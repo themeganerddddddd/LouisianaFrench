@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Louisiana French",
+    "slug": "louisiana-french",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/pelicanicon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.westleysturhan.louisianafrench",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.westleysturhan.louisianafrench",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/pelicanicon.png",
+        "backgroundColor": "#2771CB"
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/pelicanicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "92b3549d-fbd2-432d-a052-4d39e311b4f1"
+      }
+    }
+  }
+}
