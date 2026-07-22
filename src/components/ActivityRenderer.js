@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
 
@@ -22,10 +22,17 @@ function shuffle(arr) {
 
 function normalizeText(str) {
   return String(str || '')
-    .trim()
+    .replace(/œ/g, 'oe')
+    .replace(/Œ/g, 'OE')
+    .replace(/[’‘`´]/g, "'")
+    .replace(/…/g, ' ')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function makeWordBank(answer) {
@@ -123,7 +130,15 @@ function getHintText(activity) {
   return '';
 }
 
-function FeedbackFooter({ state, firstWrong, hintText, onTryAgain, onNext, onIncorrect, theme }) {
+function FeedbackFooter({
+  state,
+  firstWrong,
+  hintText,
+  answerDisplay,
+  onTryAgain,
+  onNext,
+  onIncorrect
+}) {
   if (state === 'correct') {
     return (
       <View style={[styles.footer, styles.footerGreen]}>
@@ -140,6 +155,7 @@ function FeedbackFooter({ state, firstWrong, hintText, onTryAgain, onNext, onInc
       <View style={[styles.footer, styles.footerRed]}>
         <Text style={styles.footerTitle}>Not quite</Text>
         {hintText ? <Text style={styles.footerSub}>{hintText}</Text> : null}
+
         <TouchableOpacity style={styles.footerButtonRed} onPress={onTryAgain}>
           <Text style={styles.footerButtonText}>Try Again</Text>
         </TouchableOpacity>
@@ -150,10 +166,18 @@ function FeedbackFooter({ state, firstWrong, hintText, onTryAgain, onNext, onInc
   if (state === 'wrong' && !firstWrong) {
     return (
       <View style={[styles.footer, styles.footerRed]}>
-        <Text style={styles.footerTitle}>Incorrect</Text>
-        {hintText ? <Text style={styles.footerSub}>{hintText}</Text> : null}
+        <Text style={styles.footerTitle}>Let’s move on</Text>
+
+        {answerDisplay ? (
+          <Text style={styles.footerSub}>
+            Answer: {answerDisplay}
+          </Text>
+        ) : hintText ? (
+          <Text style={styles.footerSub}>{hintText}</Text>
+        ) : null}
+
         <TouchableOpacity style={styles.footerButtonRed} onPress={onIncorrect}>
-          <Text style={styles.footerButtonText}>Incorrect</Text>
+          <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
     );
@@ -279,16 +303,17 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme }) {
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
       ) : null}
-
+      
       <FeedbackFooter
         state={state}
         firstWrong={attempts === 1}
         hintText={getHintText(activity)}
+        answerDisplay={activity.answerDisplay || activity.answer}
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(selected)}
-        theme={theme}
       />
+
     </View>
   );
 }
@@ -370,10 +395,10 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme }
         state={state}
         firstWrong={attempts === 1}
         hintText={getHintText(activity)}
+        answerDisplay={activity.answerDisplay || activity.answer}
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(selected)}
-        theme={theme}
       />
     </View>
   );
@@ -475,10 +500,10 @@ function Typing({ activity, language, onCorrect, onWrong, theme }) {
         state={state}
         firstWrong={attempts === 1}
         hintText={getHintText(activity)}
+        answerDisplay={activity.answerDisplay || activity.answer}
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(value)}
-        theme={theme}
       />
     </ScrollView>
   );
@@ -560,10 +585,10 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme }) {
         state={state}
         firstWrong={attempts === 1}
         hintText={getHintText(activity)}
+        answerDisplay={activity.answerDisplay || activity.answer}
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(selected.join(' '))}
-        theme={theme}
       />
     </ScrollView>
   );
@@ -678,10 +703,10 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme }) {
         state={state}
         firstWrong={attempts === 1}
         hintText={getHintText(activity)}
+        answerDisplay={activity.answerDisplay || 'Match the correct pairs'}
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(`${selectedLeft} ↔ ${selectedRight}`)}
-        theme={theme}
       />
     </View>
   );

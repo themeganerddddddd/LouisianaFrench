@@ -2,7 +2,7 @@
   "expo": {
     "name": "Louisiana French",
     "slug": "louisiana-french",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/pelicanicon.png",
     "userInterfaceStyle": "light",
