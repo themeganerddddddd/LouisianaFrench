@@ -1,4 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { clock } from '../../test/fixtures/clock';
+import {
+  completedLessons,
+  dailyReviewLogs,
+  leaderboardEntries,
+  leaderboards,
+  profiles,
+  wordMastery
+} from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
+import {
+  seedAsyncStorage,
+  seedRawAsyncStorage
+} from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import {
   getDefaultLanguage,
   setDefaultLanguage,
@@ -52,26 +65,16 @@ describe('Language selection', () => {
 
 describe('Profile', () => {
   it('defaults to a fresh Profile when unset', async () => {
-    expect(await getProfile()).toEqual({
-      username: 'Player',
-      xp: 0,
-      streak: 0,
-      lastStudyDate: null
-    });
+    expect(await getProfile()).toEqual(profiles.fresh);
   });
 
   it('persists a saved Profile', async () => {
-    await saveProfile({ username: 'Marie', xp: 40, streak: 2, lastStudyDate: null });
-    expect(await getProfile()).toEqual({
-      username: 'Marie',
-      xp: 40,
-      streak: 2,
-      lastStudyDate: null
-    });
+    await saveProfile(profiles.established);
+    expect(await getProfile()).toEqual(profiles.established);
   });
 
   it('rejects when the persisted Profile record is malformed JSON', async () => {
-    await AsyncStorage.setItem('lf_profile', 'not-json');
+    await seedRawAsyncStorage({ profile: 'not-json' });
     await expect(getProfile()).rejects.toThrow();
   });
 });
@@ -82,15 +85,12 @@ describe('Lesson completion', () => {
   });
 
   it('marks a Lesson complete with a timestamp keyed by Language and Lesson id', async () => {
-    jest.setSystemTime(new Date(2026, 0, 15, 12, 0, 0));
+    jest.setSystemTime(clock.lessonCompletion());
 
     await markLessonComplete('cajun', 'cajun_u01_l01');
 
     const progress = await getLessonProgress();
-    expect(progress['cajun:cajun_u01_l01']).toEqual({
-      completed: true,
-      completedAt: new Date(2026, 0, 15, 12, 0, 0).toISOString()
-    });
+    expect(progress['cajun:cajun_u01_l01']).toEqual(completedLessons.cajunFirst);
   });
 
   it('keeps completion records for different Languages and Lessons separate', async () => {
@@ -121,8 +121,7 @@ describe('Word mastery status', () => {
 
     await updateWordProgress('cajun', 'u01_w0001', true);
     const final = (await getWordProgress())[key];
-    expect(final.status).toBe('mastered');
-    expect(final).toMatchObject({ seen: 4, correct: 4, wrong: 0 });
+    expect(final).toEqual(wordMastery.mastered);
   });
 
   it('marks a Word "learning" after a single wrong answer with no prior correct answers', async () => {
@@ -131,7 +130,7 @@ describe('Word mastery status', () => {
     // partially-learned one. Characterized as current behavior.
     await updateWordProgress('cajun', 'u01_w0002', false);
     const record = (await getWordProgress())['cajun:u01_w0002'];
-    expect(record).toMatchObject({ seen: 1, correct: 0, wrong: 1, status: 'learning' });
+    expect(record).toEqual(wordMastery.learningAfterWrong);
   });
 
   it('does not mark a Word mastered when wrong answers equal correct answers', async () => {
@@ -140,7 +139,7 @@ describe('Word mastery status', () => {
     for (let i = 0; i < 4; i += 1) await updateWordProgress('cajun', rowId, false);
 
     const record = (await getWordProgress())['cajun:u01_w0003'];
-    expect(record).toMatchObject({ seen: 8, correct: 4, wrong: 4, status: 'strong' });
+    expect(record).toEqual(wordMastery.strongWithEqualAnswers);
   });
 });
 
@@ -157,11 +156,11 @@ describe('Daily Review log', () => {
 
   it('marks a date key as done', async () => {
     await markDailyReviewDone('2026-01-15');
-    expect(await getDailyReviewLog()).toEqual({ '2026-01-15': true });
+    expect(await getDailyReviewLog()).toEqual(dailyReviewLogs.completed);
   });
 
   it('computes today\'s local date key from the system clock', () => {
-    jest.setSystemTime(new Date(2026, 2, 5, 23, 30, 0));
+    jest.setSystemTime(clock.localCalendarLateEvening());
     expect(getTodayKey()).toBe('2026-03-05');
   });
 });
@@ -172,18 +171,15 @@ describe('Leaderboard', () => {
   });
 
   it('inserts a new entry and keeps the Leaderboard sorted descending by xp', async () => {
-    await upsertLeaderboard('Marie', 40);
-    await upsertLeaderboard('Beau', 90);
+    await upsertLeaderboard(leaderboardEntries.marie.name, leaderboardEntries.marie.xp);
+    await upsertLeaderboard(leaderboardEntries.beau.name, leaderboardEntries.beau.xp);
 
-    expect(await getLeaderboard()).toEqual([
-      { name: 'Beau', xp: 90 },
-      { name: 'Marie', xp: 40 }
-    ]);
+    expect(await getLeaderboard()).toEqual(leaderboards.sorted);
   });
 
   it('updates an existing entry\'s xp in place rather than duplicating it', async () => {
-    await upsertLeaderboard('Marie', 40);
-    await upsertLeaderboard('Marie', 100);
+    await upsertLeaderboard(leaderboardEntries.marie.name, leaderboardEntries.marie.xp);
+    await upsertLeaderboard(leaderboardEntries.marie.name, 100);
 
     const board = await getLeaderboard();
     expect(board).toEqual([{ name: 'Marie', xp: 100 }]);
@@ -192,20 +188,20 @@ describe('Leaderboard', () => {
 
 describe('XP and streak recording', () => {
   it('starts a streak at 1 on the first recorded study session', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    jest.setSystemTime(clock.studyDay());
 
     const updated = await recordStudyAndXp(15);
 
     expect(updated.xp).toBe(15);
     expect(updated.streak).toBe(1);
-    expect(updated.lastStudyDate).toBe(new Date(2026, 0, 10, 9, 0, 0).toISOString());
+    expect(updated.lastStudyDate).toBe(clock.studyDay().toISOString());
   });
 
   it('increments the streak on a consecutive calendar day', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    jest.setSystemTime(clock.studyDay());
     await recordStudyAndXp(10);
 
-    jest.setSystemTime(new Date(2026, 0, 11, 9, 0, 0));
+    jest.setSystemTime(clock.consecutiveStudyDay());
     const updated = await recordStudyAndXp(10);
 
     expect(updated.streak).toBe(2);
@@ -213,20 +209,20 @@ describe('XP and streak recording', () => {
   });
 
   it('resets the streak to 1 after a gap of more than one calendar day', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    jest.setSystemTime(clock.studyDay());
     await recordStudyAndXp(10);
 
-    jest.setSystemTime(new Date(2026, 0, 13, 9, 0, 0));
+    jest.setSystemTime(clock.gapStudyDay());
     const updated = await recordStudyAndXp(10);
 
     expect(updated.streak).toBe(1);
   });
 
   it('does not change the streak for a second study session on the same calendar day', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    jest.setSystemTime(clock.studyDay());
     await recordStudyAndXp(10);
 
-    jest.setSystemTime(new Date(2026, 0, 10, 20, 0, 0));
+    jest.setSystemTime(clock.sameStudyDay());
     const updated = await recordStudyAndXp(5);
 
     expect(updated.streak).toBe(1);
@@ -234,8 +230,8 @@ describe('XP and streak recording', () => {
   });
 
   it('gracefully handles a partial Profile record missing xp, streak, and lastStudyDate', async () => {
-    await saveProfile({ username: 'Marie' });
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    await seedAsyncStorage({ profile: profiles.legacyPartial });
+    jest.setSystemTime(clock.studyDay());
 
     const updated = await recordStudyAndXp(10);
 
@@ -244,7 +240,7 @@ describe('XP and streak recording', () => {
   });
 
   it('also records the updated xp on the Leaderboard for the Profile username', async () => {
-    await saveProfile({ username: 'Beau', xp: 0, streak: 0, lastStudyDate: null });
+    await saveProfile(profiles.beau);
     await recordStudyAndXp(25);
 
     expect(await getLeaderboard()).toEqual([{ name: 'Beau', xp: 25 }]);
