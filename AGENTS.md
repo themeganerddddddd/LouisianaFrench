@@ -21,5 +21,7 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 - Work from the unblocked ticket frontier under `.scratch/`; use one fresh agent context per ticket.
 - Preserve characterization separately from behavior changes. A characterization test must not encode a known defect as desired behavior.
 - Keep each pull request focused and reviewable. Production changes require tests in the same pull request.
+- Use `.github/pull_request_template.md` for every pull request, including drafts, and answer each section.
+- Write pull request titles and descriptions in clear B2-level English with minimal technical jargon.
 - Run the repository's required checks before marking a ticket complete.
 - Use the domain terms in `CONTEXT.md` and the architecture terms module, interface, implementation, depth, seam, adapter, leverage, and locality.
