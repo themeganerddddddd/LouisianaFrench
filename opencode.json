@@ -1,11 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "instructions": ["AGENTS.md"],
-  "model": "xai/grok-4.5",
+  "model": "opencode-go/grok-4.5",
   "default_agent": "general",
   "agent": {
     "general": {
-      "model": "xai/grok-4.5",
+      "model": "opencode-go/grok-4.5",
       "mode": "primary"
     },
     "explore": {
