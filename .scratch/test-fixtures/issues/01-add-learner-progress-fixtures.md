@@ -2,7 +2,7 @@
 
 **What to build:** Learner Progress and spaced-repetition tests use reusable, explicit fixtures for Profiles, Words, Cards, persisted state, and local-calendar dates without changing application behavior or weakening completed characterization.
 
-**Blocked by:** Architecture modernization ticket 04 - Add required tests and lint CI
+**Blocked by:** Architecture modernization ticket 02 - Characterize Catalog and Learner Progress
 
 **Status:** ready-for-agent
 

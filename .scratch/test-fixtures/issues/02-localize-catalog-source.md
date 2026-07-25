@@ -2,7 +2,7 @@
 
 **What to build:** Catalog acquisition sits behind the smallest internal seam so behavior tests can supply compact Catalog data while production callers continue using the unchanged Catalog interface and bundled JSON behavior.
 
-**Blocked by:** Architecture modernization ticket 04 - Add required tests and lint CI
+**Blocked by:** Architecture modernization ticket 02 - Characterize Catalog and Learner Progress
 
 **Status:** ready-for-agent
 

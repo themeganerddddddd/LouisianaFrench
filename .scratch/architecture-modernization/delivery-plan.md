@@ -7,15 +7,19 @@ This plan keeps every pull request independently reviewable and green. Character
 ```text
 PR 1 Agent setup
   -> PR 2 Test harness
-      -> PR 3 Characterization
-          -> PR 4 Required CI
-              -> reusable fixture effort
-              -> PR 5A Testability
-                  -> PR 5B Maestro foundation
-              -> PR 6 Defect fixes
-                  -> PR 7 Active-path cleanup
-                      -> TypeScript decision gate -> PR 8 Deepen Catalog
-                      -> Catalog authoring decision
+      -> PR 3A Catalog + Learner Progress characterization
+          -> PR 3B.1 Learner Progress fixtures
+          -> PR 3B.2 Catalog source seam
+              -> PR 3B.3 Compact Catalog fixtures
+PR 3B.1 + PR 3B.3
+  -> PR 3C Activity + screen + navigation characterization
+      -> PR 4 Required CI
+          -> PR 5A Testability
+              -> PR 5B Maestro foundation
+          -> PR 6 Defect fixes
+              -> PR 7 Active-path cleanup
+                  -> TypeScript decision gate -> PR 8 Deepen Catalog
+                  -> Catalog authoring decision
 PR 8 Deepen Catalog + Catalog authoring decision + compact Catalog fixtures
   -> PR 9 SQLite adapter and parity
       -> PR 10 SQLite cutover and legacy removal
@@ -92,23 +96,23 @@ The learning session, Learner Progress, activity rendering, and Audio deepening 
 2. `test: add deterministic test setup`
 3. `test: prove the harness through an existing interface`
 
-## PR 3: Characterize the Existing Application
+## PR 3A: Characterize Catalog and Learner Progress
 
-**Goal:** Protect current intended behavior at the confirmed seams before any defect fix or module deepening.
+**Goal:** Protect current Catalog and Learner Progress behavior before fixture migration or production changes.
 
 **Dependencies:** PR 2
 
 **Risk:** Medium; broad test additions can accidentally bless defects
 
-**Complexity:** L, split into PR 3A-3D if review exceeds 30 minutes
+**Complexity:** M
 
 **Expected production lines:** 0
 
-**Likely test areas:** Catalog behavior, Learner Progress and spaced repetition, all Activity types, active screens, and the real navigation graph.
+**Likely test areas:** Catalog behavior, Learner Progress, and spaced repetition.
 
 **Tests:** Behavior matrices from the spec; fake timers and seeded data where current interfaces permit; known-defect scenarios skipped with ledger references rather than asserted as correct.
 
-**Acceptance:** Every active module interface has baseline behavioral coverage; every supported Activity type has rendered coverage; inactive paths are excluded; the known-defect ledger and tests agree.
+**Acceptance:** Catalog and Learner Progress interfaces have a deterministic baseline; the known-defect ledger and tests agree.
 
 **Rollback:** Revert individual characterization commits; no runtime behavior changes.
 
@@ -116,15 +120,115 @@ The learning session, Learner Progress, activity rendering, and Audio deepening 
 
 1. `test: characterize Catalog behavior`
 2. `test: characterize Learner Progress behavior`
-3. `test: characterize Activity behavior`
-4. `test: characterize active screens`
-5. `test: characterize navigation contracts`
+3. `test: characterize spaced repetition behavior`
+
+## PR 3B.1: Add Learner Progress Fixtures
+
+**Goal:** Give Learner Progress and spaced-repetition tests reusable records, storage seeds, and stable local-calendar dates.
+
+**Dependencies:** PR 3A
+
+**Risk:** Low; tests and test support only
+
+**Complexity:** M
+
+**Expected production lines:** 0
+
+**Likely test areas:** Clock, Learner Progress, Card review, and AsyncStorage seeding.
+
+**Tests:** Existing storage and spaced-repetition characterization remains behaviorally equivalent while repeated setup moves to fixtures.
+
+**Acceptance:** Fixtures cover required Profile, Word, Card, review, leaderboard, storage, and clock states; raw storage keys are local to test support; no production code changes.
+
+**Rollback:** Revert test fixture migration; PR 3A remains the behavior baseline.
+
+**Commits:**
+
+1. `test: add Learner Progress and clock fixtures`
+2. `test: migrate progress characterization to fixtures`
+
+## PR 3B.2: Localize the Catalog Source
+
+**Goal:** Add the smallest internal seam needed to supply compact Catalog fixtures without changing the existing Catalog interface or behavior.
+
+**Dependencies:** PR 3A
+
+**Risk:** Medium; narrow production refactor with no intended behavior change
+
+**Complexity:** M
+
+**Expected production lines:** Under 150
+
+**Likely files:** Catalog acquisition implementation and existing Catalog characterization tests.
+
+**Tests:** Existing bundled Catalog behavior remains green before and after the seam is introduced.
+
+**Acceptance:** Bundled JSON acquisition has locality; fixture substitution does not leak between tests; no private helper, SQLite implementation, dependency container, or adapter registry is introduced.
+
+**Rollback:** Revert the seam extraction; bundled JSON remains the source.
+
+**Commits:**
+
+1. `test: strengthen Catalog parity assertions`
+2. `refactor: localize bundled Catalog acquisition`
+
+## PR 3B.3: Add Compact Catalog Fixtures
+
+**Goal:** Run Catalog behavior tests against small reusable fixtures while separately validating the Catalog shipped to learners.
+
+**Dependencies:** PR 3B.2
+
+**Risk:** Low; fixtures and test migration only
+
+**Complexity:** M
+
+**Expected production lines:** 0
+
+**Likely test areas:** Compact Catalog behavior and bundled-Catalog smoke and validation coverage.
+
+**Tests:** Both Languages, every Activity type, core and review Lessons, ordering, duplicate Words, Unicode, apostrophes, and present/missing Audio are covered by compact fixtures; shipped data retains separate validation.
+
+**Acceptance:** Behavioral assertions no longer depend on incidental full-Catalog content; bundled Catalog validation remains green; known defects do not become fixture expectations.
+
+**Rollback:** Restore PR 3A Catalog characterization; the internal seam may remain independently.
+
+**Commits:**
+
+1. `test: add compact Catalog fixtures`
+2. `test: migrate Catalog behavior to fixtures`
+3. `test: separate bundled Catalog validation`
+
+## PR 3C: Characterize Activities, Screens, and Navigation
+
+**Goal:** Protect rendered Activity, screen, and navigation behavior using the reusable fixture foundation.
+
+**Dependencies:** PR 3B.1 and PR 3B.3
+
+**Risk:** Medium; broad tests can accidentally bless known defects
+
+**Complexity:** L, split Activities and screens/navigation if review exceeds 30 minutes
+
+**Expected production lines:** 0
+
+**Likely test areas:** Every Activity type, active screens, and the real navigation graph.
+
+**Tests:** Behavior matrices from the spec use reusable Catalog and Learner Progress fixtures; known-defect scenarios remain skipped with ledger references.
+
+**Acceptance:** Every supported Activity type has rendered coverage; active screens and routes have baseline coverage; inactive paths are excluded; no broad test hard-codes complete application state inline.
+
+**Rollback:** Revert individual characterization commits; fixture foundations remain available.
+
+**Commits:**
+
+1. `test: characterize Activity behavior with fixtures`
+2. `test: characterize active screens with fixtures`
+3. `test: characterize navigation contracts with fixtures`
 
 ## PR 4: Add Required GitHub Actions Checks
 
 **Goal:** Block unsafe pull requests with stable test and lint checks.
 
-**Dependencies:** PR 3
+**Dependencies:** PR 3C
 
 **Risk:** Low to medium; bad workflow configuration can block merges
 

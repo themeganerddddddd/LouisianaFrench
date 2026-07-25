@@ -6,7 +6,7 @@ The characterization suite currently mixes two test-data strategies. Catalog tes
 
 ## Solution
 
-Introduce small, reusable fixtures while preserving the behavior protected by completed characterization ticket 02. Keep Catalog fixtures separate from Learner Progress fixtures because their data and lifecycles differ.
+Introduce small, reusable fixtures as part of the test-writing phase while preserving the behavior protected by completed characterization ticket 02. Finish the fixture foundation before broad Activity, screen, and navigation characterization, CI gating, defect fixes, module deepening, TypeScript migration, or SQLite work. Keep Catalog fixtures separate from Learner Progress fixtures because their data and lifecycles differ.
 
 Use compact fixture data for module behavior and keep separate smoke and validation tests against the real bundled Catalog. Add only the smallest internal Catalog seam needed to run one behavior suite against fixture data today and SQLite later. Do not expose private helpers or design a generalized adapter framework.
 
@@ -78,6 +78,8 @@ The exact internal Catalog seam shape is selected during implementation. This sp
 
 - The interface is the test surface; private helpers remain implementation.
 - Fixture migration must preserve every intended assertion from architecture modernization ticket 02.
+- Fixture foundations block the remaining characterization work and every substantial production change.
+- Future test tickets add or reuse compact fixtures before adding broad scenario matrices; fixtures are part of the test design, not a later refactor.
 - Compact fixtures prove module behavior deterministically.
 - Bundled-Catalog smoke and validation tests prove shipped content remains compatible.
 - Expected values are independent literals or worked examples, not recomputed with the production algorithm.

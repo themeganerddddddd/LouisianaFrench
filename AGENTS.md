@@ -17,6 +17,7 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 ## Engineering workflow
 
 - Treat the module interface as the test surface. Test private helpers through their module unless they carry independently complex behavior.
+- Establish reusable fixtures while writing tests, before broad characterization or substantial production changes. Keep shipped-data validation separate from compact behavior fixtures.
 - Work from the unblocked ticket frontier under `.scratch/`; use one fresh agent context per ticket.
 - Preserve characterization separately from behavior changes. A characterization test must not encode a known defect as desired behavior.
 - Keep each pull request focused and reviewable. Production changes require tests in the same pull request.

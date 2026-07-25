@@ -41,8 +41,9 @@ After the safety net is stable, deepen the Catalog, learning session, Learner Pr
 
 ## Implementation Decisions
 
-- Work begins in strict order: characterize current behavior, then establish required CI. After CI protects the branch, native journey coverage and focused defect fixes may proceed in parallel. Module deepening and Catalog migration follow their declared blocking edges.
+- Work begins in strict order: establish the harness, characterize the initial Catalog and Learner Progress baseline, establish reusable fixtures, finish Activity/screen/navigation characterization, then establish required CI. After CI protects the branch, native journey coverage and focused defect fixes may proceed in parallel. Module deepening and Catalog migration follow their declared blocking edges.
 - Characterization and intentional behavior changes never share a pull request.
+- Reusable fixtures are part of test writing, not deferred cleanup. They must exist before broad rendered/navigation characterization and substantial production changes.
 - The confirmed test surfaces are the Catalog, learning session, Learner Progress, activity rendering, Audio, navigation, and installed application interfaces.
 - The interface is the test surface. Private helpers remain implementation unless their independently complex behavior earns a separate module interface.
 - The active application path is `index.js` to `App.js` to the `src` screen modules. Inactive paths are removed only after the active path is characterized.
@@ -97,16 +98,18 @@ After the safety net is stable, deepen the Catalog, learning session, Learner Pr
 
 1. Configure repository instructions, local tracking, domain language, and decisions.
 2. Install test tooling and prove the harness with a narrow existing behavior.
-3. Characterize the active Catalog, Learner Progress, activity rendering, screens, and navigation while excluding known defects.
-4. Add required GitHub Actions tests and lint.
-5. Add accessibility semantics and deterministic native fixtures with tests.
-6. In parallel after required CI, add non-blocking Maestro journeys and fix known defects one at a time under regression tests.
-7. Remove inactive application paths after active-path coverage is green.
-8. Explore and decide the TypeScript migration strategy.
-9. Deepen the Catalog and add adapter parity tests.
-10. Introduce and cut over to the bundled SQLite Catalog.
-11. Deepen learning session, Learner Progress, activity rendering, and Audio modules as separate tested changes.
-12. Remove CSV, generated JSON, and migration-only implementation after parity and release verification.
+3. Characterize the initial Catalog and Learner Progress baseline while excluding known defects.
+4. Establish reusable Catalog, Learner Progress, Card, storage, and clock fixtures.
+5. Characterize Activity rendering, active screens, and navigation using those fixtures.
+6. Add required GitHub Actions tests and lint.
+7. Add accessibility semantics and deterministic native fixtures with tests.
+8. In parallel after required CI, add non-blocking Maestro journeys and fix known defects one at a time under regression tests.
+9. Remove inactive application paths after active-path coverage is green.
+10. Explore and decide the TypeScript migration strategy.
+11. Deepen the Catalog and add adapter parity tests.
+12. Introduce and cut over to the bundled SQLite Catalog.
+13. Deepen learning session, Learner Progress, activity rendering, and Audio modules as separate tested changes.
+14. Remove CSV, generated JSON, and migration-only implementation after parity and release verification.
 
 ## Out of Scope
 
