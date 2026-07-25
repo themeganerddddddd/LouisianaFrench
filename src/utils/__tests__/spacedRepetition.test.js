@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { clock } from '../../test/fixtures/clock';
+import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBuilder';
 import { updateCardReview, getDueReviewItems, getWeakItems } from '../spacedRepetition';
 import { saveReviewState } from '../storage';
 
@@ -20,14 +22,14 @@ afterEach(() => {
 });
 
 function daysAfter(base, days) {
-  const d = new Date(base);
-  d.setDate(d.getDate() + days);
-  return d;
+  const date = new Date(base);
+  date.setDate(date.getDate() + days);
+  return date;
 }
 
 describe('updateCardReview', () => {
   it('schedules a brand-new Card on its first successful review', async () => {
-    const now = new Date(2026, 0, 10, 9, 0, 0);
+    const now = clock.reviewStart();
     jest.setSystemTime(now);
 
     const card = await updateCardReview('cajun:u01_w0001:mc', 4);
@@ -39,7 +41,7 @@ describe('updateCardReview', () => {
   });
 
   it('grows the interval schedule 1, 3, then ease-factor-scaled on consecutive successful reviews', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    jest.setSystemTime(clock.reviewStart());
 
     await updateCardReview('cajun:u01_w0001:mc', 4);
     const second = await updateCardReview('cajun:u01_w0001:mc', 4);
@@ -54,14 +56,14 @@ describe('updateCardReview', () => {
   });
 
   it('increases the ease factor on a high-quality review', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    jest.setSystemTime(clock.reviewStart());
 
     const card = await updateCardReview('cajun:u01_w0001:mc', 5);
     expect(card.easeFactor).toBeCloseTo(2.6);
   });
 
   it('resets repetitions and interval and records a lapse on a low-quality review', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    jest.setSystemTime(clock.reviewStart());
 
     await updateCardReview('cajun:u01_w0001:mc', 4);
     await updateCardReview('cajun:u01_w0001:mc', 4);
@@ -73,7 +75,7 @@ describe('updateCardReview', () => {
   });
 
   it('persists Card state across calls, keyed by Card id', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
+    jest.setSystemTime(clock.reviewStart());
 
     await updateCardReview('cajun:u01_w0001:mc', 4);
     await updateCardReview('cajun:u01_w0002:mc', 4);
@@ -90,43 +92,31 @@ describe('getDueReviewItems', () => {
   });
 
   it('includes only the Card whose nextReviewAt has already passed', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
-    // "due-card" is reviewed once, scheduling it 1 day out (due 2026-01-11).
-    await updateCardReview('due-card', 4);
-    // "not-due-card" is reviewed three times, pushing its interval to 8
-    // days (schedule: 1, 3, 8), due 2026-01-18.
-    await updateCardReview('not-due-card', 4);
-    await updateCardReview('not-due-card', 4);
-    await updateCardReview('not-due-card', 4);
+    jest.setSystemTime(clock.dueNow());
+    await saveReviewState({
+      dueCard: buildCardReviewState({ nextReviewAt: clock.pastDue().toISOString() }),
+      notDueCard: buildCardReviewState({ nextReviewAt: clock.futureDue().toISOString() })
+    });
 
-    jest.setSystemTime(new Date(2026, 0, 12, 9, 0, 0)); // 2 days later
-
-    const items = [{ cardId: 'due-card' }, { cardId: 'not-due-card' }];
+    const items = [{ cardId: 'dueCard' }, { cardId: 'notDueCard' }];
     const due = await getDueReviewItems(items);
 
-    expect(due.map((i) => i.cardId)).toEqual(['due-card']);
+    expect(due.map((i) => i.cardId)).toEqual(['dueCard']);
   });
 
   it('excludes a Card scheduled for the future', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
-    await updateCardReview('future-card', 4); // due 2026-01-11
+    jest.setSystemTime(clock.dueNow());
+    await saveReviewState({ futureCard: buildCardReviewState() });
 
-    // "now" stays on the same day the Card was reviewed, before its due date.
-    const items = [{ cardId: 'future-card' }];
+    const items = [{ cardId: 'futureCard' }];
     expect(await getDueReviewItems(items)).toEqual([]);
   });
 
   it('includes a Card due exactly now', async () => {
-    const now = new Date(2026, 6, 22, 12);
+    const now = clock.dueNow();
     jest.setSystemTime(now);
     await saveReviewState({
-      dueNow: {
-        repetitions: 1,
-        interval: 1,
-        easeFactor: 2.5,
-        nextReviewAt: now.toISOString(),
-        lapses: 0
-      }
+      dueNow: buildCardReviewState({ nextReviewAt: now.toISOString() })
     });
 
     await expect(getDueReviewItems([{ cardId: 'dueNow' }])).resolves.toEqual([
@@ -142,24 +132,22 @@ describe('getWeakItems', () => {
   });
 
   it('excludes Cards with no recorded lapses', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
-    await updateCardReview('clean-card', 4);
+    await saveReviewState({ cleanCard: buildCardReviewState() });
 
-    const items = [{ cardId: 'clean-card' }];
+    const items = [{ cardId: 'cleanCard' }];
     expect(await getWeakItems(items)).toEqual([]);
   });
 
   it('includes Cards with at least one lapse, sorted descending by lapse count', async () => {
-    jest.setSystemTime(new Date(2026, 0, 10, 9, 0, 0));
-    await updateCardReview('one-lapse', 1);
-    await updateCardReview('three-lapses', 1);
-    await updateCardReview('three-lapses', 1);
-    await updateCardReview('three-lapses', 1);
+    await saveReviewState({
+      oneLapse: buildCardReviewState({ lapses: 1 }),
+      threeLapses: buildCardReviewState({ lapses: 3 })
+    });
 
-    const items = [{ cardId: 'one-lapse' }, { cardId: 'three-lapses' }];
+    const items = [{ cardId: 'oneLapse' }, { cardId: 'threeLapses' }];
     const weak = await getWeakItems(items);
 
-    expect(weak.map((i) => i.cardId)).toEqual(['three-lapses', 'one-lapse']);
+    expect(weak.map((i) => i.cardId)).toEqual(['threeLapses', 'oneLapse']);
     expect(weak[0].reviewMeta.lapses).toBe(3);
   });
 });
