@@ -9,13 +9,14 @@ PR 1 Agent setup
   -> PR 2 Test harness
       -> PR 3 Characterization
           -> PR 4 Required CI
+              -> reusable fixture effort
               -> PR 5A Testability
                   -> PR 5B Maestro foundation
               -> PR 6 Defect fixes
                   -> PR 7 Active-path cleanup
                       -> TypeScript decision gate -> PR 8 Deepen Catalog
                       -> Catalog authoring decision
-PR 8 Deepen Catalog + Catalog authoring decision
+PR 8 Deepen Catalog + Catalog authoring decision + compact Catalog fixtures
   -> PR 9 SQLite adapter and parity
       -> PR 10 SQLite cutover and legacy removal
 ```

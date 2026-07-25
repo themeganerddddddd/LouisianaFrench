@@ -2,7 +2,7 @@
 
 **What to build:** Learning callers consume Catalog behavior without knowing bundled JSON structure, whole-Catalog loading assumptions, fallback fields, or future SQLite representation.
 
-**Blocked by:** 10 - Remove inactive application paths; TypeScript migration decision ticket `01`
+**Blocked by:** 10 - Remove inactive application paths; TypeScript migration decision ticket `01`; test-fixtures ticket 03 - Add compact Catalog fixtures
 
 **Status:** ready-for-agent
 

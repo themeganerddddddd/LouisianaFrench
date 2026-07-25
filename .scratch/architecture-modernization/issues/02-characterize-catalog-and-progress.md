@@ -122,3 +122,7 @@ Expo Router starter path per KD-04; none introduced by this change)
 These tests passed on first run (the harness and module interfaces already
 existed from ticket 01); this PR records characterization of existing
 behavior, not a red-to-green fix.
+
+**Follow-up:** Reusable fixture work is tracked separately under
+`.scratch/test-fixtures/`. This ticket remains complete because it established
+the behavior baseline that fixture migration must preserve.

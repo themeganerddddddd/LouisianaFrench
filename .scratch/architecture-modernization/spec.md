@@ -124,4 +124,5 @@ After the safety net is stable, deepen the Catalog, learning session, Learner Pr
 - See `delivery-plan.md` for pull-request and commit sequencing.
 - See `issues/` for the agent-ready dependency graph.
 - See `.scratch/typescript-migration/spec.md` for the deferred TypeScript exploration.
+- See `.scratch/test-fixtures/spec.md` for reusable Catalog and Learner Progress fixture work that follows initial characterization.
 - See `docs/adr/` for accepted cross-cutting decisions.
