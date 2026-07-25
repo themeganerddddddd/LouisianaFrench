@@ -32,25 +32,25 @@ export default function DailyReviewScreen({ route, navigation }) {
   const [mistakes, setMistakes] = useState([]);
 
   useEffect(() => {
+    async function init() {
+      const allActivities = getAllActivities(language).filter((a) => a.type !== 'intro_card');
+      const due = await getDueReviewItems(allActivities);
+      const weak = await getWeakItems(allActivities);
+
+      const merged = dedupeByCardId([
+        ...due.map((x) => ({ ...x, isReview: true })),
+        ...weak.map((x) => ({ ...x, isReview: true }))
+      ]).slice(0, 15);
+
+      setQueue(
+        merged.length
+          ? merged
+          : allActivities.slice(0, 10).map((x) => ({ ...x, isReview: true }))
+      );
+    }
+
     init();
   }, [language]);
-
-  async function init() {
-    const allActivities = getAllActivities(language).filter((a) => a.type !== 'intro_card');
-    const due = await getDueReviewItems(allActivities);
-    const weak = await getWeakItems(allActivities);
-
-    const merged = dedupeByCardId([
-      ...due.map((x) => ({ ...x, isReview: true })),
-      ...weak.map((x) => ({ ...x, isReview: true }))
-    ]).slice(0, 15);
-
-    setQueue(
-      merged.length
-        ? merged
-        : allActivities.slice(0, 10).map((x) => ({ ...x, isReview: true }))
-    );
-  }
 
   if (!queue.length) return null;
 

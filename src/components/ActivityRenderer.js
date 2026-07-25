@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -61,55 +61,61 @@ function useAudio(language) {
   const soundRef = useRef(null);
   const fxRef = useRef(null);
 
-  async function stopAudio() {
+  const stopAudio = useCallback(async () => {
     try {
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
     } catch {}
-  }
+  }, []);
 
-  async function stopFx() {
+  const stopFx = useCallback(async () => {
     try {
       if (fxRef.current) {
         await fxRef.current.unloadAsync();
         fxRef.current = null;
       }
     } catch {}
-  }
+  }, []);
 
-  async function playAudioKey(audioKey) {
-    try {
-      const source = getAudioSource(language, audioKey);
-      if (!source) return false;
+  const playAudioKey = useCallback(
+    async (audioKey) => {
+      try {
+        const source = getAudioSource(language, audioKey);
+        if (!source) return false;
 
-      await stopAudio();
-      const { sound } = await Audio.Sound.createAsync(source);
-      soundRef.current = sound;
-      await sound.playAsync();
-      return true;
-    } catch {
-      return false;
-    }
-  }
+        await stopAudio();
+        const { sound } = await Audio.Sound.createAsync(source);
+        soundRef.current = sound;
+        await sound.playAsync();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [language, stopAudio]
+  );
 
-  async function playFeedback(kind) {
-    try {
-      await stopFx();
-      const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
-      const { sound } = await Audio.Sound.createAsync({ uri });
-      fxRef.current = sound;
-      await sound.playAsync();
-    } catch {}
-  }
+  const playFeedback = useCallback(
+    async (kind) => {
+      try {
+        await stopFx();
+        const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
+        const { sound } = await Audio.Sound.createAsync({ uri });
+        fxRef.current = sound;
+        await sound.playAsync();
+      } catch {}
+    },
+    [stopFx]
+  );
 
   useEffect(() => {
     return () => {
       stopAudio();
       stopFx();
     };
-  }, []);
+  }, [stopAudio, stopFx]);
 
   return { playAudioKey, playFeedback };
 }
@@ -221,7 +227,7 @@ function IntroCard({ activity, language, onCorrect, theme }) {
       if (activity.audioKey) playAudioKey(activity.audioKey);
     }, 500);
     return () => clearTimeout(timer);
-  }, [activity.audioKey]);
+  }, [activity.audioKey, playAudioKey]);
 
   return (
     <View style={styles.card}>
@@ -330,7 +336,7 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme }
       if (activity.audioKey) playAudioKey(activity.audioKey);
     }, 500);
     return () => clearTimeout(timer);
-  }, [activity.audioKey]);
+  }, [activity.audioKey, playAudioKey]);
 
   function playOption(opt) {
     const key = activity.optionAudioMap?.[opt];
