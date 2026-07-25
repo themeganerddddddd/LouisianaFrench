@@ -8,6 +8,8 @@
 
 **Claimed by:** OpenCode
 
+**Completed:** 2026-07-25
+
 - [x] Compact immutable fixtures cover both Languages, ordered Units and Lessons, core and review Lessons, and every supported Activity type.
 - [x] Fixtures include duplicate Words for deduplication, stable identities, Unicode and apostrophes, and present and missing Audio.
 - [x] Catalog ordering, lookup, Activity projection, Word deduplication, and sorting tests use the compact fixture.
@@ -57,8 +59,12 @@ git diff --check
 Passed
 ```
 
-Repository-wide `npm run lint` and `npx tsc --noEmit` continue to fail on the
-documented inactive Expo Router starter paths and missing Jest-global lint
-configuration. Ticket 02 also remains without a `Completed` date, so this
-ticket remains claimed rather than completed despite its acceptance criteria
-and test suites passing.
+At initial verification, repository-wide `npm run lint` and `npx tsc --noEmit`
+failed on the documented inactive Expo Router starter paths and missing
+Jest-global lint configuration. Ticket 02 also lacked a `Completed` date, so
+this ticket remained claimed despite its acceptance criteria and test suites
+passing.
+
+The lint tooling and unused Expo Router starter files were subsequently
+repaired outside this ticket. `npm run lint`, `npm test`, and `npm run build`
+now pass, ticket 02 is complete, and this ticket is no longer blocked.

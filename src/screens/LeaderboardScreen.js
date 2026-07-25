@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { getLeaderboard } from '../src/utils/storage';
+import { getLeaderboard } from '../utils/storage';
 
 export default function LeaderboardScreen() {
   const [rows, setRows] = useState([]);

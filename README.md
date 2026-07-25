@@ -92,6 +92,14 @@ docs/                     Architecture and agent workflow decisions
 
 The active application path is `index.js` -> `App.js` -> the modules under `src/`. The root `cajun.csv` and `kreole.csv` files are source data for lesson generation. The generated lesson data used at runtime is stored in `src/data/cajunLessons.json` and `src/data/kreoleLessons.json`.
 
+The initial commit also contained the unused `create-expo-app` Router template
+under root-level `app/`, `components/`, `constants/`, and `hooks/` directories,
+plus stale root-level screen copies and `scripts/reset-project.js`. Those files
+were removed because the application entry graph never referenced them and
+their undeclared template dependencies and stale imports caused lint and
+TypeScript failures. The active `src/screens/` and `src/components/` modules
+remain the application implementation.
+
 ## Updating Lesson Data
 
 Run lesson generation from the repository root:

@@ -8,6 +8,8 @@
 
 **Claimed by:** OpenCode
 
+**Completed:** 2026-07-25
+
 - [x] Existing Catalog exports and caller behavior remain unchanged.
 - [x] Bundled JSON acquisition and Language selection gain locality inside the Catalog implementation.
 - [x] Existing Catalog characterization passes before and after the change.
@@ -63,11 +65,16 @@ The required repository-wide `npm run lint` gate is already failing on `main`:
 CI run `30162771215` reports `eslint: not found` because lint dependencies are
 absent from the lockfile. Supplying temporary lint tooling additionally reveals
 pre-existing inactive starter-path and Jest-global configuration errors; no
-changed production or test file has a focused lint finding. `npx tsc --noEmit`
-continues to report only the documented inactive Expo Router starter-path
-errors under `app/` and `components/`. The ticket remains claimed without a
-`Completed` date until the required lint gate is repaired.
+changed production or test file had a focused lint finding. `npx tsc --noEmit`
+reported only the documented inactive Expo Router starter-path errors under
+`app/` and `components/`. At that point, the ticket remained claimed until the
+required lint gate could be repaired.
 
 An adversarial review found no functional defects, regressions, leakage
 hazards, scope creep, or ticket violations. Compact reusable data and broader
 fixture behavior coverage remain deferred to ticket 03.
+
+The lint tooling was subsequently committed to the dependency manifest and
+the unused Expo Router starter files that produced the repository-wide lint
+errors were removed. `npm run lint`, `npm test`, and `npm run build` now pass,
+so the required gate is satisfied.
