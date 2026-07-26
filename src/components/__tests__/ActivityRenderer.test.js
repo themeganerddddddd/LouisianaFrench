@@ -33,6 +33,16 @@ describe('ActivityRenderer', () => {
       await user.press(screen.getByText('Continue'));
       expect(onCorrect).toHaveBeenCalledTimes(1);
     });
+
+    it('plays Audio when the Word card is tapped', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity(fixtureActivities.intro);
+
+      await user.press(screen.getByText('Bonjour'));
+
+      await user.press(screen.getByText('Continue'));
+      expect(onCorrect).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('multiple_choice', () => {
@@ -103,6 +113,23 @@ describe('ActivityRenderer', () => {
 
       await user.press(screen.getByText('Next Question'));
       expect(onCorrect).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows final wrong answer and continues after two wrong attempts', async () => {
+      const user = userEvent.setup();
+      const { onWrong } = renderActivity(fixtureActivities.listening);
+
+      await user.press(screen.getByText('Ça va?'));
+      await user.press(screen.getByText('Check'));
+      await user.press(screen.getByText('Try Again'));
+
+      await user.press(screen.getByText('Ça va?'));
+      await user.press(screen.getByText('Check'));
+      expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
+      expect(screen.getByText('Answer: Bonjour')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Continue'));
+      expect(onWrong).toHaveBeenCalledWith('Ça va?');
     });
   });
 
