@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
 import { recordStudyAndXp } from '../utils/storage';
+import { correctAnswer } from '../learning/sessionRules';
 
 export default function MistakeReviewScreen({ route, navigation }) {
   const { language, lessonTitle, mistakes, lessonXp } = route.params;
@@ -23,14 +24,17 @@ export default function MistakeReviewScreen({ route, navigation }) {
   const current = queue[index];
 
   async function handleCorrect() {
+    const outcome = correctAnswer('mistake-review');
+    // Mistake Review does not update card or word progress per ticket 11
+
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
-      const updatedProfile = await recordStudyAndXp(10);
+      const updatedProfile = await recordStudyAndXp((lessonXp || 0) + outcome.xp);
 
       navigation.replace('LessonComplete', {
         lessonTitle,
-        xpEarned: (lessonXp || 0) + 10,
+        xpEarned: (lessonXp || 0) + outcome.xp,
         mistakesCount: queue.length,
         streak: updatedProfile.streak,
         scoreEarned: null,

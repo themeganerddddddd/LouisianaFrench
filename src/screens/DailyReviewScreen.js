@@ -5,15 +5,14 @@ import ProgressHeader from '../components/ProgressHeader';
 import { getAllActivities } from '../data/lessonLoader';
 import {
   getDueReviewItems,
-  getWeakItems,
-  updateCardReview
+  getWeakItems
 } from '../utils/spacedRepetition';
 import {
   getTodayKey,
   markDailyReviewDone,
-  recordStudyAndXp,
-  updateWordProgress
+  recordStudyAndXp
 } from '../utils/storage';
+import { applyOutcome, correctAnswer, wrongAnswer } from '../learning/sessionRules';
 
 function dedupeByCardId(items) {
   const seen = new Set();
@@ -57,12 +56,10 @@ export default function DailyReviewScreen({ route, navigation }) {
   const current = queue[index];
 
   async function handleCorrect() {
-    await updateCardReview(current.cardId, 5);
-    if (current.rowId) {
-      await updateWordProgress(language, current.rowId, true);
-    }
+    const outcome = correctAnswer('daily-review');
+    await applyOutcome(outcome, language, current.cardId, current.rowId);
 
-    const nextXp = xp + 8;
+    const nextXp = xp + outcome.xp;
     setXp(nextXp);
 
     if (index < queue.length - 1) {
@@ -84,10 +81,8 @@ export default function DailyReviewScreen({ route, navigation }) {
   }
 
   async function handleWrong(userAnswer) {
-    await updateCardReview(current.cardId, 2);
-    if (current.rowId) {
-      await updateWordProgress(language, current.rowId, false);
-    }
+    const outcome = wrongAnswer('daily-review');
+    await applyOutcome(outcome, language, current.cardId, current.rowId);
 
     const nextMistakes = [...mistakes, { ...current, userAnswer }];
     setMistakes(nextMistakes);

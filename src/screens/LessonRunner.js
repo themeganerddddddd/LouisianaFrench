@@ -4,14 +4,13 @@ import ActivityRenderer from '../components/ActivityRenderer';
 import ProgressHeader from '../components/ProgressHeader';
 import { getLessonById } from '../data/lessonLoader';
 import {
-  getDueReviewItems,
-  updateCardReview
+  getDueReviewItems
 } from '../utils/spacedRepetition';
 import {
   markLessonComplete,
-  recordStudyAndXp,
-  updateWordProgress
+  recordStudyAndXp
 } from '../utils/storage';
+import { applyOutcome, correctAnswer, wrongAnswer } from '../learning/sessionRules';
 
 export default function LessonRunner({ route, navigation }) {
   const { language, lessonId } = route.params;
@@ -91,18 +90,14 @@ export default function LessonRunner({ route, navigation }) {
       : activities.filter((a) => a.type !== 'intro_card').length;
 
   async function handleCorrect() {
-    await updateCardReview(current.cardId, current.isReview ? 5 : 4);
-
-    if (current.rowId) {
-      await updateWordProgress(language, current.rowId, true);
-    }
+    const outcome = correctAnswer('lesson', current.isReview);
+    await applyOutcome(outcome, language, current.cardId, current.rowId);
 
     if (lesson.type !== 'review' && current.type !== 'intro_card') {
       setScoreEarned((v) => v + 1);
     }
 
-    const gained = current.isReview ? 6 : 10;
-    const nextXp = lessonXp + gained;
+    const nextXp = lessonXp + outcome.xp;
     setLessonXp(nextXp);
 
     if (index < activities.length - 1) {
@@ -121,11 +116,8 @@ export default function LessonRunner({ route, navigation }) {
   }
 
   async function handleWrong(userAnswer) {
-    await updateCardReview(current.cardId, 2);
-
-    if (current.rowId) {
-      await updateWordProgress(language, current.rowId, false);
-    }
+    const outcome = wrongAnswer('lesson');
+    await applyOutcome(outcome, language, current.cardId, current.rowId);
 
     const nextMistake = { ...current, userAnswer };
     setMistakes((prev) => [...prev, nextMistake]);

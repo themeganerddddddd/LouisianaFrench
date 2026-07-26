@@ -4,7 +4,11 @@
 
 **Blocked by:** 11 - Resolve learning session persistence rules
 
-**Status:** ready-for-agent
+**Status:** completed
+
+**Claimed by:** agent/deepen-learning-session
+
+**Completed:** 2026-07-26
 
 - [ ] The agreed learning session rules are captured through one module interface test surface.
 - [ ] Core Lesson, Daily Review, and Mistake Review no longer reconstruct the same progression policy independently.
