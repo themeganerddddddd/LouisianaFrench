@@ -19,14 +19,6 @@ describe('KD-01: Final Daily Review mistake is also recorded as correct', () => 
   );
 });
 
-describe('KD-02: Lesson completion links to an unregistered route', () => {
-  it('App.js does not register a Leaderboard route', () => {
-    // LessonCompleteScreen (line 36-39) has a visible "Open Leaderboard
-    // (WIP)" button that navigates to 'Leaderboard'. The route is not
-    // registered in App.js. Pressing this button would fail at runtime.
-  });
-});
-
 describe('KD-05: Mistake Review does not update Card or Word progress', () => {
   it.skip(
     'Mistake Review correct answer must update Card review state and Word progress',

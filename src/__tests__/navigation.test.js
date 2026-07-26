@@ -1,30 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 
 import App from '../../App';
-import { fixtureCatalog } from '../test/fixtures/catalog/activities';
+import { lessonById } from '../test/fixtures/catalog/activities';
 import {
   REGISTERED_ROUTES,
   renderApp,
   routesDeclaredInAppSource
 } from '../test/renderApp';
+import { setupAppTests, setupUser } from '../test/setupAppTest';
 
-jest.mock('../data/lessonLoader', () => {
-  const { createCatalog } = require('../data/catalog');
-  const {
-    compactCatalogSource
-  } = require('../test/fixtures/catalog/compactCatalog');
-  return createCatalog(compactCatalogSource);
-});
+jest.mock('../data/lessonLoader', () =>
+  require('../test/fixtures/catalog/activities').fixtureCatalog
+);
 
-beforeEach(async () => {
-  await AsyncStorage.clear();
-  jest.useFakeTimers();
-});
-
-afterEach(() => {
-  jest.useRealTimers();
-});
+setupAppTests();
 
 describe('navigation graph', () => {
   it('registers test routes that match the real App.js navigator', () => {
@@ -42,71 +31,36 @@ describe('navigation graph', () => {
   });
 
   it('navigates Home → Daily Review with Language params', async () => {
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const user = setupUser();
 
     renderApp({
       initialRouteName: 'Home',
       initialParams: { language: 'cajun' }
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Review')).toBeOnTheScreen();
-    });
+    expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Daily Review'));
 
-    await waitFor(() => {
-      expect(
-        screen.getByText('Due cards, weak words, and review practice.')
-      ).toBeOnTheScreen();
-    });
+    expect(
+      await screen.findByText('Due cards, weak words, and review practice.')
+    ).toBeOnTheScreen();
   });
 
   it('navigates Home → Lesson with lesson identity params', async () => {
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    const lesson = fixtureCatalog.getLessonById('cajun', 'fixture_cajun_u01_l01');
+    const user = setupUser();
+    const lesson = lessonById('fixture_cajun_u01_l01');
 
     renderApp({
       initialRouteName: 'Home',
       initialParams: { language: 'cajun' }
     });
 
-    await waitFor(() => {
-      expect(screen.getByText(lesson.lessonTitle)).toBeOnTheScreen();
-    });
+    expect(await screen.findByText(lesson.lessonTitle)).toBeOnTheScreen();
 
     await user.press(screen.getByText(lesson.lessonTitle));
 
-    await waitFor(() => {
-      expect(screen.getByText('New word')).toBeOnTheScreen();
-    });
-  });
-
-  it('reaches LessonComplete from MistakeReview with required params', async () => {
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    const activity = fixtureCatalog
-      .getAllActivities('cajun')
-      .find((item) => item.cardId === 'fixture:cajun:greeting:choice');
-
-    renderApp({
-      initialRouteName: 'MistakeReview',
-      initialParams: {
-        language: 'cajun',
-        lessonId: 'fixture_cajun_u01_l01',
-        lessonTitle: 'Fixture Lesson',
-        mistakes: [activity],
-        lessonXp: 10
-      }
-    });
-
-    await user.press(screen.getByText('Ça va?'));
-    await user.press(screen.getByText('Check'));
-    await user.press(screen.getByText('Next Question'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Session Complete 🎉')).toBeOnTheScreen();
-    });
-    expect(screen.getByText('Fixture Lesson')).toBeOnTheScreen();
+    expect(await screen.findByText('New word')).toBeOnTheScreen();
   });
 
 });

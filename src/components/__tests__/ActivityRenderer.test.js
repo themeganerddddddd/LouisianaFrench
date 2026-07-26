@@ -1,6 +1,21 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
+import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import ActivityRenderer from '../ActivityRenderer';
 import { fixtureActivities } from '../../test/fixtures/catalog/activities';
+import {
+  chooseAndCheck,
+  expectFinalWrong,
+  expectFirstWrong,
+  finishCorrect,
+  finishWrong,
+  press,
+  retry
+} from '../../test/activityInteractions';
+
+jest.mock('../../data/audioManifest', () => ({
+  getAudioSource: jest.fn(() => ({ uri: 'fixture-audio' }))
+}));
 
 function renderActivity(activity, handlers = {}) {
   const onCorrect = handlers.onCorrect || jest.fn();
@@ -18,7 +33,19 @@ function renderActivity(activity, handlers = {}) {
   return { onCorrect, onWrong };
 }
 
+async function expectAudioPlayedAfter(callsBeforePress) {
+  await waitFor(() => {
+    expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(callsBeforePress + 1);
+  });
+  const { sound } = await Audio.Sound.createAsync.mock.results.at(-1).value;
+  expect(sound.playAsync).toHaveBeenCalledTimes(1);
+}
+
 describe('ActivityRenderer', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('intro_card', () => {
     it('shows the Word and continues without checking an answer', async () => {
       const user = userEvent.setup();
@@ -30,18 +57,17 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('Hello')).toBeOnTheScreen();
       expect(screen.getByText('Tap the word to hear it again')).toBeOnTheScreen();
 
-      await user.press(screen.getByText('Continue'));
+      await press(user, 'Continue');
       expect(onCorrect).toHaveBeenCalledTimes(1);
     });
 
     it('plays Audio when the Word card is tapped', async () => {
       const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.intro);
+      renderActivity(fixtureActivities.intro);
+      const callsBeforePress = Audio.Sound.createAsync.mock.calls.length;
 
-      await user.press(screen.getByText('Bonjour'));
-
-      await user.press(screen.getByText('Continue'));
-      expect(onCorrect).toHaveBeenCalledTimes(1);
+      await press(user, 'Bonjour');
+      await expectAudioPlayedAfter(callsBeforePress);
     });
   });
 
@@ -58,78 +84,55 @@ describe('ActivityRenderer', () => {
       const user = userEvent.setup();
       const { onCorrect } = renderActivity(fixtureActivities.multipleChoice);
 
-      await user.press(screen.getByText('Ça va?'));
-      await user.press(screen.getByText('Check'));
-
-      expect(screen.getByText('Correct!')).toBeOnTheScreen();
-      await user.press(screen.getByText('Next Question'));
-      expect(onCorrect).toHaveBeenCalledTimes(1);
+      await chooseAndCheck(user, 'Ça va?');
+      await finishCorrect(user, onCorrect);
     });
 
     it('offers a first-wrong retry with a hint, then shows the answer on final wrong', async () => {
       const user = userEvent.setup();
       const { onWrong } = renderActivity(fixtureActivities.multipleChoice);
 
-      await user.press(screen.getByText('Bonjour'));
-      await user.press(screen.getByText('Check'));
-
-      expect(screen.getByText('Not quite')).toBeOnTheScreen();
-      expect(
-        screen.getByText('Hint: think about "How’s it going?"')
-      ).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Try Again'));
-      expect(screen.queryByText('Not quite')).toBeNull();
-
-      await user.press(screen.getByText('Bonjour'));
-      await user.press(screen.getByText('Check'));
-
-      expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
-      expect(screen.getByText('Answer: Ça va?')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Continue'));
-      expect(onWrong).toHaveBeenCalledWith('Bonjour');
+      await chooseAndCheck(user, 'Bonjour');
+      expectFirstWrong('Hint: think about "How’s it going?"');
+      await retry(user);
+      await chooseAndCheck(user, 'Bonjour');
+      expectFinalWrong('Ça va?');
+      await finishWrong(user, onWrong, 'Bonjour');
     });
   });
 
   describe('listening_target_choice', () => {
-    it('covers correct and first-wrong feedback with Audio controls', async () => {
+    it('starts unanswered and replays the target Audio', async () => {
       const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.listening);
+      renderActivity(fixtureActivities.listening);
 
       expect(screen.getByText('Listening')).toBeOnTheScreen();
       expect(screen.getByText('Listen and choose the word')).toBeOnTheScreen();
       expect(screen.getByText('Check')).toBeDisabled();
+      const callsBeforePress = Audio.Sound.createAsync.mock.calls.length;
 
-      await user.press(screen.getByText('Ça va?'));
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Not quite')).toBeOnTheScreen();
-      expect(screen.getByText('Hint: think about "Hello"')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Try Again'));
-      await user.press(screen.getByText('Bonjour'));
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Correct!')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Next Question'));
-      expect(onCorrect).toHaveBeenCalledTimes(1);
+      await user.press(screen.UNSAFE_getByType(Ionicons).parent);
+      await expectAudioPlayedAfter(callsBeforePress);
     });
 
-    it('shows final wrong answer and continues after two wrong attempts', async () => {
+    it('accepts the correct answer and continues', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity(fixtureActivities.listening);
+
+      await chooseAndCheck(user, 'Bonjour');
+      await finishCorrect(user, onCorrect);
+    });
+
+    it('offers a first-wrong hint, then continues after final wrong', async () => {
       const user = userEvent.setup();
       const { onWrong } = renderActivity(fixtureActivities.listening);
 
-      await user.press(screen.getByText('Ça va?'));
-      await user.press(screen.getByText('Check'));
-      await user.press(screen.getByText('Try Again'));
-
-      await user.press(screen.getByText('Ça va?'));
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
-      expect(screen.getByText('Answer: Bonjour')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Continue'));
-      expect(onWrong).toHaveBeenCalledWith('Ça va?');
+      await chooseAndCheck(user, 'Ça va?');
+      expectFirstWrong('Hint: think about "Hello"');
+      await retry(user);
+      await chooseAndCheck(user, 'Ça va?');
+      expectFinalWrong('Bonjour');
+      await finishWrong(user, onWrong, 'Ça va?');
     });
   });
 
@@ -141,10 +144,10 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('Typing')).toBeOnTheScreen();
       expect(screen.getByText('Check')).toBeDisabled();
 
-      await user.press(screen.getByText('Hints'));
+      await press(user, 'Hints');
       expect(screen.getByText('Starts with: Ça …')).toBeOnTheScreen();
 
-      await user.press(screen.getByText('More hints'));
+      await press(user, 'More hints');
       expect(
         screen.getByText('Tap words to help build the answer')
       ).toBeOnTheScreen();
@@ -152,11 +155,8 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('va?')).toBeOnTheScreen();
 
       await user.type(screen.getByPlaceholderText('Type your answer'), 'Ça va?');
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Correct!')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Next Question'));
-      expect(onCorrect).toHaveBeenCalledTimes(1);
+      await press(user, 'Check');
+      await finishCorrect(user, onCorrect);
     });
 
     it('records final wrong after a retry', async () => {
@@ -164,17 +164,12 @@ describe('ActivityRenderer', () => {
       const { onWrong } = renderActivity(fixtureActivities.typing);
 
       await user.type(screen.getByPlaceholderText('Type your answer'), 'Bonjour');
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Not quite')).toBeOnTheScreen();
-      expect(screen.getByText('Starts with: Ça …')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Try Again'));
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
-      expect(screen.getByText('Answer: Ça va?')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Continue'));
-      expect(onWrong).toHaveBeenCalledWith('Bonjour');
+      await press(user, 'Check');
+      expectFirstWrong('Starts with: Ça …');
+      await retry(user);
+      await press(user, 'Check');
+      expectFinalWrong('Ça va?');
+      await finishWrong(user, onWrong, 'Bonjour');
     });
   });
 
@@ -188,31 +183,21 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('Tap words below')).toBeOnTheScreen();
       expect(screen.getByText('Check')).toBeDisabled();
 
-      await user.press(screen.getByText("C'est"));
-      await user.press(screen.getByText('paré'));
-      await user.press(screen.getByText('Check'));
-
-      expect(screen.getByText('Correct!')).toBeOnTheScreen();
-      await user.press(screen.getByText('Next Question'));
-      expect(onCorrect).toHaveBeenCalledTimes(1);
+      await press(user, "C'est");
+      await chooseAndCheck(user, 'paré');
+      await finishCorrect(user, onCorrect);
     });
 
     it('shows answer feedback after a second wrong build', async () => {
       const user = userEvent.setup();
       const { onWrong } = renderActivity(fixtureActivities.sentenceBuild);
 
-      await user.press(screen.getByText('paré'));
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Not quite')).toBeOnTheScreen();
-      expect(screen.getByText("Starts with: C'e…")).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Try Again'));
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
-      expect(screen.getByText("Answer: C'est paré")).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Continue'));
-      expect(onWrong).toHaveBeenCalledWith('paré');
+      await chooseAndCheck(user, 'paré');
+      expectFirstWrong("Starts with: C'e…");
+      await retry(user);
+      await press(user, 'Check');
+      expectFinalWrong("C'est paré");
+      await finishWrong(user, onWrong, 'paré');
     });
   });
 
@@ -225,35 +210,24 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('Match the words')).toBeOnTheScreen();
       expect(screen.getByText('Check')).toBeDisabled();
 
-      await user.press(screen.getByText('Hello'));
-      await user.press(screen.getByText('Bonjour'));
-      await user.press(screen.getByText('Check'));
-
-      await user.press(screen.getByText('How’s it going?'));
-      await user.press(screen.getByText('Ça va?'));
-      await user.press(screen.getByText('Check'));
-
-      expect(screen.getByText('Correct!')).toBeOnTheScreen();
-      await user.press(screen.getByText('Next Question'));
-      expect(onCorrect).toHaveBeenCalledTimes(1);
+      await press(user, 'Hello');
+      await chooseAndCheck(user, 'Bonjour');
+      await press(user, 'How’s it going?');
+      await chooseAndCheck(user, 'Ça va?');
+      await finishCorrect(user, onCorrect);
     });
 
     it('allows retry after a wrong pair, then continues after final wrong', async () => {
       const user = userEvent.setup();
       const { onWrong } = renderActivity(fixtureActivities.matchPairs);
 
-      await user.press(screen.getByText('Hello'));
-      await user.press(screen.getByText('Ça va?'));
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Not quite')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Try Again'));
-      await user.press(screen.getByText('Ça va?'));
-      await user.press(screen.getByText('Check'));
-      expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
-
-      await user.press(screen.getByText('Continue'));
-      expect(onWrong).toHaveBeenCalledWith('Hello ↔ Ça va?');
+      await press(user, 'Hello');
+      await chooseAndCheck(user, 'Ça va?');
+      expectFirstWrong();
+      await retry(user);
+      await chooseAndCheck(user, 'Ça va?');
+      expectFinalWrong();
+      await finishWrong(user, onWrong, 'Hello ↔ Ça va?');
     });
   });
 
