@@ -287,6 +287,43 @@ describe('DailyReviewScreen', () => {
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText('Daily Review')).toBeOnTheScreen();
   });
+
+  it('completes after a final wrong answer without double-scoring (KD-01)', async () => {
+    jest.setSystemTime(clock.pastDue());
+
+    await seedAsyncStorage({
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          nextReviewAt: clock.reviewStart().toISOString()
+        })
+      }
+    });
+
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'DailyReview',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('1 / 1')).toBeOnTheScreen();
+
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    expect(screen.getByText('Not quite')).toBeOnTheScreen();
+
+    await user.press(screen.getByText('Try Again'));
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
+
+    await user.press(screen.getByText('Continue'));
+
+    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
+    expect(screen.getByText('Daily Review')).toBeOnTheScreen();
+    expect(screen.getByText('⚡ 0')).toBeOnTheScreen();
+    expect(screen.getByText('📝 1')).toBeOnTheScreen();
+  });
 });
 
 describe('DictionaryScreen', () => {

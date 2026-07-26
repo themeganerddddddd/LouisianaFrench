@@ -7,17 +7,9 @@
 //
 // See `.scratch/architecture-modernization/known-defects.md`.
 
-describe('KD-01: Final Daily Review mistake is also recorded as correct', () => {
-  it.skip(
-    'final Daily Review wrong must not call handleCorrect or double-score',
-    () => {
-      // DailyReviewScreen.handleWrong (line 97) calls handleCorrect()
-      // on the last queue item even after recording quality 2 and
-      // incorrect Word progress. This can grant quality 5, correct
-      // progress, and XP after a final wrong answer.
-    }
-  );
-});
+// KD-01 resolved: see regression test in src/screens/__tests__/screens.test.js
+// Final Daily Review wrong no longer calls handleCorrect — quality 2 and
+// incorrect word progress are preserved through completion.
 
 describe('KD-05: Mistake Review does not update Card or Word progress', () => {
   it.skip(
