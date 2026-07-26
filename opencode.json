@@ -2,20 +2,10 @@
   "$schema": "https://opencode.ai/config.json",
   "instructions": ["AGENTS.md"],
   "model": "opencode-go/grok-4.5",
+  "lsp": true,
   "default_agent": "general",
   "agent": {
-    "general": {
-      "model": "opencode-go/grok-4.5",
-      "mode": "primary"
-    },
-    "explore": {
-      "model": "deepseek/deepseek-v4-flash"
-    },
-    "coding-specialist": {
-      "model": "deepseek/deepseek-v4-flash"
-    },
     "review": {
-      "model": "moonshot/kimi-k3",
       "permission": {
         "bash": {
           "*": "ask",

@@ -7,3 +7,39 @@
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+
+jest.mock('expo-av', () => {
+  const unloadAsync = jest.fn(async () => {});
+  const playAsync = jest.fn(async () => {});
+
+  return {
+    Audio: {
+      setAudioModeAsync: jest.fn(async () => {}),
+      Sound: {
+        createAsync: jest.fn(async () => ({
+          sound: { playAsync, unloadAsync }
+        }))
+      }
+    }
+  };
+});
+
+jest.mock('react-native-gesture-handler', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  return {
+    GestureHandlerRootView: ({ children, ...props }) =>
+      React.createElement(View, props, children),
+    Swipeable: View,
+    DrawerLayout: View,
+    State: {},
+    PanGestureHandler: View,
+    BaseButton: View,
+    RectButton: View,
+    BorderlessButton: View,
+    FlatList: View,
+    gestureHandlerRootHOC: (component) => component,
+    Directions: {}
+  };
+});
