@@ -1,6 +1,8 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { render } from '@testing-library/react-native';
+import fs from 'fs';
+import path from 'path';
 
 import AdvancedScreen from '../screens/AdvancedScreen';
 import DailyReviewScreen from '../screens/DailyReviewScreen';
@@ -27,6 +29,20 @@ const SCREENS = Object.freeze({
 });
 
 export const REGISTERED_ROUTES = Object.freeze(Object.keys(SCREENS));
+
+export function routesDeclaredInAppSource() {
+  const appPath = path.resolve(__dirname, '../../App.js');
+  const source = fs.readFileSync(appPath, 'utf8');
+  const pattern = /name="([^"]+)"/g;
+  const names = [];
+  let match;
+
+  while ((match = pattern.exec(source)) !== null) {
+    names.push(match[1]);
+  }
+
+  return names;
+}
 
 function AppStack({ initialRouteName = 'Loading', initialParams }) {
   return (
