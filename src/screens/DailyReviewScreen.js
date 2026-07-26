@@ -89,12 +89,23 @@ export default function DailyReviewScreen({ route, navigation }) {
       await updateWordProgress(language, current.rowId, false);
     }
 
-    setMistakes((prev) => [...prev, { ...current, userAnswer }]);
+    const nextMistakes = [...mistakes, { ...current, userAnswer }];
+    setMistakes(nextMistakes);
 
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
-      await handleCorrect();
+      await markDailyReviewDone(getTodayKey());
+      const profile = await recordStudyAndXp(xp);
+
+      navigation.replace('LessonComplete', {
+        lessonTitle: 'Daily Review',
+        xpEarned: xp,
+        mistakesCount: nextMistakes.length,
+        streak: profile.streak,
+        scoreEarned: null,
+        scorePossible: null
+      });
     }
   }
 
