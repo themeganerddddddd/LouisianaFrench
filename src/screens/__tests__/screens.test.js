@@ -183,6 +183,15 @@ describe('LessonRunner', () => {
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText(/Everyday phrases/)).toBeOnTheScreen();
   });
+
+  it('redirects to Home when the lesson is not found (KD-06)', async () => {
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: { language: 'cajun', lessonId: 'nonexistent' }
+    });
+
+    expect(await screen.findByText('Cajun French')).toBeOnTheScreen();
+  });
 });
 
 describe('MistakeReviewScreen', () => {
