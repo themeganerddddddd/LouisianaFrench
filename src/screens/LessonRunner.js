@@ -27,6 +27,11 @@ export default function LessonRunner({ route, navigation }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!lesson) {
+      navigation.replace('Home', { language });
+      return;
+    }
+
     async function init() {
       const due = await getDueReviewItems(lesson.activities || []);
       const dueIds = new Set(due.map((d) => d.cardId));
@@ -40,7 +45,7 @@ export default function LessonRunner({ route, navigation }) {
     }
 
     init();
-  }, [lesson.activities]);
+  }, [lesson, language, navigation]);
 
   // fadeAnim and slideAnim are useRef().current values — stable across renders
   useEffect(() => {

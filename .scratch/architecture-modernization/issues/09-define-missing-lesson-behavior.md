@@ -4,7 +4,11 @@
 
 **Blocked by:** 04 - Add required tests and lint CI
 
-**Status:** ready-for-human
+**Status:** completed
+
+**Claimed by:** agent/fix-missing-lesson-crash
+
+**Completed:** 2026-07-26
 
 - [ ] The expected unavailable-Lesson behavior is specified through the Lesson screen interface.
 - [ ] A regression test goes red on the current failure path.

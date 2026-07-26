@@ -25,14 +25,5 @@ describe('KD-05: Mistake Review does not update Card or Word progress', () => {
   );
 });
 
-describe('KD-06: Missing Lesson data can fail before the loading guard', () => {
-  it.skip(
-    'unknown lessonId should produce an intentional empty/error UI instead of throwing',
-    () => {
-      // LessonRunner.init (lines 67-79 in the current source) reads
-      // lesson.activities before the render guard checks !lesson at
-      // line 79. An unknown lessonId causes getLessonById to return
-      // undefined, making lesson.activities throw.
-    }
-  );
-});
+// KD-06 resolved: see regression test in src/screens/__tests__/screens.test.js
+// Unknown lessonId now redirects to Home instead of crashing on lesson.activities
