@@ -178,6 +178,8 @@ export default function HomeScreen() {
             dailyDone && { backgroundColor: theme.dailyDoneBg }
           ]}
           onPress={() => navigation.navigate('DailyReview', { language })}
+          accessibilityRole="button"
+          accessibilityLabel="Daily Review"
         >
           <View style={{ flex: 1 }}>
             <Text style={styles.dailyTitle}>Daily Review</Text>
@@ -200,6 +202,8 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.dictionaryBtn}
           onPress={() => navigation.navigate('Dictionary', { language })}
+          accessibilityRole="button"
+          accessibilityLabel="Open Dictionary"
         >
           <Text style={styles.dictionaryBtnText}>Open Dictionary</Text>
         </TouchableOpacity>
@@ -207,6 +211,8 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.advancedBtn}
           onPress={() => navigation.navigate('Advanced', { language })}
+          accessibilityRole="button"
+          accessibilityLabel="Advanced Review Hub"
         >
           <Text style={styles.advancedBtnText}>Advanced / Review Hub</Text>
         </TouchableOpacity>
@@ -267,6 +273,8 @@ export default function HomeScreen() {
                     key={lesson.id}
                     style={styles.lessonRow}
                     onPress={() => navigation.navigate('Lesson', { lessonId: lesson.id, language })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${lesson.lessonTitle || lesson.title || 'Lesson'}`}
                   >
                     <View style={{ flex: 1 }}>
                       <Text style={styles.lessonTitle}>

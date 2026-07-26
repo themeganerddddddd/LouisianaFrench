@@ -1,4 +1,5 @@
-import { getReviewState, saveReviewState } from "./storage";
+import { getNow } from './clock';
+import { getReviewState, saveReviewState } from './storage';
 
 function defaultCardState() {
   return {
@@ -30,7 +31,7 @@ export async function updateCardReview(cardId, quality) {
     card.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
   );
 
-  const next = new Date();
+  const next = getNow();
   next.setDate(next.getDate() + card.interval);
   card.nextReviewAt = next.toISOString();
 
@@ -41,7 +42,7 @@ export async function updateCardReview(cardId, quality) {
 
 export async function getDueReviewItems(items) {
   const reviewState = await getReviewState();
-  const now = new Date();
+  const now = getNow();
 
   return items.filter((item) => {
     const card = reviewState[item.cardId];

@@ -4,7 +4,11 @@
 
 **Blocked by:** 02 - Characterize Catalog and Learner Progress; 03 - Characterize Activities, screens, and navigation
 
-**Status:** ready-for-agent
+**Status:** completed
+
+**Claimed by:** PR #4
+
+**Completed:** 2026-07-24
 
 - [ ] CI installs with `npm ci` and caches npm dependencies by lockfile.
 - [ ] CI runs deterministic test and lint commands without watch mode.
