@@ -5,30 +5,11 @@ production change budget of zero lines. The following production changes were
 identified while building that safety net, but they are intentionally deferred
 so characterization remains separate from behavior and interface changes.
 
-## Hook And Lint Cleanup
+## ~~Hook And Lint Cleanup~~ Completed
 
-The active application currently reports React hook dependency warnings in
-`ActivityRenderer.js`, `DailyReviewScreen.js`, `DictionaryScreen.js`,
-`HomeScreen.js`, and `LessonRunner.js`, plus unused bindings in Dictionary and
-Mistake Review.
-
-This work needs to be done because missing dependencies can hide stale values
-or prevent an effect from responding when its inputs change. The unused
-bindings also obscure which route parameters and errors are part of the active
-implementation.
-
-It does not belong in Ticket 03 because moving loaders into effects, stabilizing
-Audio callbacks, or changing dependency arrays can alter when initialization,
-cleanup, and playback run. A dedicated production ticket must add focused
-regression coverage for each changed module before clearing these warnings.
-
-Suggested follow-up:
-
-- Characterize effect initialization and cleanup at each module interface.
-- Change one module at a time rather than combining all lint warnings.
-- Verify Language changes, Lesson identity changes, Audio cleanup, and screen
-  unmount behavior explicitly.
-- Run the full test and lint checks before removing each warning from this note.
+Completed in PR #8. React hook deps, animation ref deps, and unused bindings
+were fixed one module at a time with existing characterization tests as the
+regression safety net.
 
 ## Real Navigator Seam
 

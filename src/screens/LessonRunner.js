@@ -27,9 +27,22 @@ export default function LessonRunner({ route, navigation }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    init();
-  }, []);
+    async function init() {
+      const due = await getDueReviewItems(lesson.activities || []);
+      const dueIds = new Set(due.map((d) => d.cardId));
 
+      const merged = (lesson.activities || []).map((a) => ({
+        ...a,
+        isReview: dueIds.has(a.cardId)
+      }));
+
+      setActivities(merged);
+    }
+
+    init();
+  }, [lesson.activities]);
+
+  // fadeAnim and slideAnim are useRef().current values — stable across renders
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -43,7 +56,7 @@ export default function LessonRunner({ route, navigation }) {
         useNativeDriver: true
       })
     ]).start();
-  }, [index]);
+  }, [index, fadeAnim, slideAnim]);
 
   function animateToNext(cb) {
     Animated.parallel([
@@ -62,18 +75,6 @@ export default function LessonRunner({ route, navigation }) {
       slideAnim.setValue(12);
       fadeAnim.setValue(0);
     });
-  }
-
-  async function init() {
-    const due = await getDueReviewItems(lesson.activities || []);
-    const dueIds = new Set(due.map((d) => d.cardId));
-
-    const merged = (lesson.activities || []).map((a) => ({
-      ...a,
-      isReview: dueIds.has(a.cardId)
-    }));
-
-    setActivities(merged);
   }
 
   if (!lesson || activities.length === 0) return null;

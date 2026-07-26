@@ -38,6 +38,11 @@ export default function DictionaryScreen({ route }) {
   const soundRef = useRef(null);
 
   useEffect(() => {
+    async function load() {
+      setAllWords(getAllWords(language));
+      setWordProgress(await getWordProgress());
+    }
+
     load();
 
     return () => {
@@ -45,18 +50,13 @@ export default function DictionaryScreen({ route }) {
     };
   }, [language]);
 
-  async function load() {
-    setAllWords(getAllWords(language));
-    setWordProgress(await getWordProgress());
-  }
-
   async function unloadSound() {
     try {
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   async function playAudio(audioKey) {
@@ -72,7 +72,7 @@ export default function DictionaryScreen({ route }) {
       const { sound } = await Audio.Sound.createAsync(source);
       soundRef.current = sound;
       await sound.playAsync();
-    } catch (e) {
+    } catch (_e) {
       Alert.alert('Audio error', 'Could not play this audio file.');
     }
   }
