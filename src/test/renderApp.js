@@ -31,7 +31,7 @@ const SCREENS = Object.freeze({
 export const REGISTERED_ROUTES = Object.freeze(Object.keys(SCREENS));
 
 export function routesDeclaredInAppSource() {
-  const appPath = path.resolve(__dirname, '../../App.js');
+  const appPath = path.resolve(process.cwd(), 'App.js');
   const source = fs.readFileSync(appPath, 'utf8');
   const pattern = /name="([^"]+)"/g;
   const names = [];
