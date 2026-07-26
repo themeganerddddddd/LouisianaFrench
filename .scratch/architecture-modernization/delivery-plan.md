@@ -15,7 +15,6 @@ PR 3B.1 + PR 3B.3
   -> PR 3C Activity + screen + navigation characterization
       -> PR 4 Required CI
           -> PR 5A Testability
-              -> PR 5B Maestro foundation
           -> PR 6 Defect fixes
               -> PR 7 Active-path cleanup
                   -> TypeScript decision gate -> PR 8 Deepen Catalog
@@ -23,6 +22,8 @@ PR 3B.1 + PR 3B.3
 PR 8 Deepen Catalog + Catalog authoring decision + compact Catalog fixtures
   -> PR 9 SQLite adapter and parity
       -> PR 10 SQLite cutover and legacy removal
+
+Native Maestro E2E (PR 5B, ticket 19) is deferred: see deferred-maestro.md.
 ```
 
 Learning-session rule decisions after defect fixes also open a parallel deepening track:
@@ -34,11 +35,8 @@ PR 6 Defect fixes
           -> deepen learning session
               -> deepen Learner Progress
 
-PR 5B Maestro foundation + PR 7 Active-path cleanup
+Active-path cleanup
   -> deepen Activity and Audio behavior
-
-Stable Maestro evidence + resolved critical defects
-  -> promote eligible native merge gates
 ```
 
 The learning session, Learner Progress, activity rendering, and Audio deepening efforts are separate tickets and may proceed when their blocking edges clear. They do not need to wait for SQLite unless they touch the same module interface concurrently.
@@ -276,31 +274,9 @@ The learning session, Learner Progress, activity rendering, and Audio deepening 
 2. `test: make clock behavior deterministic`
 3. `test: make randomized activities reproducible`
 
-## PR 5B: Establish Native Maestro Journeys
+## PR 5B: Establish Native Maestro Journeys — **DEFERRED**
 
-**Goal:** Exercise the installed application on iOS and Android without immediately making native infrastructure a merge blocker.
-
-**Dependencies:** PR 5A
-
-**Risk:** Medium; native builds and timing can be flaky
-
-**Complexity:** L, split by platform if needed
-
-**Expected production lines:** Under 150, limited to deterministic native fixture support with tests
-
-**Likely files:** Maestro flow files, EAS or local test-build configuration, deterministic fixture support, and a non-blocking workflow.
-
-**Tests:** First launch, both Languages, core Lesson completion, mistake path, Daily Review, Dictionary, restart persistence, and active routes.
-
-**Acceptance:** Critical flows pass locally on both native platforms; scheduled/manual CI retains screenshots and logs; no untrusted fork requires secrets; promotion criteria are documented.
-
-**Rollback:** Disable the non-blocking workflow while retaining module and rendered gates.
-
-**Commits:**
-
-1. `test: add deterministic native test state`
-2. `test: add core Maestro journeys`
-3. `ci: run native journeys outside required checks`
+**Decision:** See `deferred-maestro.md`. Skipped because the app has no users yet and Jest + required CI (lint/test/build) provide sufficient merge safety. Will revisit at SQLite cutover (ticket 15) or when learner impact justifies it.
 
 ## PR 6: Fix Known Defects Under Regression Tests
 

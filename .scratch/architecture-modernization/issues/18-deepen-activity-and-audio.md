@@ -2,7 +2,7 @@
 
 **What to build:** Every Activity type shares consistent answer, retry, feedback, and Audio behavior while learning and Dictionary flows use one Audio implementation for bundled assets and native playback lifecycle.
 
-**Blocked by:** 06 - Establish iOS and Android Maestro journeys; 10 - Remove inactive application paths
+**Blocked by:** 10 - Remove inactive application paths
 
 **Status:** ready-for-agent
 

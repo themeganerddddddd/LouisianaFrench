@@ -2,14 +2,13 @@
 
 **What to build:** Learners use bundled SQLite as the sole canonical Catalog, with obsolete CSV, generated JSON, and migration-only implementation removed after native parity is proven.
 
-**Blocked by:** 06 - Establish iOS and Android Maestro journeys; 14 - Build the bundled SQLite Catalog
+**Blocked by:** 14 - Build the bundled SQLite Catalog
 
 **Status:** ready-for-agent
 
 - [ ] Runtime selects the SQLite Catalog implementation.
 - [ ] Required CI validates the bundled database before merge.
-- [ ] Critical Maestro journeys pass on iOS and Android across restart.
-- [ ] Catalog cutover preserves Learner Progress.
+- [ ] Module and rendered tests pass with the SQLite adapter.
 - [ ] CSV source, generated JSON, obsolete generation scripts, and the JSON adapter are removed.
 - [ ] Catalog maintenance and schema evolution are documented.
 - [ ] KD-07 is marked resolved by removal or replacement of the inconsistent generation flow.
