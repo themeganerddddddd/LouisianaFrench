@@ -41,3 +41,6 @@ app-example
 # generated native folders
 /ios
 /android
+
+# LLM teaching workspace
+.llm-lessons/
