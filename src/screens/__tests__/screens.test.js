@@ -9,6 +9,12 @@ import {
 } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { renderApp } from '../../test/renderApp';
+import {
+  getDefaultLanguage,
+  hasSelectedLanguage,
+  markLanguageSelected,
+  setDefaultLanguage
+} from '../../utils/storage';
 
 jest.mock('../../data/lessonLoader', () => {
   const { createCatalog } = require('../../data/catalog');
@@ -44,8 +50,8 @@ describe('LoadingScreen', () => {
   });
 
   it('routes a returning learner to Home with the saved Language', async () => {
-    await AsyncStorage.setItem('lf_has_selected_language', 'true');
-    await AsyncStorage.setItem('lf_default_language', 'kreole');
+    await setDefaultLanguage('kreole');
+    await markLanguageSelected();
 
     renderApp({ initialRouteName: 'Loading' });
 
@@ -73,8 +79,8 @@ describe('LanguageSelectScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('Cajun French')).toBeOnTheScreen();
     });
-    expect(await AsyncStorage.getItem('lf_default_language')).toBe('cajun');
-    expect(await AsyncStorage.getItem('lf_has_selected_language')).toBe('true');
+    expect(await getDefaultLanguage()).toBe('cajun');
+    expect(await hasSelectedLanguage()).toBe(true);
   });
 });
 
