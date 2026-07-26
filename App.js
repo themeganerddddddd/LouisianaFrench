@@ -16,20 +16,6 @@ import MistakeReviewScreen from './src/screens/MistakeReviewScreen';
 
 const Stack = createStackNavigator();
 
-export const ROUTES = Object.freeze({
-  Loading: LoadingScreen,
-  LanguageSelect: LanguageSelectScreen,
-  Home: HomeScreen,
-  Lesson: LessonRunner,
-  MistakeReview: MistakeReviewScreen,
-  LessonComplete: LessonCompleteScreen,
-  DailyReview: DailyReviewScreen,
-  Advanced: AdvancedScreen,
-  Dictionary: DictionaryScreen
-});
-
-export const REGISTERED_ROUTES = Object.freeze(Object.keys(ROUTES));
-
 export default function App() {
   useEffect(() => {
     async function configureAudio() {
@@ -57,9 +43,15 @@ export default function App() {
         initialRouteName="Loading"
         screenOptions={{ headerShown: false }}
       >
-        {REGISTERED_ROUTES.map((name) => (
-          <Stack.Screen key={name} name={name} component={ROUTES[name]} />
-        ))}
+        <Stack.Screen name="Loading" component={LoadingScreen} />
+        <Stack.Screen name="LanguageSelect" component={LanguageSelectScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Lesson" component={LessonRunner} />
+        <Stack.Screen name="MistakeReview" component={MistakeReviewScreen} />
+        <Stack.Screen name="LessonComplete" component={LessonCompleteScreen} />
+        <Stack.Screen name="DailyReview" component={DailyReviewScreen} />
+        <Stack.Screen name="Advanced" component={AdvancedScreen} />
+        <Stack.Screen name="Dictionary" component={DictionaryScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

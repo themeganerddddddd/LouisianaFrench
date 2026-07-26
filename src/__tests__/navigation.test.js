@@ -1,9 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
-import App, { REGISTERED_ROUTES } from '../../App';
+import App from '../../App';
 import { fixtureCatalog } from '../test/fixtures/catalog/activities';
-import { renderApp } from '../test/renderApp';
+import {
+  REGISTERED_ROUTES,
+  renderApp,
+  routesDeclaredInAppSource
+} from '../test/renderApp';
 
 jest.mock('../data/lessonLoader', () => {
   const { createCatalog } = require('../data/catalog');
@@ -23,28 +27,18 @@ afterEach(() => {
 });
 
 describe('navigation graph', () => {
+  it('registers test routes that match the real App.js navigator', () => {
+    expect(REGISTERED_ROUTES).toEqual(routesDeclaredInAppSource());
+  });
+
   it('starts the real App on Loading', () => {
     render(<App />);
     expect(screen.getByText('Learn')).toBeOnTheScreen();
     expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
   });
 
-  it('registers every active application route', () => {
-    expect(REGISTERED_ROUTES).toEqual([
-      'Loading',
-      'LanguageSelect',
-      'Home',
-      'Lesson',
-      'MistakeReview',
-      'LessonComplete',
-      'DailyReview',
-      'Advanced',
-      'Dictionary'
-    ]);
-  });
-
   it('marks Leaderboard as a known unregistered outgoing contract (KD-02)', () => {
-    expect(REGISTERED_ROUTES).not.toContain('Leaderboard');
+    expect(routesDeclaredInAppSource()).not.toContain('Leaderboard');
   });
 
   it('navigates Home → Daily Review with Language params', async () => {
@@ -114,4 +108,5 @@ describe('navigation graph', () => {
     });
     expect(screen.getByText('Fixture Lesson')).toBeOnTheScreen();
   });
+
 });
