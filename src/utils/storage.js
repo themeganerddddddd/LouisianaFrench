@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getNow } from './clock';
 
 const KEYS = {
   PROFILE: 'lf_profile',
@@ -58,7 +59,7 @@ export async function markLessonComplete(language, lessonId) {
   const progress = await getLessonProgress();
   progress[`${language}:${lessonId}`] = {
     completed: true,
-    completedAt: new Date().toISOString()
+    completedAt: getNow().toISOString()
   };
   await saveLessonProgress(progress);
 }
@@ -117,7 +118,7 @@ export async function markDailyReviewDone(dateKey) {
 }
 
 export function getTodayKey() {
-  const d = new Date();
+  const d = getNow();
   return [
     d.getFullYear(),
     String(d.getMonth() + 1).padStart(2, '0'),
@@ -143,7 +144,7 @@ export async function upsertLeaderboard(name, xp) {
 
 export async function recordStudyAndXp(xpEarned) {
   const profile = await getProfile();
-  const now = new Date();
+  const now = getNow();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   let streak = profile.streak || 0;
@@ -163,7 +164,7 @@ export async function recordStudyAndXp(xpEarned) {
     ...profile,
     xp: (profile.xp || 0) + xpEarned,
     streak,
-    lastStudyDate: new Date().toISOString()
+    lastStudyDate: getNow().toISOString()
   };
 
   await saveProfile(updated);

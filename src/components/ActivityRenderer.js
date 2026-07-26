@@ -16,8 +16,8 @@ const CORRECT_TONE_URI =
 const WRONG_TONE_URI =
   'data:audio/wav;base64,UklGRtAUAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YawUAAAAAJoBMwPJBFoG5AdnCeAKTgywDQQPSRB9EaASsROtFJUVZxYiF8YXUhjGGCEZYhmLGZkZjRloGSoZ0hhhGNcXNhd9Fq4VyBTOE8ASnxFtECoP1w13DAoLkgkRCIcG9wRhA8kBLgCV/vv8';
 
-function shuffle(arr) {
-  return [...arr].sort(() => Math.random() - 0.5);
+function shuffle(arr, randomFn = Math.random) {
+  return [...arr].sort(() => randomFn() - 0.5);
 }
 
 function normalizeText(str) {
@@ -149,7 +149,12 @@ function FeedbackFooter({
     return (
       <View style={[styles.footer, styles.footerGreen]}>
         <Text style={styles.footerTitle}>Correct!</Text>
-        <TouchableOpacity style={styles.footerButtonGreen} onPress={onNext}>
+        <TouchableOpacity
+          style={styles.footerButtonGreen}
+          onPress={onNext}
+          accessibilityRole="button"
+          accessibilityLabel="Next question"
+        >
           <Text style={styles.footerButtonText}>Next Question</Text>
         </TouchableOpacity>
       </View>
@@ -162,7 +167,12 @@ function FeedbackFooter({
         <Text style={styles.footerTitle}>Not quite</Text>
         {hintText ? <Text style={styles.footerSub}>{hintText}</Text> : null}
 
-        <TouchableOpacity style={styles.footerButtonRed} onPress={onTryAgain}>
+        <TouchableOpacity
+          style={styles.footerButtonRed}
+          onPress={onTryAgain}
+          accessibilityRole="button"
+          accessibilityLabel="Try again"
+        >
           <Text style={styles.footerButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
@@ -182,7 +192,12 @@ function FeedbackFooter({
           <Text style={styles.footerSub}>{hintText}</Text>
         ) : null}
 
-        <TouchableOpacity style={styles.footerButtonRed} onPress={onIncorrect}>
+        <TouchableOpacity
+          style={styles.footerButtonRed}
+          onPress={onIncorrect}
+          accessibilityRole="button"
+          accessibilityLabel="Continue"
+        >
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -237,13 +252,20 @@ function IntroCard({ activity, language, onCorrect, theme }) {
       <TouchableOpacity
         style={[styles.introWordCard, { backgroundColor: theme.light }]}
         onPress={() => playAudioKey(activity.audioKey)}
+        accessibilityRole="button"
+        accessibilityLabel={`Play audio: ${activity.target}`}
       >
         <Text style={styles.introWord}>{activity.target}</Text>
         <Text style={styles.introTranslation}>{activity.english}</Text>
         <Text style={[styles.tapToHear, { color: theme.text }]}>Tap the word to hear it again</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: theme.accent }]} onPress={onCorrect}>
+      <TouchableOpacity
+        style={[styles.primaryBtn, { backgroundColor: theme.accent }]}
+        onPress={onCorrect}
+        accessibilityRole="button"
+        accessibilityLabel="Continue"
+      >
         <Text style={styles.primaryBtnText}>Continue</Text>
       </TouchableOpacity>
     </View>
@@ -295,6 +317,8 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme }) {
             setSelected(opt);
             playOption(opt);
           }}
+          accessibilityRole="button"
+          accessibilityLabel={opt}
         >
           <Text style={styles.optionText}>{opt}</Text>
         </TouchableOpacity>
@@ -305,6 +329,8 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme }) {
           style={[styles.primaryBtn, { backgroundColor: theme.accent }, !selected && styles.primaryBtnDisabled]}
           disabled={!selected}
           onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -364,7 +390,12 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme }
     <View style={[styles.card, state === 'correct' ? styles.cardCorrect : state === 'wrong' ? styles.cardWrong : null]}>
       <View style={styles.promptRow}>
         <Text style={[styles.kicker, { color: theme.text }]}>Listening</Text>
-        <TouchableOpacity style={[styles.speakerBtn, { backgroundColor: theme.light }]} onPress={() => playAudioKey(activity.audioKey)}>
+        <TouchableOpacity
+          style={[styles.speakerBtn, { backgroundColor: theme.light }]}
+          onPress={() => playAudioKey(activity.audioKey)}
+          accessibilityRole="button"
+          accessibilityLabel="Play audio"
+        >
           <Ionicons name="volume-high" size={20} color={theme.accent} />
         </TouchableOpacity>
       </View>
@@ -382,6 +413,8 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme }
             setSelected(opt);
             playOption(opt);
           }}
+          accessibilityRole="button"
+          accessibilityLabel={opt}
         >
           <Text style={styles.optionText}>{opt}</Text>
         </TouchableOpacity>
@@ -392,6 +425,8 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme }
           style={[styles.primaryBtn, { backgroundColor: theme.accent }, !selected && styles.primaryBtnDisabled]}
           disabled={!selected}
           onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -463,7 +498,12 @@ function Typing({ activity, language, onCorrect, onWrong, theme }) {
       />
 
       {hintLevel === 0 ? (
-        <TouchableOpacity style={[styles.secondarySmallBtn, { backgroundColor: theme.light }]} onPress={() => setHintLevel(1)}>
+        <TouchableOpacity
+          style={[styles.secondarySmallBtn, { backgroundColor: theme.light }]}
+          onPress={() => setHintLevel(1)}
+          accessibilityRole="button"
+          accessibilityLabel="Show hints"
+        >
           <Text style={[styles.secondarySmallBtnText, { color: theme.text }]}>Hints</Text>
         </TouchableOpacity>
       ) : null}
@@ -484,7 +524,13 @@ function Typing({ activity, language, onCorrect, onWrong, theme }) {
           <Text style={styles.wordBankLabel}>Tap words to help build the answer</Text>
           <View style={styles.wordWrap}>
             {wordBank.map((word, idx) => (
-              <TouchableOpacity key={`${word}-${idx}`} style={[styles.wordChip, { backgroundColor: theme.light }]} onPress={() => addWord(word)}>
+              <TouchableOpacity
+                key={`${word}-${idx}`}
+                style={[styles.wordChip, { backgroundColor: theme.light }]}
+                onPress={() => addWord(word)}
+                accessibilityRole="button"
+                accessibilityLabel={`Add word: ${word}`}
+              >
                 <Text style={styles.wordChipText}>{word}</Text>
               </TouchableOpacity>
             ))}
@@ -497,6 +543,8 @@ function Typing({ activity, language, onCorrect, onWrong, theme }) {
           style={[styles.primaryBtn, { backgroundColor: theme.accent }, !value.trim() && styles.primaryBtnDisabled]}
           disabled={!value.trim()}
           onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -562,7 +610,13 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme }) {
         {selected.length === 0 ? <Text style={styles.placeholder}>Tap words below</Text> : null}
         <View style={styles.wordWrap}>
           {selected.map((word, idx) => (
-            <TouchableOpacity key={`${word}-${idx}`} style={[styles.wordChipSelected, { backgroundColor: theme.light }]} onPress={() => removeWord(word, idx)}>
+            <TouchableOpacity
+              key={`${word}-${idx}`}
+              style={[styles.wordChipSelected, { backgroundColor: theme.light }]}
+              onPress={() => removeWord(word, idx)}
+              accessibilityRole="button"
+              accessibilityLabel={`Remove word: ${word}`}
+            >
               <Text style={styles.wordChipText}>{word}</Text>
             </TouchableOpacity>
           ))}
@@ -571,7 +625,13 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme }) {
 
       <View style={styles.wordWrap}>
         {pool.map((word, idx) => (
-          <TouchableOpacity key={`${word}-${idx}`} style={[styles.wordChip, { backgroundColor: theme.light }]} onPress={() => pick(word, idx)}>
+          <TouchableOpacity
+            key={`${word}-${idx}`}
+            style={[styles.wordChip, { backgroundColor: theme.light }]}
+            onPress={() => pick(word, idx)}
+            accessibilityRole="button"
+            accessibilityLabel={`Add word: ${word}`}
+          >
             <Text style={styles.wordChipText}>{word}</Text>
           </TouchableOpacity>
         ))}
@@ -582,6 +642,8 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme }) {
           style={[styles.primaryBtn, { backgroundColor: theme.accent }, selected.length === 0 && styles.primaryBtnDisabled]}
           disabled={selected.length === 0}
           onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -667,6 +729,8 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme }) {
                 selectedLeft === item && { borderColor: theme.accent, backgroundColor: theme.light }
               ]}
               onPress={() => setSelectedLeft(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Select: ${item}`}
             >
               <Text style={styles.optionText}>{item}</Text>
             </TouchableOpacity>
@@ -688,6 +752,8 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme }) {
                 const key = rightAudioKey(item);
                 if (key) playAudioKey(key);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={`Select: ${item}`}
             >
               <Text style={styles.optionText}>{item}</Text>
             </TouchableOpacity>
@@ -700,6 +766,8 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme }) {
           style={[styles.primaryBtn, { backgroundColor: theme.accent }, (!selectedLeft || !selectedRight) && styles.primaryBtnDisabled]}
           disabled={!selectedLeft || !selectedRight}
           onPress={checkPair}
+          accessibilityRole="button"
+          accessibilityLabel="Check matches"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
