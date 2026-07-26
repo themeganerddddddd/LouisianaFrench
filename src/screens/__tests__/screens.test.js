@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import { fixtureCatalog } from '../../test/fixtures/catalog/activities';
+import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBuilder';
+import { clock } from '../../test/fixtures/clock';
 import {
   completedLessons,
   profiles,
@@ -177,6 +179,46 @@ describe('LessonRunner', () => {
     });
     expect(screen.getByText('2 / 4')).toBeOnTheScreen();
   });
+
+  it('reaches MistakeReview after two wrong answers and completes after correction', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const lesson = fixtureCatalog.getLessonById('cajun', 'fixture_cajun_u02_l01');
+
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: { language: 'cajun', lessonId: lesson.id }
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Build: 'It's ready'")).toBeOnTheScreen();
+    });
+
+    await user.press(screen.getByText("C'est"));
+    await user.press(screen.getByText('Check'));
+    expect(screen.getByText('Not quite')).toBeOnTheScreen();
+
+    await user.press(screen.getByText('Try Again'));
+    await user.press(screen.getByText('Check'));
+    expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
+
+    await user.press(screen.getByText('Continue'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Mistake Review')).toBeOnTheScreen();
+    });
+
+    await user.press(screen.getByText("C'est"));
+    await user.press(screen.getByText('paré'));
+    await user.press(screen.getByText('Check'));
+    expect(screen.getByText('Correct!')).toBeOnTheScreen();
+
+    await user.press(screen.getByText('Next Question'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Session Complete 🎉')).toBeOnTheScreen();
+    });
+    expect(screen.getByText(/Everyday phrases/)).toBeOnTheScreen();
+  });
 });
 
 describe('MistakeReviewScreen', () => {
@@ -257,6 +299,40 @@ describe('DailyReviewScreen', () => {
 
     const check = await screen.findByText('Check');
     expect(check).toBeDisabled();
+  });
+
+  it('completes when the sole due Card is answered correctly', async () => {
+    jest.setSystemTime(clock.pastDue());
+
+    await seedAsyncStorage({
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          nextReviewAt: clock.reviewStart().toISOString()
+        })
+      }
+    });
+
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+    renderApp({
+      initialRouteName: 'DailyReview',
+      initialParams: { language: 'cajun' }
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
+    });
+
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    expect(screen.getByText('Correct!')).toBeOnTheScreen();
+
+    await user.press(screen.getByText('Next Question'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Session Complete 🎉')).toBeOnTheScreen();
+    });
+    expect(screen.getByText('Daily Review')).toBeOnTheScreen();
   });
 });
 
