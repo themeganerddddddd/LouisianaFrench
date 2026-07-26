@@ -4,7 +4,7 @@ import ActivityRenderer from '../components/ActivityRenderer';
 import { recordStudyAndXp } from '../utils/storage';
 
 export default function MistakeReviewScreen({ route, navigation }) {
-  const { language, lessonTitle, mistakes, lessonXp } = route.params;
+  const { language, lessonId, lessonTitle, mistakes, lessonXp } = route.params;
   const [queue] = useState(mistakes || []);
   const [index, setIndex] = useState(0);
 

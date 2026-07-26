@@ -69,17 +69,6 @@ export default function HomeScreen() {
   }, [route.params?.language]);
 
   useEffect(() => {
-    async function loadData() {
-      setUnits(getUnits(language));
-      setProfile(await getProfile());
-      setLessonProgress(await getLessonProgress());
-      setWordProgress(await getWordProgress());
-
-      const reviewLog = await getDailyReviewLog();
-      setDailyDone(!!reviewLog[getTodayKey()]);
-      setTimeUntilReset(getTimeUntilMidnight());
-    }
-
     loadData();
   }, [language]);
 
@@ -94,6 +83,17 @@ export default function HomeScreen() {
   async function switchLanguage(nextLanguage) {
     setLanguage(nextLanguage);
     await setDefaultLanguage(nextLanguage);
+  }
+
+  async function loadData() {
+    setUnits(getUnits(language));
+    setProfile(await getProfile());
+    setLessonProgress(await getLessonProgress());
+    setWordProgress(await getWordProgress());
+
+    const reviewLog = await getDailyReviewLog();
+    setDailyDone(!!reviewLog[getTodayKey()]);
+    setTimeUntilReset(getTimeUntilMidnight());
   }
 
   const theme =
