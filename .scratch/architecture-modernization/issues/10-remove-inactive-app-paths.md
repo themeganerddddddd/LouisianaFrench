@@ -4,7 +4,17 @@
 
 **Blocked by:** 03 - Characterize Activities, screens, and navigation; 08 - Make completion navigation valid; 09 - Handle unavailable Lessons intentionally
 
-**Status:** ready-for-agent
+**Status:** completed
+
+**Claimed by:** agent/next
+
+**Completed:** 2026-07-26
+
+## Comments
+
+Verified: no `app/` directory (Expo Router starter removed in PR #6), no root `components/` directory, single entry path `index.js` → `App.js` → `src/screens/`. LeaderboardScreen.js intentionally unregistered (see ticket 08).
+
+KD-04 resolved: three competing paths reduced to one.
 
 - [ ] Static imports and runtime smoke coverage confirm the active path before deletion.
 - [ ] Inactive top-level legacy screens are removed.

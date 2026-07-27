@@ -4,7 +4,17 @@
 
 **Blocked by:** 10 - Remove inactive application paths
 
-**Status:** ready-for-human
+**Status:** completed
+
+**Claimed by:** agent/defer-maestro
+
+**Completed:** 2026-07-26
+
+## Comments
+
+Decision: **Option A — CSV remains the editable source of truth.** When the migration proceeds, Python scripts will generate bundled SQLite from CSV instead of JSON. CSV is spreadsheet-friendly for non-technical authors, diffable in PRs, and already established.
+
+SQLite migration is deferred until lesson/activity shape stabilizes (~1 week). Tickets 13, 14, 15 remain ready-for-agent but should not be started until the shape is settled.
 
 - [ ] The editable source of Catalog truth is selected without contradicting SQLite's canonical role.
 - [ ] The workflow for adding and changing Languages, Units, Lessons, Words, Activities, and Audio identities is defined.
