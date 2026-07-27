@@ -2,7 +2,6 @@ import { jest } from '@jest/globals';
 import {
   applyOutcome,
   correctAnswer,
-  routesToMistakeReview,
   wrongAnswer
 } from '../sessionRules';
 import { updateCardReview } from '../../utils/spacedRepetition';
@@ -69,20 +68,6 @@ describe('sessionRules', () => {
     });
   });
 
-  describe('routesToMistakeReview', () => {
-    it('true for lesson', () => {
-      expect(routesToMistakeReview('lesson')).toBe(true);
-    });
-
-    it('false for daily-review', () => {
-      expect(routesToMistakeReview('daily-review')).toBe(false);
-    });
-
-    it('false for mistake-review', () => {
-      expect(routesToMistakeReview('mistake-review')).toBe(false);
-    });
-  });
-
   describe('applyOutcome', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -138,14 +123,24 @@ describe('sessionRules', () => {
       expect(updateWordProgress).not.toHaveBeenCalled();
     });
 
-    it('skips updateWordProgress when rowId is missing', async () => {
-      await applyOutcome(
+    it('rethrows persistence errors from updateCardReview', async () => {
+      updateCardReview.mockRejectedValueOnce(new Error('storage failure'));
+      await expect(applyOutcome(
         { cardQuality: 4, updatesWords: true },
         'cajun',
         'card-1',
-        null
-      );
-      expect(updateWordProgress).not.toHaveBeenCalled();
+        'w-1'
+      )).rejects.toThrow('storage failure');
+    });
+  });
+
+  describe('invariant guards', () => {
+    it('throws on unknown session type for correctAnswer', () => {
+      expect(() => correctAnswer('unknown')).toThrow('Unknown session type');
+    });
+
+    it('throws on unknown session type for wrongAnswer', () => {
+      expect(() => wrongAnswer('unknown')).toThrow('Unknown session type');
     });
   });
 });

@@ -25,7 +25,6 @@ export default function MistakeReviewScreen({ route, navigation }) {
 
   async function handleCorrect() {
     const outcome = correctAnswer('mistake-review');
-    // Mistake Review does not update card or word progress per ticket 11
 
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);

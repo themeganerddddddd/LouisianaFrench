@@ -40,6 +40,7 @@ function xpValue(rule, isReview) {
 
 export function correctAnswer(type, isReview) {
   const rules = RULES[type];
+  if (!rules) throw new Error(`Unknown session type: ${type}`);
   return {
     cardQuality: qualityValue(rules.correct, isReview),
     updatesWords: rules.updatesWords,
@@ -49,15 +50,12 @@ export function correctAnswer(type, isReview) {
 
 export function wrongAnswer(type) {
   const rules = RULES[type];
+  if (!rules) throw new Error(`Unknown session type: ${type}`);
   return {
     cardQuality: qualityValue(rules.wrong),
     updatesWords: rules.updatesWords,
     xp: xpValue(rules.wrong),
   };
-}
-
-export function routesToMistakeReview(type) {
-  return RULES[type].wrongRoutesToMistakeReview;
 }
 
 export async function applyOutcome(outcome, language, cardId, rowId) {

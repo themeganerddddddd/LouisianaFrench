@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROTOTYPE — Defect Fixes (KD-01, KD-02, KD-06)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+
+.banner { background: #ff6b35; color: #fff; text-align: center; padding: 6px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; width: 100%; }
+.banner a { color: #fff; }
+
+.controls { display: flex; gap: 8px; padding: 16px; flex-wrap: wrap; justify-content: center; }
+.controls button { padding: 8px 18px; border: 2px solid #d0d5dd; border-radius: 10px; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.controls button.active { border-color: #2771CB; background: #eaf3ff; color: #2771CB; }
+
+.phone-wrap { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; padding: 0 16px 40px; }
+.phone { width: 375px; background: #fff; border-radius: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); overflow: hidden; position: relative; }
+.phone-label { text-align: center; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 0 4px; color: #999; }
+.phone-label.before { color: #cb2431; }
+.phone-label.after { color: #22863a; }
+
+.topbar { height: 54px; display: flex; align-items: center; justify-content: center; position: relative; }
+.topbar-cajun { background: linear-gradient(135deg, #498BDC, #2771CB); }
+.topbar-kreole { background: linear-gradient(135deg, #7C3AED, #5B21B6); }
+.topbar-title { color: #fff; font-size: 15px; font-weight: 800; }
+.topbar-back { position: absolute; left: 14px; top: 14px; width: 26px; height: 26px; border-radius: 13px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; cursor: default; }
+
+.content { padding: 16px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.badge-kd { background: #fff3cd; color: #856404; }
+
+/* LessonComplete */
+.lc-card { background: #fff; border-radius: 20px; padding: 24px 20px; border: 1px solid #e2e8f0; margin-bottom: 10px; text-align: center; }
+.lc-icon { font-size: 48px; margin-bottom: 8px; }
+.lc-title { font-size: 24px; font-weight: 900; color: #102a43; margin-bottom: 4px; }
+.lc-sub { font-size: 14px; color: #64748b; font-weight: 600; margin-bottom: 16px; }
+.lc-stats { display: flex; gap: 10px; margin-bottom: 18px; }
+.lc-stat { flex: 1; background: #f8fafc; border-radius: 12px; padding: 10px; text-align: center; }
+.lc-stat-val { font-size: 20px; font-weight: 900; color: #17324d; }
+.lc-stat-label { font-size: 11px; color: #64748b; font-weight: 700; margin-top: 2px; }
+.lc-btn { display: block; width: 100%; padding: 14px; border-radius: 16px; border: none; font-size: 16px; font-weight: 800; cursor: default; margin-bottom: 8px; text-align: center; }
+.lc-btn-primary { background: #2771CB; color: #fff; }
+.lc-btn-secondary { background: #f1f5f9; color: #334155; }
+.lc-btn-danger { background: #fee2e2; color: #cb2431; border: 1px dashed #fca5a5; }
+
+/* LessonRunner error */
+.lr-error { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 16px; padding: 40px 20px; text-align: center; margin-top: 60px; }
+.lr-error-icon { font-size: 40px; margin-bottom: 12px; }
+.lr-error-title { font-size: 18px; font-weight: 800; color: #9a3412; margin-bottom: 6px; }
+.lr-error-sub { font-size: 13px; color: #7c2d12; font-weight: 600; }
+.lr-error-crash { font-family: monospace; background: #fecaca; border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #991b1b; margin-top: 12px; display: inline-block; }
+
+/* Daily Review */
+.dr-header { background: #f0f9ff; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; }
+.dr-title { font-size: 17px; font-weight: 900; color: #0c4a6e; }
+.dr-sub { font-size: 12px; color: #475569; font-weight: 600; margin-top: 2px; }
+.dr-card { background: #fff; border-radius: 18px; padding: 20px; border: 1px solid #e2e8f0; }
+.dr-prompt { font-size: 20px; font-weight: 800; color: #102a43; margin-bottom: 14px; }
+.dr-option { padding: 14px; border: 1px solid #cbd5e1; border-radius: 14px; margin-bottom: 8px; font-size: 16px; font-weight: 600; cursor: default; }
+.dr-option-sel { border-color: #2771CB; background: #eaf3ff; }
+.dr-check { display: block; width: 100%; padding: 14px; border-radius: 14px; border: none; font-size: 16px; font-weight: 800; cursor: default; text-align: center; }
+.dr-check-enabled { background: #2771CB; color: #fff; }
+
+.state-readout { background: #1a1a2e; color: #e2e8f0; border-radius: 10px; padding: 12px 14px; font-family: 'SF Mono', 'Courier New', monospace; font-size: 11px; line-height: 1.5; margin-top: 12px; overflow-x: auto; white-space: pre; }
+.state-readout .key { color: #fbbf24; }
+.state-readout .val-good { color: #34d399; }
+.state-readout .val-bad { color: #f87171; }
+
+@media (max-width: 820px) { .phone-wrap { flex-direction: column; align-items: center; } }
+</style>
+</head>
+<body>
+
+<div class="banner">PROTOTYPE — throwaway. <a href="../../.scratch/architecture-modernization/issues/07-fix-daily-review-final-mistake.md">Ticket 07</a> · <a href="../../.scratch/architecture-modernization/issues/08-fix-navigation-contracts.md">08</a> · <a href="../../.scratch/architecture-modernization/issues/09-define-missing-lesson-behavior.md">09</a></div>
+
+<div class="controls">
+  <button class="active" onclick="showScenario('kd01')">KD-01 · Daily Review double-score</button>
+  <button onclick="showScenario('kd02')">KD-02 · Leaderboard route</button>
+  <button onclick="showScenario('kd06')">KD-06 · Missing lesson crash</button>
+</div>
+
+<div class="phone-wrap" id="kd01">
+  <!-- BEFORE: KD-01 — final wrong double-scores -->
+  <div>
+    <div class="phone-label before">BEFORE (bug)</div>
+    <div class="phone">
+      <div class="topbar topbar-cajun"><div class="topbar-back">&larr;</div><div class="topbar-title">Daily Review</div></div>
+      <div class="content">
+        <div class="dr-header"><div class="dr-title">Daily Review</div><div class="dr-sub">1 / 1</div></div>
+        <div class="dr-card">
+          <span class="badge badge-kd">KD-01</span>
+          <div class="dr-prompt" style="margin-top:8px">Choose the match for 'How&rsquo;s it going?'</div>
+          <div class="dr-option dr-option-sel">&Ccedil;a va?</div>
+          <button class="dr-check dr-check-enabled">Check</button>
+        </div>
+        <div class="lc-card" style="margin-top:12px">
+          <div class="lc-icon">🎉</div>
+          <div class="lc-title">Session Complete</div>
+          <div class="lc-sub">Daily Review</div>
+          <div class="lc-stats"><div class="lc-stat"><div class="lc-stat-val">⚡ 8</div><div class="lc-stat-label">XP</div></div><div class="lc-stat"><div class="lc-stat-val">📝 0</div><div class="lc-stat-label">Mistakes</div></div></div>
+        </div>
+        <div class="state-readout">
+<span class="key">handleWrong</span> called on final item (quality 2, word incorrect)
+  → then calls <span class="key">handleCorrect</span> (quality 5, word correct, +8 XP)
+<span class="val-bad">BUG: quality = 5</span> (should be 2)
+<span class="val-bad">BUG: word   = "correct"</span> (should be "incorrect")
+<span class="val-bad">BUG: XP     = 8</span> (should be 0, already wrong)
+<span class="val-bad">BUG: mistakes shown as 0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER: KD-01 fixed -->
+  <div>
+    <div class="phone-label after">AFTER (fixed)</div>
+    <div class="phone">
+      <div class="topbar topbar-cajun"><div class="topbar-back">&larr;</div><div class="topbar-title">Daily Review</div></div>
+      <div class="content">
+        <div class="dr-header"><div class="dr-title">Daily Review</div><div class="dr-sub">1 / 1</div></div>
+        <div class="dr-card">
+          <div class="dr-prompt">Choose the match for 'How&rsquo;s it going?'</div>
+          <div class="dr-option dr-option-sel">&Ccedil;a va?</div>
+          <button class="dr-check dr-check-enabled">Check</button>
+        </div>
+        <div class="lc-card" style="margin-top:12px">
+          <div class="lc-icon">🎉</div>
+          <div class="lc-title">Session Complete</div>
+          <div class="lc-sub">Daily Review</div>
+          <div class="lc-stats"><div class="lc-stat"><div class="lc-stat-val">⚡ 0</div><div class="lc-stat-label">XP</div></div><div class="lc-stat"><div class="lc-stat-val">📝 1</div><div class="lc-stat-label">Mistake</div></div></div>
+        </div>
+        <div class="state-readout">
+<span class="key">handleWrong</span> called on final item (quality 2, word incorrect)
+  → completes session without calling handleCorrect
+<span class="val-good">FIX: quality = 2</span>
+<span class="val-good">FIX: word   = "incorrect"</span>
+<span class="val-good">FIX: XP     = 0 (no double-award)</span>
+<span class="val-good">FIX: mistakes = 1 (truthful)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="phone-wrap" id="kd02" style="display:none">
+  <!-- BEFORE: KD-02 — unregistered Leaderboard button -->
+  <div>
+    <div class="phone-label before">BEFORE (bug)</div>
+    <div class="phone">
+      <div class="topbar topbar-cajun"><div class="topbar-back">&larr;</div><div class="topbar-title">Lesson Complete</div></div>
+      <div class="content">
+        <div class="lc-card">
+          <span class="badge badge-kd">KD-02</span>
+          <div class="lc-icon" style="margin-top:8px">🎉</div>
+          <div class="lc-title">Session Complete</div>
+          <div class="lc-sub">Greetings &amp; Check-ins — First greetings</div>
+          <div class="lc-stats"><div class="lc-stat"><div class="lc-stat-val">⚡ 30</div><div class="lc-stat-label">XP</div></div><div class="lc-stat"><div class="lc-stat-val">📝 1</div><div class="lc-stat-label">Mistake</div></div><div class="lc-stat"><div class="lc-stat-val">🔥 2</div><div class="lc-stat-label">Streak</div></div></div>
+          <button class="lc-btn lc-btn-secondary">Open Leaderboard (WIP)</button>
+          <button class="lc-btn lc-btn-primary">Back to Home</button>
+        </div>
+        <div class="state-readout">
+<span class="val-bad">"Open Leaderboard (WIP)" → navigation.navigate('Leaderboard')</span>
+<span class="val-bad">Leaderboard is NOT registered in the Stack.Navigator</span>
+<span class="val-bad">KD-02: unregistered navigation target crashes</span>
+<span class="val-bad">KD-03: LeaderboardScreen import path broken</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER: KD-02 — Leaderboard removed -->
+  <div>
+    <div class="phone-label after">AFTER (fixed)</div>
+    <div class="phone">
+      <div class="topbar topbar-cajun"><div class="topbar-back">&larr;</div><div class="topbar-title">Lesson Complete</div></div>
+      <div class="content">
+        <div class="lc-card">
+          <div class="lc-icon">🎉</div>
+          <div class="lc-title">Session Complete</div>
+          <div class="lc-sub">Greetings &amp; Check-ins — First greetings</div>
+          <div class="lc-stats"><div class="lc-stat"><div class="lc-stat-val">⚡ 30</div><div class="lc-stat-label">XP</div></div><div class="lc-stat"><div class="lc-stat-val">📝 1</div><div class="lc-stat-label">Mistake</div></div><div class="lc-stat"><div class="lc-stat-val">🔥 2</div><div class="lc-stat-label">Streak</div></div></div>
+          <button class="lc-btn lc-btn-primary">Back to Home</button>
+        </div>
+        <div class="state-readout">
+<span class="val-good">Leaderboard button removed from LessonComplete</span>
+<span class="val-good">LeaderboardScreen.js deleted</span>
+<span class="val-good">All visible actions navigate to registered routes</span>
+<span class="val-good">KD-02 resolved · KD-03 resolved</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="phone-wrap" id="kd06" style="display:none">
+  <!-- BEFORE: KD-06 — crash on missing lesson -->
+  <div>
+    <div class="phone-label before">BEFORE (crash)</div>
+    <div class="phone">
+      <div class="topbar topbar-cajun"><div class="topbar-back">&larr;</div><div class="topbar-title">Lesson</div></div>
+      <div class="content">
+        <span class="badge badge-kd" style="margin-bottom:12px;display:inline-block">KD-06</span>
+        <div class="lr-error">
+          <div class="lr-error-icon">💥</div>
+          <div class="lr-error-title">App Crashes</div>
+          <div class="lr-error-sub">The learner sees a white screen or native crash</div>
+          <div class="lr-error-crash">TypeError: Cannot read properties<br>of undefined (reading 'activities')<br>at LessonRunner.js:68</div>
+        </div>
+        <div class="state-readout" style="margin-top:12px">
+<span class="key">lesson</span> = <span class="val-bad">undefined</span> (unknown lessonId)
+<span class="val-bad">lesson.activities throws before !lesson guard at line 79</span>
+<span class="val-bad">No recovery path — learner is stuck</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER: KD-06 — redirect to Home -->
+  <div>
+    <div class="phone-label after">AFTER (fixed)</div>
+    <div class="phone">
+      <div class="topbar topbar-cajun"><div class="topbar-back">&larr;</div><div class="topbar-title">Cajun French</div></div>
+      <div class="content">
+        <div class="lc-card">
+          <div class="lc-icon">🏠</div>
+          <div class="lc-title">Cajun French</div>
+          <div class="lc-sub">Redirected — lesson not found</div>
+          <div class="lc-stats"><div class="lc-stat"><div class="lc-stat-val">0</div><div class="lc-stat-label">XP</div></div><div class="lc-stat"><div class="lc-stat-val">🔥 0</div><div class="lc-stat-label">Streak</div></div><div class="lc-stat"><div class="lc-stat-val">0%</div><div class="lc-stat-label">Mastered</div></div></div>
+          <button class="lc-btn lc-btn-primary">Daily Review</button>
+          <button class="lc-btn lc-btn-secondary">Open Dictionary</button>
+          <button class="lc-btn lc-btn-secondary">Advanced / Review Hub</button>
+        </div>
+        <div class="state-readout">
+<span class="val-good">Guard: !lesson → navigation.replace('Home')</span>
+<span class="val-good">lesson.activities never accessed when lesson is undefined</span>
+<span class="val-good">HomeScreen loads normally from saved Language</span>
+<span class="val-good">KD-06 resolved</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScenario(id) {
+  document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.phone-wrap').forEach(w => w.style.display = 'none');
+  document.getElementById(id).style.display = 'flex';
+}
+</script>
+
+</body>
+</html>
