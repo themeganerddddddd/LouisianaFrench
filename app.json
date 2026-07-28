@@ -26,7 +26,8 @@
     "extra": {
       "eas": {
         "projectId": "92b3549d-fbd2-432d-a052-4d39e311b4f1"
-      }
+      },
+      "bugReportEmail": ""
     }
   }
 }
