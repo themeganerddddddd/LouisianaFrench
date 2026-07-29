@@ -91,7 +91,7 @@ describe('createCatalog', () => {
     [
       'kreole',
       ['fixture_kreole_w01', 'fixture_kreole_w02', 'fixture_kreole_w03'],
-      'Pronouns & Greetings'
+      'Greetings & Check-ins'
     ]
   ])('deduplicates, sorts, and annotates %s Words', (language, rowIds, firstUnitTitle) => {
     const words = catalog.getAllWords(language);
