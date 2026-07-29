@@ -36,7 +36,7 @@ describe('createCatalog', () => {
   it.each([
     [
       'cajun',
-      'Pronouns & Greetings',
+      'Greetings & Check-ins',
       ['fixture_cajun_u01_l01', 'fixture_cajun_u01_review']
     ],
     [
