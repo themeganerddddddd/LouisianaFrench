@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ActivityRenderer from '../components/ActivityRenderer';
 import ProgressHeader from '../components/ProgressHeader';
 import { getAllActivities } from '../data/lessonLoader';
@@ -114,14 +115,14 @@ export default function DailyReviewScreen({ route, navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.inner}>
-      <ProgressHeader
-      current={index + 1}
-      total={queue.length}
-      xp={xp}
-      title="Daily Review"
-      modeLabel="Across all units"
-      language={language}
-      />
+        <ProgressHeader
+          current={index + 1}
+          total={queue.length}
+          xp={xp}
+          title="Daily Review"
+          modeLabel="Across all units"
+          language={language}
+        />
 
         <Text style={styles.sub}>Due cards, weak words, and review practice.</Text>
 

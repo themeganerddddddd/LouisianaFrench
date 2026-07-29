@@ -3,6 +3,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { render } from '@testing-library/react-native';
 import fs from 'fs';
 import path from 'path';
+import {
+  initialWindowMetrics,
+  SafeAreaProvider
+} from 'react-native-safe-area-context';
 
 import AdvancedScreen from '../screens/AdvancedScreen';
 import DailyReviewScreen from '../screens/DailyReviewScreen';
@@ -65,15 +69,18 @@ function AppStack({ initialRouteName = 'Loading', initialParams }) {
 export function renderApp({
   initialRouteName = 'Loading',
   initialParams,
+  safeAreaMetrics = initialWindowMetrics,
   ...renderOptions
 } = {}) {
   return render(
-    <NavigationContainer>
-      <AppStack
-        initialRouteName={initialRouteName}
-        initialParams={initialParams}
-      />
-    </NavigationContainer>,
+    <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+      <NavigationContainer>
+        <AppStack
+          initialRouteName={initialRouteName}
+          initialParams={initialParams}
+        />
+      </NavigationContainer>
+    </SafeAreaProvider>,
     renderOptions
   );
 }

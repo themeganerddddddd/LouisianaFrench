@@ -1,4 +1,5 @@
 import { act, screen } from '@testing-library/react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import {
   activityByCardId,
@@ -75,6 +76,23 @@ describe('LanguageSelectScreen', () => {
 });
 
 describe('HomeScreen', () => {
+  it('positions the top bar below the device safe area', async () => {
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 412, height: 915 },
+        insets: { top: 38, right: 0, bottom: 24, left: 0 }
+      }
+    });
+
+    await screen.findByText('Cajun French');
+
+    expect(screen.UNSAFE_getAllByType(LinearGradient)[0].props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ paddingTop: 54 })])
+    );
+  });
+
   it('shows Learner Progress, Units, Lessons, and session entry points', async () => {
     await seedAsyncStorage({
       profile: profiles.established,
