@@ -1431,7 +1431,7 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip }
           accessibilityRole="button"
           accessibilityLabel="Check matches"
         >
-          <Text style={styles.primaryBtnText}>Check Pair</Text>
+          <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
       ) : null}
 
