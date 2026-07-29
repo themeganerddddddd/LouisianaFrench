@@ -10,7 +10,7 @@ export default function AdvancedScreen({ route }) {
           {language === 'cajun' ? 'Advanced Cajun Hub' : 'Advanced Kouri-Vini Hub'}
         </Text>
         <Text style={styles.text}>
-          Future modes can go here:
+          WIP - Future modes will go here:
         </Text>
         <Text style={styles.bullet}>• category challenge mode</Text>
         <Text style={styles.bullet}>• conversation practice</Text>
