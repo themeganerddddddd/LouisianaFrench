@@ -36,12 +36,12 @@ describe('createCatalog', () => {
   it.each([
     [
       'cajun',
-      'Greetings & Check-ins',
+      'Pronouns & Greetings',
       ['fixture_cajun_u01_l01', 'fixture_cajun_u01_review']
     ],
     [
       'kreole',
-      'Pronouns & Greetings',
+      'Greetings & Check-ins',
       ['fixture_kreole_u01_l01', 'fixture_kreole_u01_review']
     ]
   ])('orders %s Units and Lessons and annotates their titles', (language, unitTitle, lessonIds) => {
