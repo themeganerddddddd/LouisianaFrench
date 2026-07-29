@@ -319,8 +319,6 @@ export default function HomeScreen() {
                 return (
                   <TouchableOpacity
                     key={lesson.id}
-                  <TouchableOpacity
-                    key={lesson.id}
                     style={[
                       styles.lessonRow,
                       done && {
