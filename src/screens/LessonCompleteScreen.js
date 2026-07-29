@@ -1,12 +1,12 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
+import SafeScreenView from '../components/SafeScreenView';
 
 export default function LessonCompleteScreen({ route, navigation }) {
   const { lessonTitle, xpEarned, mistakesCount, streak, language } = route.params;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.card}>
           <Image
@@ -47,7 +47,7 @@ export default function LessonCompleteScreen({ route, navigation }) {
         </View>
       </View>
       <BugReportButton screenName="LessonComplete" language={language} />
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

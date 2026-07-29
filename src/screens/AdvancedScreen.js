@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
+import SafeScreenView from '../components/SafeScreenView';
 
 export default function AdvancedScreen({ route }) {
   const { language } = route.params;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.card}>
           <Text style={styles.title}>
@@ -23,7 +23,7 @@ export default function AdvancedScreen({ route }) {
         </View>
       </View>
       <BugReportButton screenName="Advanced" language={language} />
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

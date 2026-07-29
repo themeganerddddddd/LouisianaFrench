@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import SafeScreenView from '../components/SafeScreenView';
 import { getLeaderboard } from '../utils/storage';
 
 export default function LeaderboardScreen() {
@@ -16,7 +16,7 @@ export default function LeaderboardScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container}>
       <Text style={styles.title}>Leaderboard</Text>
       <Text style={styles.sub}>Local device leaderboard for now</Text>
 
@@ -29,7 +29,7 @@ export default function LeaderboardScreen() {
           </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import ActivityRenderer from '../components/ActivityRenderer';
+import SafeScreenView from '../components/SafeScreenView';
 import { recordStudyAndXp } from '../utils/storage';
 
 export default function MistakeReviewScreen({ route, navigation }) {
@@ -48,7 +48,7 @@ export default function MistakeReviewScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container}>
       <View style={styles.inner}>
         <Text style={styles.header}>Mistake Review</Text>
         <Text style={styles.sub}>
@@ -63,7 +63,7 @@ export default function MistakeReviewScreen({ route, navigation }) {
           onWrong={handleWrong}
         />
       </View>
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

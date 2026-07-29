@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import ActivityRenderer from '../components/ActivityRenderer';
 import ProgressHeader from '../components/ProgressHeader';
+import SafeScreenView from '../components/SafeScreenView';
 import { getLessonById } from '../data/lessonLoader';
 import {
   getDueReviewItems,
@@ -160,7 +160,7 @@ export default function LessonRunner({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container}>
       <View style={styles.inner}>
         <ProgressHeader
         current={index + 1}
@@ -186,7 +186,7 @@ export default function LessonRunner({ route, navigation }) {
           />
         </Animated.View>
       </View>
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 
