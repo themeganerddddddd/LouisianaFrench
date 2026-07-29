@@ -8,7 +8,19 @@ export function getLessonsByLanguage(language) {
 
 export function getLessonById(language, lessonId) {
   const lessons = getLessonsByLanguage(language);
-  return lessons.find((lesson) => lesson.id === lessonId || String(lesson.id) === String(lessonId));
+
+  return lessons.find(
+    (lesson) => lesson.id === lessonId || String(lesson.id) === String(lessonId)
+  );
+}
+
+export function getLessonUnitTitle(language, lessonOrUnitCode) {
+  if (typeof lessonOrUnitCode === 'object' && lessonOrUnitCode !== null) {
+    const unitCode = lessonOrUnitCode.unit || lessonOrUnitCode.unitCode || 'u00';
+    return lessonOrUnitCode.unitTitle || getUnitTitle(language, unitCode);
+  }
+
+  return getUnitTitle(language, lessonOrUnitCode || 'u00');
 }
 
 export function getUnits(language) {
@@ -17,11 +29,12 @@ export function getUnits(language) {
 
   for (const lesson of lessons) {
     const unitCode = lesson.unit || lesson.unitCode || 'u00';
+    const unitTitle = getLessonUnitTitle(language, lesson);
 
     if (!map.has(unitCode)) {
       map.set(unitCode, {
         unit: unitCode,
-        unitTitle: getUnitTitle(language, unitCode),
+        unitTitle,
         lessons: []
       });
     }
@@ -29,7 +42,7 @@ export function getUnits(language) {
     map.get(unitCode).lessons.push({
       ...lesson,
       unit: unitCode,
-      unitTitle: getUnitTitle(language, unitCode)
+      unitTitle
     });
   }
 
@@ -40,21 +53,25 @@ export function getUnits(language) {
       lessons: unitObj.lessons.sort((a, b) => {
         const aNum = Number(a.lessonNumberInUnit || a.order || 0);
         const bNum = Number(b.lessonNumberInUnit || b.order || 0);
+
         return aNum - bNum;
       })
     }));
 }
 
 export function getAllActivities(language) {
-  return getLessonsByLanguage(language).flatMap((lesson) =>
-    (lesson.activities || []).map((activity) => ({
+  return getLessonsByLanguage(language).flatMap((lesson) => {
+    const unitCode = lesson.unit || lesson.unitCode || 'u00';
+    const unitTitle = getLessonUnitTitle(language, lesson);
+
+    return (lesson.activities || []).map((activity) => ({
       ...activity,
       lessonId: lesson.id,
       lessonTitle: lesson.lessonTitle || lesson.title || 'Lesson',
-      unit: lesson.unit || lesson.unitCode || 'u00',
-      unitTitle: getUnitTitle(language, lesson.unit || lesson.unitCode || 'u00')
-    }))
-  );
+      unit: unitCode,
+      unitTitle
+    }));
+  });
 }
 
 export function getAllWords(language) {
@@ -64,11 +81,12 @@ export function getAllWords(language) {
 
   for (const lesson of lessons) {
     const unitCode = lesson.unit || lesson.unitCode || 'u00';
-    const unitTitle = getUnitTitle(language, unitCode);
+    const unitTitle = getLessonUnitTitle(language, lesson);
 
     for (const word of lesson.words || []) {
       const rowId = word.rowId || word.id;
       const key = `${language}:${rowId}`;
+
       if (!rowId || seen.has(key)) continue;
 
       seen.add(key);

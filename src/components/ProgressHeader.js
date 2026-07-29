@@ -6,8 +6,8 @@ export default function ProgressHeader({ current, total, xp, title, modeLabel, l
   const theme =
     language === 'kreole'
       ? {
-          accent: '#6D28D9',
-          stat: '#5B21B6'
+          accent: '#08834C',
+          stat: '#066B3F'
         }
       : {
           accent: '#2771CB',

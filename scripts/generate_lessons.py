@@ -10,7 +10,8 @@ KREOLE_CSV = "kreole.csv"
 OUTPUT_CAJUN = "src/data/cajunLessons.json"
 OUTPUT_KREOLE = "src/data/kreoleLessons.json"
 
-LESSON_CHUNK_SIZE = 5
+DEFAULT_LESSON_CHUNK_SIZE = 5
+KREOLE_LESSON_CHUNK_SIZE = 6
 MAX_ACTIVITIES_PER_LESSON = 15
 RANDOM_SEED = 42
 
@@ -29,16 +30,27 @@ UNIT_TITLE_FALLBACKS = {
 }
 
 UNIT_TITLE_FALLBACKS_KREOLE = {
-    "u01": "Pronouns & Greetings",
-    "u02": "Check-ins & Well-being",
-    "u03": "Names & Introductions",
-    "u04": "Common Verbs",
-    "u05": "Everyday Nouns",
+    "u01": "Greetings & Check-ins",
+    "u02": "Pronouns & People",
+    "u03": "Common Verbs",
+    "u04": "Descriptions & Everyday Words",
+    "u05": "School & Simple Questions",
+    "u06": "Question Words",
+    "u07": "Needs, Abilities & Actions",
+    "u08": "Possessives",
+    "u09": "Object Pronouns",
 }
 
 
 def clean(value):
     return str(value or "").strip()
+
+
+def get_lesson_chunk_size(language):
+    if language == "kreole":
+        return KREOLE_LESSON_CHUNK_SIZE
+
+    return DEFAULT_LESSON_CHUNK_SIZE
 
 
 def tokenize_phrase(text):
@@ -49,9 +61,12 @@ def sort_rows_by_id(rows):
     def key_fn(row):
         row_id = clean(row.get("id"))
         match = re.match(r"u(\d+)_w(\d+)", row_id)
+
         if match:
             return (int(match.group(1)), int(match.group(2)))
+
         return (9999, row_id)
+
     return sorted(rows, key=key_fn)
 
 
@@ -63,20 +78,57 @@ def build_card_id(language, row_id, suffix):
     return f"{language}:{row_id}:{suffix}"
 
 
+def activity_row_id(activity):
+    return clean((activity or {}).get("rowId"))
+
+
+def activity_type(activity):
+    return clean((activity or {}).get("type"))
+
+
+def finalize_lesson_activity_ids(lesson_id, activities):
+    """
+    Give every activity a unique cardId inside the lesson.
+
+    This prevents React from reusing previous question state when the same
+    word/type appears again later in the same lesson.
+    """
+    finalized = []
+
+    for index, activity in enumerate(activities, start=1):
+        if not activity:
+            continue
+
+        cloned = dict(activity)
+        base_card_id = clean(cloned.get("cardId")) or f"{lesson_id}:activity"
+
+        cloned["baseCardId"] = base_card_id
+        cloned["cardId"] = f"{base_card_id}:step{str(index).zfill(2)}"
+        cloned["activityIndex"] = index
+
+        finalized.append(cloned)
+
+    return finalized
+
+
 def lesson_part_name(chunk_rows, index):
     english_terms = [clean(r.get("english")) for r in chunk_rows if clean(r.get("english"))]
     english_terms = english_terms[:3]
+
     if not english_terms:
         return f"Part {index}"
+
     return f"Part {index} — {', '.join(english_terms)}"
 
 
 def safe_sample(pool, correct, n=3):
     pool = [p for p in pool if p != correct]
     random.shuffle(pool)
+
     picked = pool[:n]
     picked.append(correct)
     random.shuffle(picked)
+
     return picked
 
 
@@ -220,6 +272,7 @@ def make_sentence_build(language, row):
     audio_key = clean(row.get("audioKey"))
 
     tokens = tokenize_phrase(target)
+
     if len(tokens) <= 1:
         return None
 
@@ -273,10 +326,13 @@ def make_match_pairs(language, rows):
 
         if extra_details:
             vocab_card["extraDetails"] = extra_details
+
         if context_badge:
             vocab_card["contextBadge"] = context_badge
+
         if english_alt_response:
             vocab_card["englishAltResponse"] = english_alt_response
+
         if variant_alt_response:
             vocab_card["variantAltResponse"] = variant_alt_response
 
@@ -321,6 +377,7 @@ def available_quiz_types_for_row(row, is_first_chunk):
 
     if not is_first_chunk:
         quiz_types.append("typing")
+
         if len(tokens) > 1:
             quiz_types.append("sentence_build")
 
@@ -330,12 +387,16 @@ def available_quiz_types_for_row(row, is_first_chunk):
 def make_activity_from_type(language, row, unit_ctx, quiz_type):
     if quiz_type == "multiple_choice":
         return make_multiple_choice(language, row, unit_ctx)
+
     if quiz_type == "listening_target":
         return make_listening_target(language, row, unit_ctx)
+
     if quiz_type == "typing":
         return make_typing(language, row)
+
     if quiz_type == "sentence_build":
         return make_sentence_build(language, row)
+
     return None
 
 
@@ -343,8 +404,9 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
     """
     Build a lesson flow that:
     - introduces each chunk word
-    - quizzes that word within 3 following activities
-    - mixes in older words from same chunk / same unit
+    - quizzes that word soon after introduction
+    - avoids putting the same word question back-to-back
+    - mixes in older words from the same lesson / same unit
     - adds matching once enough words are introduced
     """
     unit_ctx = build_unit_lookups(unit_rows)
@@ -356,11 +418,81 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
     seen_in_this_lesson = []
     prior_pool = list(prior_rows_in_unit)
 
+    def dedupe_rows(rows):
+        deduped = {}
+
+        for candidate in rows:
+            row_id = clean(candidate.get("id"))
+
+            if not row_id:
+                continue
+
+            if not clean(candidate.get("english")) or not clean(candidate.get("variant_text")):
+                continue
+
+            deduped[row_id] = candidate
+
+        return list(deduped.values())
+
+    def make_non_repeating_quiz(candidate_rows, first_chunk_mode, preferred_row=None):
+        rows = dedupe_rows(candidate_rows)
+
+        if not rows:
+            return None, None
+
+        last_activity = activities[-1] if activities else None
+        last_row_id = activity_row_id(last_activity)
+        last_type = activity_type(last_activity)
+
+        # It is okay to quiz the same row immediately after an intro card.
+        # It is not okay to quiz the same row immediately after another quiz.
+        if last_activity and last_type != "intro_card":
+            non_repeating_rows = [
+                row for row in rows
+                if clean(row.get("id")) != last_row_id
+            ]
+
+            if non_repeating_rows:
+                rows = non_repeating_rows
+            else:
+                return None, None
+
+        chosen_row = None
+
+        if preferred_row is not None:
+            preferred_id = clean(preferred_row.get("id"))
+            matching_preferred_rows = [
+                row for row in rows
+                if clean(row.get("id")) == preferred_id
+            ]
+
+            if matching_preferred_rows and random.random() < 0.7:
+                chosen_row = matching_preferred_rows[0]
+
+        if chosen_row is None:
+            chosen_row = random.choice(rows)
+
+        available_types = available_quiz_types_for_row(chosen_row, first_chunk_mode)
+
+        # If the last activity somehow has the same row, avoid repeating
+        # the same exact question type too.
+        if clean(chosen_row.get("id")) == last_row_id:
+            available_types = [
+                quiz_type for quiz_type in available_types
+                if quiz_type != last_type
+            ]
+
+        if not available_types:
+            return None, None
+
+        quiz_type = random.choice(available_types)
+        activity = make_activity_from_type(language, chosen_row, unit_ctx, quiz_type)
+
+        return activity, chosen_row
+
     for row in chunk_rows:
-        row_id = clean(row.get("id"))
         english = clean(row.get("english"))
         target = clean(row.get("variant_text"))
-        audio_key = clean(row.get("audioKey"))
 
         if not english or not target:
             continue
@@ -382,54 +514,49 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
                 break
 
             forced = None
+
             for item in introduced_queue:
                 if not item["quizzed"]:
                     forced = item
                     break
 
             candidate_rows = []
+
             if forced is not None:
                 candidate_rows.append(forced["row"])
 
-            older_current = [r for r in seen_in_this_lesson if clean(r.get("id")) != clean(forced["row"].get("id"))] if forced else seen_in_this_lesson[:]
+            if forced is not None:
+                older_current = [
+                    r for r in seen_in_this_lesson
+                    if clean(r.get("id")) != clean(forced["row"].get("id"))
+                ]
+            else:
+                older_current = seen_in_this_lesson[:]
+
             if older_current:
                 candidate_rows.extend(random.sample(older_current, min(len(older_current), 2)))
 
             if prior_pool:
                 candidate_rows.extend(random.sample(prior_pool, min(len(prior_pool), 2)))
 
-            dedup = {}
-            for r in candidate_rows:
-                dedup[clean(r.get("id"))] = r
-            candidate_rows = list(dedup.values())
+            activity, chosen_row = make_non_repeating_quiz(
+                candidate_rows=candidate_rows,
+                first_chunk_mode=is_first_chunk,
+                preferred_row=forced["row"] if forced is not None else None
+            )
 
-            if not candidate_rows:
-                continue
+            # Important:
+            # If the only possible next question would be the exact same word
+            # again, skip it and introduce the next word instead.
+            if not activity or not chosen_row:
+                break
 
-            chosen_row = None
-            if forced is not None and (forced["remaining_window"] <= 1 or random.random() < 0.6):
-                chosen_row = forced["row"]
-            else:
-                chosen_row = random.choice(candidate_rows)
+            activities.append(activity)
 
-            available_types = available_quiz_types_for_row(chosen_row, is_first_chunk)
-
-            if forced is not None and clean(chosen_row.get("id")) == clean(forced["row"].get("id")):
-                if "listening_target" in available_types and random.random() < 0.5:
-                    quiz_type = "listening_target"
-                else:
-                    quiz_type = "multiple_choice"
-            else:
-                quiz_type = random.choice(available_types)
-
-            activity = make_activity_from_type(language, chosen_row, unit_ctx, quiz_type)
-            if activity:
-                activities.append(activity)
-
-                for item in introduced_queue:
-                    if clean(item["row"].get("id")) == clean(chosen_row.get("id")) and not item["quizzed"]:
-                        item["quizzed"] = True
-                        break
+            for item in introduced_queue:
+                if clean(item["row"].get("id")) == clean(chosen_row.get("id")) and not item["quizzed"]:
+                    item["quizzed"] = True
+                    break
 
             for item in introduced_queue:
                 if not item["quizzed"]:
@@ -439,6 +566,7 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
             if not any(a.get("type") == "match_pairs" for a in activities):
                 match_rows = seen_in_this_lesson[-4:]
                 match_activity = make_match_pairs(language, match_rows)
+
                 if match_activity:
                     activities.append(match_activity)
 
@@ -446,18 +574,26 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
             break
 
     mixed_pool = chunk_rows + prior_pool
-    while len(activities) < MAX_ACTIVITIES_PER_LESSON and mixed_pool:
-        chosen_row = random.choice(mixed_pool)
-        available_types = available_quiz_types_for_row(chosen_row, is_first_chunk=False)
-        quiz_type = random.choice(available_types)
-        activity = make_activity_from_type(language, chosen_row, unit_ctx, quiz_type)
-        if activity:
-            activities.append(activity)
+    attempts = 0
+
+    while len(activities) < MAX_ACTIVITIES_PER_LESSON and mixed_pool and attempts < 60:
+        attempts += 1
+
+        activity, chosen_row = make_non_repeating_quiz(
+            candidate_rows=mixed_pool,
+            first_chunk_mode=False
+        )
+
+        if not activity:
+            break
+
+        activities.append(activity)
 
         if len(activities) < MAX_ACTIVITIES_PER_LESSON and len(mixed_pool) >= 4:
             if not any(a.get("type") == "match_pairs" for a in activities) and random.random() < 0.25:
                 match_rows = random.sample(mixed_pool, min(4, len(mixed_pool)))
                 match_activity = make_match_pairs(language, match_rows)
+
                 if match_activity:
                     activities.append(match_activity)
 
@@ -470,24 +606,38 @@ def make_review_activities(language, unit_rows):
     review_activities = []
     review_rows = sort_rows_by_id(unit_rows)
 
-    candidate_rows = [r for r in review_rows if clean(r.get("english")) and clean(r.get("variant_text"))]
+    candidate_rows = [
+        r for r in review_rows
+        if clean(r.get("english")) and clean(r.get("variant_text"))
+    ]
     random.shuffle(candidate_rows)
+
+    last_row_id = ""
 
     for row in candidate_rows:
         if len(review_activities) >= MAX_ACTIVITIES_PER_LESSON:
             break
 
+        row_id = clean(row.get("id"))
+
+        if row_id and row_id == last_row_id:
+            continue
+
         quiz_types = ["multiple_choice"]
+
         if clean(row.get("audioKey")):
             quiz_types.append("listening_target")
 
         quiz_type = random.choice(quiz_types)
         activity = make_activity_from_type(language, row, unit_ctx, quiz_type)
+
         if activity:
             review_activities.append(activity)
+            last_row_id = row_id
 
     if len(candidate_rows) >= 4 and not any(a.get("type") == "match_pairs" for a in review_activities):
         match_activity = make_match_pairs(language, candidate_rows[:4])
+
         if match_activity and len(review_activities) < MAX_ACTIVITIES_PER_LESSON:
             review_activities.append(match_activity)
 
@@ -527,21 +677,26 @@ def build_lessons(language, csv_path, output_path):
 
     with open(csv_path, "r", encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
+
         for row in reader:
             unit = clean(row.get("unit"))
+
             if not unit:
                 continue
+
+            row["unit"] = unit
             grouped[unit].append(row)
 
     ordered_units = sorted(grouped.keys())
     all_lessons = []
 
     title_map = UNIT_TITLE_FALLBACKS if language == "cajun" else UNIT_TITLE_FALLBACKS_KREOLE
+    lesson_chunk_size = get_lesson_chunk_size(language)
 
     for unit in ordered_units:
         unit_rows = sort_rows_by_id(grouped[unit])
         unit_title = title_map.get(unit, f"Unit {unit.replace('u', '')}")
-        unit_chunks = chunk_list(unit_rows, LESSON_CHUNK_SIZE)
+        unit_chunks = chunk_list(unit_rows, lesson_chunk_size)
 
         prior_rows_in_unit = []
 
@@ -557,6 +712,7 @@ def build_lessons(language, csv_path, output_path):
             )
 
             lesson_id = f"{language}_{unit}_l{str(chunk_index).zfill(2)}"
+            activities = finalize_lesson_activity_ids(lesson_id, activities)
             lesson_title = lesson_part_name(chunk_rows, chunk_index)
 
             all_lessons.append({
@@ -576,6 +732,9 @@ def build_lessons(language, csv_path, output_path):
             prior_rows_in_unit.extend(chunk_rows)
 
         review_id = f"{language}_{unit}_review"
+        review_activities = make_review_activities(language, unit_rows)
+        review_activities = finalize_lesson_activity_ids(review_id, review_activities)
+
         all_lessons.append({
             "id": review_id,
             "language": language,
@@ -590,7 +749,7 @@ def build_lessons(language, csv_path, output_path):
                 for r in unit_rows
                 if clean(r.get("english")) and clean(r.get("variant_text"))
             ],
-            "activities": make_review_activities(language, unit_rows),
+            "activities": review_activities,
             "baseXp": 50
         })
 

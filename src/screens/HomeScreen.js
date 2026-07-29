@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
@@ -45,6 +44,14 @@ function getLessonButtonText(done, locked = false) {
   if (done) return 'Done';
   if (locked) return 'Locked';
   return 'Start';
+}
+
+function getUnitNumber(unitCode) {
+  const match = String(unitCode || '').match(/u(\d+)/i);
+
+  if (!match) return 'Unit';
+
+  return `Unit ${Number(match[1])}`;
 }
 
 export default function HomeScreen() {
@@ -116,18 +123,22 @@ export default function HomeScreen() {
           progressFill: '#7DD3FC',
           subtitle: '#DCEBFF',
           dailyDoneBg: '#1E3A8A',
-          dailyTimer: '#DBEAFE'
+          dailyTimer: '#DBEAFE',
+          accent: '#2771CB',
+          stat: '#17324D'
         }
       : {
-          topBarGrad: ['#7C3AED', '#5B21B6'],
-          headerGrad: ['#7C3AED', '#5B21B6'],
-          start: '#6D28D9',
-          done: '#8B5CF6',
-          doneSoft: '#8B5CF6',
-          progressFill: '#C084FC',
-          subtitle: '#EDE9FE',
-          dailyDoneBg: '#4C1D95',
-          dailyTimer: '#E9D5FF'
+          topBarGrad: ['#0AA35F', '#066B3F'],
+          headerGrad: ['#0AA35F', '#066B3F'],
+          start: '#08834C',
+          done: '#10B981',
+          doneSoft: '#34D399',
+          progressFill: '#6EE7B7',
+          subtitle: '#E7F5EE',
+          dailyDoneBg: '#064E32',
+          dailyTimer: '#D1FAE5',
+          accent: '#08834C',
+          stat: '#066B3F'
         };
 
   const allWords = useMemo(() => getAllWords(language), [language]);
@@ -178,17 +189,19 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statNum}>{profile.xp || 0}</Text>
+            <Text style={[styles.statNum, { color: theme.stat }]}>{profile.xp || 0}</Text>
             <Text style={styles.statLabel}>XP</Text>
           </View>
 
           <View style={styles.statCard}>
-            <Text style={styles.statNum}>🔥 {profile.streak || 0}</Text>
+            <Text style={[styles.statNum, { color: theme.stat }]}>
+              🔥 {profile.streak || 0}
+            </Text>
             <Text style={styles.statLabel}>Streak</Text>
           </View>
 
           <View style={styles.statCard}>
-            <Text style={styles.statNum}>{overallPct}%</Text>
+            <Text style={[styles.statNum, { color: theme.stat }]}>{overallPct}%</Text>
             <Text style={styles.statLabel}>Mastered</Text>
           </View>
         </View>
@@ -259,12 +272,11 @@ export default function HomeScreen() {
           return (
             <View key={unitObj.unit} style={styles.unitCard}>
               <LinearGradient colors={theme.headerGrad} style={styles.unitHeader}>
-                <Ionicons
-                  name="book"
-                  size={22}
-                  color="#fff"
-                  style={{ marginRight: 10 }}
-                />
+                <View style={styles.unitNumberPill}>
+                  <Text style={[styles.unitNumberText, { color: theme.accent }]}>
+                    {getUnitNumber(unitObj.unit)}
+                  </Text>
+                </View>
 
                 <View style={{ flex: 1 }}>
                   <Text style={styles.unitTitle}>{unitObj.unitTitle}</Text>
@@ -427,13 +439,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderRadius: 16,
     paddingVertical: 14,
-    alignItems: 'center'
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0'
   },
 
   statNum: {
     fontSize: 20,
-    fontWeight: '900',
-    color: '#17324D'
+    fontWeight: '900'
   },
 
   statLabel: {
@@ -516,6 +529,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16
+  },
+
+  unitNumberPill: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 10
+  },
+
+  unitNumberText: {
+    fontSize: 12,
+    fontWeight: '900'
   },
 
   unitTitle: {

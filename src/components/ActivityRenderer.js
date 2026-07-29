@@ -88,9 +88,9 @@ function makeWordBank(answer) {
 function getTheme(language) {
   return language === 'kreole'
     ? {
-        accent: '#6D28D9',
-        light: '#EDE9FE',
-        text: '#5B21B6'
+        accent: '#08834c',
+        light: '#E7F5EE',
+        text: '#066B3F'
       }
     : {
         accent: '#2771CB',
@@ -386,7 +386,16 @@ function ExtraDetailsBird({ activity, language, visible }) {
           ]}
         >
           <Text style={styles.extraBubbleText}>{activity.extraDetails}</Text>
+        </View>
 
+        <View
+          style={[
+            styles.extraBubbleBridge,
+            { backgroundColor: theme.light }
+          ]}
+        />
+
+        <View style={styles.extraBubbleTailWrap}>
           <View
             style={[
               styles.extraBubbleTailBorder,
@@ -401,6 +410,7 @@ function ExtraDetailsBird({ activity, language, visible }) {
             ]}
           />
         </View>
+        
 
         <Image source={birdImage} style={styles.birdImage} resizeMode="contain" />
       </View>
@@ -1731,6 +1741,14 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     position: 'relative'
   },
+  extraBubbleBridge: {
+    width: 16,
+    height: 5,
+    alignSelf: 'center',
+    marginTop: -3,
+    marginBottom: -2,
+    zIndex: 6
+  },
 
   extraBubble: {
     maxWidth: '88%',
@@ -1738,26 +1756,27 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     paddingHorizontal: 15,
     paddingVertical: 13,
-    marginBottom: 10,
-    position: 'relative',
+    marginBottom: 0,
     zIndex: 3,
     elevation: 3,
     alignSelf: 'center'
   },
 
-  extraBubbleText: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: '#1F2937',
-    fontWeight: '700',
-    textAlign: 'center'
+  extraBubbleTailWrap: {
+    width: 28,
+    height: 20,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginTop: -1,
+    marginBottom: 0,
+    position: 'relative',
+    zIndex: 4
   },
 
   extraBubbleTailBorder: {
     position: 'absolute',
-    bottom: -20,
-    left: '50%',
-    marginLeft: -12,
+    top: 0,
     width: 0,
     height: 0,
     borderLeftWidth: 12,
@@ -1770,9 +1789,7 @@ const styles = StyleSheet.create({
 
   extraBubbleTail: {
     position: 'absolute',
-    bottom: -16,
-    left: '50%',
-    marginLeft: -9,
+    top: 0,
     width: 0,
     height: 0,
     borderLeftWidth: 9,
