@@ -27,6 +27,11 @@ jest.mock('../../data/lessonLoader', () =>
 
 setupAppTests();
 
+const FULL_SCREEN_PHONE_METRICS = {
+  frame: { x: 0, y: 0, width: 412, height: 915 },
+  insets: { top: 38, right: 0, bottom: 24, left: 0 }
+};
+
 describe('LoadingScreen', () => {
   it('routes first launch to Language selection', async () => {
     renderApp({ initialRouteName: 'Loading' });
@@ -75,6 +80,20 @@ describe('LanguageSelectScreen', () => {
 });
 
 describe('HomeScreen', () => {
+  it('positions the top bar below the device safe area', async () => {
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
+    });
+
+    await screen.findByText('Cajun French');
+
+    expect(screen.getByTestId('home-top-bar')).toHaveStyle({
+      paddingTop: FULL_SCREEN_PHONE_METRICS.insets.top + 16
+    });
+  });
+
   it('shows Learner Progress, Units, Lessons, and session entry points', async () => {
     await seedAsyncStorage({
       profile: profiles.established,
@@ -344,6 +363,22 @@ describe('DailyReviewScreen', () => {
 });
 
 describe('DictionaryScreen', () => {
+  it('applies the final top inset on the first render', async () => {
+    renderApp({
+      initialRouteName: 'Dictionary',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
+    });
+
+    expect(screen.getByText('Cajun Dictionary')).toBeOnTheScreen();
+
+    expect(screen.getByTestId('dictionary-screen')).toHaveStyle({
+      paddingTop: FULL_SCREEN_PHONE_METRICS.insets.top,
+      paddingBottom: FULL_SCREEN_PHONE_METRICS.insets.bottom
+    });
+    expect(await screen.findByText('Hello')).toBeOnTheScreen();
+  });
+
   it('lists Words, filters by search, and shows mastery status', async () => {
     const user = setupUser();
     await seedAsyncStorage({

@@ -3,7 +3,6 @@ import { Audio } from 'expo-av';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   View
 } from 'react-native';
 import BugReportButton from '../components/BugReportButton';
+import SafeScreenView from '../components/SafeScreenView';
 import { getAudioSource } from '../data/audioManifest';
 import { getAllWords } from '../data/lessonLoader';
 import { getWordProgress } from '../utils/storage';
@@ -106,7 +106,7 @@ export default function DictionaryScreen({ route }) {
   }, [allWords, query, selectedUnit]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container} testID="dictionary-screen">
       <View style={styles.header}>
         <Text style={styles.title}>
           {language === 'cajun' ? 'Cajun Dictionary' : 'Kouri-Vini Dictionary'}
@@ -193,7 +193,7 @@ export default function DictionaryScreen({ route }) {
 
         <BugReportButton screenName="Dictionary" language={language} />
       </ScrollView>
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

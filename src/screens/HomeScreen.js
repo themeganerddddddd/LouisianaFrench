@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
 import { getAllWords, getUnits } from '../data/lessonLoader';
 import {
@@ -44,6 +45,7 @@ function getTimeUntilMidnight() {
 export default function HomeScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
 
   const [language, setLanguage] = useState(route.params?.language || 'cajun');
   const [units, setUnits] = useState([]);
@@ -131,7 +133,11 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.topBarGrad} style={styles.topBar}>
+      <LinearGradient
+        colors={theme.topBarGrad}
+        style={[styles.topBar, { paddingTop: insets.top + 16 }]}
+        testID="home-top-bar"
+      >
         <View style={{ flex: 1 }}>
           <Text style={styles.topTitle}>
             {language === 'cajun' ? 'Cajun French' : 'Kouri-Vini'}
@@ -329,7 +335,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 50,
     paddingBottom: 22,
     paddingHorizontal: 20
   },
