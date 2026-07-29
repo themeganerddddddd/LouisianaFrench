@@ -68,7 +68,7 @@
     .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
     .flow div { padding: 18px 14px; background: var(--wash); border-radius: 16px; font-weight: 800; text-align: center; }
     .flow strong { display: block; margin-bottom: 6px; color: var(--blue); font-size: 13px; text-transform: uppercase; }
-    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
     article { padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); }
     article.active { border: 2px solid var(--blue); }
     .status {
@@ -115,7 +115,7 @@
     <section>
       <h2>The learner experience</h2>
       <div class="flow">
-        <div><strong>1</strong>Tap the 36px ! button</div>
+        <div><strong>1</strong>Tap the report control</div>
         <div><strong>2</strong>Enter name, email, and issue</div>
         <div><strong>3</strong>Review device-data notice</div>
         <div><strong>4</strong>Accept and open mail app</div>
@@ -124,11 +124,11 @@
     </section>
 
     <section>
-      <h2>Why the work is split into three PRs</h2>
-      <p>Each PR stays focused, includes its own tests, and leaves a reviewable change.</p>
+      <h2>Why the work is split into two PRs</h2>
+      <p>Each PR stays focused, includes its own tests, and leaves a reviewable change. Former PR2 and PR3 were combined per a user-approved review-size exception.</p>
       <div class="cards">
         <article class="active">
-          <span class="status">PR 1 · Draft</span>
+          <span class="status">PR 1 · Merged</span>
           <h3>Safe data and email foundation</h3>
           <ul>
             <li>Validate required name, valid email, and required description.</li>
@@ -137,24 +137,18 @@
             <li>Test successful gathering for both iOS and Android.</li>
           </ul>
         </article>
-        <article>
-          <span class="status planned">PR 2 · Planned</span>
-          <h3>Complete flow on Home</h3>
+        <article class="active">
+          <span class="status">PR 2 · Draft</span>
+          <h3>Complete UI across all five hubs</h3>
           <ul>
-            <li>Add the support button, form, and inline validation.</li>
+            <li>Add Home report text plus round ! controls on other hubs.</li>
             <li>Show the exact consent list before device collection.</li>
             <li>Open the mail app after acceptance.</li>
             <li>Show the Mardi Gras umbrella pelican confirmation.</li>
-          </ul>
-        </article>
-        <article>
-          <span class="status planned">PR 3 · Planned</span>
-          <h3>Place it on other hubs</h3>
-          <ul>
-            <li>Add the same control to Dictionary and Advanced.</li>
-            <li>Add it to Language Select and Lesson Complete.</li>
+            <li>Mount button on Dictionary, Advanced, LanguageSelect, LessonComplete.</li>
+            <li>Pass <code>language</code> and <code>screenName</code> from each screen.</li>
+            <li>Propagate <code>language</code> through lesson/review replace calls.</li>
             <li>Keep lesson and review activities unchanged.</li>
-            <li>Pass the current screen and Language into reports.</li>
           </ul>
         </article>
       </div>
@@ -202,7 +196,7 @@
         <li>Is the support button noticeable without distracting from learning?</li>
         <li>Does the consent notice explain the collected information clearly?</li>
         <li>Does the email handoff feel acceptable compared with an in-app send?</li>
-        <li>Does the three-PR sequence make the change easy to review?</li>
+        <li>Does the two-PR sequence make the change easy to review?</li>
       </ul>
     </section>
 

@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import BugReportButton from '../components/BugReportButton';
 import { getAudioSource } from '../data/audioManifest';
 import { getAllWords } from '../data/lessonLoader';
 import { getWordProgress } from '../utils/storage';
@@ -189,6 +190,8 @@ export default function DictionaryScreen({ route }) {
             <Text style={styles.emptyText}>No matches found.</Text>
           </View>
         ) : null}
+
+        <BugReportButton screenName="Dictionary" language={language} />
       </ScrollView>
     </SafeAreaView>
   );

@@ -33,6 +33,7 @@ describe('LoadingScreen', () => {
 
     expect(screen.getByText('Learn')).toBeOnTheScreen();
     expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Report a bug')).toBeNull();
 
     await act(async () => {
       jest.advanceTimersByTime(3000);
@@ -63,6 +64,7 @@ describe('LanguageSelectScreen', () => {
     expect(screen.getByText('Choose your language')).toBeOnTheScreen();
     expect(screen.getByText('Cajun')).toBeOnTheScreen();
     expect(screen.getByText('Kouri-Vini')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Cajun'));
 
@@ -101,6 +103,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Greetings & Check-ins')).toBeOnTheScreen();
     expect(screen.getByText('First greetings')).toBeOnTheScreen();
     expect(screen.getByText('Done')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
   });
 
   it('opens Dictionary from Home', async () => {
@@ -143,6 +146,7 @@ describe('LessonRunner', () => {
     expect(await screen.findByText('New word')).toBeOnTheScreen();
     expect(screen.getByText('1 / 4')).toBeOnTheScreen();
     expect(screen.getByText('Bonjour')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Report a bug')).toBeNull();
 
     await user.press(screen.getByText('Continue'));
 
@@ -213,6 +217,7 @@ describe('MistakeReviewScreen', () => {
     expect(screen.getByText('Mistake Review')).toBeOnTheScreen();
     expect(screen.getByText('Let’s fix the questions you missed.')).toBeOnTheScreen();
     expect(screen.getByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Report a bug')).toBeNull();
 
     await user.press(screen.getByText('Ça va?'));
     await user.press(screen.getByText('Check'));
@@ -233,7 +238,8 @@ describe('LessonCompleteScreen', () => {
         lessonTitle: 'Greetings & Check-ins — First greetings',
         xpEarned: 30,
         mistakesCount: 1,
-        streak: 2
+        streak: 2,
+        language: 'cajun'
       }
     });
 
@@ -243,6 +249,7 @@ describe('LessonCompleteScreen', () => {
     expect(screen.getByText('📝 1')).toBeOnTheScreen();
     expect(screen.getByText('🔥 Streak: 2')).toBeOnTheScreen();
     expect(screen.getByText('Open Leaderboard (WIP)')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Back to Home'));
     expect(await screen.findByText('Cajun French')).toBeOnTheScreen();
@@ -262,6 +269,7 @@ describe('DailyReviewScreen', () => {
     ).toBeOnTheScreen();
     expect(screen.getByText('1 / 5')).toBeOnTheScreen();
     expect(screen.getByText("Build: 'It's ready'")).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Report a bug')).toBeNull();
 
     const check = await screen.findByText('Check');
     expect(check).toBeDisabled();
@@ -377,6 +385,7 @@ describe('DictionaryScreen', () => {
     });
 
     expect(await screen.findByText('All Words')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
     await user.press(screen.getAllByText('Names & Introductions')[0]);
     expect(await screen.findByText("It's ready")).toBeOnTheScreen();
@@ -393,5 +402,6 @@ describe('AdvancedScreen', () => {
 
     expect(screen.getByText('Advanced Kouri-Vini Hub')).toBeOnTheScreen();
     expect(screen.getByText('Future modes can go here:')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
   });
 });

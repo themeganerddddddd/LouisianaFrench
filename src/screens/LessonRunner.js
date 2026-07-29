@@ -153,7 +153,8 @@ export default function LessonRunner({ route, navigation }) {
       mistakesCount: mistakes.length,
       streak: profile.streak,
       scoreEarned: lesson.type === 'review' ? null : finalScoreEarned,
-      scorePossible: lesson.type === 'review' ? null : scoredPossible
+      scorePossible: lesson.type === 'review' ? null : scoredPossible,
+      language
     });
   }
 

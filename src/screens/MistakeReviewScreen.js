@@ -15,7 +15,8 @@ export default function MistakeReviewScreen({ route, navigation }) {
       mistakesCount: 0,
       streak: null,
       scoreEarned: null,
-      scorePossible: null
+      scorePossible: null,
+      language
     });
     return null;
   }
@@ -34,7 +35,8 @@ export default function MistakeReviewScreen({ route, navigation }) {
         mistakesCount: queue.length,
         streak: updatedProfile.streak,
         scoreEarned: null,
-        scorePossible: null
+        scorePossible: null,
+        language
       });
     }
   }

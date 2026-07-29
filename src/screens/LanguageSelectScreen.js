@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import BugReportButton from '../components/BugReportButton';
 import { markLanguageSelected, setDefaultLanguage } from '../utils/storage';
 
 export default function LanguageSelectScreen({ navigation }) {
@@ -11,32 +12,35 @@ export default function LanguageSelectScreen({ navigation }) {
 
   return (
     <LinearGradient colors={['#2771CB', '#5B21B6']} style={styles.container}>
-      <Text style={styles.title}>Choose your language</Text>
-      <Text style={styles.sub}>
-        Pick the language you want to begin with.
-      </Text>
+      <View style={styles.content}>
+        <Text style={styles.title}>Choose your language</Text>
+        <Text style={styles.sub}>
+          Pick the language you want to begin with.
+        </Text>
 
-      <View style={styles.cardRow}>
-        <TouchableOpacity style={styles.card} onPress={() => choose('cajun')}>
-          <Image
-            source={require('../../assets/images/cajun_flag.png')}
-            style={styles.flag}
-            resizeMode="cover"
-          />
-          <Text style={styles.cardTitle}>Cajun</Text>
-          <Text style={styles.cardSub}>Louisiana French</Text>
-        </TouchableOpacity>
+        <View style={styles.cardRow}>
+          <TouchableOpacity style={styles.card} onPress={() => choose('cajun')}>
+            <Image
+              source={require('../../assets/images/cajun_flag.png')}
+              style={styles.flag}
+              resizeMode="cover"
+            />
+            <Text style={styles.cardTitle}>Cajun</Text>
+            <Text style={styles.cardSub}>Louisiana French</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card} onPress={() => choose('kreole')}>
-          <Image
-            source={require('../../assets/images/creole_flag.png')}
-            style={styles.flag}
-            resizeMode="cover"
-          />
-          <Text style={styles.cardTitle}>Kouri-Vini</Text>
-          <Text style={styles.cardSub}>Louisiana Creole</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.card} onPress={() => choose('kreole')}>
+            <Image
+              source={require('../../assets/images/creole_flag.png')}
+              style={styles.flag}
+              resizeMode="cover"
+            />
+            <Text style={styles.cardTitle}>Kouri-Vini</Text>
+            <Text style={styles.cardSub}>Louisiana Creole</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+      <BugReportButton screenName="LanguageSelect" />
     </LinearGradient>
   );
 }
@@ -44,8 +48,11 @@ export default function LanguageSelectScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     paddingHorizontal: 24
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center'
   },
   title: {
     color: '#fff',
