@@ -1,8 +1,8 @@
 import csv
 import os
 
-CAJUN_CSV = "Louisiana French - Sheet1.csv"
-KREOLE_CSV = "Louisiana French - Kreole.csv"
+CAJUN_CSV = "cajun.csv"
+KREOLE_CSV = "kreole.csv"
 OUTPUT_JS = "src/data/audioManifest.js"
 
 AUDIO_BASE = {

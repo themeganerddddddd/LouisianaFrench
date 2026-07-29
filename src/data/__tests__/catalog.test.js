@@ -41,7 +41,7 @@ describe('createCatalog', () => {
     ],
     [
       'kreole',
-      'Pronouns & Greetings',
+      'Greetings & Check-ins',
       ['fixture_kreole_u01_l01', 'fixture_kreole_u01_review']
     ]
   ])('orders %s Units and Lessons and annotates their titles', (language, unitTitle, lessonIds) => {
@@ -91,7 +91,7 @@ describe('createCatalog', () => {
     [
       'kreole',
       ['fixture_kreole_w01', 'fixture_kreole_w02', 'fixture_kreole_w03'],
-      'Pronouns & Greetings'
+      'Greetings & Check-ins'
     ]
   ])('deduplicates, sorts, and annotates %s Words', (language, rowIds, firstUnitTitle) => {
     const words = catalog.getAllWords(language);

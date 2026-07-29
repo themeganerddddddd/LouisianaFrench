@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
@@ -26,6 +25,7 @@ import {
 function getTimeUntilMidnight() {
   const now = new Date();
   const nextMidnight = new Date(now);
+
   nextMidnight.setHours(24, 0, 0, 0);
 
   const diffMs = Math.max(0, nextMidnight.getTime() - now.getTime());
@@ -40,6 +40,20 @@ function getTimeUntilMidnight() {
   const ss = String(seconds).padStart(2, '0');
 
   return `${hh}:${mm}:${ss}`;
+}
+
+function getLessonButtonText(done, locked = false) {
+  if (done) return 'Done';
+  if (locked) return 'Locked';
+  return 'Start';
+}
+
+function getUnitNumber(unitCode) {
+  const match = String(unitCode || '').match(/u(\d+)/i);
+
+  if (!match) return 'Unit';
+
+  return `Unit ${Number(match[1])}`;
 }
 
 export default function HomeScreen() {
@@ -63,6 +77,7 @@ export default function HomeScreen() {
       }
 
       const savedLanguage = await getDefaultLanguage();
+
       if (savedLanguage) {
         setLanguage(savedLanguage);
       }
@@ -105,21 +120,27 @@ export default function HomeScreen() {
           topBarGrad: ['#498BDC', '#2771CB'],
           headerGrad: ['#498BDC', '#2771CB'],
           start: '#2771CB',
-          done: '#1D4ED8',
+          done: '#3B82F6',
+          doneSoft: '#3B82F6',
           progressFill: '#7DD3FC',
           subtitle: '#DCEBFF',
           dailyDoneBg: '#1E3A8A',
-          dailyTimer: '#DBEAFE'
+          dailyTimer: '#DBEAFE',
+          accent: '#2771CB',
+          stat: '#17324D'
         }
       : {
-          topBarGrad: ['#7C3AED', '#5B21B6'],
-          headerGrad: ['#7C3AED', '#5B21B6'],
-          start: '#6D28D9',
-          done: '#7C3AED',
-          progressFill: '#C084FC',
-          subtitle: '#EDE9FE',
-          dailyDoneBg: '#4C1D95',
-          dailyTimer: '#E9D5FF'
+          topBarGrad: ['#0AA35F', '#066B3F'],
+          headerGrad: ['#0AA35F', '#066B3F'],
+          start: '#08834C',
+          done: '#10B981',
+          doneSoft: '#34D399',
+          progressFill: '#6EE7B7',
+          subtitle: '#E7F5EE',
+          dailyDoneBg: '#064E32',
+          dailyTimer: '#D1FAE5',
+          accent: '#08834C',
+          stat: '#066B3F'
         };
 
   const allWords = useMemo(() => getAllWords(language), [language]);
@@ -142,6 +163,7 @@ export default function HomeScreen() {
           <Text style={styles.topTitle}>
             {language === 'cajun' ? 'Cajun French' : 'Kouri-Vini'}
           </Text>
+
           <Text style={[styles.topSubtitle, { color: theme.subtitle }]}>
             {masteredWords} / {totalWords} words mastered
           </Text>
@@ -151,13 +173,20 @@ export default function HomeScreen() {
           <TouchableOpacity onPress={() => switchLanguage('cajun')}>
             <Image
               source={require('../../assets/images/cajun_flag.png')}
-              style={[styles.flagImage, language === 'cajun' && styles.flagSelected]}
+              style={[
+                styles.flagImage,
+                language === 'cajun' && styles.flagSelected
+              ]}
             />
           </TouchableOpacity>
+
           <TouchableOpacity onPress={() => switchLanguage('kreole')}>
             <Image
               source={require('../../assets/images/creole_flag.png')}
-              style={[styles.flagImage, language === 'kreole' && styles.flagSelected]}
+              style={[
+                styles.flagImage,
+                language === 'kreole' && styles.flagSelected
+              ]}
             />
           </TouchableOpacity>
         </View>
@@ -166,15 +195,19 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statNum}>{profile.xp || 0}</Text>
+            <Text style={[styles.statNum, { color: theme.stat }]}>{profile.xp || 0}</Text>
             <Text style={styles.statLabel}>XP</Text>
           </View>
+
           <View style={styles.statCard}>
-            <Text style={styles.statNum}>🔥 {profile.streak || 0}</Text>
+            <Text style={[styles.statNum, { color: theme.stat }]}>
+              🔥 {profile.streak || 0}
+            </Text>
             <Text style={styles.statLabel}>Streak</Text>
           </View>
+
           <View style={styles.statCard}>
-            <Text style={styles.statNum}>{overallPct}%</Text>
+            <Text style={[styles.statNum, { color: theme.stat }]}>{overallPct}%</Text>
             <Text style={styles.statLabel}>Mastered</Text>
           </View>
         </View>
@@ -190,6 +223,7 @@ export default function HomeScreen() {
         >
           <View style={{ flex: 1 }}>
             <Text style={styles.dailyTitle}>Daily Review</Text>
+
             <Text style={styles.dailyDesc}>
               {dailyDone
                 ? 'Complete! Your daily review will renew at midnight.'
@@ -203,7 +237,7 @@ export default function HomeScreen() {
             ) : null}
           </View>
 
-          <Text style={styles.dailyStatus}>{dailyDone ? 'Complete!' : 'Start'}</Text>
+          <Text style={styles.dailyStatus}>{dailyDone ? 'Done' : 'Start'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -250,9 +284,15 @@ export default function HomeScreen() {
           return (
             <View key={unitObj.unit} style={styles.unitCard}>
               <LinearGradient colors={theme.headerGrad} style={styles.unitHeader}>
-                <Ionicons name="book" size={22} color="#fff" style={{ marginRight: 10 }} />
+                <View style={styles.unitNumberPill}>
+                  <Text style={[styles.unitNumberText, { color: theme.accent }]}>
+                    {getUnitNumber(unitObj.unit)}
+                  </Text>
+                </View>
+
                 <View style={{ flex: 1 }}>
                   <Text style={styles.unitTitle}>{unitObj.unitTitle}</Text>
+
                   <Text style={styles.unitMeta}>
                     {masteredInUnit} / {uniqueWords.length} words mastered ·{' '}
                     {completedLessons} / {unitObj.lessons.length} lessons done
@@ -274,20 +314,43 @@ export default function HomeScreen() {
 
               {unitObj.lessons.map((lesson) => {
                 const done = !!lessonProgress[`${language}:${lesson.id}`]?.completed;
+                const buttonText = getLessonButtonText(done);
 
                 return (
                   <TouchableOpacity
                     key={lesson.id}
-                    style={styles.lessonRow}
-                    onPress={() => navigation.navigate('Lesson', { lessonId: lesson.id, language })}
+                    style={[
+                      styles.lessonRow,
+                      done && {
+                        backgroundColor: theme.doneSoft,
+                        borderTopColor: theme.doneSoft
+                      }
+                    ]}
+                    onPress={() =>
+                      navigation.navigate('Lesson', {
+                        lessonId: lesson.id,
+                        language
+                      })
+                    }
                     accessibilityRole="button"
                     accessibilityLabel={`${lesson.lessonTitle || lesson.title || 'Lesson'}`}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.lessonTitle}>
+                      <Text
+                        style={[
+                          styles.lessonTitle,
+                          done && styles.lessonTitleDone
+                        ]}
+                      >
                         {lesson.lessonTitle || lesson.title || 'Lesson'}
                       </Text>
-                      <Text style={styles.lessonDesc}>
+
+                      <Text
+                        style={[
+                          styles.lessonDesc,
+                          done && styles.lessonDescDone
+                        ]}
+                      >
                         {lesson.wordCount || (lesson.words || []).length || 0} words ·{' '}
                         {lesson.type === 'review' ? 'Review' : 'Core lesson'}
                       </Text>
@@ -297,11 +360,18 @@ export default function HomeScreen() {
                       style={[
                         styles.badge,
                         done
-                          ? { backgroundColor: theme.done }
+                          ? styles.badgeDone
                           : { backgroundColor: theme.start }
                       ]}
                     >
-                      <Text style={styles.badgeText}>{done ? 'Done' : 'Start'}</Text>
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          done && styles.badgeTextDone
+                        ]}
+                      >
+                        {buttonText}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -330,7 +400,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
+  },
+
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -338,9 +412,23 @@ const styles = StyleSheet.create({
     paddingBottom: 22,
     paddingHorizontal: 20
   },
-  topTitle: { color: '#fff', fontSize: 24, fontWeight: '800' },
-  topSubtitle: { fontSize: 14, fontWeight: '600', marginTop: 6 },
-  flagRow: { flexDirection: 'row' },
+
+  topTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800'
+  },
+
+  topSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 6
+  },
+
+  flagRow: {
+    flexDirection: 'row'
+  },
+
   flagImage: {
     width: 64,
     height: 40,
@@ -348,30 +436,45 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     borderRadius: 4
   },
-  flagSelected: { opacity: 1, borderWidth: 2, borderColor: '#fff' },
-  scroll: { paddingVertical: 16, paddingHorizontal: 14 },
+
+  flagSelected: {
+    opacity: 1,
+    borderWidth: 2,
+    borderColor: '#FFFFFF'
+  },
+
+  scroll: {
+    paddingVertical: 16,
+    paddingHorizontal: 14
+  },
+
   statsRow: {
     flexDirection: 'row',
     gap: 10,
     marginBottom: 14
   },
+
   statCard: {
     flex: 1,
     backgroundColor: '#F8FAFC',
     borderRadius: 16,
     paddingVertical: 14,
-    alignItems: 'center'
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0'
   },
+
   statNum: {
     fontSize: 20,
-    fontWeight: '900',
-    color: '#17324D'
+    fontWeight: '900'
   },
+
   statLabel: {
     marginTop: 4,
     color: '#64748B',
     fontWeight: '700'
   },
+
   dailyCard: {
     backgroundColor: '#102A43',
     borderRadius: 18,
@@ -380,26 +483,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center'
   },
+
   dailyTitle: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '900'
   },
+
   dailyDesc: {
     color: '#DCEBFF',
     marginTop: 4,
     fontWeight: '600'
   },
+
   dailyTimer: {
     marginTop: 8,
     fontWeight: '800',
     fontSize: 13
   },
+
   dailyStatus: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '900',
     marginLeft: 12
   },
+
   dictionaryBtn: {
     backgroundColor: '#0F172A',
     borderRadius: 18,
@@ -407,11 +515,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10
   },
+
   dictionaryBtnText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 16
   },
+
   advancedBtn: {
     backgroundColor: '#334155',
     borderRadius: 18,
@@ -419,45 +529,63 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14
   },
+
   advancedBtnText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 16
   },
-  pelicanImage: {
-    width: '100%',
-    height: 180,
-    marginBottom: 16,
-    borderRadius: 18,
-    alignSelf: 'center'
-  },
+
   unitCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     marginBottom: 14,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E2E8F0'
   },
+
   unitHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16
   },
-  unitTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
+
+  unitNumberPill: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 10
+  },
+
+  unitNumberText: {
+    fontSize: 12,
+    fontWeight: '900'
+  },
+
+  unitTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF'
+  },
+
   unitMeta: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.88)',
     marginTop: 5,
     fontWeight: '600'
   },
+
   progressBarBg: {
     height: 10,
     backgroundColor: '#E2E8F0'
   },
+
   progressBarFill: {
     height: 10
   },
+
   lessonRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -465,22 +593,48 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9'
   },
+
   lessonTitle: {
     fontSize: 16,
     fontWeight: '800',
     color: '#102A43'
   },
+
+  lessonTitleDone: {
+    color: '#FFFFFF'
+  },
+
   lessonDesc: {
     fontSize: 13,
     color: '#64748B',
     marginTop: 4
   },
+
+  lessonDescDone: {
+    color: 'rgba(255,255,255,0.88)'
+  },
+
   badge: {
     borderRadius: 999,
     paddingVertical: 8,
     paddingHorizontal: 12
   },
-  badgeText: { color: '#fff', fontWeight: '800' },
+
+  badgeDone: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)'
+  },
+
+  badgeText: {
+    color: '#FFFFFF',
+    fontWeight: '800'
+  },
+
+  badgeTextDone: {
+    color: '#FFFFFF'
+  },
+
   bottomImage: {
     width: '100%',
     height: 120,

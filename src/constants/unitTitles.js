@@ -7,11 +7,15 @@ export const UNIT_TITLES = {
     u05: 'Doing & Everyday Actions'
   },
   kreole: {
-    u01: 'Pronouns & Greetings',
-    u02: 'Check-ins & Well-being',
-    u03: 'Names & Introductions',
-    u04: 'Common Verbs',
-    u05: 'Everyday Nouns'
+    u01: "Greetings & Check-ins",
+    u02: "Pronouns & Feelings",
+    u03: "Common Verbs",
+    u04: "Descriptions & Qualities",
+    u05: "School & Everyday Life",
+    u06: "Questions & Time",
+    u07: "Actions & Tenses",
+    u08: "Possession & Requests",
+    u09: "Objects, Names & Senses"
   }
 };
 
