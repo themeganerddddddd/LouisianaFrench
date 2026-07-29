@@ -136,6 +136,7 @@ export default function HomeScreen() {
       <LinearGradient
         colors={theme.topBarGrad}
         style={[styles.topBar, { paddingTop: insets.top + 16 }]}
+        testID="home-top-bar"
       >
         <View style={{ flex: 1 }}>
           <Text style={styles.topTitle}>
