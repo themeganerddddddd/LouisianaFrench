@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
 import ProgressHeader from '../components/ProgressHeader';
+import SafeScreenView from '../components/SafeScreenView';
 import { getAllActivities } from '../data/lessonLoader';
 import {
   getDueReviewItems,
@@ -32,25 +33,25 @@ export default function DailyReviewScreen({ route, navigation }) {
   const [mistakes, setMistakes] = useState([]);
 
   useEffect(() => {
+    async function init() {
+      const allActivities = getAllActivities(language).filter((a) => a.type !== 'intro_card');
+      const due = await getDueReviewItems(allActivities);
+      const weak = await getWeakItems(allActivities);
+
+      const merged = dedupeByCardId([
+        ...due.map((x) => ({ ...x, isReview: true })),
+        ...weak.map((x) => ({ ...x, isReview: true }))
+      ]).slice(0, 15);
+
+      setQueue(
+        merged.length
+          ? merged
+          : allActivities.slice(0, 10).map((x) => ({ ...x, isReview: true }))
+      );
+    }
+
     init();
   }, [language]);
-
-  async function init() {
-    const allActivities = getAllActivities(language).filter((a) => a.type !== 'intro_card');
-    const due = await getDueReviewItems(allActivities);
-    const weak = await getWeakItems(allActivities);
-
-    const merged = dedupeByCardId([
-      ...due.map((x) => ({ ...x, isReview: true })),
-      ...weak.map((x) => ({ ...x, isReview: true }))
-    ]).slice(0, 15);
-
-    setQueue(
-      merged.length
-        ? merged
-        : allActivities.slice(0, 10).map((x) => ({ ...x, isReview: true }))
-    );
-  }
 
   if (!queue.length) return null;
 
@@ -79,7 +80,8 @@ export default function DailyReviewScreen({ route, navigation }) {
       mistakesCount: mistakes.length,
       streak: profile.streak,
       scoreEarned: null,
-      scorePossible: null
+      scorePossible: null,
+      language
     });
   }
 
@@ -89,26 +91,38 @@ export default function DailyReviewScreen({ route, navigation }) {
       await updateWordProgress(language, current.rowId, false);
     }
 
-    setMistakes((prev) => [...prev, { ...current, userAnswer }]);
+    const nextMistakes = [...mistakes, { ...current, userAnswer }];
+    setMistakes(nextMistakes);
 
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
-      await handleCorrect();
+      await markDailyReviewDone(getTodayKey());
+      const profile = await recordStudyAndXp(xp);
+
+      navigation.replace('LessonComplete', {
+        lessonTitle: 'Daily Review',
+        xpEarned: xp,
+        mistakesCount: nextMistakes.length,
+        streak: profile.streak,
+        scoreEarned: null,
+        scorePossible: null,
+        language
+      });
     }
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container}>
       <View style={styles.inner}>
-      <ProgressHeader
-      current={index + 1}
-      total={queue.length}
-      xp={xp}
-      title="Daily Review"
-      modeLabel="Across all units"
-      language={language}
-      />
+        <ProgressHeader
+          current={index + 1}
+          total={queue.length}
+          xp={xp}
+          title="Daily Review"
+          modeLabel="Across all units"
+          language={language}
+        />
 
         <Text style={styles.sub}>Due cards, weak words, and review practice.</Text>
 
@@ -120,7 +134,7 @@ export default function DailyReviewScreen({ route, navigation }) {
           onWrong={handleWrong}
         />
       </View>
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
+import SafeScreenView from '../components/SafeScreenView';
 import { recordStudyAndXp } from '../utils/storage';
 
 export default function MistakeReviewScreen({ route, navigation }) {
@@ -15,7 +16,8 @@ export default function MistakeReviewScreen({ route, navigation }) {
       mistakesCount: 0,
       streak: null,
       scoreEarned: null,
-      scorePossible: null
+      scorePossible: null,
+      language
     });
     return null;
   }
@@ -40,7 +42,8 @@ export default function MistakeReviewScreen({ route, navigation }) {
         mistakesCount: queue.length,
         streak: updatedProfile.streak,
         scoreEarned: null,
-        scorePossible: null
+        scorePossible: null,
+        language
       });
     }
   }
@@ -51,7 +54,7 @@ export default function MistakeReviewScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container}>
       <View style={styles.inner}>
         <View style={styles.reviewHeader}>
           <Text style={styles.header}>Mistake Review</Text>
@@ -83,7 +86,7 @@ export default function MistakeReviewScreen({ route, navigation }) {
           allowSkip={false}
         />
       </View>
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

@@ -3,7 +3,6 @@ import { Audio } from 'expo-av';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import BugReportButton from '../components/BugReportButton';
+import SafeScreenView from '../components/SafeScreenView';
 import { getAudioSource } from '../data/audioManifest';
 import { getAllWords } from '../data/lessonLoader';
 import { getWordProgress } from '../utils/storage';
@@ -38,6 +39,11 @@ export default function DictionaryScreen({ route }) {
   const soundRef = useRef(null);
 
   useEffect(() => {
+    async function load() {
+      setAllWords(getAllWords(language));
+      setWordProgress(await getWordProgress());
+    }
+
     load();
 
     return () => {
@@ -45,18 +51,13 @@ export default function DictionaryScreen({ route }) {
     };
   }, [language]);
 
-  async function load() {
-    setAllWords(getAllWords(language));
-    setWordProgress(await getWordProgress());
-  }
-
   async function unloadSound() {
     try {
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   async function playAudio(audioKey) {
@@ -72,7 +73,7 @@ export default function DictionaryScreen({ route }) {
       const { sound } = await Audio.Sound.createAsync(source);
       soundRef.current = sound;
       await sound.playAsync();
-    } catch (e) {
+    } catch (_e) {
       Alert.alert('Audio error', 'Could not play this audio file.');
     }
   }
@@ -105,7 +106,7 @@ export default function DictionaryScreen({ route }) {
   }, [allWords, query, selectedUnit]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container} testID="dictionary-screen">
       <View style={styles.header}>
         <Text style={styles.title}>
           {language === 'cajun' ? 'Cajun Dictionary' : 'Kouri-Vini Dictionary'}
@@ -189,8 +190,10 @@ export default function DictionaryScreen({ route }) {
             <Text style={styles.emptyText}>No matches found.</Text>
           </View>
         ) : null}
+
+        <BugReportButton screenName="Dictionary" language={language} />
       </ScrollView>
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

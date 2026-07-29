@@ -1,0 +1,75 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md"],
+  "model": "opencode-go/deepseek-v4-pro",
+  "lsp": true,
+  "default_agent": "general",
+  "agent": {
+    "review": {
+      "model": "opencode-go/grok-4.5",
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "cat*": "allow",
+          "head*": "allow",
+          "tail*": "allow",
+          "grep*": "allow",
+          "rg*": "allow",
+          "find*": "allow",
+          "find*-delete*": "deny",
+          "find*-exec*": "deny",
+          "find*-execdir*": "deny",
+          "sed*": "allow",
+          "sed*-i*": "deny",
+          "sed*--in-place*": "deny",
+          "sed*>*": "deny",
+          "awk*": "allow",
+          "awk*system(*": "deny",
+          "awk*>*": "deny",
+          "git status*": "allow",
+          "git diff*": "allow",
+          "git log*": "allow",
+          "git show*": "allow",
+          "git blame*": "allow",
+          "git grep*": "allow",
+          "git rev-parse*": "allow",
+          "git merge-base*": "allow",
+          "git ls-files*": "allow"
+        }
+      }
+    },
+    "coder-mini": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "cat*": "allow",
+          "head*": "allow",
+          "tail*": "allow",
+          "grep*": "allow",
+          "rg*": "allow",
+          "find*": "allow",
+          "find*-delete*": "deny",
+          "find*-exec*": "deny",
+          "find*-execdir*": "deny",
+          "sed*": "allow",
+          "sed*-i*": "deny",
+          "sed*--in-place*": "deny",
+          "sed*>*": "deny",
+          "awk*": "allow",
+          "awk*system(*": "deny",
+          "awk*>*": "deny",
+          "git status*": "allow",
+          "git diff*": "allow",
+          "git log*": "allow",
+          "git show*": "allow",
+          "git blame*": "allow",
+          "git grep*": "allow",
+          "git rev-parse*": "allow",
+          "git merge-base*": "allow",
+          "git ls-files*": "allow"
+        }
+      }
+    }
+  },
+}

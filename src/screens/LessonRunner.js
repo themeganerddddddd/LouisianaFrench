@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
 import ProgressHeader from '../components/ProgressHeader';
+import SafeScreenView from '../components/SafeScreenView';
 import { getLessonById } from '../data/lessonLoader';
 import {
   getDueReviewItems,
@@ -27,9 +28,27 @@ export default function LessonRunner({ route, navigation }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    init();
-  }, []);
+    if (!lesson) {
+      navigation.replace('Home', { language });
+      return;
+    }
 
+    async function init() {
+      const due = await getDueReviewItems(lesson.activities || []);
+      const dueIds = new Set(due.map((d) => d.cardId));
+
+      const merged = (lesson.activities || []).map((a) => ({
+        ...a,
+        isReview: dueIds.has(a.cardId)
+      }));
+
+      setActivities(merged);
+    }
+
+    init();
+  }, [lesson, language, navigation]);
+
+  // fadeAnim and slideAnim are useRef().current values — stable across renders
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -43,7 +62,7 @@ export default function LessonRunner({ route, navigation }) {
         useNativeDriver: true
       })
     ]).start();
-  }, [index]);
+  }, [index, fadeAnim, slideAnim]);
 
   function animateToNext(cb) {
     Animated.parallel([
@@ -62,18 +81,6 @@ export default function LessonRunner({ route, navigation }) {
       slideAnim.setValue(12);
       fadeAnim.setValue(0);
     });
-  }
-
-  async function init() {
-    const due = await getDueReviewItems(lesson.activities || []);
-    const dueIds = new Set(due.map((d) => d.cardId));
-
-    const merged = (lesson.activities || []).map((a) => ({
-      ...a,
-      isReview: dueIds.has(a.cardId)
-    }));
-
-    setActivities(merged);
   }
 
   if (!lesson || activities.length === 0) return null;
@@ -147,12 +154,13 @@ export default function LessonRunner({ route, navigation }) {
       mistakesCount: mistakes.length,
       streak: profile.streak,
       scoreEarned: lesson.type === 'review' ? null : finalScoreEarned,
-      scorePossible: lesson.type === 'review' ? null : scoredPossible
+      scorePossible: lesson.type === 'review' ? null : scoredPossible,
+      language
     });
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeScreenView style={styles.container}>
       <View style={styles.inner}>
         <ProgressHeader
         current={index + 1}
@@ -178,7 +186,7 @@ export default function LessonRunner({ route, navigation }) {
           />
         </Animated.View>
       </View>
-    </SafeAreaView>
+    </SafeScreenView>
   );
 }
 

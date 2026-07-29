@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support Button Project Review</title>
+  <style>
+    :root {
+      --blue: #2771cb;
+      --purple: #6d28d9;
+      --ink: #17324d;
+      --muted: #64748b;
+      --line: #dbe4ef;
+      --paper: #ffffff;
+      --wash: #f4f8fc;
+      --green: #166534;
+      --orange: #9a3412;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: linear-gradient(145deg, #e8f2ff 0%, var(--wash) 50%, #f3ebff 100%);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    main { width: min(1080px, calc(100% - 32px)); margin: 36px auto 64px; }
+    header, section {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(219, 228, 239, 0.9);
+      border-radius: 24px;
+      box-shadow: 0 18px 50px rgba(23, 50, 77, 0.08);
+    }
+    header { padding: clamp(28px, 6vw, 64px); position: relative; overflow: hidden; }
+    header::after {
+      content: "!";
+      position: absolute;
+      right: clamp(24px, 8vw, 90px);
+      top: 50%;
+      translate: 0 -50%;
+      display: grid;
+      place-items: center;
+      width: 72px;
+      height: 72px;
+      color: white;
+      background: var(--blue);
+      border-radius: 50%;
+      font-size: 36px;
+      font-weight: 900;
+      box-shadow: 0 12px 28px rgba(39, 113, 203, 0.32);
+    }
+    h1 { max-width: 700px; margin: 0; font-size: clamp(34px, 7vw, 66px); line-height: 1.02; }
+    header p { max-width: 690px; margin: 18px 100px 0 0; color: var(--muted); font-size: 18px; }
+    .eyebrow { color: var(--blue); font-size: 13px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .links a {
+      padding: 10px 15px;
+      color: white;
+      background: var(--ink);
+      border-radius: 999px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    section { margin-top: 20px; padding: clamp(22px, 4vw, 38px); }
+    h2 { margin: 0 0 18px; font-size: 26px; }
+    h3 { margin: 0; font-size: 19px; }
+    p { margin: 8px 0; }
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .flow div { padding: 18px 14px; background: var(--wash); border-radius: 16px; font-weight: 800; text-align: center; }
+    .flow strong { display: block; margin-bottom: 6px; color: var(--blue); font-size: 13px; text-transform: uppercase; }
+    .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    article { padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); }
+    article.active { border: 2px solid var(--blue); }
+    .status {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: var(--green);
+      background: #dcfce7;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .planned { color: var(--purple); background: #ede9fe; }
+    ul { margin: 12px 0 0; padding-left: 20px; }
+    li { margin: 7px 0; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .notice { border-left: 5px solid #f59e0b; background: #fff7ed; }
+    .notice h3 { color: var(--orange); }
+    code { padding: 2px 6px; background: #e8eef5; border-radius: 5px; }
+    footer { padding: 26px 4px; color: var(--muted); text-align: center; }
+    @media (max-width: 760px) {
+      header::after { width: 48px; height: 48px; right: 20px; top: 28px; translate: 0; font-size: 24px; }
+      header p { margin-right: 0; }
+      .flow, .cards, .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">Partner review document</div>
+      <h1>In-app support button</h1>
+      <p>
+        A small support button lets learners describe a problem, understand exactly
+        which device details will be attached, and open a ready-to-send email.
+      </p>
+      <nav class="links" aria-label="Project documents">
+        <a href="mockup.html">Open interactive mockup</a>
+        <a href="spec.md">Read detailed specification</a>
+      </nav>
+    </header>
+
+    <section>
+      <h2>The learner experience</h2>
+      <div class="flow">
+        <div><strong>1</strong>Tap the report control</div>
+        <div><strong>2</strong>Enter name, email, and issue</div>
+        <div><strong>3</strong>Review device-data notice</div>
+        <div><strong>4</strong>Accept and open mail app</div>
+        <div><strong>5</strong>See pelican confirmation</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Why the work is split into two PRs</h2>
+      <p>Each PR stays focused, includes its own tests, and leaves a reviewable change. Former PR2 and PR3 were combined per a user-approved review-size exception.</p>
+      <div class="cards">
+        <article class="active">
+          <span class="status">PR 1 · Merged</span>
+          <h3>Safe data and email foundation</h3>
+          <ul>
+            <li>Validate required name, valid email, and required description.</li>
+            <li>Gather device and app details only when called.</li>
+            <li>Build and open a pre-filled <code>mailto:</code> message.</li>
+            <li>Test successful gathering for both iOS and Android.</li>
+          </ul>
+        </article>
+        <article class="active">
+          <span class="status">PR 2 · Draft</span>
+          <h3>Complete UI across all five hubs</h3>
+          <ul>
+            <li>Add Home report text plus round ! controls on other hubs.</li>
+            <li>Show the exact consent list before device collection.</li>
+            <li>Open the mail app after acceptance.</li>
+            <li>Show the Mardi Gras umbrella pelican confirmation.</li>
+            <li>Mount button on Dictionary, Advanced, LanguageSelect, LessonComplete.</li>
+            <li>Pass <code>language</code> and <code>screenName</code> from each screen.</li>
+            <li>Propagate <code>language</code> through lesson/review replace calls.</li>
+            <li>Keep lesson and review activities unchanged.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Privacy and validation</h2>
+      <div class="two-col">
+        <article>
+          <h3>Nothing gathered before consent</h3>
+          <p>The form is validated first. Device information is collected only after the learner accepts the notice.</p>
+          <ul>
+            <li>Phone make and model</li>
+            <li>Operating system (name + version)</li>
+            <li>OS build ID (firmware-ish)</li>
+            <li>App version</li>
+            <li>Device type (phone / tablet / web)</li>
+            <li>App context (selected language, screen name, UTC timestamp)</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Clear form requirements</h3>
+          <ul>
+            <li>Name cannot be empty or whitespace.</li>
+            <li>Email is required and must use a basic valid format.</li>
+            <li>Description cannot be empty or whitespace.</li>
+            <li>Invalid forms never proceed to consent.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="notice">
+      <h3>No support server is required</h3>
+      <p>
+        The app opens the learner's existing mail client. It does not contain a GitHub
+        token or automatically send data. The final support inbox will be configured
+        before the feature ships.
+      </p>
+    </section>
+
+    <section>
+      <h2>What to review</h2>
+      <ul>
+        <li>Is the support button noticeable without distracting from learning?</li>
+        <li>Does the consent notice explain the collected information clearly?</li>
+        <li>Does the email handoff feel acceptable compared with an in-app send?</li>
+        <li>Does the two-PR sequence make the change easy to review?</li>
+      </ul>
+    </section>
+
+    <footer>Louisiana Language Learning · Support button project</footer>
+  </main>
+</body>
+</html>

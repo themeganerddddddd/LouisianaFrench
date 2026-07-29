@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BugReportButton from '../components/BugReportButton';
 import { getAllWords, getUnits } from '../data/lessonLoader';
 import {
   getDailyReviewLog,
@@ -57,6 +59,7 @@ function getUnitNumber(unitCode) {
 export default function HomeScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
 
   const [language, setLanguage] = useState(route.params?.language || 'cajun');
   const [units, setUnits] = useState([]);
@@ -84,6 +87,17 @@ export default function HomeScreen() {
   }, [route.params?.language]);
 
   useEffect(() => {
+    async function loadData() {
+      setUnits(getUnits(language));
+      setProfile(await getProfile());
+      setLessonProgress(await getLessonProgress());
+      setWordProgress(await getWordProgress());
+
+      const reviewLog = await getDailyReviewLog();
+      setDailyDone(!!reviewLog[getTodayKey()]);
+      setTimeUntilReset(getTimeUntilMidnight());
+    }
+
     loadData();
   }, [language]);
 
@@ -98,18 +112,6 @@ export default function HomeScreen() {
   async function switchLanguage(nextLanguage) {
     setLanguage(nextLanguage);
     await setDefaultLanguage(nextLanguage);
-  }
-
-  async function loadData() {
-    setUnits(getUnits(language));
-    setProfile(await getProfile());
-    setLessonProgress(await getLessonProgress());
-    setWordProgress(await getWordProgress());
-
-    const reviewLog = await getDailyReviewLog();
-
-    setDailyDone(!!reviewLog[getTodayKey()]);
-    setTimeUntilReset(getTimeUntilMidnight());
   }
 
   const theme =
@@ -152,7 +154,11 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.topBarGrad} style={styles.topBar}>
+      <LinearGradient
+        colors={theme.topBarGrad}
+        style={[styles.topBar, { paddingTop: insets.top + 16 }]}
+        testID="home-top-bar"
+      >
         <View style={{ flex: 1 }}>
           <Text style={styles.topTitle}>
             {language === 'cajun' ? 'Cajun French' : 'Kouri-Vini'}
@@ -212,6 +218,8 @@ export default function HomeScreen() {
             dailyDone && { backgroundColor: theme.dailyDoneBg }
           ]}
           onPress={() => navigation.navigate('DailyReview', { language })}
+          accessibilityRole="button"
+          accessibilityLabel="Daily Review"
         >
           <View style={{ flex: 1 }}>
             <Text style={styles.dailyTitle}>Daily Review</Text>
@@ -235,6 +243,8 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.dictionaryBtn}
           onPress={() => navigation.navigate('Dictionary', { language })}
+          accessibilityRole="button"
+          accessibilityLabel="Open Dictionary"
         >
           <Text style={styles.dictionaryBtnText}>Open Dictionary</Text>
         </TouchableOpacity>
@@ -242,6 +252,8 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.advancedBtn}
           onPress={() => navigation.navigate('Advanced', { language })}
+          accessibilityRole="button"
+          accessibilityLabel="Advanced Review Hub"
         >
           <Text style={styles.advancedBtnText}>Advanced / Review Hub</Text>
         </TouchableOpacity>
@@ -307,6 +319,8 @@ export default function HomeScreen() {
                 return (
                   <TouchableOpacity
                     key={lesson.id}
+                  <TouchableOpacity
+                    key={lesson.id}
                     style={[
                       styles.lessonRow,
                       done && {
@@ -320,6 +334,8 @@ export default function HomeScreen() {
                         language
                       })
                     }
+                    accessibilityRole="button"
+                    accessibilityLabel={`${lesson.lessonTitle || lesson.title || 'Lesson'}`}
                   >
                     <View style={{ flex: 1 }}>
                       <Text
@@ -372,6 +388,13 @@ export default function HomeScreen() {
           resizeMode="contain"
         />
 
+        <BugReportButton
+          screenName="Home"
+          language={language}
+          accentColor={theme.start}
+          appearance="text"
+        />
+
         <View style={{ height: 30 }} />
       </ScrollView>
     </View>
@@ -388,7 +411,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 50,
     paddingBottom: 22,
     paddingHorizontal: 20
   },

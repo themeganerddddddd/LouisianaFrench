@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -20,8 +20,8 @@ const CORRECT_TONE_URI =
 const WRONG_TONE_URI =
   'data:audio/wav;base64,UklGRtAUAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YawUAAAAAJoBMwPJBFoG5AdnCeAKTgywDQQPSRB9EaASsROtFJUVZxYiF8YXUhjGGCEZYhmLGZkZjRloGSoZ0hhhGNcXNhd9Fq4VyBTOE8ASnxFtECoP1w13DAoLkgkRCIcG9wRhA8kBLgCV/vv8';
 
-function shuffle(arr) {
-  return [...arr].sort(() => Math.random() - 0.5);
+function shuffle(arr, randomFn = Math.random) {
+  return [...arr].sort(() => randomFn() - 0.5);
 }
 
 function makeMatchColumns(pairs = []) {
@@ -121,58 +121,61 @@ function useAudio(language) {
   const soundRef = useRef(null);
   const fxRef = useRef(null);
 
-  async function stopAudio() {
+  const stopAudio = useCallback(async () => {
     try {
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
     } catch {}
-  }
+  }, []);
 
-  async function stopFx() {
+  const stopFx = useCallback(async () => {
     try {
       if (fxRef.current) {
         await fxRef.current.unloadAsync();
         fxRef.current = null;
       }
     } catch {}
-  }
+  }, []);
 
-  async function playAudioKey(audioKey) {
-    try {
-      const source = getAudioSource(language, audioKey);
-      if (!source) return false;
+  const playAudioKey = useCallback(
+    async (audioKey) => {
+      try {
+        const source = getAudioSource(language, audioKey);
+        if (!source) return false;
 
-      await stopAudio();
-      const { sound } = await Audio.Sound.createAsync(source);
-      soundRef.current = sound;
-      await sound.playAsync();
+        await stopAudio();
+        const { sound } = await Audio.Sound.createAsync(source);
+        soundRef.current = sound;
+        await sound.playAsync();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [language, stopAudio]
+  );
 
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  async function playFeedback(kind) {
-    try {
-      await stopFx();
-
-      const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
-      const { sound } = await Audio.Sound.createAsync({ uri });
-
-      fxRef.current = sound;
-      await sound.playAsync();
-    } catch {}
-  }
+  const playFeedback = useCallback(
+    async (kind) => {
+      try {
+        await stopFx();
+        const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
+        const { sound } = await Audio.Sound.createAsync({ uri });
+        fxRef.current = sound;
+        await sound.playAsync();
+      } catch {}
+    },
+    [stopFx]
+  );
 
   useEffect(() => {
     return () => {
       stopAudio();
       stopFx();
     };
-  }, []);
+  }, [stopAudio, stopFx]);
 
   return { playAudioKey, playFeedback };
 }
@@ -479,7 +482,12 @@ function FeedbackFooter({
 
         {hintText ? <Text style={styles.footerSub}>{hintText}</Text> : null}
 
-        <TouchableOpacity style={styles.footerButtonRed} onPress={onTryAgain}>
+        <TouchableOpacity
+          style={styles.footerButtonRed}
+          onPress={onTryAgain}
+          accessibilityRole="button"
+          accessibilityLabel="Try again"
+        >
           <Text style={styles.footerButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
@@ -612,7 +620,7 @@ function IntroCard({ activity, language, onCorrect, theme }) {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [activity.audioKey]);
+  }, [activity.audioKey, playAudioKey]);
 
   return (
     <QuestionScrollView>
@@ -634,6 +642,8 @@ function IntroCard({ activity, language, onCorrect, theme }) {
       <TouchableOpacity
         style={[styles.introWordCard, { backgroundColor: theme.light }]}
         onPress={() => playAudioKey(activity.audioKey)}
+        accessibilityRole="button"
+        accessibilityLabel={`Play audio: ${activity.target}`}
       >
         <Text style={styles.introWord}>{targetText}</Text>
         <Text style={styles.introTranslation}>{englishText}</Text>
@@ -738,6 +748,8 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
             setSelected(opt);
             playOption(opt);
           }}
+          accessibilityRole="button"
+          accessibilityLabel={opt}
         >
           <Text style={styles.optionText}>{opt}</Text>
         </TouchableOpacity>
@@ -752,6 +764,8 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
           ]}
           disabled={!selected}
           onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -799,7 +813,7 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme, 
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [activity.audioKey]);
+  }, [activity.audioKey, playAudioKey]);
 
   function playOption(opt) {
     const key = activity.optionAudioMap?.[opt];
@@ -836,10 +850,11 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme, 
     <QuestionScrollView state={state}>
       <View style={styles.promptRow}>
         <Text style={[styles.kicker, { color: theme.text }]}>Listening</Text>
-
         <TouchableOpacity
           style={[styles.speakerBtn, { backgroundColor: theme.light }]}
           onPress={() => playAudioKey(activity.audioKey)}
+          accessibilityRole="button"
+          accessibilityLabel="Play audio"
         >
           <Ionicons name="volume-high" size={20} color={theme.accent} />
         </TouchableOpacity>
@@ -875,6 +890,8 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme, 
             setSelected(opt);
             playOption(opt);
           }}
+          accessibilityRole="button"
+          accessibilityLabel={opt}
         >
           <Text style={styles.optionText}>{opt}</Text>
         </TouchableOpacity>
@@ -889,6 +906,8 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme, 
           ]}
           disabled={!selected}
           onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -1067,6 +1086,8 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
           ]}
           disabled={!value.trim()}
           onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -1226,6 +1247,8 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
           ]}
           disabled={selected.length === 0}
           onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -1405,6 +1428,8 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip }
           ]}
           disabled={!selectedLeft || !selectedRight}
           onPress={checkPair}
+          accessibilityRole="button"
+          accessibilityLabel="Check matches"
         >
           <Text style={styles.primaryBtnText}>Check Pair</Text>
         </TouchableOpacity>
