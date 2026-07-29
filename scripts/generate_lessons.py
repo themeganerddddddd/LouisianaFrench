@@ -80,13 +80,35 @@ def safe_sample(pool, correct, n=3):
     return picked
 
 
+def attach_row_metadata(activity, row):
+    """Copy optional CSV display metadata onto generated activities."""
+    extra_details = clean(row.get("extra_details", ""))
+    context_badge = clean(row.get("context_badge", ""))
+    english_alt_response = clean(row.get("english_alt_response", ""))
+    variant_alt_response = clean(row.get("variant_alt_response", ""))
+
+    if extra_details:
+        activity["extraDetails"] = extra_details
+
+    if context_badge:
+        activity["contextBadge"] = context_badge
+
+    if english_alt_response:
+        activity["englishAltResponse"] = english_alt_response
+
+    if variant_alt_response:
+        activity["variantAltResponse"] = variant_alt_response
+
+    return activity
+
+
 def make_intro_card(language, row):
     row_id = clean(row.get("id"))
     english = clean(row.get("english"))
     target = clean(row.get("variant_text"))
     audio_key = clean(row.get("audioKey"))
 
-    return {
+    return attach_row_metadata({
         "cardId": build_card_id(language, row_id, "intro"),
         "rowId": row_id,
         "audioKey": audio_key or None,
@@ -96,7 +118,7 @@ def make_intro_card(language, row):
         "target": target,
         "answer": target,
         "answerDisplay": target
-    }
+    }, row)
 
 
 def build_unit_lookups(unit_rows):
@@ -131,7 +153,7 @@ def make_multiple_choice(language, row, unit_ctx):
 
     options = safe_sample(unit_ctx["target_pool"], target, 3)
 
-    return {
+    return attach_row_metadata({
         "cardId": build_card_id(language, row_id, "mc"),
         "rowId": row_id,
         "audioKey": audio_key or None,
@@ -143,7 +165,7 @@ def make_multiple_choice(language, row, unit_ctx):
         "answerDisplay": target,
         "english": english,
         "target": target
-    }
+    }, row)
 
 
 def make_listening_target(language, row, unit_ctx):
@@ -157,7 +179,7 @@ def make_listening_target(language, row, unit_ctx):
 
     options = safe_sample(unit_ctx["target_pool"], target, 3)
 
-    return {
+    return attach_row_metadata({
         "cardId": build_card_id(language, row_id, "listening_target"),
         "rowId": row_id,
         "audioKey": audio_key,
@@ -169,7 +191,7 @@ def make_listening_target(language, row, unit_ctx):
         "answerDisplay": target,
         "english": english,
         "target": target
-    }
+    }, row)
 
 
 def make_typing(language, row):
@@ -178,7 +200,7 @@ def make_typing(language, row):
     target = clean(row.get("variant_text"))
     audio_key = clean(row.get("audioKey"))
 
-    return {
+    return attach_row_metadata({
         "cardId": build_card_id(language, row_id, "typing"),
         "rowId": row_id,
         "audioKey": audio_key or None,
@@ -188,7 +210,7 @@ def make_typing(language, row):
         "answerDisplay": target,
         "english": english,
         "target": target
-    }
+    }, row)
 
 
 def make_sentence_build(language, row):
@@ -201,7 +223,7 @@ def make_sentence_build(language, row):
     if len(tokens) <= 1:
         return None
 
-    return {
+    return attach_row_metadata({
         "cardId": build_card_id(language, row_id, "build"),
         "rowId": row_id,
         "audioKey": audio_key or None,
@@ -213,11 +235,13 @@ def make_sentence_build(language, row):
         "answerDisplay": target,
         "english": english,
         "target": target
-    }
+    }, row)
 
 
 def make_match_pairs(language, rows):
     vocab_cards = []
+    metadata_source_row = None
+
     for row in rows:
         row_id = clean(row.get("id"))
         english = clean(row.get("english"))
@@ -227,19 +251,43 @@ def make_match_pairs(language, rows):
         if not english or not target:
             continue
 
-        vocab_cards.append({
+        if metadata_source_row is None and (
+            clean(row.get("extra_details")) or
+            clean(row.get("context_badge")) or
+            clean(row.get("english_alt_response")) or
+            clean(row.get("variant_alt_response"))
+        ):
+            metadata_source_row = row
+
+        vocab_card = {
             "rowId": row_id,
             "english": english,
             "target": target,
             "audioKey": audio_key or None
-        })
+        }
+
+        extra_details = clean(row.get("extra_details", ""))
+        context_badge = clean(row.get("context_badge", ""))
+        english_alt_response = clean(row.get("english_alt_response", ""))
+        variant_alt_response = clean(row.get("variant_alt_response", ""))
+
+        if extra_details:
+            vocab_card["extraDetails"] = extra_details
+        if context_badge:
+            vocab_card["contextBadge"] = context_badge
+        if english_alt_response:
+            vocab_card["englishAltResponse"] = english_alt_response
+        if variant_alt_response:
+            vocab_card["variantAltResponse"] = variant_alt_response
+
+        vocab_cards.append(vocab_card)
 
     if len(vocab_cards) < 4:
         return None
 
     pair_cards = random.sample(vocab_cards, 4)
 
-    return {
+    activity = {
         "cardId": f"{language}:match:{pair_cards[0]['rowId']}",
         "type": "match_pairs",
         "prompt": "Match the words",
@@ -254,6 +302,11 @@ def make_match_pairs(language, rows):
         "answer": "All matched",
         "answerDisplay": "All matched"
     }
+
+    if metadata_source_row is not None:
+        activity = attach_row_metadata(activity, metadata_source_row)
+
+    return activity
 
 
 def available_quiz_types_for_row(row, is_first_chunk):
@@ -299,7 +352,7 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
     activities = []
     vocab_cards = []
 
-    introduced_queue = deque()  # tracks words recently introduced and awaiting a forced quiz
+    introduced_queue = deque()
     seen_in_this_lesson = []
     prior_pool = list(prior_rows_in_unit)
 
@@ -312,18 +365,11 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
         if not english or not target:
             continue
 
-        vocab_cards.append({
-            "rowId": row_id,
-            "english": english,
-            "target": target,
-            "audioKey": audio_key or None
-        })
+        vocab_cards.append(row_to_vocab_card(row))
 
-        # 1) Introduce the word
         activities.append(make_intro_card(language, row))
         seen_in_this_lesson.append(row)
 
-        # Register it as needing a quiz soon
         intro_item = {
             "row": row,
             "remaining_window": MAX_DISTANCE_AFTER_INTRO,
@@ -331,9 +377,6 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
         }
         introduced_queue.append(intro_item)
 
-        # 2) Immediately mix in up to 2 follow-up slots after intro
-        # so that the introduced word is guaranteed to be quizzed soon,
-        # but not always with the same exact pattern.
         for _ in range(2):
             if len(activities) >= MAX_ACTIVITIES_PER_LESSON:
                 break
@@ -348,16 +391,13 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
             if forced is not None:
                 candidate_rows.append(forced["row"])
 
-            # also allow mixing in already introduced words from current chunk
             older_current = [r for r in seen_in_this_lesson if clean(r.get("id")) != clean(forced["row"].get("id"))] if forced else seen_in_this_lesson[:]
             if older_current:
                 candidate_rows.extend(random.sample(older_current, min(len(older_current), 2)))
 
-            # and pull some previous-part words from same unit
             if prior_pool:
                 candidate_rows.extend(random.sample(prior_pool, min(len(prior_pool), 2)))
 
-            # dedupe by row id
             dedup = {}
             for r in candidate_rows:
                 dedup[clean(r.get("id"))] = r
@@ -374,7 +414,6 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
 
             available_types = available_quiz_types_for_row(chosen_row, is_first_chunk)
 
-            # avoid always picking the same first type
             if forced is not None and clean(chosen_row.get("id")) == clean(forced["row"].get("id")):
                 if "listening_target" in available_types and random.random() < 0.5:
                     quiz_type = "listening_target"
@@ -387,18 +426,15 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
             if activity:
                 activities.append(activity)
 
-                # if this activity satisfied a forced newly introduced word, mark it
                 for item in introduced_queue:
                     if clean(item["row"].get("id")) == clean(chosen_row.get("id")) and not item["quizzed"]:
                         item["quizzed"] = True
                         break
 
-            # tick down remaining windows
             for item in introduced_queue:
                 if not item["quizzed"]:
                     item["remaining_window"] -= 1
 
-        # Add a match-pairs once enough words are introduced in the lesson
         if len(seen_in_this_lesson) >= 4 and len(activities) < MAX_ACTIVITIES_PER_LESSON:
             if not any(a.get("type") == "match_pairs" for a in activities):
                 match_rows = seen_in_this_lesson[-4:]
@@ -409,7 +445,6 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
         if len(activities) >= MAX_ACTIVITIES_PER_LESSON:
             break
 
-    # Fill remaining slots with mixed review from current chunk + previous parts
     mixed_pool = chunk_rows + prior_pool
     while len(activities) < MAX_ACTIVITIES_PER_LESSON and mixed_pool:
         chosen_row = random.choice(mixed_pool)
@@ -419,7 +454,6 @@ def schedule_core_activities(language, chunk_rows, prior_rows_in_unit, unit_rows
         if activity:
             activities.append(activity)
 
-        # once enough vocabulary exists, allow a late match
         if len(activities) < MAX_ACTIVITIES_PER_LESSON and len(mixed_pool) >= 4:
             if not any(a.get("type") == "match_pairs" for a in activities) and random.random() < 0.25:
                 match_rows = random.sample(mixed_pool, min(4, len(mixed_pool)))
@@ -458,6 +492,34 @@ def make_review_activities(language, unit_rows):
             review_activities.append(match_activity)
 
     return review_activities[:MAX_ACTIVITIES_PER_LESSON]
+
+
+def row_to_vocab_card(row):
+    card = {
+        "rowId": clean(row.get("id")),
+        "english": clean(row.get("english")),
+        "target": clean(row.get("variant_text")),
+        "audioKey": clean(row.get("audioKey")) or None
+    }
+
+    extra_details = clean(row.get("extra_details", ""))
+    context_badge = clean(row.get("context_badge", ""))
+    english_alt_response = clean(row.get("english_alt_response", ""))
+    variant_alt_response = clean(row.get("variant_alt_response", ""))
+
+    if extra_details:
+        card["extraDetails"] = extra_details
+
+    if context_badge:
+        card["contextBadge"] = context_badge
+
+    if english_alt_response:
+        card["englishAltResponse"] = english_alt_response
+
+    if variant_alt_response:
+        card["variantAltResponse"] = variant_alt_response
+
+    return card
 
 
 def build_lessons(language, csv_path, output_path):
@@ -524,12 +586,7 @@ def build_lessons(language, csv_path, output_path):
             "type": "review",
             "wordCount": len(unit_rows),
             "words": [
-                {
-                    "rowId": clean(r.get("id")),
-                    "english": clean(r.get("english")),
-                    "target": clean(r.get("variant_text")),
-                    "audioKey": clean(r.get("audioKey")) or None
-                }
+                row_to_vocab_card(r)
                 for r in unit_rows
                 if clean(r.get("english")) and clean(r.get("variant_text"))
             ],

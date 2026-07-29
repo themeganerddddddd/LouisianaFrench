@@ -13,19 +13,23 @@
         "rowId": "u01_w0001",
         "english": "I",
         "target": "mo",
-        "audioKey": "u01_w0001_kreole"
+        "audioKey": "u01_w0001_kreole",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "rowId": "u01_w0002",
         "english": "you (sg.)",
         "target": "to",
-        "audioKey": "u01_w0002_kreole"
+        "audioKey": "u01_w0002_kreole",
+        "englishAltResponse": "Test"
       },
       {
         "rowId": "u01_w0003",
         "english": "he, she, or it",
         "target": "li",
-        "audioKey": "u01_w0003_kreole"
+        "audioKey": "u01_w0003_kreole",
+        "variantAltResponse": "Test"
       },
       {
         "rowId": "u01_w0004",
@@ -50,7 +54,9 @@
         "english": "I",
         "target": "mo",
         "answer": "mo",
-        "answerDisplay": "mo"
+        "answerDisplay": "mo",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "kreole:u01_w0001:listening_target",
@@ -73,7 +79,9 @@
         "answer": "mo",
         "answerDisplay": "mo",
         "english": "I",
-        "target": "mo"
+        "target": "mo",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "kreole:u01_w0001:mc",
@@ -96,7 +104,9 @@
         "answer": "mo",
         "answerDisplay": "mo",
         "english": "I",
-        "target": "mo"
+        "target": "mo",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "kreole:u01_w0002:intro",
@@ -107,7 +117,8 @@
         "english": "you (sg.)",
         "target": "to",
         "answer": "to",
-        "answerDisplay": "to"
+        "answerDisplay": "to",
+        "englishAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0001:listening_target",
@@ -130,7 +141,9 @@
         "answer": "mo",
         "answerDisplay": "mo",
         "english": "I",
-        "target": "mo"
+        "target": "mo",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "kreole:u01_w0002:mc",
@@ -153,7 +166,8 @@
         "answer": "to",
         "answerDisplay": "to",
         "english": "you (sg.)",
-        "target": "to"
+        "target": "to",
+        "englishAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0003:intro",
@@ -164,7 +178,8 @@
         "english": "he, she, or it",
         "target": "li",
         "answer": "li",
-        "answerDisplay": "li"
+        "answerDisplay": "li",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0003:listening_target",
@@ -187,7 +202,8 @@
         "answer": "li",
         "answerDisplay": "li",
         "english": "he, she, or it",
-        "target": "li"
+        "target": "li",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0003:mc",
@@ -210,7 +226,8 @@
         "answer": "li",
         "answerDisplay": "li",
         "english": "he, she, or it",
-        "target": "li"
+        "target": "li",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0004:intro",
@@ -267,7 +284,9 @@
         "answer": "mo",
         "answerDisplay": "mo",
         "english": "I",
-        "target": "mo"
+        "target": "mo",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "kreole:match:u01_w0001",
@@ -296,7 +315,9 @@
           }
         ],
         "answer": "All matched",
-        "answerDisplay": "All matched"
+        "answerDisplay": "All matched",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "kreole:u01_w0005:intro",
@@ -1074,7 +1095,8 @@
         "answer": "li",
         "answerDisplay": "li",
         "english": "he, she, or it",
-        "target": "li"
+        "target": "li",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0005:listening_target",
@@ -1153,7 +1175,8 @@
         "answer": "li",
         "answerDisplay": "li",
         "english": "he, she, or it",
-        "target": "li"
+        "target": "li",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0004:listening_target",
@@ -1205,7 +1228,8 @@
           }
         ],
         "answer": "All matched",
-        "answerDisplay": "All matched"
+        "answerDisplay": "All matched",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0002:listening_target",
@@ -1228,7 +1252,8 @@
         "answer": "to",
         "answerDisplay": "to",
         "english": "you (sg.)",
-        "target": "to"
+        "target": "to",
+        "englishAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0008:typing",
@@ -1250,7 +1275,8 @@
         "answer": "li",
         "answerDisplay": "li",
         "english": "he, she, or it",
-        "target": "li"
+        "target": "li",
+        "variantAltResponse": "Test"
       }
     ],
     "baseXp": 40
@@ -1269,19 +1295,23 @@
         "rowId": "u01_w0001",
         "english": "I",
         "target": "mo",
-        "audioKey": "u01_w0001_kreole"
+        "audioKey": "u01_w0001_kreole",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "rowId": "u01_w0002",
         "english": "you (sg.)",
         "target": "to",
-        "audioKey": "u01_w0002_kreole"
+        "audioKey": "u01_w0002_kreole",
+        "englishAltResponse": "Test"
       },
       {
         "rowId": "u01_w0003",
         "english": "he, she, or it",
         "target": "li",
-        "audioKey": "u01_w0003_kreole"
+        "audioKey": "u01_w0003_kreole",
+        "variantAltResponse": "Test"
       },
       {
         "rowId": "u01_w0004",
@@ -1499,7 +1529,9 @@
         "answer": "mo",
         "answerDisplay": "mo",
         "english": "I",
-        "target": "mo"
+        "target": "mo",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "kreole:u01_w0009:listening_target",
@@ -1545,7 +1577,8 @@
         "answer": "to",
         "answerDisplay": "to",
         "english": "you (sg.)",
-        "target": "to"
+        "target": "to",
+        "englishAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0003:listening_target",
@@ -1568,7 +1601,8 @@
         "answer": "li",
         "answerDisplay": "li",
         "english": "he, she, or it",
-        "target": "li"
+        "target": "li",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "kreole:u01_w0005:listening_target",

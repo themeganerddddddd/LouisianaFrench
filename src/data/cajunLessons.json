@@ -13,19 +13,23 @@
         "rowId": "u01_w0001",
         "english": "Hello! Hi!",
         "target": "Bonjour!",
-        "audioKey": "u01_w0001_cajun"
+        "audioKey": "u01_w0001_cajun",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "rowId": "u01_w0002",
         "english": "How’s it going?",
         "target": "Comment ça va?",
-        "audioKey": "u01_w00002_cajun"
+        "audioKey": "u01_w00002_cajun",
+        "englishAltResponse": "Test"
       },
       {
         "rowId": "u01_w0003",
         "english": "Are things OK? Are you OK?",
         "target": "Ça va?",
-        "audioKey": "u01_w00003_cajun"
+        "audioKey": "u01_w00003_cajun",
+        "variantAltResponse": "Test"
       },
       {
         "rowId": "u01_w0004",
@@ -50,7 +54,9 @@
         "english": "Hello! Hi!",
         "target": "Bonjour!",
         "answer": "Bonjour!",
-        "answerDisplay": "Bonjour!"
+        "answerDisplay": "Bonjour!",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:u01_w0001:mc",
@@ -73,7 +79,9 @@
         "answer": "Bonjour!",
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
-        "target": "Bonjour!"
+        "target": "Bonjour!",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:u01_w0001:listening_target",
@@ -96,7 +104,9 @@
         "answer": "Bonjour!",
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
-        "target": "Bonjour!"
+        "target": "Bonjour!",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:u01_w0002:intro",
@@ -107,7 +117,8 @@
         "english": "How’s it going?",
         "target": "Comment ça va?",
         "answer": "Comment ça va?",
-        "answerDisplay": "Comment ça va?"
+        "answerDisplay": "Comment ça va?",
+        "englishAltResponse": "Test"
       },
       {
         "cardId": "cajun:u01_w0001:mc",
@@ -130,7 +141,9 @@
         "answer": "Bonjour!",
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
-        "target": "Bonjour!"
+        "target": "Bonjour!",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:u01_w0001:listening_target",
@@ -153,7 +166,9 @@
         "answer": "Bonjour!",
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
-        "target": "Bonjour!"
+        "target": "Bonjour!",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:u01_w0003:intro",
@@ -164,7 +179,8 @@
         "english": "Are things OK? Are you OK?",
         "target": "Ça va?",
         "answer": "Ça va?",
-        "answerDisplay": "Ça va?"
+        "answerDisplay": "Ça va?",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "cajun:u01_w0002:mc",
@@ -187,7 +203,8 @@
         "answer": "Comment ça va?",
         "answerDisplay": "Comment ça va?",
         "english": "How’s it going?",
-        "target": "Comment ça va?"
+        "target": "Comment ça va?",
+        "englishAltResponse": "Test"
       },
       {
         "cardId": "cajun:u01_w0003:listening_target",
@@ -210,7 +227,8 @@
         "answer": "Ça va?",
         "answerDisplay": "Ça va?",
         "english": "Are things OK? Are you OK?",
-        "target": "Ça va?"
+        "target": "Ça va?",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "cajun:u01_w0004:intro",
@@ -267,7 +285,9 @@
         "answer": "Bonjour!",
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
-        "target": "Bonjour!"
+        "target": "Bonjour!",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:match:u01_w0004",
@@ -296,7 +316,9 @@
           }
         ],
         "answer": "All matched",
-        "answerDisplay": "All matched"
+        "answerDisplay": "All matched",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:u01_w0005:intro",
@@ -432,7 +454,9 @@
         "answer": "Bonjour!",
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
-        "target": "Bonjour!"
+        "target": "Bonjour!",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:u01_w0007:intro",
@@ -477,7 +501,8 @@
         "answer": "Ça va?",
         "answerDisplay": "Ça va?",
         "english": "Are things OK? Are you OK?",
-        "target": "Ça va?"
+        "target": "Ça va?",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "cajun:u01_w0008:intro",
@@ -1653,19 +1678,23 @@
         "rowId": "u01_w0001",
         "english": "Hello! Hi!",
         "target": "Bonjour!",
-        "audioKey": "u01_w0001_cajun"
+        "audioKey": "u01_w0001_cajun",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "rowId": "u01_w0002",
         "english": "How’s it going?",
         "target": "Comment ça va?",
-        "audioKey": "u01_w00002_cajun"
+        "audioKey": "u01_w00002_cajun",
+        "englishAltResponse": "Test"
       },
       {
         "rowId": "u01_w0003",
         "english": "Are things OK? Are you OK?",
         "target": "Ça va?",
-        "audioKey": "u01_w00003_cajun"
+        "audioKey": "u01_w00003_cajun",
+        "variantAltResponse": "Test"
       },
       {
         "rowId": "u01_w0004",
@@ -1948,7 +1977,8 @@
         "answer": "Ça va?",
         "answerDisplay": "Ça va?",
         "english": "Are things OK? Are you OK?",
-        "target": "Ça va?"
+        "target": "Ça va?",
+        "variantAltResponse": "Test"
       },
       {
         "cardId": "cajun:u01_w0020:listening_target",
@@ -1994,7 +2024,9 @@
         "answer": "Bonjour!",
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
-        "target": "Bonjour!"
+        "target": "Bonjour!",
+        "extraDetails": "Test",
+        "contextBadge": "Singular"
       },
       {
         "cardId": "cajun:u01_w0013:listening_target",
@@ -2151,7 +2183,8 @@
         "rowId": "u02_w0001",
         "english": "Who is that?",
         "target": "Qui c’est ça?",
-        "audioKey": "u02_w0001_cajun"
+        "audioKey": "u02_w0001_cajun",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "rowId": "u02_w0002",
@@ -2188,7 +2221,8 @@
         "english": "Who is that?",
         "target": "Qui c’est ça?",
         "answer": "Qui c’est ça?",
-        "answerDisplay": "Qui c’est ça?"
+        "answerDisplay": "Qui c’est ça?",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:u02_w0001:mc",
@@ -2211,7 +2245,8 @@
         "answer": "Qui c’est ça?",
         "answerDisplay": "Qui c’est ça?",
         "english": "Who is that?",
-        "target": "Qui c’est ça?"
+        "target": "Qui c’est ça?",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:u02_w0001:listening_target",
@@ -2234,7 +2269,8 @@
         "answer": "Qui c’est ça?",
         "answerDisplay": "Qui c’est ça?",
         "english": "Who is that?",
-        "target": "Qui c’est ça?"
+        "target": "Qui c’est ça?",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:u02_w0002:intro",
@@ -2405,7 +2441,8 @@
         "answer": "Qui c’est ça?",
         "answerDisplay": "Qui c’est ça?",
         "english": "Who is that?",
-        "target": "Qui c’est ça?"
+        "target": "Qui c’est ça?",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:match:u02_w0003",
@@ -2434,7 +2471,8 @@
           }
         ],
         "answer": "All matched",
-        "answerDisplay": "All matched"
+        "answerDisplay": "All matched",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:u02_w0005:intro",
@@ -2551,7 +2589,8 @@
         "answer": "Qui c’est ça?",
         "answerDisplay": "Qui c’est ça?",
         "english": "Who is that?",
-        "target": "Qui c’est ça?"
+        "target": "Qui c’est ça?",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:u02_w0006:listening_target",
@@ -3012,7 +3051,8 @@
         "answer": "Qui c’est ça?",
         "answerDisplay": "Qui c’est ça?",
         "english": "Who is that?",
-        "target": "Qui c’est ça?"
+        "target": "Qui c’est ça?",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:u02_w0014:intro",
@@ -3390,7 +3430,8 @@
           }
         ],
         "answer": "All matched",
-        "answerDisplay": "All matched"
+        "answerDisplay": "All matched",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:u02_w0002:build",
@@ -3505,7 +3546,8 @@
         "rowId": "u02_w0001",
         "english": "Who is that?",
         "target": "Qui c’est ça?",
-        "audioKey": "u02_w0001_cajun"
+        "audioKey": "u02_w0001_cajun",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "rowId": "u02_w0002",
@@ -3770,7 +3812,8 @@
         "answer": "Qui c’est ça?",
         "answerDisplay": "Qui c’est ça?",
         "english": "Who is that?",
-        "target": "Qui c’est ça?"
+        "target": "Qui c’est ça?",
+        "extraDetails": "Can also mean \"what is that?\" in Evangeline, Avoyelles, Terrebonne and LaFourche Parishes."
       },
       {
         "cardId": "cajun:u02_w0006:listening_target",
