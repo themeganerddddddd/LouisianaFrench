@@ -103,9 +103,9 @@
       font-size: 0.72rem; font-weight: 700; color: var(--muted); letter-spacing: 0.02em;
     }
     .bug-btn {
-      width: 36px; height: 36px; border-radius: 999px; border: 0; background: var(--blue);
-      color: #fff; font-size: 1.1rem; font-weight: 900; line-height: 1; cursor: pointer;
-      box-shadow: 0 6px 14px rgba(39, 113, 203, 0.35);
+      border: 0; background: transparent; color: var(--blue); font-size: 0.82rem;
+      font-weight: 800; line-height: 1; cursor: pointer; text-decoration: underline;
+      padding: 10px 12px;
       transition: transform 0.12s ease, background 0.12s ease;
     }
     .bug-btn:hover { background: var(--blue-deep); transform: scale(1.05); }
@@ -304,8 +304,7 @@
         </div>
 
         <div class="footer-report">
-          <button type="button" class="bug-btn" id="openBug" aria-label="Report a bug" title="Report a bug">!</button>
-          <span class="hint">Report a bug</span>
+          <button type="button" class="bug-btn" id="openBug" aria-label="Report a bug" title="Report a bug">Report a bug</button>
         </div>
       </div>
 

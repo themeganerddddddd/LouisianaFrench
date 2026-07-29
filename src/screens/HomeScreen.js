@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import BugReportButton from '../components/BugReportButton';
 import { getAllWords, getUnits } from '../data/lessonLoader';
 import {
   getDailyReviewLog,
@@ -307,6 +308,13 @@ export default function HomeScreen() {
           source={require('../../assets/images/secondline.png')}
           style={styles.bottomImage}
           resizeMode="contain"
+        />
+
+        <BugReportButton
+          screenName="Home"
+          language={language}
+          accentColor={theme.start}
+          appearance="text"
         />
 
         <View style={{ height: 30 }} />

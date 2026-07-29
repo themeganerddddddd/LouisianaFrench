@@ -6,7 +6,7 @@ Mockup: `.scratch/bug-report/mockup.html` (reference UI only; not shipped)
 
 ## Summary
 
-Add a small round **!** button at the bottom of hub screens. Tapping it opens a bug-report form. On submit, show a consent modal that lists device fields to be collected. On accept, collect device info, open the learner’s mail app with a pre-filled message, and show a confirmation with the Mardi Gras umbrella pelican animation.
+Add a text-only **Report a bug** control under the Home pelican and a small round **!** button at the bottom of the other hub screens. Tapping either opens a bug-report form. On submit, show a consent modal that lists device fields to be collected. On accept, collect device info, open the learner’s mail app with a pre-filled message, and show a confirmation with the Mardi Gras umbrella pelican animation.
 
 No backend, Cloudflare worker, Formspree, or GitHub API. Inbox address comes from config (`expo.extra.bugReportEmail`), supplied at implement/ship time.
 
@@ -17,14 +17,14 @@ No backend, Cloudflare worker, Formspree, or GitHub API. Inbox address comes fro
 | Delivery | `mailto:` → device mail client; user taps Send |
 | Inbox | `app.json` → `expo.extra.bugReportEmail` |
 | Screens | Hub only: Home, Dictionary, Advanced, LanguageSelect, LessonComplete |
-| Entry UI | Round `!` button, ~36px, themed (`#2771CB` / `#6D28D9`) |
+| Entry UI | Home: text-only control under pelican. Other hubs: round `!` button, ~36px, themed (`#2771CB` / `#6D28D9`) |
 | Confirmation | Static `secondline.png` (pelican + Mardi Gras umbrella) with soft fade-in + gentle sway; light confetti optional |
 | Not in v1 | Mid-lesson entry, screenshots, progress dumps, auto-send without mail app |
 
 ## User flow
 
 ```
-[!] footer button
+[Report a bug / !] footer control
   → Form modal (name, email, description)
   → Validate (see below)
   → Consent modal (lists device fields; nothing collected yet)
@@ -111,7 +111,7 @@ Screens only mount `<BugReportButton … />` in the footer. No report logic in s
 
 ## UI reference (from mockup)
 
-- Home-like hub footer: centered 36px blue circle with `!`, subtle “Report a bug” hint
+- Home footer: centered text-only “Report a bug” control under the pelican; remaining hubs use the 36px themed `!`
 - Bottom sheet / modal cards: white, 22px radius, `#17324D` titles, `#2771CB` primary
 - Consent: orange warning box + bulleted field list
 - Confirmation: pelican umbrella image (`assets/images/secondline.png`), sway loop, then mail-preview context in mockup (production may simplify to short success copy after mail opens)
@@ -120,6 +120,8 @@ Screens only mount `<BugReportButton … />` in the footer. No report logic in s
 ## PR breakdown (AGENTS.md)
 
 Prefer &lt;100 production lines per PR when practical; under 250 normal. Tests ship with production code.
+
+Delivery is two PRs:
 
 ### PR 1 — Device info + mailto + validation helpers
 
@@ -139,12 +141,17 @@ Prefer &lt;100 production lines per PR when practical; under 250 normal. Tests s
 
 **Out of scope:** UI components, screen wiring
 
-### PR 2 — Flow on Home (tracer bullet)
+### PR 2 — Complete UI across all five hub screens
+
+Former PR2 + PR3 combined per user-approved review-size exception (two ticket slices/contexts in one PR).
 
 **Production**
 
 - `BugReportButton.js`, `BugReportFlow.js`
-- Wire Home footer (`ScrollView` end); accent from theme
+- Wire Home text control below the pelican (`ScrollView` end); accent from theme
+- Dictionary, Advanced, LanguageSelect, LessonComplete footers
+- Pass `language` when known, `screenName` per screen
+- `language` metadata in all five `navigation.replace('LessonComplete', ...)` call sites (LessonRunner, MistakeReviewScreen ×2, DailyReviewScreen ×2)
 - Form validation UI; consent; collect only after Accept; pelican confirmation after successful mail open attempt
 
 **Tests**
@@ -153,19 +160,10 @@ Prefer &lt;100 production lines per PR when practical; under 250 normal. Tests s
 - Valid form → consent lists fields
 - Accept opens mail (mocked); Decline does not collect/open
 - Home exposes `getByLabelText('Report a bug')`
+- Remaining hubs expose report control (light assertions)
+- Absence verified on LessonRunner, MistakeReview, DailyReview, Loading
 
-### PR 3 — Remaining hub screens
-
-**Production**
-
-- Dictionary, Advanced, LanguageSelect, LessonComplete footers only
-- Pass `language` when known, `screenName` per screen
-
-**Tests**
-
-- Report control present on remaining hub screens (light assertions)
-
-**Out of scope:** Lesson, Daily Review, Mistake Review, Loading
+**Out of scope:** Lesson, Daily Review, Mistake Review, Loading (still no controls added)
 
 ## Implement-time checklist (human)
 

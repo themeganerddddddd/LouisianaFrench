@@ -79,7 +79,8 @@ export default function DailyReviewScreen({ route, navigation }) {
       mistakesCount: mistakes.length,
       streak: profile.streak,
       scoreEarned: null,
-      scorePossible: null
+      scorePossible: null,
+      language
     });
   }
 
@@ -104,7 +105,8 @@ export default function DailyReviewScreen({ route, navigation }) {
         mistakesCount: nextMistakes.length,
         streak: profile.streak,
         scoreEarned: null,
-        scorePossible: null
+        scorePossible: null,
+        language
       });
     }
   }
