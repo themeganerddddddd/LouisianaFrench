@@ -72,7 +72,7 @@ describe('createCatalog', () => {
         lessonId: 'fixture_cajun_u01_l01',
         lessonTitle: 'First greetings',
         unit: 'u01',
-        unitTitle: 'Pronouns & Greetings'
+        unitTitle: 'Greetings & Check-ins'
       })
     );
     expect(catalog.getAllActivities('kreole').map((activity) => activity.lessonId)).toEqual([
