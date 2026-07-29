@@ -30,7 +30,7 @@ const languages = [
     anchorLesson: { id: 'kreole_u01_l01', unit: 'u01' },
     audioWord: {
       rowId: 'u01_w0004',
-      target: 'Ç'ap kouri',
+      target: "Ç'ap kouri",
       audioKey: 'u01_w0004_kreole'
     }
   }
