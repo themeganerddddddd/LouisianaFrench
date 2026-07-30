@@ -21,6 +21,7 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 - Preserve characterization separately from behavior changes. A characterization test must not encode a known defect as desired behavior.
 - Keep each pull request focused and reviewable. Production changes require tests in the same pull request.
 - Use `.github/pull_request_template.md` for every pull request, including drafts, and answer each section.
+- Never commit or push directly to `main`. Fetch the latest `main`, create a feature branch, and deliver every change through a pull request.
 - Write pull request titles and descriptions in clear B2-level English with minimal technical jargon.
 - Run the repository's required checks before marking a ticket complete.
 
