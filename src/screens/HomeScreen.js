@@ -161,7 +161,7 @@ export default function HomeScreen() {
       >
         <View style={{ flex: 1 }}>
           <Text style={styles.topTitle}>
-            {language === 'cajun' ? 'Cajun French' : 'Kouri-Vini'}
+            {language === 'cajun' ? 'Louisiana French' : 'Kouri-Vini'}
           </Text>
 
           <Text style={[styles.topSubtitle, { color: theme.subtitle }]}>

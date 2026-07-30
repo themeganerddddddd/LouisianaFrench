@@ -11,9 +11,8 @@ export default function AdvancedScreen({ route }) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>
-            {language === 'cajun' ? 'Advanced Cajun Hub' : 'Advanced Kouri-Vini Hub'}
+            {language === 'cajun' ? 'Advanced French Hub' : 'Advanced Kouri-Vini Hub'}
           </Text>
-          <Text style={styles.text}>Experimental speaking drills</Text>
         </View>
         <SpeechPracticePrototype language={language} />
       </ScrollView>
@@ -25,7 +24,6 @@ export default function AdvancedScreen({ route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7FAFC', padding: 18 },
   content: { paddingBottom: 100 },
-  header: { marginBottom: 16 },
-  title: { fontSize: 28, fontWeight: '900', color: '#17324D', marginBottom: 6 },
-  text: { fontSize: 16, color: '#52667A' }
+  header: { marginBottom: 16, alignItems: 'center' },
+  title: { fontSize: 28, fontWeight: '900', color: '#17324D', textAlign: 'center' }
 });

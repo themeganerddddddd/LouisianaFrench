@@ -44,9 +44,8 @@ export default function SpeechPracticePrototype({ language }) {
   useEffect(() => {
     return () => {
       soundRef.current?.unloadAsync();
-      if (recorder.isRecording) recorder.stop();
     };
-  }, [recorder]);
+  }, []);
 
   async function play(source) {
     if (!source) return;
@@ -144,7 +143,6 @@ export default function SpeechPracticePrototype({ language }) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.prototypeLabel}>Self-reviewed speech practice prototype</Text>
       <Text style={styles.phrase}>{prototypeWord.target}</Text>
       <Text style={styles.translation}>{prototypeWord.english}</Text>
       <Text style={styles.progress}>
@@ -160,7 +158,7 @@ export default function SpeechPracticePrototype({ language }) {
         onPress={() => play(getAudioSource(language, prototypeWord.audioKey))}
         disabled={busy || isRecording}
       >
-        <Text style={[styles.secondaryButtonText, { color: accent }]}>Play speaker</Text>
+        <Text style={[styles.secondaryButtonText, { color: accent }]}>Play Audio</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -175,7 +173,7 @@ export default function SpeechPracticePrototype({ language }) {
               ? `Stop recording (${(durationMs / 1000).toFixed(1)}s)`
               : learnerUri
                 ? 'Record again'
-                : 'Record learner'}
+                : 'Record'}
         </Text>
       </TouchableOpacity>
 
@@ -215,15 +213,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1'
   },
-  prototypeLabel: {
-    color: '#B45309',
-    fontSize: 12,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    textAlign: 'center'
-  },
   phrase: {
-    marginTop: 12,
     color: '#102A43',
     fontSize: 30,
     fontWeight: '900',

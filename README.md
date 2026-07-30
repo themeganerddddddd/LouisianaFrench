@@ -2,7 +2,7 @@
 
 Louisiana Language Learning is a mobile and web application for studying Louisiana languages through structured lessons and practice activities. The application currently supports:
 
-- Cajun French
+- Louisiana French
 - Kouri-Vini
 
 Learners can select a Language, work through Units and Lessons, practice Words with several Activity types, listen to Audio when it is available, and review their Learner Progress. The app also includes Daily Review, Mistake Review, and Dictionary screens.

@@ -25,7 +25,7 @@ export default function LanguageSelectScreen({ navigation }) {
               style={styles.flag}
               resizeMode="cover"
             />
-            <Text style={styles.cardTitle}>Cajun</Text>
+            <Text style={styles.cardTitle}>French</Text>
             <Text style={styles.cardSub}>Louisiana French</Text>
           </TouchableOpacity>
 

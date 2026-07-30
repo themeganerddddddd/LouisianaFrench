@@ -5,12 +5,11 @@ The application teaches Louisiana languages through structured lessons, practice
 ## Language
 
 **Language**:
-A language a learner can study in the application. The supported languages are Cajun French and Kouri-Vini.
+A language a learner can study in the application. The supported languages are Louisiana French and Kouri-Vini.
 _Avoid_: Course, locale
 
-**Cajun French**:
+**Louisiana French**:
 The Louisiana French language track identified internally as `cajun`.
-_Avoid_: Cajun when ambiguity with culture or people matters
 
 **Kouri-Vini**:
 The Louisiana Creole language track identified internally as `kreole`.
