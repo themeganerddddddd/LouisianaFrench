@@ -83,11 +83,16 @@ export function createCatalog(source) {
     return words.sort((a, b) => String(a.rowId).localeCompare(String(b.rowId)));
   }
 
+  function getUnitPreface(language, unitCode) {
+    return source.getUnitPreface?.(language, unitCode);
+  }
+
   return {
     getLessonsByLanguage,
     getLessonById,
     getUnits,
     getAllActivities,
-    getAllWords
+    getAllWords,
+    getUnitPreface
   };
 }

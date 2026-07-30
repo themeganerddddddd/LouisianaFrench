@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function ProgressHeader({ current, total, xp, title, modeLabel, language }) {
+export default function ProgressHeader({ current, total, xp, title, modeLabel, language, unitPreface, onOpenPreface }) {
   const pct = total > 0 ? ((current / total) * 100).toFixed(0) : 0;
 
   const theme =
@@ -21,6 +21,19 @@ export default function ProgressHeader({ current, total, xp, title, modeLabel, l
           <Text style={styles.title}>{title}</Text>
           {modeLabel ? <Text style={styles.mode}>{modeLabel}</Text> : null}
         </View>
+        {unitPreface && (
+          <TouchableOpacity
+            onPress={onOpenPreface}
+            accessibilityRole="button"
+            accessibilityLabel="Unit note"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.unitNoteButton}
+          >
+            <Text style={[styles.unitNoteText, { color: theme.accent }]}>
+              Unit note
+            </Text>
+          </TouchableOpacity>
+        )}
         <Text style={[styles.stat, { color: theme.stat }]}>⚡ {xp}</Text>
       </View>
 
@@ -63,6 +76,13 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '700',
     marginTop: 4
+  },
+  unitNoteButton: {
+    marginRight: 10
+  },
+  unitNoteText: {
+    fontSize: 13,
+    fontWeight: '800'
   },
   stat: {
     fontSize: 15,

@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
+import LessonPrefaceModal from '../components/LessonPrefaceModal';
 import ProgressHeader from '../components/ProgressHeader';
 import SafeScreenView from '../components/SafeScreenView';
-import { getLessonById } from '../data/lessonLoader';
+import { getLessonById, getUnitPreface } from '../data/lessonLoader';
 import {
   getDueReviewItems,
   updateCardReview
 } from '../utils/spacedRepetition';
 import {
+  isPrefaceRead,
   markLessonComplete,
+  markPrefaceRead,
   recordStudyAndXp,
   updateWordProgress
 } from '../utils/storage';
@@ -23,6 +26,13 @@ export default function LessonRunner({ route, navigation }) {
   const [lessonXp, setLessonXp] = useState(0);
   const [mistakes, setMistakes] = useState([]);
   const [scoreEarned, setScoreEarned] = useState(0);
+
+  const [prefaceVisible, setPrefaceVisible] = useState(false);
+  const [prefaceMode, setPrefaceMode] = useState('start');
+  const unitPreface = useMemo(
+    () => getUnitPreface(language, lesson?.unit),
+    [language, lesson?.unit]
+  );
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -47,6 +57,21 @@ export default function LessonRunner({ route, navigation }) {
 
     init();
   }, [lesson, language, navigation]);
+
+  useEffect(() => {
+    if (!lesson || !unitPreface) return;
+    if (lesson.lessonNumberInUnit !== 1) return;
+
+    async function checkPreface() {
+      const alreadyRead = await isPrefaceRead(unitPreface.id);
+      if (!alreadyRead) {
+        setPrefaceVisible(true);
+        setPrefaceMode('start');
+      }
+    }
+
+    checkPreface();
+  }, [lesson, unitPreface]);
 
   // fadeAnim and slideAnim are useRef().current values — stable across renders
   useEffect(() => {
@@ -82,6 +107,25 @@ export default function LessonRunner({ route, navigation }) {
       fadeAnim.setValue(0);
     });
   }
+
+  const handlePrefaceContinue = useCallback(async () => {
+    if (unitPreface) {
+      await markPrefaceRead(unitPreface.id);
+    }
+    setPrefaceVisible(false);
+  }, [unitPreface]);
+
+  const handlePrefaceClose = useCallback(() => {
+    setPrefaceVisible(false);
+  }, []);
+
+  const handleOpenPreface = useCallback(() => {
+    setPrefaceMode('reference');
+    setPrefaceVisible(true);
+  }, []);
+
+  const accentColor = language === 'kreole' ? '#6D28D9' : '#2771CB';
+  const displayProgress = prefaceVisible ? 0 : index + 1;
 
   if (!lesson || activities.length === 0) return null;
 
@@ -163,29 +207,42 @@ export default function LessonRunner({ route, navigation }) {
     <SafeScreenView style={styles.container}>
       <View style={styles.inner}>
         <ProgressHeader
-        current={index + 1}
+        current={displayProgress}
         total={activities.length}
         xp={lessonXp}
         title={lesson.unitTitle}
-        modeLabel={lesson.lessonTitle}
+        modeLabel={prefaceVisible ? 'Before you begin' : lesson.lessonTitle}
         language={language}
+        unitPreface={prefaceVisible ? undefined : unitPreface}
+        onOpenPreface={handleOpenPreface}
         />
 
-        <Animated.View
-          style={{
-            opacity: fadeAnim,
-            transform: [{ translateX: slideAnim }]
-          }}
-        >
-          <ActivityRenderer
-            key={current.cardId}
-            activity={current}
-            language={language}
-            onCorrect={handleCorrect}
-            onWrong={handleWrong}
-          />
-        </Animated.View>
+        {!prefaceVisible && (
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateX: slideAnim }]
+            }}
+          >
+            <ActivityRenderer
+              key={current?.cardId}
+              activity={current}
+              language={language}
+              onCorrect={handleCorrect}
+              onWrong={handleWrong}
+            />
+          </Animated.View>
+        )}
       </View>
+
+      <LessonPrefaceModal
+        preface={unitPreface}
+        visible={prefaceVisible}
+        mode={prefaceMode}
+        onContinue={handlePrefaceContinue}
+        onClose={handlePrefaceClose}
+        accentColor={accentColor}
+      />
     </SafeScreenView>
   );
 }

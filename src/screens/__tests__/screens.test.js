@@ -113,7 +113,7 @@ describe('HomeScreen', () => {
 
     expect(await screen.findByText('Cajun French')).toBeOnTheScreen();
 
-    expect(screen.getByText('1 / 3 words mastered')).toBeOnTheScreen();
+    expect(screen.getByText('1 / 4 words mastered')).toBeOnTheScreen();
     expect(screen.getByText('40')).toBeOnTheScreen();
     expect(screen.getByText('🔥 2')).toBeOnTheScreen();
     expect(screen.getByText('Daily Review')).toBeOnTheScreen();
@@ -214,6 +214,85 @@ describe('LessonRunner', () => {
     });
 
     expect(await screen.findByText('Cajun French')).toBeOnTheScreen();
+  });
+
+  describe('Unit preface', () => {
+    it('shows the preface Modal when Lesson 1 of a Unit with a preface is rendered', async () => {
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' }
+      });
+
+      expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
+      expect(screen.getByText('0 / 1')).toBeOnTheScreen();
+      expect(screen.getByText('Before you begin')).toBeOnTheScreen();
+    });
+
+    it('dismisses the preface and renders the first Activity on "Start lesson"', async () => {
+      const user = setupUser();
+
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' }
+      });
+
+      expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Start lesson'));
+
+      expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
+      expect(screen.queryByText('A note before you begin')).toBeNull();
+    });
+
+    it('skips the preface for a later Lesson (lessonNumberInUnit > 1)', async () => {
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u01_l01' }
+      });
+
+      expect(await screen.findByText('New word')).toBeOnTheScreen();
+      expect(screen.queryByText('A note before you begin')).toBeNull();
+    });
+
+    it('does not show the preface when it was previously read', async () => {
+      const { markPrefaceRead } = require('../../utils/storage');
+      await markPrefaceRead('cajun:u03');
+
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' }
+      });
+
+      expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
+      expect(screen.queryByText('A note before you begin')).toBeNull();
+    });
+
+    it('shows "Unit note" button on ProgressHeader and opens preface in reference mode', async () => {
+      const user = setupUser();
+
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' }
+      });
+
+      // Dismiss the initial preface
+      expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
+      await user.press(screen.getByText('Start lesson'));
+
+      // Activity should now be visible
+      expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
+
+      // "Unit note" button should be visible in ProgressHeader
+      expect(screen.getByText('Unit note')).toBeOnTheScreen();
+
+      // Tap "Unit note" to reopen the preface in reference mode
+      await user.press(screen.getByText('Unit note'));
+
+      // Modal should show "Back to lesson" (reference mode) instead of "Start lesson"
+      expect(await screen.findByText('Back to lesson')).toBeOnTheScreen();
+      expect(screen.queryByText('Start lesson')).toBeNull();
+    });
   });
 });
 

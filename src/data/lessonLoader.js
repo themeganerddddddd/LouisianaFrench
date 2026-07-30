@@ -1,10 +1,14 @@
 import cajunLessons from './cajunLessons.json';
 import kreoleLessons from './kreoleLessons.json';
+import { UNIT_PREFACES } from '../constants/unitPrefaces';
 import { createCatalog } from './catalog';
 
 const bundledCatalog = createCatalog({
   getLessonsByLanguage(language) {
     return language === 'kreole' ? kreoleLessons : cajunLessons;
+  },
+  getUnitPreface(language, unitCode) {
+    return UNIT_PREFACES[language]?.[unitCode];
   }
 });
 
@@ -26,4 +30,8 @@ export function getAllActivities(language) {
 
 export function getAllWords(language) {
   return bundledCatalog.getAllWords(language);
+}
+
+export function getUnitPreface(language, unitCode) {
+  return bundledCatalog.getUnitPreface(language, unitCode);
 }

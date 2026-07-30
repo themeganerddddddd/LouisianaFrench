@@ -29,7 +29,9 @@ import {
   getTodayKey,
   getLeaderboard,
   upsertLeaderboard,
-  recordStudyAndXp
+  recordStudyAndXp,
+  isPrefaceRead,
+  markPrefaceRead
 } from '../storage';
 
 // Characterizes the current Learner Progress storage interface
@@ -244,5 +246,31 @@ describe('XP and streak recording', () => {
     await recordStudyAndXp(25);
 
     expect(await getLeaderboard()).toEqual([{ name: 'Beau', xp: 25 }]);
+  });
+});
+
+describe('Preface read tracking', () => {
+  it('returns false for an unmarked id', async () => {
+    expect(await isPrefaceRead('cajun:u03')).toBe(false);
+  });
+
+  it('returns true after markPrefaceRead', async () => {
+    await markPrefaceRead('cajun:u03');
+    expect(await isPrefaceRead('cajun:u03')).toBe(true);
+  });
+
+  it('treats different ids independently', async () => {
+    await markPrefaceRead('cajun:u03');
+    expect(await isPrefaceRead('cajun:u03')).toBe(true);
+    expect(await isPrefaceRead('kreole:u01')).toBe(false);
+  });
+
+  it('persists the read state across calls', async () => {
+    await markPrefaceRead('cajun:u03');
+    await markPrefaceRead('kreole:u01');
+
+    expect(await isPrefaceRead('cajun:u03')).toBe(true);
+    expect(await isPrefaceRead('kreole:u01')).toBe(true);
+    expect(await isPrefaceRead('kreole:u02')).toBe(false);
   });
 });
