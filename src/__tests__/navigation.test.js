@@ -26,7 +26,7 @@ describe('navigation graph', () => {
     expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
   });
 
-  it('marks Leaderboard as a known unregistered outgoing contract (KD-02)', () => {
+  it('quarantines the unregistered Leaderboard contract pending Issue #27', () => {
     expect(routesDeclaredInAppSource()).not.toContain('Leaderboard');
   });
 

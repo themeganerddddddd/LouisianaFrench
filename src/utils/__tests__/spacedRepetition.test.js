@@ -6,11 +6,10 @@ import { saveReviewState } from '../storage';
 
 // Characterizes the current spaced-repetition Card scheduling interface
 // (`src/utils/spacedRepetition.js`) backed by the real AsyncStorage jest
-// mock and fake system time. See
-// `.scratch/architecture-modernization/issues/02-characterize-catalog-and-progress.md`.
+// mock and fake system time.
 //
-// Screens are explicitly out of scope. KD-01 and KD-05 are not exercised
-// here; this module has no visibility into which screen calls it.
+// Screens are explicitly out of scope. The resolved Daily Review defect and
+// Issue #30 are not exercised here; this module cannot see which screen calls it.
 
 beforeEach(async () => {
   await AsyncStorage.clear();

@@ -1,30 +1,30 @@
-# Issue Tracker: Local Markdown
+# Issue Tracker: GitHub Issues
 
-Specs and tickets for this repository live as committed Markdown files under `.scratch/`. GitHub pull requests deliver the work, but GitHub Issues are not the source of planning truth.
+GitHub Issues are the source of truth for engineering specs, decisions, and implementation tickets. Pull requests deliver the work and must link the Issue they address.
+
+Do not create a local `.scratch/` tracker. Historical planning remains available through Git history and merged pull requests.
 
 ## Conventions
 
-- One effort per directory: `.scratch/<effort-slug>/`.
-- The effort spec is `.scratch/<effort-slug>/spec.md`.
-- Implementation tickets are one file each at `.scratch/<effort-slug>/issues/<NN>-<slug>.md`.
-- Ticket numbers start at `01` and follow dependency order.
-- `Status:` records the current triage role.
-- `Blocked by:` names every ticket that must finish first.
-- `Claimed by:` records the agent or person currently working the ticket; omit it while unclaimed.
-- `Completed:` records the completion date; omit it until every acceptance criterion and required check passes.
-- Comments and investigation notes append under `## Comments`.
-- Planning files are committed so agents, reviewers, and future sessions share one work graph.
+- Use one GitHub Issue for each spec or independently deliverable ticket.
+- Link implementation Issues to their parent spec Issue.
+- Record dependencies as `Blocked by #<issue-number>` in the Issue body.
+- Put acceptance criteria and required checks in the Issue body.
+- Apply exactly one canonical triage label from `docs/agents/triage-labels.md`.
+- Use Issue comments for investigation notes, decisions, claims, and verification evidence.
+- Assign an Issue to the person or agent working on it when possible.
+- Close an implementation Issue only after its acceptance criteria and required checks pass.
 
 ## Skill Operations
 
-When a skill says "publish to the issue tracker," create or update files under `.scratch/<effort-slug>/`.
+When a skill says "publish to the issue tracker," create or update a GitHub Issue with `gh issue create`, `gh issue edit`, or `gh issue comment`.
 
-When a skill says "fetch the relevant ticket," read the referenced ticket file and its parent spec before exploring implementation.
+When a skill says "fetch the relevant ticket," use `gh issue view` and read the linked parent spec Issue before exploring implementation.
 
-When implementing, choose one ticket from the frontier: `Status: ready-for-agent`, no `Claimed by:` value, and every `Blocked by` ticket has a `Completed:` date. Claim it by adding `Claimed by:` before implementation. Complete it by checking every acceptance criterion, appending verification evidence under `## Comments`, and adding `Completed: YYYY-MM-DD` only after all required checks pass.
+When implementing, choose one unassigned Issue labeled `ready-for-agent` whose blocking Issues are closed. Claim it by assigning yourself or leaving a claim comment. Complete it by posting verification evidence and closing it after all required checks pass.
 
-The five triage roles remain the only `Status:` values. Claim and completion are lifecycle metadata, not triage roles.
+The five triage roles remain the only workflow labels. Assignment and open/closed state are lifecycle metadata, not triage roles.
 
 ## Wayfinding
 
-For `/wayfinder`, use `.scratch/<effort>/map.md` and one child file per decision ticket under `.scratch/<effort>/issues/`. Record `Type`, `Status`, and `Blocked by` near the top of each child file.
+For `/wayfinder`, create one parent GitHub Issue for the map and one linked Issue per decision. Record blocking relationships in each Issue body.

@@ -5,13 +5,13 @@
 // behaviour. Delete or convert to passing tests only after the
 // corresponding fix ticket completes.
 //
-// See `.scratch/architecture-modernization/known-defects.md`.
+// See GitHub Issue #30.
 
 // KD-01 resolved: see regression test in src/screens/__tests__/screens.test.js
 // Final Daily Review wrong no longer calls handleCorrect — quality 2 and
 // incorrect word progress are preserved through completion.
 
-describe('KD-05: Mistake Review does not update Card or Word progress', () => {
+describe('Issue #30: Mistake Review progress rule is unresolved', () => {
   it.skip(
     'Mistake Review correct answer must update Card review state and Word progress',
     () => {

@@ -28,6 +28,23 @@ jest.mock('expo-av', () => {
   };
 });
 
+jest.mock('expo-audio', () => ({
+  RecordingPresets: { HIGH_QUALITY: {} },
+  requestRecordingPermissionsAsync: jest.fn(async () => ({ granted: true })),
+  setAudioModeAsync: jest.fn(async () => {}),
+  useAudioRecorder: jest.fn(() => ({
+    prepareToRecordAsync: jest.fn(async () => {}),
+    record: jest.fn(),
+    stop: jest.fn(async () => {}),
+    uri: null,
+    isRecording: false
+  })),
+  useAudioRecorderState: jest.fn(() => ({
+    isRecording: false,
+    durationMillis: 0
+  }))
+}));
+
 jest.mock('react-native-gesture-handler', () => {
   const React = require('react');
   const { View } = require('react-native');

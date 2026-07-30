@@ -35,11 +35,10 @@ import {
 } from '../storage';
 
 // Characterizes the current Learner Progress storage interface
-// (`src/utils/storage.js`) against the real AsyncStorage jest mock. See
-// `.scratch/architecture-modernization/issues/02-characterize-catalog-and-progress.md`.
+// (`src/utils/storage.js`) against the real AsyncStorage jest mock.
 //
 // Screens (DailyReviewScreen, MistakeReviewScreen) are explicitly out of
-// scope. KD-01 and KD-05 are not exercised here.
+// scope. The resolved Daily Review defect and Issue #30 are not exercised here.
 
 beforeEach(async () => {
   await AsyncStorage.clear();
