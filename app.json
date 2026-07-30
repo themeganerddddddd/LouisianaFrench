@@ -28,6 +28,14 @@
         "projectId": "92b3549d-fbd2-432d-a052-4d39e311b4f1"
       },
       "bugReportEmail": ""
-    }
+    },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Louisiana French to record pronunciation practice."
+        }
+      ]
+    ]
   }
 }

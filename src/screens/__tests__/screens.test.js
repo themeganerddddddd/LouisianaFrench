@@ -515,7 +515,9 @@ describe('AdvancedScreen', () => {
     });
 
     expect(screen.getByText('Advanced Kouri-Vini Hub')).toBeOnTheScreen();
-    expect(screen.getByText('Future modes can go here:')).toBeOnTheScreen();
+    expect(screen.getByText('Self-reviewed speech practice prototype')).toBeOnTheScreen();
+    expect(screen.getByText('Record learner')).toBeOnTheScreen();
+    expect(screen.getByText(/Pronunciation is not graded/)).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
   });
 });

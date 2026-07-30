@@ -4,7 +4,7 @@
 
 ### Issue tracker
 
-Specs and tickets live as committed Markdown under `.scratch/`. See `docs/agents/issue-tracker.md`.
+GitHub Issues are the source of truth for specs and tickets. Do not create local planning files under `.scratch/`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
@@ -17,7 +17,7 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 ## Engineering workflow
 
 - Establish reusable fixtures while writing tests, before broad characterization or substantial production changes. Keep shipped-data validation separate from compact behavior fixtures.
-- Work from the unblocked ticket frontier under `.scratch/`; use one fresh agent context per ticket.
+- Work from the unblocked `ready-for-agent` GitHub Issue frontier; use one fresh agent context per issue.
 - Preserve characterization separately from behavior changes. A characterization test must not encode a known defect as desired behavior.
 - Keep each pull request focused and reviewable. Production changes require tests in the same pull request.
 - Use `.github/pull_request_template.md` for every pull request, including drafts, and answer each section.

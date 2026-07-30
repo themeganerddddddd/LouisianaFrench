@@ -44,3 +44,6 @@ app-example
 
 # LLM teaching workspace
 .llm-lessons/
+
+# Local agent scratch files (planning belongs in GitHub Issues)
+.scratch/
