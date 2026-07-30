@@ -62,18 +62,18 @@ describe('LoadingScreen', () => {
 });
 
 describe('LanguageSelectScreen', () => {
-  it('persists Cajun French and opens Home', async () => {
+  it('persists Louisiana French and opens Home', async () => {
     const user = setupUser();
     renderApp({ initialRouteName: 'LanguageSelect' });
 
     expect(screen.getByText('Choose your language')).toBeOnTheScreen();
-    expect(screen.getByText('Cajun')).toBeOnTheScreen();
+    expect(screen.getByText('French')).toBeOnTheScreen();
     expect(screen.getByText('Kouri-Vini')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
-    await user.press(screen.getByText('Cajun'));
+    await user.press(screen.getByText('French'));
 
-    expect(await screen.findByText('Cajun French')).toBeOnTheScreen();
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
     expect(await getDefaultLanguage()).toBe('cajun');
     expect(await hasSelectedLanguage()).toBe(true);
   });
@@ -87,7 +87,7 @@ describe('HomeScreen', () => {
       safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
     });
 
-    await screen.findByText('Cajun French');
+    await screen.findByText('Louisiana French');
 
     expect(screen.getByTestId('home-top-bar')).toHaveStyle({
       paddingTop: FULL_SCREEN_PHONE_METRICS.insets.top + 16
@@ -111,7 +111,7 @@ describe('HomeScreen', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Cajun French')).toBeOnTheScreen();
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
 
     expect(screen.getByText('1 / 4 words mastered')).toBeOnTheScreen();
     expect(screen.getByText('40')).toBeOnTheScreen();
@@ -135,7 +135,7 @@ describe('HomeScreen', () => {
     expect(await screen.findByText('Open Dictionary')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Open Dictionary'));
-    expect(await screen.findByText('Cajun Dictionary')).toBeOnTheScreen();
+    expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
   });
 
   it('opens Advanced from Home', async () => {
@@ -148,7 +148,7 @@ describe('HomeScreen', () => {
     expect(await screen.findByText('Advanced / Review Hub')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Advanced / Review Hub'));
-    expect(await screen.findByText('Advanced Cajun Hub')).toBeOnTheScreen();
+    expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
   });
 });
 
@@ -213,7 +213,7 @@ describe('LessonRunner', () => {
       initialParams: { language: 'cajun', lessonId: 'nonexistent' }
     });
 
-    expect(await screen.findByText('Cajun French')).toBeOnTheScreen();
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
   });
 
   describe('Unit preface', () => {
@@ -350,7 +350,7 @@ describe('LessonCompleteScreen', () => {
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Back to Home'));
-    expect(await screen.findByText('Cajun French')).toBeOnTheScreen();
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
   });
 });
 
@@ -449,7 +449,7 @@ describe('DictionaryScreen', () => {
       safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
     });
 
-    expect(screen.getByText('Cajun Dictionary')).toBeOnTheScreen();
+    expect(screen.getByText('French Dictionary')).toBeOnTheScreen();
 
     expect(screen.getByTestId('dictionary-screen')).toHaveStyle({
       paddingTop: FULL_SCREEN_PHONE_METRICS.insets.top,
@@ -472,7 +472,7 @@ describe('DictionaryScreen', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Cajun Dictionary')).toBeOnTheScreen();
+    expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
 
     expect(screen.getByText('Hello')).toBeOnTheScreen();
     expect(screen.getByText('Bonjour')).toBeOnTheScreen();
@@ -514,9 +514,11 @@ describe('AdvancedScreen', () => {
       initialParams: { language: 'kreole' }
     });
 
-    expect(screen.getByText('Advanced Kouri-Vini Hub')).toBeOnTheScreen();
-    expect(screen.getByText('Self-reviewed speech practice prototype')).toBeOnTheScreen();
-    expect(screen.getByText('Record learner')).toBeOnTheScreen();
+    expect(screen.getByText('Advanced Kouri-Vini Hub')).toHaveStyle({ textAlign: 'center' });
+    expect(screen.queryByText('Experimental speaking drills')).toBeNull();
+    expect(screen.queryByText('Self-reviewed speech practice prototype')).toBeNull();
+    expect(screen.getByText('Play Audio')).toBeOnTheScreen();
+    expect(screen.getByText('Record')).toBeOnTheScreen();
     expect(screen.getByText(/Pronunciation is not graded/)).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
   });

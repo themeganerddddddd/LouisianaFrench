@@ -109,7 +109,7 @@ export default function DictionaryScreen({ route }) {
     <SafeScreenView style={styles.container} testID="dictionary-screen">
       <View style={styles.header}>
         <Text style={styles.title}>
-          {language === 'cajun' ? 'Cajun Dictionary' : 'Kouri-Vini Dictionary'}
+          {language === 'cajun' ? 'French Dictionary' : 'Kouri-Vini Dictionary'}
         </Text>
         <Text style={styles.sub}>Browse every word introduced in the course</Text>
       </View>

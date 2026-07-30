@@ -48,4 +48,15 @@ describe('self-reviewed speech practice', () => {
     expect(await screen.findByText('merci')).toBeOnTheScreen();
     expect(screen.queryByText('Play my recording')).toBeNull();
   });
+
+  it('leaves recorder disposal to useAudioRecorder when unmounted', () => {
+    const stop = jest.fn();
+    useAudioRecorder.mockReturnValue({ isRecording: true, stop });
+    useAudioRecorderState.mockReturnValue({ isRecording: true, durationMillis: 800 });
+
+    const { unmount } = render(<SpeechPracticePrototype language="cajun" />);
+    unmount();
+
+    expect(stop).not.toHaveBeenCalled();
+  });
 });
