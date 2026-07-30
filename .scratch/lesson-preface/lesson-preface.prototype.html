@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Compact Lesson Preface Prototype</title>
+    <!-- Three phone-first lesson-preface variants, switchable via ?variant=. -->
+    <style>
+      :root {
+        color-scheme: light;
+        --blue: #2771cb;
+        --blue-dark: #173f77;
+        --blue-pale: #eaf3ff;
+        --ink: #17324d;
+        --muted: #64748b;
+        --line: #dbe5ef;
+        --canvas: #e8eef5;
+        font-family: Inter, ui-rounded, "Avenir Next", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(circle at 50% 8%, #f8fbff 0 12rem, transparent 36rem),
+          var(--canvas);
+        color: var(--ink);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      button:focus-visible {
+        outline: 3px solid rgba(39, 113, 203, 0.35);
+        outline-offset: 2px;
+      }
+
+      .workspace {
+        display: grid;
+        min-height: 100dvh;
+        place-items: center;
+        padding: 16px 250px 16px 16px;
+      }
+
+      .phone {
+        position: relative;
+        display: flex;
+        width: min(390px, 100%);
+        height: min(812px, calc(100dvh - 32px));
+        min-height: 536px;
+        overflow: hidden;
+        border: 7px solid #14202b;
+        border-radius: 38px;
+        background: #f7fafc;
+        box-shadow: 0 28px 70px rgba(19, 37, 54, 0.25);
+      }
+
+      .screen {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+      }
+
+      .lesson-header {
+        flex: none;
+        padding: 20px 18px 11px;
+        background: #f7fafc;
+      }
+
+      .lesson-header__row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .lesson-header h1 {
+        margin: 0;
+        font-size: 1.06rem;
+        line-height: 1.2;
+      }
+
+      .lesson-header p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .unit-note {
+        min-height: 32px;
+        padding: 6px 9px;
+        border: 1px solid #b8d3f3;
+        border-radius: 99px;
+        background: white;
+        color: var(--blue-dark);
+        cursor: pointer;
+        font-size: 0.68rem;
+        font-weight: 850;
+      }
+
+      .progress {
+        height: 8px;
+        margin-top: 11px;
+        overflow: hidden;
+        border-radius: 99px;
+        background: #e2e8f0;
+      }
+
+      .progress__fill {
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--blue);
+        transition: width 180ms ease;
+      }
+
+      .screen-body {
+        position: relative;
+        display: flex;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 8px 16px 16px;
+      }
+
+      .activity {
+        display: flex;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        padding: 22px 18px 18px;
+        border: 1px solid #e2e8f0;
+        border-radius: 19px;
+        background: white;
+        box-shadow: 0 8px 24px rgba(23, 50, 77, 0.06);
+      }
+
+      .kicker {
+        margin: 0 0 6px;
+        color: var(--blue);
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .activity h2 {
+        margin: 0;
+        font-size: clamp(1.35rem, 7vw, 1.8rem);
+        line-height: 1.12;
+      }
+
+      .word-card {
+        display: grid;
+        min-height: 150px;
+        flex: 1;
+        margin-top: 18px;
+        place-content: center;
+        border-radius: 17px;
+        background: var(--blue-pale);
+        text-align: center;
+      }
+
+      .word-card strong {
+        font-size: 2.25rem;
+      }
+
+      .word-card span {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 700;
+      }
+
+      .primary,
+      .secondary,
+      .text-button,
+      .close-button {
+        min-height: 44px;
+        border: 0;
+        cursor: pointer;
+        font-weight: 850;
+      }
+
+      .primary {
+        padding: 11px 15px;
+        border-radius: 13px;
+        background: var(--blue);
+        color: white;
+      }
+
+      .primary:hover {
+        background: #1f62b3;
+      }
+
+      .secondary {
+        padding: 10px 13px;
+        border: 1px solid #bdd2e8;
+        border-radius: 13px;
+        background: white;
+        color: var(--blue-dark);
+      }
+
+      .text-button {
+        padding: 8px 4px;
+        background: transparent;
+        color: var(--muted);
+      }
+
+      .activity > .primary {
+        width: 100%;
+        margin-top: 16px;
+      }
+
+      .scrim {
+        position: absolute;
+        z-index: 2;
+        inset: 0;
+        background: rgba(17, 37, 56, 0.5);
+        animation: fade-in 160ms ease-out;
+      }
+
+      .preface-card {
+        color: var(--ink);
+      }
+
+      .preface-card h2 {
+        margin: 0;
+        font-size: 1.42rem;
+        line-height: 1.12;
+        letter-spacing: -0.015em;
+      }
+
+      .summary {
+        margin: 9px 0 0;
+        color: #496174;
+        font-size: 0.84rem;
+        font-weight: 620;
+        line-height: 1.42;
+      }
+
+      .pronouns {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+        margin-top: 13px;
+      }
+
+      .pronouns span {
+        padding: 8px 2px;
+        border: 1px solid #b8d3f3;
+        border-radius: 10px;
+        background: var(--blue-pale);
+        color: var(--blue-dark);
+        text-align: center;
+        font-size: 0.77rem;
+        font-weight: 900;
+      }
+
+      .acceptance-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 9px 10px;
+        border-radius: 11px;
+        background: #edf8f1;
+        color: #245c3c;
+        font-size: 0.73rem;
+        font-weight: 760;
+        line-height: 1.32;
+      }
+
+      .acceptance-note strong {
+        font-size: 0.85rem;
+      }
+
+      .preface-actions {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 8px;
+        margin-top: 13px;
+      }
+
+      /* A: a small, conventional dialog over the waiting Activity. */
+      .dialog-positioner {
+        position: absolute;
+        z-index: 3;
+        inset: 0;
+        display: grid;
+        padding: 14px;
+        place-items: center;
+      }
+
+      .compact-dialog {
+        width: 100%;
+        max-width: 330px;
+        padding: 18px;
+        border-radius: 19px;
+        background: white;
+        box-shadow: 0 18px 48px rgba(10, 29, 47, 0.3);
+        animation: rise 180ms ease-out;
+      }
+
+      /* B: a thumb-reachable sheet that keeps both actions above the fold. */
+      .sheet-positioner {
+        position: absolute;
+        z-index: 3;
+        inset: 0;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .compact-sheet {
+        width: 100%;
+        max-height: 78%;
+        padding: 8px 18px 17px;
+        overflow: auto;
+        border-radius: 22px 22px 0 0;
+        background: white;
+        box-shadow: 0 -12px 40px rgba(10, 29, 47, 0.24);
+        animation: sheet-in 190ms ease-out;
+      }
+
+      .sheet-handle {
+        width: 42px;
+        height: 4px;
+        margin: 0 auto 12px;
+        border-radius: 99px;
+        background: #cbd5e1;
+      }
+
+      /* C: the preface occupies Activity zero without adding another layer. */
+      .activity-zero {
+        justify-content: center;
+        padding: 20px 18px;
+        animation: rise 180ms ease-out;
+      }
+
+      .zero-count {
+        margin: 13px 0 0;
+        color: var(--muted);
+        font-size: 0.69rem;
+        font-weight: 750;
+        text-align: center;
+      }
+
+      /* Optional full explanation. */
+      .details-view {
+        position: absolute;
+        z-index: 5;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: white;
+        animation: sheet-in 180ms ease-out;
+      }
+
+      .details-header {
+        display: flex;
+        flex: none;
+        align-items: center;
+        gap: 10px;
+        min-height: 58px;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .close-button {
+        width: 44px;
+        flex: none;
+        border-radius: 12px;
+        background: var(--blue-pale);
+        color: var(--blue-dark);
+        font-size: 1.15rem;
+      }
+
+      .details-header h2 {
+        margin: 0;
+        font-size: 1.05rem;
+      }
+
+      .details-header p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 0.7rem;
+        font-weight: 700;
+      }
+
+      .details-content {
+        min-height: 0;
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px 18px 28px;
+      }
+
+      .detail-section + .detail-section {
+        margin-top: 17px;
+        padding-top: 17px;
+        border-top: 1px solid #edf2f7;
+      }
+
+      .detail-section h3 {
+        margin: 0 0 6px;
+        font-size: 0.9rem;
+      }
+
+      .detail-section p {
+        margin: 0;
+        color: #496174;
+        font-size: 0.82rem;
+        line-height: 1.5;
+      }
+
+      .quote {
+        margin: 9px 0 0;
+        padding: 11px 12px;
+        border-left: 3px solid #f4b41b;
+        border-radius: 0 10px 10px 0;
+        background: #fff8e2;
+        color: #594715;
+        font-size: 0.82rem;
+        font-weight: 800;
+        line-height: 1.42;
+      }
+
+      .quote span {
+        display: block;
+        margin-top: 3px;
+        font-size: 0.72rem;
+        font-weight: 650;
+      }
+
+      /* Prototype controls live outside the phone whenever space allows. */
+      .prototype-bar {
+        position: fixed;
+        z-index: 10;
+        top: 50%;
+        right: 24px;
+        width: 210px;
+        padding: 12px;
+        border-radius: 17px;
+        background: #101820;
+        color: white;
+        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.3);
+        transform: translateY(-50%);
+      }
+
+      .prototype-label strong,
+      .prototype-label span {
+        display: block;
+      }
+
+      .prototype-label strong {
+        font-size: 0.84rem;
+      }
+
+      .prototype-label span {
+        margin-top: 4px;
+        color: #b9c7d3;
+        font-size: 0.69rem;
+        line-height: 1.35;
+      }
+
+      .prototype-controls {
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
+        gap: 7px;
+        margin-top: 10px;
+      }
+
+      .prototype-controls button {
+        min-height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: #293642;
+        color: white;
+        cursor: pointer;
+        font-weight: 900;
+      }
+
+      .prototype-controls .reset {
+        color: #dbeafe;
+        font-size: 0.72rem;
+      }
+
+      @keyframes fade-in {
+        from { opacity: 0; }
+      }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(6px) scale(0.985); }
+      }
+
+      @keyframes sheet-in {
+        from { opacity: 0; transform: translateY(12px); }
+      }
+
+      @media (max-width: 680px) {
+        body {
+          background: #f7fafc;
+        }
+
+        .workspace {
+          display: block;
+          min-height: auto;
+          padding: 48px 0 0;
+        }
+
+        .phone {
+          width: 100%;
+          height: calc(100dvh - 48px);
+          min-height: 472px;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .prototype-bar {
+          top: 0;
+          right: 0;
+          left: 0;
+          display: flex;
+          width: 100%;
+          height: 48px;
+          align-items: center;
+          gap: 8px;
+          padding: 5px 8px;
+          border-radius: 0;
+          transform: none;
+        }
+
+        .prototype-label {
+          min-width: 0;
+          flex: 1;
+        }
+
+        .prototype-label strong,
+        .prototype-label span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .prototype-label span {
+          display: none;
+        }
+
+        .prototype-controls {
+          display: flex;
+          flex: none;
+          margin: 0;
+        }
+
+        .prototype-controls button {
+          width: 38px;
+          min-height: 38px;
+        }
+
+        .prototype-controls .reset {
+          width: auto;
+          padding: 0 9px;
+        }
+      }
+
+      @media (max-height: 620px) {
+        .lesson-header {
+          padding-top: 12px;
+          padding-bottom: 8px;
+        }
+
+        .activity {
+          padding-top: 16px;
+        }
+
+        .compact-dialog,
+        .activity-zero {
+          padding-top: 15px;
+          padding-bottom: 15px;
+        }
+
+        .preface-card h2 {
+          font-size: 1.25rem;
+        }
+
+        .summary {
+          font-size: 0.78rem;
+        }
+
+        .acceptance-note {
+          margin-top: 9px;
+        }
+
+        .preface-actions {
+          margin-top: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="workspace">
+      <section class="phone" aria-label="Phone preview">
+        <div class="screen">
+          <header class="lesson-header">
+            <div class="lesson-header__row">
+              <div>
+                <h1>Personal Pronouns</h1>
+                <p>Lesson 1: Ways to say &ldquo;they&rdquo;</p>
+              </div>
+              <button class="unit-note" id="unit-note" type="button" hidden>Unit note</button>
+            </div>
+            <div class="progress" aria-label="Lesson progress">
+              <div class="progress__fill" id="progress-fill"></div>
+            </div>
+          </header>
+          <section class="screen-body" id="stage" aria-live="polite"></section>
+        </div>
+      </section>
+    </main>
+
+    <nav class="prototype-bar" aria-label="Prototype variants">
+      <div class="prototype-label">
+        <strong id="variant-label"></strong>
+        <span id="prototype-state"></span>
+      </div>
+      <div class="prototype-controls">
+        <button id="previous-variant" type="button" aria-label="Previous variant">&larr;</button>
+        <button class="reset" id="reset-prototype" type="button">Reset</button>
+        <button id="next-variant" type="button" aria-label="Next variant">&rarr;</button>
+      </div>
+    </nav>
+
+    <script src="./lesson-preface.prototype.js"></script>
+  </body>
+</html>

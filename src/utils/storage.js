@@ -9,7 +9,8 @@ const KEYS = {
   DAILY_REVIEW_LOG: 'lf_daily_review_log',
   LEADERBOARD: 'lf_leaderboard',
   DEFAULT_LANGUAGE: 'lf_default_language',
-  HAS_SELECTED_LANGUAGE: 'lf_has_selected_language'
+  HAS_SELECTED_LANGUAGE: 'lf_has_selected_language',
+  PREFACE_READ: 'lf_preface_read'
 };
 
 const defaultProfile = {
@@ -170,4 +171,17 @@ export async function recordStudyAndXp(xpEarned) {
   await saveProfile(updated);
   await upsertLeaderboard(updated.username || 'Player', updated.xp);
   return updated;
+}
+
+export async function isPrefaceRead(prefaceId) {
+  const raw = await AsyncStorage.getItem(KEYS.PREFACE_READ);
+  const data = raw ? JSON.parse(raw) : {};
+  return !!data[prefaceId];
+}
+
+export async function markPrefaceRead(prefaceId) {
+  const raw = await AsyncStorage.getItem(KEYS.PREFACE_READ);
+  const data = raw ? JSON.parse(raw) : {};
+  data[prefaceId] = true;
+  await AsyncStorage.setItem(KEYS.PREFACE_READ, JSON.stringify(data));
 }

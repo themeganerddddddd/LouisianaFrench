@@ -34,7 +34,8 @@ export const fixtureActivities = Object.freeze({
   multipleChoice: activityByCardId('fixture:cajun:greeting:choice'),
   typing: activityByCardId('fixture:cajun:greeting:typing'),
   sentenceBuild: activityByCardId('fixture:cajun:ready:build'),
-  matchPairs: activityByCardId('fixture:cajun:greetings:match')
+  matchPairs: activityByCardId('fixture:cajun:greetings:match'),
+  toBeIntro: activityByCardId('fixture:cajun:to-be:intro')
 });
 
 export { compactCatalogLessons, compactCatalogSource };

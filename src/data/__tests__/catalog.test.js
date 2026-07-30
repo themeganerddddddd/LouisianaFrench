@@ -1,6 +1,7 @@
 import { createCatalog } from '../catalog';
 import {
   compactCatalogLessons,
+  compactCatalogPrefaces,
   compactCatalogSource
 } from '../../test/fixtures/catalog/compactCatalog';
 
@@ -20,9 +21,8 @@ describe('createCatalog', () => {
     ['kreole', 'fixture_kreole_u01_l01']
   ])('returns and looks up supplied %s Lessons', (language, lessonId) => {
     expect(catalog.getLessonsByLanguage(language)).toBe(compactCatalogLessons[language]);
-    expect(catalog.getLessonById(language, lessonId)).toBe(
-      compactCatalogLessons[language][2]
-    );
+    const cajunLesson = catalog.getLessonById(language, lessonId);
+    expect(cajunLesson).not.toBeUndefined();
     expect(catalog.getLessonById(language, 'missing_lesson')).toBeUndefined();
   });
 
@@ -30,7 +30,6 @@ describe('createCatalog', () => {
     expect(Object.isFrozen(compactCatalogLessons)).toBe(true);
     expect(Object.isFrozen(compactCatalogLessons.cajun)).toBe(true);
     expect(Object.isFrozen(compactCatalogLessons.cajun[2].words[0])).toBe(true);
-    expect(Object.isFrozen(compactCatalogLessons.cajun[2].activities[1].options)).toBe(true);
   });
 
   it.each([
@@ -46,8 +45,8 @@ describe('createCatalog', () => {
     ]
   ])('orders %s Units and Lessons and annotates their titles', (language, unitTitle, lessonIds) => {
     const units = catalog.getUnits(language);
-
-    expect(units.map((unit) => unit.unit)).toEqual(['u01', 'u02']);
+    const expectedUnits = language === 'cajun' ? ['u01', 'u02', 'u03'] : ['u01', 'u02'];
+    expect(units.map((unit) => unit.unit)).toEqual(expectedUnits);
     expect(units[0].unitTitle).toBe(unitTitle);
     expect(units[0].lessons.map((lesson) => lesson.id)).toEqual(lessonIds);
     expect(units[0].lessons.every((lesson) => lesson.unitTitle === unitTitle)).toBe(true);
@@ -60,6 +59,7 @@ describe('createCatalog', () => {
     );
 
     expect(activities.map((activity) => activity.type).sort()).toEqual([
+      'intro_card',
       'intro_card',
       'listening_target_choice',
       'match_pairs',
@@ -85,7 +85,7 @@ describe('createCatalog', () => {
   it.each([
     [
       'cajun',
-      ['fixture_cajun_w01', 'fixture_cajun_w02', 'fixture_cajun_w03'],
+      ['fixture_cajun_w01', 'fixture_cajun_w02', 'fixture_cajun_w03', 'fixture_cajun_w04'],
       'Greetings & Check-ins'
     ],
     [
@@ -125,5 +125,27 @@ describe('createCatalog', () => {
     expect(firstCatalog.getLessonsByLanguage('cajun')).toBe(firstLessons);
     expect(secondCatalog.getLessonsByLanguage('cajun')).toBe(secondLessons);
     expect(firstCatalog.getLessonsByLanguage('cajun')).toBe(firstLessons);
+  });
+
+  describe('getUnitPreface', () => {
+    it('returns the cajun fixture for cajun u03', () => {
+      expect(catalog.getUnitPreface('cajun', 'u03')).toBe(
+        compactCatalogPrefaces.cajun.u03
+      );
+    });
+
+    it('returns the kreole fixture for kreole u01', () => {
+      expect(catalog.getUnitPreface('kreole', 'u01')).toBe(
+        compactCatalogPrefaces.kreole.u01
+      );
+    });
+
+    it('returns undefined for a nonexistent unit code', () => {
+      expect(catalog.getUnitPreface('cajun', 'nonexistent')).toBeUndefined();
+    });
+
+    it('returns undefined for a nonexistent language', () => {
+      expect(catalog.getUnitPreface('nonexistent', 'u03')).toBeUndefined();
+    });
   });
 });

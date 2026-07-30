@@ -135,6 +135,32 @@ export const compactCatalogLessons = deepFreeze({
           target: 'Ça va?'
         }
       ]
+    },
+    {
+      id: 'fixture_cajun_u03_l01',
+      unit: 'u03',
+      lessonNumberInUnit: 1,
+      lessonTitle: 'To Be & To Have',
+      type: 'core',
+      words: [
+        {
+          rowId: 'fixture_cajun_w04',
+          english: 'to be',
+          target: 'être'
+        }
+      ],
+      activities: [
+        {
+          cardId: 'fixture:cajun:to-be:intro',
+          rowId: 'fixture_cajun_w04',
+          type: 'intro_card',
+          prompt: 'Listen and learn',
+          answer: 'être',
+          answerDisplay: 'être',
+          english: 'to be',
+          target: 'être'
+        }
+      ]
     }
   ],
   kreole: [
@@ -229,8 +255,72 @@ export const compactCatalogLessons = deepFreeze({
   ]
 });
 
+export const compactCatalogPrefaces = deepFreeze({
+  cajun: {
+    u03: {
+      id: 'cajun:u03',
+      title: 'Ways to say "they"',
+      summary: 'The form you hear may depend on the region or the speaker.',
+      terms: ['ils', 'eux-autres', 'eusse', 'ça'],
+      reassurance: 'The app will accept multiple forms in your answers.',
+      detailsTitle: 'Why are there different forms?',
+      sections: [
+        {
+          heading: 'Language changes by place',
+          paragraphs: [
+            "You'll hear eusse more frequently in southeast Louisiana, including Terrebonne and Lafourche, than in the rest of the state."
+          ]
+        },
+        {
+          heading: 'People may switch forms',
+          paragraphs: [
+            'The same person may use different words interchangeably. Marie might mostly use ils, but sometimes say ça, particularly when speaking generally.'
+          ],
+          quote: {
+            text: '"Ça parle français à Mamou."',
+            attribution: '"They speak French in Mamou."'
+          }
+        },
+        {
+          heading: 'A form shared across French',
+          paragraphs: [
+            'Ils is common both in Louisiana and throughout the French-speaking world. Even with ils, Louisiana speakers may conjugate some verbs differently.'
+          ]
+        },
+        {
+          heading: 'Answer naturally',
+          paragraphs: [
+            'This app will do its best to accept ils, eux-autres, eusse, and ça when more than one form works.'
+          ]
+        }
+      ]
+    }
+  },
+  kreole: {
+    u01: {
+      id: 'kreole:u01',
+      title: 'Pronouns & Greetings',
+      summary: 'The pronouns you hear may vary by region.',
+      terms: ['mo', 'to', 'li', 'nouzòt', 'vouzòt', 'yé'],
+      reassurance: 'The app accepts multiple forms where they vary.',
+      detailsTitle: 'Why do pronouns vary?',
+      sections: [
+        {
+          heading: 'Regional variation',
+          paragraphs: [
+            'Some areas use vouzòt more frequently than others for the plural "you".'
+          ]
+        }
+      ]
+    }
+  }
+});
+
 export const compactCatalogSource = Object.freeze({
   getLessonsByLanguage(language) {
     return compactCatalogLessons[language];
+  },
+  getUnitPreface(language, unitCode) {
+    return compactCatalogPrefaces?.[language]?.[unitCode];
   }
 });
