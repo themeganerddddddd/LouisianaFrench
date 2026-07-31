@@ -14,7 +14,6 @@
         "english": "Hello! Hi!",
         "target": "Bonjour!",
         "audioKey": "u01_w0001_cajun",
-        "extraDetails": "Test",
         "contextBadge": "Singular"
       },
       {
@@ -55,7 +54,6 @@
         "target": "Bonjour!",
         "answer": "Bonjour!",
         "answerDisplay": "Bonjour!",
-        "extraDetails": "Test",
         "contextBadge": "Singular",
         "baseCardId": "cajun:u01_w0001:intro",
         "activityIndex": 1
@@ -82,7 +80,6 @@
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
         "target": "Bonjour!",
-        "extraDetails": "Test",
         "contextBadge": "Singular",
         "baseCardId": "cajun:u01_w0001:mc",
         "activityIndex": 2
@@ -149,7 +146,6 @@
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
         "target": "Bonjour!",
-        "extraDetails": "Test",
         "contextBadge": "Singular",
         "baseCardId": "cajun:u01_w0001:mc",
         "activityIndex": 5
@@ -216,7 +212,6 @@
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
         "target": "Bonjour!",
-        "extraDetails": "Test",
         "contextBadge": "Singular",
         "baseCardId": "cajun:u01_w0001:mc",
         "activityIndex": 8
@@ -313,7 +308,6 @@
         ],
         "answer": "All matched",
         "answerDisplay": "All matched",
-        "extraDetails": "Test",
         "contextBadge": "Singular",
         "baseCardId": "cajun:match:u01_w0002",
         "activityIndex": 12
@@ -959,7 +953,6 @@
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
         "target": "Bonjour!",
-        "extraDetails": "Test",
         "contextBadge": "Singular",
         "baseCardId": "cajun:u01_w0001:listening_target",
         "activityIndex": 9
@@ -1777,7 +1770,6 @@
         "english": "Hello! Hi!",
         "target": "Bonjour!",
         "audioKey": "u01_w0001_cajun",
-        "extraDetails": "Test",
         "contextBadge": "Singular"
       },
       {
@@ -2140,7 +2132,6 @@
         "answerDisplay": "Bonjour!",
         "english": "Hello! Hi!",
         "target": "Bonjour!",
-        "extraDetails": "Test",
         "contextBadge": "Singular",
         "baseCardId": "cajun:u01_w0001:mc",
         "activityIndex": 9
@@ -5688,7 +5679,7 @@
         "english": "they are",
         "target": "eux-autres est",
         "audioKey": "u03_w0021_cajun",
-        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker."
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" In southeast Louisiana, you may also hear eusse, especially in Terrebonne and Lafourche."
       },
       {
         "rowId": "u03_w0022",
@@ -5728,7 +5719,7 @@
         "target": "eux-autres est",
         "answer": "eux-autres est",
         "answerDisplay": "eux-autres est",
-        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" In southeast Louisiana, you may also hear eusse, especially in Terrebonne and Lafourche.",
         "baseCardId": "cajun:u03_w0021:intro",
         "activityIndex": 1
       },
@@ -5754,7 +5745,7 @@
         "answerDisplay": "eux-autres est",
         "english": "they are",
         "target": "eux-autres est",
-        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" In southeast Louisiana, you may also hear eusse, especially in Terrebonne and Lafourche.",
         "baseCardId": "cajun:u03_w0021:listening_target",
         "activityIndex": 2
       },
@@ -5961,7 +5952,7 @@
         "answerDisplay": "eux-autres est",
         "english": "they are",
         "target": "eux-autres est",
-        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" In southeast Louisiana, you may also hear eusse, especially in Terrebonne and Lafourche.",
         "baseCardId": "cajun:u03_w0021:build",
         "activityIndex": 12
       },
@@ -5993,7 +5984,7 @@
         ],
         "answer": "All matched",
         "answerDisplay": "All matched",
-        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" In southeast Louisiana, you may also hear eusse, especially in Terrebonne and Lafourche.",
         "baseCardId": "cajun:match:u03_w0022",
         "activityIndex": 13
       },
@@ -6504,7 +6495,7 @@
         "english": "they are",
         "target": "eux-autres est",
         "audioKey": "u03_w0021_cajun",
-        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker."
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" In southeast Louisiana, you may also hear eusse, especially in Terrebonne and Lafourche."
       },
       {
         "rowId": "u03_w0022",
@@ -6586,7 +6577,7 @@
         "answerDisplay": "eux-autres est",
         "english": "they are",
         "target": "eux-autres est",
-        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" In southeast Louisiana, you may also hear eusse, especially in Terrebonne and Lafourche.",
         "baseCardId": "cajun:u03_w0021:mc",
         "activityIndex": 1
       },

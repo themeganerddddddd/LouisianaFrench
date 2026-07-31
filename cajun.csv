@@ -1,5 +1,5 @@
 id,unit,variant,english,variant_text,audioKey,link,context_badge,extra_details,english_alt_response,variant_alt_response
-u01_w0001,u01,cajun,Hello! Hi!,Bonjour!,u01_w0001_cajun,https://static.memrise.com/uploads/things/audio/278028338_210214_2324_47.mp3,Singular,Test,,
+u01_w0001,u01,cajun,Hello! Hi!,Bonjour!,u01_w0001_cajun,https://static.memrise.com/uploads/things/audio/278028338_210214_2324_47.mp3,Singular,,,
 u01_w0002,u01,cajun,How’s it going?,Comment ça va?,u01_w00002_cajun,https://static.memrise.com/uploads/things/audio/278028339_210214_2325_05.mp3,,,Test,
 u01_w0003,u01,cajun,Are things OK? Are you OK?,Ça va?,u01_w00003_cajun,https://static.memrise.com/uploads/things/audio/278028340_210214_2325_18.mp3,,,,Test
 u01_w0004,u01,cajun,Things are OK.,Ça va.,u01_w00004_cajun,https://static.memrise.com/uploads/things/audio/278028341_210214_2325_28.mp3,,,,
@@ -62,7 +62,7 @@ u03_w0017,u03,cajun,they are,ils sont,u03_w0017_cajun,https://static.memrise.com
 u03_w0018,u03,cajun,they have,ils ont,u03_w0018_cajun,https://static.memrise.com/uploads/things/audio/252834823_210315_1431_35.mp3,,,,
 u03_w0019,u03,cajun,They are married.,Ils sont mariés.,u03_w0019_cajun,https://static.memrise.com/uploads/things/audio/252835873_201229_2201_23.mp3,,,,
 u03_w0020,u03,cajun,They have six children.,Ils ont six enfants.,u03_w0020_cajun,https://static.memrise.com/uploads/things/audio/252837042_210604_1846_10.mp3,,,,
-u03_w0021,u03,cajun,they are,eux-autres est,u03_w0021_cajun,https://static.memrise.com/uploads/things/audio/252834464_210205_1912_38.mp3,,Eux-autres is one Louisiana French way to say "they." The form you hear may depend on the region or the speaker.,
+u03_w0021,u03,cajun,they are,eux-autres est,u03_w0021_cajun,https://static.memrise.com/uploads/things/audio/252834464_210205_1912_38.mp3,,"Eux-autres is one Louisiana French way to say ""they."" In southeast Louisiana, you may also hear eusse, especially in Terrebonne and Lafourche.",,
 u03_w0022,u03,cajun,they have,eux-autres a,u03_w0022_cajun,https://static.memrise.com/uploads/things/audio/252834831_210325_1402_55.mp3,,Eux-autres can also appear before "have" in the same regional pattern.,
 u03_w0023,u03,cajun,"it/that is, they are",c'est,u03_w0023_cajun,https://static.memrise.com/uploads/things/audio/252834526_210315_1430_00.mp3,,,,
 u03_w0024,u03,cajun,What's that?,Quoi c'est ça?,u03_w0024_cajun,https://static.memrise.com/uploads/things/audio/255044010_210205_1437_59.mp3,,"Ça can mean ""that,"" and in some Louisiana French expressions it can also stand in for ""they"" when speaking generally.",

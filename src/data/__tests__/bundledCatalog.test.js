@@ -132,12 +132,15 @@ describe('bundled Catalog', () => {
     expect(regionalActivities).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ rowId: 'u03_w0017', extraDetails: expect.stringContaining('ils') }),
-        expect.objectContaining({ rowId: 'u03_w0021', extraDetails: expect.stringContaining('Eux-autres') }),
+        expect.objectContaining({ rowId: 'u03_w0021', extraDetails: expect.stringMatching(/Eux-autres.*eusse/) }),
         expect.objectContaining({ rowId: 'u03_w0022', extraDetails: expect.stringContaining('have') }),
         expect.objectContaining({ rowId: 'u03_w0024', extraDetails: expect.stringContaining('Ça') })
       ])
     );
     expect(regionalActivities.every((activity) => !/test|prototype/i.test(activity.extraDetails))).toBe(
+      true
+    );
+    expect(activities.every((activity) => !/test|prototype/i.test(activity.extraDetails || ''))).toBe(
       true
     );
   });
