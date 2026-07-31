@@ -110,6 +110,30 @@ describe('LessonPrefaceModal', () => {
     expect(screen.getByText(cajunPreface.detailsTitle)).toBeOnTheScreen();
   });
 
+  it('keeps the footer action usable with long detail content', async () => {
+    const onContinue = jest.fn();
+    const user = userEvent.setup();
+    const longSections = Array.from({ length: 12 }, (_, index) => ({
+      heading: `Detail heading ${index + 1}`,
+      paragraphs: ['A long explainer paragraph that should scroll above the footer.']
+    }));
+
+    renderModal({
+      mode: 'reference',
+      onContinue,
+      preface: { ...cajunPreface, sections: longSections }
+    });
+
+    await user.press(screen.getByLabelText('Learn more'));
+
+    const continueButton = screen.getByLabelText('Back to lesson');
+    expect(continueButton).toBeOnTheScreen();
+    expect(continueButton).toHaveStyle({ flex: 0, width: '100%' });
+
+    await user.press(continueButton);
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
   it('tapping back in details returns to summary', async () => {
     const user = userEvent.setup();
     renderModal();

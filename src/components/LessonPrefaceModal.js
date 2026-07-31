@@ -180,7 +180,12 @@ export default function LessonPrefaceModal({
 
             <View style={styles.detailsActions}>
               <TouchableOpacity
-                style={[styles.actionButton, styles.primaryButton, { backgroundColor: accentColor }]}
+                style={[
+                  styles.actionButton,
+                  styles.detailsActionButton,
+                  styles.primaryButton,
+                  { backgroundColor: accentColor }
+                ]}
                 onPress={onContinue}
                 accessibilityRole="button"
                 accessibilityLabel={isStart ? 'Start lesson' : 'Back to lesson'}
@@ -354,7 +359,8 @@ const styles = StyleSheet.create({
     color: '#17324D'
   },
   detailsScroll: {
-    flex: 1
+    flex: 1,
+    minHeight: 0
   },
   detailsContent: {
     padding: 20,
@@ -397,9 +403,14 @@ const styles = StyleSheet.create({
     color: '#64748B'
   },
   detailsActions: {
+    flexShrink: 0,
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0'
+  },
+  detailsActionButton: {
+    flex: 0,
+    width: '100%'
   }
 });
