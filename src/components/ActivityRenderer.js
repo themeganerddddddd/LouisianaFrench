@@ -412,7 +412,7 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
               />
             </View>
             <View style={styles.tBoyActionLabel}>
-              <Text style={[styles.tBoyActionText, { color: theme.accent }]}>Open Unit note</Text>
+              <Text style={[styles.tBoyActionText, { color: theme.accent }]}>T-Boy&apos;s Advice</Text>
               <Ionicons name="chevron-forward" size={14} color={theme.accent} />
             </View>
           </TouchableOpacity>
