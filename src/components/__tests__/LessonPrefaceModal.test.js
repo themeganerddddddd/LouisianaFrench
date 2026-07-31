@@ -47,6 +47,15 @@ describe('LessonPrefaceModal', () => {
     expect(screen.getByText(cajunPreface.title)).toBeOnTheScreen();
   });
 
+  it('uses the shared T-Boy speech bubble and accessible artwork in the summary', () => {
+    renderModal();
+
+    expect(screen.getByTestId('preface-tboy-bubble')).toBeOnTheScreen();
+    expect(screen.getByTestId('preface-tboy-image')).toBeOnTheScreen();
+    expect(screen.getByLabelText('T-Boy')).toBeOnTheScreen();
+    expect(screen.getByTestId('preface-summary-scroll')).toBeOnTheScreen();
+  });
+
   it('renders all term chips', () => {
     renderModal();
     for (const term of cajunPreface.terms) {

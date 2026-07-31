@@ -35,6 +35,14 @@ _Avoid_: Remediation
 One learner interaction in a Lesson or review session, such as an introduction, choice, listening, typing, sentence-building, or matching task.
 _Avoid_: Question when the interaction is not a question
 
+**T-Boy**:
+The in-Lesson mascot that surfaces Extra details.
+_Avoid_: Pelican Buddy, helpful pelican
+
+**Extra details**:
+An optional Catalog note attached to a Word or Activity and shown by T-Boy after the Activity's normal reveal point.
+_Avoid_: Tooltip, hint when referring to Catalog content
+
 **Word**:
 A catalog entry pairing a target-language expression with its English meaning and optional Audio.
 _Avoid_: Vocabulary item

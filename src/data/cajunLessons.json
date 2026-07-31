@@ -5367,7 +5367,8 @@
         "rowId": "u03_w0017",
         "english": "they are",
         "target": "ils sont",
-        "audioKey": "u03_w0017_cajun"
+        "audioKey": "u03_w0017_cajun",
+        "extraDetails": "The form ils is common in Louisiana French and throughout the French-speaking world. You may hear other forms for \"they\" depending on the speaker or region."
       },
       {
         "rowId": "u03_w0018",
@@ -5462,6 +5463,7 @@
         "target": "ils sont",
         "answer": "ils sont",
         "answerDisplay": "ils sont",
+        "extraDetails": "The form ils is common in Louisiana French and throughout the French-speaking world. You may hear other forms for \"they\" depending on the speaker or region.",
         "baseCardId": "cajun:u03_w0017:intro",
         "activityIndex": 4
       },
@@ -5508,6 +5510,7 @@
         "answerDisplay": "ils sont",
         "english": "they are",
         "target": "ils sont",
+        "extraDetails": "The form ils is common in Louisiana French and throughout the French-speaking world. You may hear other forms for \"they\" depending on the speaker or region.",
         "baseCardId": "cajun:u03_w0017:build",
         "activityIndex": 6
       },
@@ -5625,6 +5628,7 @@
         ],
         "answer": "All matched",
         "answerDisplay": "All matched",
+        "extraDetails": "The form ils is common in Louisiana French and throughout the French-speaking world. You may hear other forms for \"they\" depending on the speaker or region.",
         "baseCardId": "cajun:match:u03_w0018",
         "activityIndex": 13
       },
@@ -5683,13 +5687,15 @@
         "rowId": "u03_w0021",
         "english": "they are",
         "target": "eux-autres est",
-        "audioKey": "u03_w0021_cajun"
+        "audioKey": "u03_w0021_cajun",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker."
       },
       {
         "rowId": "u03_w0022",
         "english": "they have",
         "target": "eux-autres a",
-        "audioKey": "u03_w0022_cajun"
+        "audioKey": "u03_w0022_cajun",
+        "extraDetails": "Eux-autres can also appear before \"have\" in the same regional pattern."
       },
       {
         "rowId": "u03_w0023",
@@ -5701,7 +5707,8 @@
         "rowId": "u03_w0024",
         "english": "What's that?",
         "target": "Quoi c'est ça?",
-        "audioKey": "u03_w0024_cajun"
+        "audioKey": "u03_w0024_cajun",
+        "extraDetails": "Ça can mean \"that,\" and in some Louisiana French expressions it can also stand in for \"they\" when speaking generally."
       },
       {
         "rowId": "u03_w0025",
@@ -5721,6 +5728,7 @@
         "target": "eux-autres est",
         "answer": "eux-autres est",
         "answerDisplay": "eux-autres est",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
         "baseCardId": "cajun:u03_w0021:intro",
         "activityIndex": 1
       },
@@ -5746,6 +5754,7 @@
         "answerDisplay": "eux-autres est",
         "english": "they are",
         "target": "eux-autres est",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
         "baseCardId": "cajun:u03_w0021:listening_target",
         "activityIndex": 2
       },
@@ -5784,6 +5793,7 @@
         "target": "eux-autres a",
         "answer": "eux-autres a",
         "answerDisplay": "eux-autres a",
+        "extraDetails": "Eux-autres can also appear before \"have\" in the same regional pattern.",
         "baseCardId": "cajun:u03_w0022:intro",
         "activityIndex": 4
       },
@@ -5809,6 +5819,7 @@
         "answerDisplay": "eux-autres a",
         "english": "they have",
         "target": "eux-autres a",
+        "extraDetails": "Eux-autres can also appear before \"have\" in the same regional pattern.",
         "baseCardId": "cajun:u03_w0022:mc",
         "activityIndex": 5
       },
@@ -5898,6 +5909,7 @@
         "target": "Quoi c'est ça?",
         "answer": "Quoi c'est ça?",
         "answerDisplay": "Quoi c'est ça?",
+        "extraDetails": "Ça can mean \"that,\" and in some Louisiana French expressions it can also stand in for \"they\" when speaking generally.",
         "baseCardId": "cajun:u03_w0024:intro",
         "activityIndex": 10
       },
@@ -5923,6 +5935,7 @@
         "answerDisplay": "Quoi c'est ça?",
         "english": "What's that?",
         "target": "Quoi c'est ça?",
+        "extraDetails": "Ça can mean \"that,\" and in some Louisiana French expressions it can also stand in for \"they\" when speaking generally.",
         "baseCardId": "cajun:u03_w0024:listening_target",
         "activityIndex": 11
       },
@@ -5948,6 +5961,7 @@
         "answerDisplay": "eux-autres est",
         "english": "they are",
         "target": "eux-autres est",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
         "baseCardId": "cajun:u03_w0021:build",
         "activityIndex": 12
       },
@@ -5979,6 +5993,7 @@
         ],
         "answer": "All matched",
         "answerDisplay": "All matched",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
         "baseCardId": "cajun:match:u03_w0022",
         "activityIndex": 13
       },
@@ -6463,7 +6478,8 @@
         "rowId": "u03_w0017",
         "english": "they are",
         "target": "ils sont",
-        "audioKey": "u03_w0017_cajun"
+        "audioKey": "u03_w0017_cajun",
+        "extraDetails": "The form ils is common in Louisiana French and throughout the French-speaking world. You may hear other forms for \"they\" depending on the speaker or region."
       },
       {
         "rowId": "u03_w0018",
@@ -6487,13 +6503,15 @@
         "rowId": "u03_w0021",
         "english": "they are",
         "target": "eux-autres est",
-        "audioKey": "u03_w0021_cajun"
+        "audioKey": "u03_w0021_cajun",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker."
       },
       {
         "rowId": "u03_w0022",
         "english": "they have",
         "target": "eux-autres a",
-        "audioKey": "u03_w0022_cajun"
+        "audioKey": "u03_w0022_cajun",
+        "extraDetails": "Eux-autres can also appear before \"have\" in the same regional pattern."
       },
       {
         "rowId": "u03_w0023",
@@ -6505,7 +6523,8 @@
         "rowId": "u03_w0024",
         "english": "What's that?",
         "target": "Quoi c'est ça?",
-        "audioKey": "u03_w0024_cajun"
+        "audioKey": "u03_w0024_cajun",
+        "extraDetails": "Ça can mean \"that,\" and in some Louisiana French expressions it can also stand in for \"they\" when speaking generally."
       },
       {
         "rowId": "u03_w0025",
@@ -6567,6 +6586,7 @@
         "answerDisplay": "eux-autres est",
         "english": "they are",
         "target": "eux-autres est",
+        "extraDetails": "Eux-autres is one Louisiana French way to say \"they.\" The form you hear may depend on the region or the speaker.",
         "baseCardId": "cajun:u03_w0021:mc",
         "activityIndex": 1
       },
@@ -6767,6 +6787,7 @@
         "answerDisplay": "ils sont",
         "english": "they are",
         "target": "ils sont",
+        "extraDetails": "The form ils is common in Louisiana French and throughout the French-speaking world. You may hear other forms for \"they\" depending on the speaker or region.",
         "baseCardId": "cajun:u03_w0017:mc",
         "activityIndex": 9
       },

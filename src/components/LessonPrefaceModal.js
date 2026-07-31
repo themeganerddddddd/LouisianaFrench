@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Image,
   Modal,
   ScrollView,
   StyleSheet,
@@ -7,6 +8,9 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import TBoySpeechBubble from './TBoySpeechBubble';
+
+const tBoyImage = require('../../assets/images/mainscreen.png');
 
 export default function LessonPrefaceModal({
   preface,
@@ -40,8 +44,14 @@ export default function LessonPrefaceModal({
       <View style={styles.overlay}>
         {!showingDetails ? (
           /* ---- Summary view (centered) ---- */
-          <View style={styles.summaryContainer}>
-            <View style={styles.summaryCard}>
+          <ScrollView
+            style={styles.summaryScroll}
+            contentContainerStyle={styles.summaryScrollContent}
+            showsVerticalScrollIndicator
+            testID="preface-summary-scroll"
+          >
+            <View style={styles.summaryContainer}>
+              <View style={styles.summaryCard}>
               {/* Close button */}
               <TouchableOpacity
                 style={styles.closeButton}
@@ -52,11 +62,28 @@ export default function LessonPrefaceModal({
                 <Text style={styles.closeButtonText}>X</Text>
               </TouchableOpacity>
 
-              <Text style={[styles.kicker, { color: accentColor }]}>
-                A note before you begin
-              </Text>
-              <Text style={styles.title}>{preface.title}</Text>
-              <Text style={styles.summary}>{preface.summary}</Text>
+              <Text style={[styles.kicker, { color: accentColor }]}>A note before you begin</Text>
+
+              <View style={styles.tBoyPrefaceRow}>
+                <View style={styles.tBoyArtPocket}>
+                  <Image
+                    source={tBoyImage}
+                    style={styles.tBoyImage}
+                    resizeMode="contain"
+                    testID="preface-tboy-image"
+                    accessibilityRole="image"
+                    accessibilityLabel="T-Boy"
+                  />
+                </View>
+                <TBoySpeechBubble
+                  heading={preface.title}
+                  body={preface.summary}
+                  accentColor={accentColor}
+                  layout="row"
+                  tailPosition="left"
+                  testID="preface-tboy-bubble"
+                />
+              </View>
 
               {preface.terms && preface.terms.length > 0 && (
                 <View style={styles.chipRow}>
@@ -105,8 +132,9 @@ export default function LessonPrefaceModal({
                   </Text>
                 </TouchableOpacity>
               </View>
+              </View>
             </View>
-          </View>
+          </ScrollView>
         ) : (
           /* ---- Details view (left-aligned, scrollable) ---- */
           <View style={styles.detailsContainer}>
@@ -178,39 +206,52 @@ const styles = StyleSheet.create({
     padding: 20
   },
   /* Summary */
+  summaryScroll: {
+    flex: 1,
+    width: '100%'
+  },
+  summaryScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8
+  },
   summaryContainer: {
     width: '100%',
-    maxWidth: 400
+    maxWidth: 420,
+    alignSelf: 'center'
   },
   summaryCard: {
-    backgroundColor: '#fff',
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#000',
-    padding: 28,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: '#D5E2EF',
+    padding: 20,
     alignItems: 'center'
   },
   kicker: {
     fontSize: 13,
     fontWeight: '800',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    textTransform: 'uppercase'
+    letterSpacing: 0.2,
+    marginBottom: 12
   },
-  title: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#17324D',
-    textAlign: 'center',
-    marginBottom: 10
-  },
-  summary: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#486581',
-    textAlign: 'center',
-    lineHeight: 22,
+  tBoyPrefaceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    width: '100%',
     marginBottom: 18
+  },
+  tBoyArtPocket: {
+    width: 86,
+    height: 100,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6
+  },
+  tBoyImage: {
+    width: 82,
+    height: 96
   },
   closeButton: {
     position: 'absolute',

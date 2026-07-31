@@ -21,7 +21,7 @@ function renderActivity(activity, handlers = {}) {
   const onCorrect = handlers.onCorrect || jest.fn();
   const onWrong = handlers.onWrong || jest.fn();
 
-  render(
+  const rendered = render(
     <ActivityRenderer
       activity={activity}
       language="cajun"
@@ -30,7 +30,7 @@ function renderActivity(activity, handlers = {}) {
     />
   );
 
-  return { onCorrect, onWrong };
+  return { ...rendered, onCorrect, onWrong };
 }
 
 async function expectAudioPlayedAfter(callsBeforePress) {
@@ -69,9 +69,105 @@ describe('ActivityRenderer', () => {
       await press(user, 'Bonjour');
       await expectAudioPlayedAfter(callsBeforePress);
     });
+
+    it('renders one display-only T-Boy callout for long extra details', () => {
+      const longText =
+        'This is a longer practice note so you can see how helpful context fits beside the Activity.';
+
+      renderActivity({
+        ...fixtureActivities.intro,
+        extraDetails: longText
+      });
+
+      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
+      expect(screen.getByTestId('tboy-text')).toHaveTextContent(longText);
+      expect(screen.getByTestId('tboy-text').props.numberOfLines).toBeUndefined();
+      expect(screen.getByLabelText('T-Boy')).toBeOnTheScreen();
+      expect(screen.queryByLabelText('T-Boy has more to say')).toBeNull();
+    });
+
+    it('does not render a T-Boy callout when the Activity has no extra details', () => {
+      renderActivity(fixtureActivities.intro);
+
+      expect(screen.queryByTestId('tboy-callout')).toBeNull();
+    });
+
+    it('uses the English phrase, then the target phrase, as its heading fallback', () => {
+      const { unmount } = renderActivity({
+        ...fixtureActivities.intro,
+        english: 'Regional phrase',
+        target: 'Bonjour!',
+        extraDetails: 'Helpful context'
+      });
+
+      expect(screen.getByTestId('tboy-heading')).toHaveTextContent('Regional phrase');
+
+      unmount();
+      renderActivity({
+        ...fixtureActivities.intro,
+        english: '',
+        target: 'Bonjour!',
+        extraDetails: 'Helpful context'
+      });
+
+      expect(screen.getByTestId('tboy-heading')).toHaveTextContent('Bonjour!');
+    });
+
+    it('falls back to Context when both phrase headings are missing', () => {
+      renderActivity({
+        ...fixtureActivities.intro,
+        english: '',
+        target: '',
+        extraDetails: 'Helpful context'
+      });
+
+      expect(screen.getByTestId('tboy-heading')).toHaveTextContent('Context');
+    });
   });
 
   describe('multiple_choice', () => {
+    it('reveals T-Boy context after a correct answer', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        extraDetails: 'Helpful context'
+      });
+
+      expect(screen.queryByTestId('tboy-callout')).toBeNull();
+      await chooseAndCheck(user, 'Ça va?');
+
+      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
+    });
+
+    it('reveals T-Boy context only after a final wrong answer', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        extraDetails: 'Helpful context'
+      });
+
+      await chooseAndCheck(user, 'Bonjour');
+      expect(screen.queryByTestId('tboy-callout')).toBeNull();
+
+      await retry(user);
+      await chooseAndCheck(user, 'Bonjour');
+      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
+    });
+
+    it('reveals T-Boy context after a skip', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        extraDetails: 'Helpful context'
+      });
+
+      await press(user, 'Skip');
+      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
+    });
+
     it('keeps Check disabled until an option is selected', () => {
       renderActivity(fixtureActivities.multipleChoice);
 
@@ -117,9 +213,13 @@ describe('ActivityRenderer', () => {
 
     it('accepts the correct answer and continues', async () => {
       const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.listening);
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.listening,
+        extraDetails: 'Helpful context'
+      });
 
       await chooseAndCheck(user, 'Bonjour');
+      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
       await finishCorrect(user, onCorrect);
     });
 
@@ -139,7 +239,10 @@ describe('ActivityRenderer', () => {
   describe('typing', () => {
     it('accepts a typed answer and exposes progressive hints', async () => {
       const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.typing);
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.typing,
+        extraDetails: 'Helpful context'
+      });
 
       expect(screen.getByText('Typing')).toBeOnTheScreen();
       expect(screen.getByText('Check')).toBeDisabled();
@@ -156,6 +259,7 @@ describe('ActivityRenderer', () => {
 
       await user.type(screen.getByPlaceholderText('Type your answer'), 'Ça va?');
       await press(user, 'Check');
+      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
       await finishCorrect(user, onCorrect);
     });
 
@@ -176,7 +280,10 @@ describe('ActivityRenderer', () => {
   describe('sentence_build', () => {
     it('builds the correct token order and continues', async () => {
       const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.sentenceBuild);
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.sentenceBuild,
+        extraDetails: 'Helpful context'
+      });
 
       expect(screen.getByText('Build')).toBeOnTheScreen();
       expect(screen.getByText("Build: 'It's ready'")).toBeOnTheScreen();
@@ -185,6 +292,7 @@ describe('ActivityRenderer', () => {
 
       await press(user, "C'est");
       await chooseAndCheck(user, 'paré');
+      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
       await finishCorrect(user, onCorrect);
     });
 
@@ -204,7 +312,10 @@ describe('ActivityRenderer', () => {
   describe('match_pairs', () => {
     it('matches every pair correctly', async () => {
       const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.matchPairs);
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.matchPairs,
+        extraDetails: 'Helpful context'
+      });
 
       expect(screen.getByText('Match')).toBeOnTheScreen();
       expect(screen.getByText('Match the words')).toBeOnTheScreen();
@@ -214,6 +325,7 @@ describe('ActivityRenderer', () => {
       await chooseAndCheck(user, 'Bonjour');
       await press(user, 'How’s it going?');
       await chooseAndCheck(user, 'Ça va?');
+      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
       await finishCorrect(user, onCorrect);
     });
 
