@@ -253,7 +253,7 @@ describe('LessonRunner', () => {
 
       expect(await screen.findByText('New word')).toBeOnTheScreen();
       expect(screen.queryByText('A note before you begin')).toBeNull();
-      expect(screen.queryByLabelText('T-Boy has more to say')).toBeNull();
+      expect(screen.queryByLabelText('T-Boy: open Unit note')).toBeNull();
     });
 
     it('does not show the preface when it was previously read', async () => {
@@ -283,11 +283,11 @@ describe('LessonRunner', () => {
 
       // Activity should now be visible
       expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
-      expect(screen.getByLabelText('T-Boy has more to say')).toBeOnTheScreen();
+      expect(screen.getByLabelText('T-Boy: open Unit note')).toBeOnTheScreen();
       expect(screen.getByText('1 / 1')).toBeOnTheScreen();
 
       // T-Boy should open the same reference-mode Unit note without changing progress.
-      await user.press(screen.getByLabelText('T-Boy has more to say'));
+      await user.press(screen.getByLabelText('T-Boy: open Unit note'));
       expect(await screen.findByText('Back to lesson')).toBeOnTheScreen();
 
       await user.press(screen.getByText('Back to lesson'));
