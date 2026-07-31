@@ -1,4 +1,5 @@
 import { act, screen } from '@testing-library/react-native';
+import { LayoutAnimation } from 'react-native';
 
 import {
   activityByCardId,
@@ -8,6 +9,7 @@ import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBu
 import { clock } from '../../test/fixtures/clock';
 import {
   completedLessons,
+  lastWorkedUnits,
   profiles,
   wordMastery
 } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
@@ -16,6 +18,7 @@ import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import {
   getDefaultLanguage,
+  getLastWorkedUnit,
   hasSelectedLanguage,
   markLanguageSelected,
   setDefaultLanguage
@@ -103,6 +106,7 @@ describe('HomeScreen', () => {
       wordProgress: {
         'cajun:fixture_cajun_w01': wordMastery.mastered
       },
+      lastWorkedUnit: lastWorkedUnits.cajunUnitOne,
       dailyReviewLog: {}
     });
 
@@ -121,8 +125,89 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Advanced / Review Hub')).toBeOnTheScreen();
     expect(screen.getByText('Greetings & Check-ins')).toBeOnTheScreen();
     expect(screen.getByText('First greetings')).toBeOnTheScreen();
+    expect(screen.queryByText('Everyday phrases')).toBeNull();
     expect(screen.getByText('Done')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
+  });
+
+  it('collapses Units by default and allows only one open Unit', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('Greetings & Check-ins')).toBeOnTheScreen();
+    expect(screen.queryByText('First greetings')).toBeNull();
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: false
+    });
+
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+
+    expect(screen.getByText('First greetings')).toBeOnTheScreen();
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: true
+    });
+
+    await user.press(screen.getByTestId('unit-toggle-u02'));
+
+    expect(screen.queryByText('First greetings')).toBeNull();
+    expect(screen.getByText('Everyday phrases')).toBeOnTheScreen();
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: false
+    });
+    expect(screen.getByTestId('unit-toggle-u02').props.accessibilityState).toEqual({
+      expanded: true
+    });
+
+    await user.press(screen.getByTestId('unit-toggle-u02'));
+
+    expect(screen.queryByText('Everyday phrases')).toBeNull();
+    expect(screen.getByTestId('unit-toggle-u02').props.accessibilityState).toEqual({
+      expanded: false
+    });
+  });
+
+  it('schedules a layout transition when a Unit expands or collapses', async () => {
+    const user = setupUser();
+    const configureNext = jest
+      .spyOn(LayoutAnimation, 'configureNext')
+      .mockImplementation(() => {});
+
+    try {
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByText('Greetings & Check-ins')).toBeOnTheScreen();
+      expect(configureNext).not.toHaveBeenCalled();
+
+      await user.press(screen.getByTestId('unit-toggle-u01'));
+
+      expect(configureNext).toHaveBeenCalledWith({
+        duration: 220,
+        create: {
+          type: LayoutAnimation.Types.easeInEaseOut,
+          property: LayoutAnimation.Properties.scaleY
+        },
+        update: {
+          type: LayoutAnimation.Types.easeInEaseOut
+        },
+        delete: {
+          type: LayoutAnimation.Types.easeInEaseOut,
+          property: LayoutAnimation.Properties.scaleY
+        }
+      });
+
+      await user.press(screen.getByTestId('unit-toggle-u01'));
+
+      expect(configureNext).toHaveBeenCalledTimes(2);
+    } finally {
+      configureNext.mockRestore();
+    }
   });
 
   it('opens Dictionary from Home', async () => {
@@ -163,6 +248,7 @@ describe('LessonRunner', () => {
     });
 
     expect(await screen.findByText('New word')).toBeOnTheScreen();
+    expect(await getLastWorkedUnit('cajun')).toBe('u01');
     expect(screen.getByText('1 / 4')).toBeOnTheScreen();
     expect(screen.getByText('Bonjour')).toBeOnTheScreen();
     expect(screen.queryByLabelText('Report a bug')).toBeNull();

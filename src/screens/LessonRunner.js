@@ -14,6 +14,7 @@ import {
   markLessonComplete,
   markPrefaceRead,
   recordStudyAndXp,
+  setLastWorkedUnit,
   updateWordProgress
 } from '../utils/storage';
 
@@ -44,6 +45,7 @@ export default function LessonRunner({ route, navigation }) {
     }
 
     async function init() {
+      await setLastWorkedUnit(language, lesson.unit);
       const due = await getDueReviewItems(lesson.activities || []);
       const dueIds = new Set(due.map((d) => d.cardId));
 

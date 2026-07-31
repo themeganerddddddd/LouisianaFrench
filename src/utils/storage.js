@@ -10,7 +10,8 @@ const KEYS = {
   LEADERBOARD: 'lf_leaderboard',
   DEFAULT_LANGUAGE: 'lf_default_language',
   HAS_SELECTED_LANGUAGE: 'lf_has_selected_language',
-  PREFACE_READ: 'lf_preface_read'
+  PREFACE_READ: 'lf_preface_read',
+  LAST_WORKED_UNIT: 'lf_last_worked_unit'
 };
 
 const defaultProfile = {
@@ -54,6 +55,19 @@ export async function getLessonProgress() {
 
 export async function saveLessonProgress(progress) {
   await AsyncStorage.setItem(KEYS.LESSON_PROGRESS, JSON.stringify(progress));
+}
+
+export async function getLastWorkedUnit(language) {
+  const raw = await AsyncStorage.getItem(KEYS.LAST_WORKED_UNIT);
+  const data = raw ? JSON.parse(raw) : {};
+  return data[language] || null;
+}
+
+export async function setLastWorkedUnit(language, unitCode) {
+  const raw = await AsyncStorage.getItem(KEYS.LAST_WORKED_UNIT);
+  const data = raw ? JSON.parse(raw) : {};
+  data[language] = unitCode;
+  await AsyncStorage.setItem(KEYS.LAST_WORKED_UNIT, JSON.stringify(data));
 }
 
 export async function markLessonComplete(language, lessonId) {

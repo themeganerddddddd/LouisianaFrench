@@ -3,10 +3,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
+  LayoutAnimation,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  UIManager,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +18,7 @@ import { getAllWords, getUnits } from '../data/lessonLoader';
 import {
   getDailyReviewLog,
   getDefaultLanguage,
+  getLastWorkedUnit,
   getLessonProgress,
   getProfile,
   getTodayKey,
@@ -68,6 +72,7 @@ export default function HomeScreen() {
   const [wordProgress, setWordProgress] = useState({});
   const [dailyDone, setDailyDone] = useState(false);
   const [timeUntilReset, setTimeUntilReset] = useState(getTimeUntilMidnight());
+  const [expandedUnit, setExpandedUnit] = useState(null);
 
   useEffect(() => {
     async function bootstrapLanguage() {
@@ -88,14 +93,25 @@ export default function HomeScreen() {
 
   useEffect(() => {
     async function loadData() {
-      setUnits(getUnits(language));
-      setProfile(await getProfile());
-      setLessonProgress(await getLessonProgress());
-      setWordProgress(await getWordProgress());
+      const loadedUnits = getUnits(language);
+      const loadedProfile = await getProfile();
+      const loadedLessonProgress = await getLessonProgress();
+      const loadedWordProgress = await getWordProgress();
 
       const reviewLog = await getDailyReviewLog();
+      const lastWorkedUnit = await getLastWorkedUnit(language);
+
+      setUnits(loadedUnits);
+      setProfile(loadedProfile);
+      setLessonProgress(loadedLessonProgress);
+      setWordProgress(loadedWordProgress);
       setDailyDone(!!reviewLog[getTodayKey()]);
       setTimeUntilReset(getTimeUntilMidnight());
+      setExpandedUnit(
+        loadedUnits.some((unitObj) => unitObj.unit === lastWorkedUnit)
+          ? lastWorkedUnit
+          : null
+      );
     }
 
     loadData();
@@ -109,9 +125,34 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
   async function switchLanguage(nextLanguage) {
     setLanguage(nextLanguage);
     await setDefaultLanguage(nextLanguage);
+  }
+
+  function toggleUnit(unitCode) {
+    LayoutAnimation.configureNext({
+      duration: 220,
+      create: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.scaleY
+      },
+      update: {
+        type: LayoutAnimation.Types.easeInEaseOut
+      },
+      delete: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.scaleY
+      }
+    });
+
+    setExpandedUnit((currentUnit) => (currentUnit === unitCode ? null : unitCode));
   }
 
   const theme =
@@ -283,22 +324,36 @@ export default function HomeScreen() {
 
           return (
             <View key={unitObj.unit} style={styles.unitCard}>
-              <LinearGradient colors={theme.headerGrad} style={styles.unitHeader}>
-                <View style={styles.unitNumberPill}>
-                  <Text style={[styles.unitNumberText, { color: theme.accent }]}>
-                    {getUnitNumber(unitObj.unit)}
-                  </Text>
-                </View>
+              <TouchableOpacity
+                testID={`unit-toggle-${unitObj.unit}`}
+                onPress={() => toggleUnit(unitObj.unit)}
+                accessibilityRole="button"
+                accessibilityLabel={`Toggle ${unitObj.unitTitle}`}
+                accessibilityState={{ expanded: expandedUnit === unitObj.unit }}
+              >
+                <LinearGradient colors={theme.headerGrad} style={styles.unitHeader}>
+                  <View style={styles.unitNumberPill}>
+                    <Text style={[styles.unitNumberText, { color: theme.accent }]}>
+                      {getUnitNumber(unitObj.unit)}
+                    </Text>
+                  </View>
 
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.unitTitle}>{unitObj.unitTitle}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.unitTitle}>{unitObj.unitTitle}</Text>
 
-                  <Text style={styles.unitMeta}>
-                    {masteredInUnit} / {uniqueWords.length} words mastered ·{' '}
-                    {completedLessons} / {unitObj.lessons.length} lessons done
-                  </Text>
-                </View>
-              </LinearGradient>
+                    <Text style={styles.unitMeta}>
+                      {masteredInUnit} / {uniqueWords.length} words mastered ·{' '}
+                      {completedLessons} / {unitObj.lessons.length} lessons done
+                    </Text>
+                  </View>
+
+                  <View style={styles.unitToggleIcon}>
+                    <Text style={styles.unitToggleIconText}>
+                      {expandedUnit === unitObj.unit ? '-' : '+'}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
 
               <View style={styles.progressBarBg}>
                 <View
@@ -312,70 +367,72 @@ export default function HomeScreen() {
                 />
               </View>
 
-              {unitObj.lessons.map((lesson) => {
-                const done = !!lessonProgress[`${language}:${lesson.id}`]?.completed;
-                const buttonText = getLessonButtonText(done);
+              {expandedUnit === unitObj.unit
+                ? unitObj.lessons.map((lesson) => {
+                    const done = !!lessonProgress[`${language}:${lesson.id}`]?.completed;
+                    const buttonText = getLessonButtonText(done);
 
-                return (
-                  <TouchableOpacity
-                    key={lesson.id}
-                    style={[
-                      styles.lessonRow,
-                      done && {
-                        backgroundColor: theme.doneSoft,
-                        borderTopColor: theme.doneSoft
-                      }
-                    ]}
-                    onPress={() =>
-                      navigation.navigate('Lesson', {
-                        lessonId: lesson.id,
-                        language
-                      })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={`${lesson.lessonTitle || lesson.title || 'Lesson'}`}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text
+                    return (
+                      <TouchableOpacity
+                        key={lesson.id}
                         style={[
-                          styles.lessonTitle,
-                          done && styles.lessonTitleDone
+                          styles.lessonRow,
+                          done && {
+                            backgroundColor: theme.doneSoft,
+                            borderTopColor: theme.doneSoft
+                          }
                         ]}
+                        onPress={() =>
+                          navigation.navigate('Lesson', {
+                            lessonId: lesson.id,
+                            language
+                          })
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`${lesson.lessonTitle || lesson.title || 'Lesson'}`}
                       >
-                        {lesson.lessonTitle || lesson.title || 'Lesson'}
-                      </Text>
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={[
+                              styles.lessonTitle,
+                              done && styles.lessonTitleDone
+                            ]}
+                          >
+                            {lesson.lessonTitle || lesson.title || 'Lesson'}
+                          </Text>
 
-                      <Text
-                        style={[
-                          styles.lessonDesc,
-                          done && styles.lessonDescDone
-                        ]}
-                      >
-                        {lesson.wordCount || (lesson.words || []).length || 0} words ·{' '}
-                        {lesson.type === 'review' ? 'Review' : 'Core lesson'}
-                      </Text>
-                    </View>
+                          <Text
+                            style={[
+                              styles.lessonDesc,
+                              done && styles.lessonDescDone
+                            ]}
+                          >
+                            {lesson.wordCount || (lesson.words || []).length || 0} words ·{' '}
+                            {lesson.type === 'review' ? 'Review' : 'Core lesson'}
+                          </Text>
+                        </View>
 
-                    <View
-                      style={[
-                        styles.badge,
-                        done
-                          ? styles.badgeDone
-                          : { backgroundColor: theme.start }
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          done && styles.badgeTextDone
-                        ]}
-                      >
-                        {buttonText}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+                        <View
+                          style={[
+                            styles.badge,
+                            done
+                              ? styles.badgeDone
+                              : { backgroundColor: theme.start }
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.badgeText,
+                              done && styles.badgeTextDone
+                            ]}
+                          >
+                            {buttonText}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })
+                : null}
             </View>
           );
         })}
@@ -549,6 +606,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16
+  },
+
+  unitToggleIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10
+  },
+
+  unitToggleIconText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 22
   },
 
   unitNumberPill: {
