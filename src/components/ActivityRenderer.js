@@ -11,8 +11,9 @@ import {
   View
 } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
+import TBoySpeechBubble from './TBoySpeechBubble';
 
-const birdImage = require('../../assets/images/mainscreen.png');
+const tBoyImage = require('../../assets/images/mainscreen.png');
 
 const CORRECT_TONE_URI =
   'data:audio/wav;base64,UklGRtAUAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YawUAAAAAFoGTgx9EZUVUhiLGSoZNhfOEyoPkglhA/v8xfYi8W3s8ujo5nDmkec66j/uYPNM+aP//wX8CzkRYhU1GIQZOhldFwkUdA/oCb4DWP0c927xquwbOZ25wnq/O0P8/L4Rv+kBakL';
@@ -371,51 +372,34 @@ function ContextBadge({ activity, language }) {
   );
 }
 
-function ExtraDetailsBird({ activity, language, visible }) {
+function TBoyCallout({ activity, language, visible }) {
   const theme = getTheme(language);
+  const heading = activity?.english || activity?.target || 'Context';
 
   if (!visible || !activity?.extraDetails) return null;
 
   return (
-    <View style={styles.extraDetailsWrap}>
-      <View style={styles.speechStage}>
-        <View
-          style={[
-            styles.extraBubble,
-            {
-              backgroundColor: theme.light,
-              borderColor: theme.accent
-            }
-          ]}
-        >
-          <Text style={styles.extraBubbleText}>{activity.extraDetails}</Text>
-        </View>
-
-        <View
-          style={[
-            styles.extraBubbleBridge,
-            { backgroundColor: theme.light }
-          ]}
+    <View style={styles.tBoyWrap} testID="tboy-callout">
+      <View style={styles.tBoyStage}>
+        <TBoySpeechBubble
+          heading={heading}
+          body={activity.extraDetails}
+          accentColor={theme.accent}
+          testID="tboy-speech-bubble"
+          headingTestID="tboy-heading"
+          bodyTestID="tboy-text"
         />
 
-        <View style={styles.extraBubbleTailWrap}>
-          <View
-            style={[
-              styles.extraBubbleTailBorder,
-              { borderTopColor: theme.accent }
-            ]}
-          />
-
-          <View
-            style={[
-              styles.extraBubbleTail,
-              { borderTopColor: theme.light }
-            ]}
+        <View style={styles.tBoyArtPocket}>
+          <Image
+            source={tBoyImage}
+            style={styles.tBoyImage}
+            resizeMode="contain"
+            testID="tboy-image"
+            accessibilityRole="image"
+            accessibilityLabel="T-Boy"
           />
         </View>
-        
-
-        <Image source={birdImage} style={styles.birdImage} resizeMode="contain" />
       </View>
     </View>
   );
@@ -652,7 +636,7 @@ function IntroCard({ activity, language, onCorrect, theme }) {
         </Text>
       </TouchableOpacity>
 
-      <ExtraDetailsBird
+      <TBoyCallout
         activity={activity}
         language={language}
         visible={shouldShowIntroAddOns(activity)}
@@ -775,7 +759,7 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
         <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
       ) : null}
 
-      <ExtraDetailsBird
+      <TBoyCallout
         activity={activity}
         language={language}
         visible={revealAddOns}
@@ -795,7 +779,14 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
   );
 }
 
-function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
+function ListeningTargetChoice({
+  activity,
+  language,
+  onCorrect,
+  onWrong,
+  theme,
+  allowSkip
+}) {
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -917,7 +908,7 @@ function ListeningTargetChoice({ activity, language, onCorrect, onWrong, theme, 
         <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
       ) : null}
 
-      <ExtraDetailsBird
+      <TBoyCallout
         activity={activity}
         language={language}
         visible={revealAddOns}
@@ -1097,7 +1088,7 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
         <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
       ) : null}
 
-      <ExtraDetailsBird
+      <TBoyCallout
         activity={activity}
         language={language}
         visible={revealAddOns}
@@ -1258,7 +1249,7 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
         <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
       ) : null}
 
-      <ExtraDetailsBird
+      <TBoyCallout
         activity={activity}
         language={language}
         visible={revealAddOns}
@@ -1439,7 +1430,7 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip }
         <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
       ) : null}
 
-      <ExtraDetailsBird
+      <TBoyCallout
         activity={activity}
         language={language}
         visible={revealAddOns}
@@ -1752,85 +1743,35 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
 
-  extraDetailsWrap: {
+  tBoyWrap: {
     alignItems: 'center',
     marginTop: 18,
     marginBottom: 12,
     overflow: 'visible'
   },
 
-  speechStage: {
+  tBoyStage: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'visible',
     position: 'relative'
   },
-  extraBubbleBridge: {
-    width: 16,
-    height: 5,
-    alignSelf: 'center',
-    marginTop: -3,
-    marginBottom: -2,
-    zIndex: 6
-  },
-
-  extraBubble: {
-    maxWidth: '88%',
-    borderWidth: 2,
-    borderRadius: 22,
-    paddingHorizontal: 15,
-    paddingVertical: 13,
-    marginBottom: 0,
-    zIndex: 3,
-    elevation: 3,
-    alignSelf: 'center'
-  },
-
-  extraBubbleTailWrap: {
-    width: 28,
-    height: 20,
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginTop: -1,
-    marginBottom: 0,
-    position: 'relative',
-    zIndex: 4
-  },
-
-  extraBubbleTailBorder: {
-    position: 'absolute',
-    top: 0,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 12,
-    borderRightWidth: 12,
-    borderTopWidth: 20,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    zIndex: 4
-  },
-
-  extraBubbleTail: {
-    position: 'absolute',
-    top: 0,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 9,
-    borderRightWidth: 9,
-    borderTopWidth: 16,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    zIndex: 5
-  },
-
-  birdImage: {
+  tBoyImage: {
     width: 106,
     height: 106,
     alignSelf: 'center',
     marginTop: 2,
-    zIndex: 1
+    zIndex: 1,
+    transform: [{ scaleX: -1 }]
+  },
+
+  tBoyArtPocket: {
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
 
   altButtonRow: {

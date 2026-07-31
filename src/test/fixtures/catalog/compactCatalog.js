@@ -158,7 +158,8 @@ export const compactCatalogLessons = deepFreeze({
           answer: 'être',
           answerDisplay: 'être',
           english: 'to be',
-          target: 'être'
+          target: 'être',
+          extraDetails: 'This phrase has a Unit note.'
         }
       ]
     }

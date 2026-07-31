@@ -120,4 +120,25 @@ describe('bundled Catalog', () => {
       )
     ).toBe(true);
   });
+
+  it('ships Unit 03 regional Extra details for the supported Louisiana French forms', () => {
+    const activities = getAllActivities('cajun');
+    const regionalRowIds = ['u03_w0017', 'u03_w0021', 'u03_w0022', 'u03_w0024'];
+    const regionalActivities = activities.filter((activity) =>
+      regionalRowIds.includes(activity.rowId)
+    );
+
+    expect(regionalActivities.length).toBeGreaterThan(0);
+    expect(regionalActivities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ rowId: 'u03_w0017', extraDetails: expect.stringContaining('ils') }),
+        expect.objectContaining({ rowId: 'u03_w0021', extraDetails: expect.stringContaining('Eux-autres') }),
+        expect.objectContaining({ rowId: 'u03_w0022', extraDetails: expect.stringContaining('have') }),
+        expect.objectContaining({ rowId: 'u03_w0024', extraDetails: expect.stringContaining('Ça') })
+      ])
+    );
+    expect(regionalActivities.every((activity) => !/test|prototype/i.test(activity.extraDetails))).toBe(
+      true
+    );
+  });
 });
