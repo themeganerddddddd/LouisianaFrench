@@ -133,7 +133,7 @@ The Audio manifest script is separate:
 python scripts/generate_audio_manifest.py
 ```
 
-The current script expects CSV files named `Louisiana French - Sheet1.csv` and `Louisiana French - Kreole.csv`. Those files are not part of the current repository checkout, so normal local development should use the committed `src/data/audioManifest.js` instead of running this script. If the required source files are added later, review the generated manifest and Audio paths before committing it.
+This reads the root `cajun.csv` and `kreole.csv` files and replaces the committed Audio manifest. Review the generated manifest and Audio paths before committing it.
 
 ## Further Documentation
 
