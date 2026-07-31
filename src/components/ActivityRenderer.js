@@ -372,9 +372,10 @@ function ContextBadge({ activity, language }) {
   );
 }
 
-function TBoyCallout({ activity, language, visible }) {
+function TBoyCallout({ activity, language, visible, onOpenPreface }) {
   const theme = getTheme(language);
   const heading = activity?.english || activity?.target || 'Context';
+  const canOpenPreface = typeof onOpenPreface === 'function';
 
   if (!visible || !activity?.extraDetails) return null;
 
@@ -390,16 +391,43 @@ function TBoyCallout({ activity, language, visible }) {
           bodyTestID="tboy-text"
         />
 
-        <View style={styles.tBoyArtPocket}>
-          <Image
-            source={tBoyImage}
-            style={styles.tBoyImage}
-            resizeMode="contain"
-            testID="tboy-image"
-            accessibilityRole="image"
-            accessibilityLabel="T-Boy"
-          />
-        </View>
+        {canOpenPreface ? (
+          <TouchableOpacity
+            style={({ pressed }) => [
+              styles.tBoyAction,
+              pressed && styles.tBoyActionPressed
+            ]}
+            onPress={onOpenPreface}
+            accessibilityRole="button"
+            accessibilityLabel="T-Boy has more to say"
+            accessibilityHint="Opens the full Unit note"
+          >
+            <View style={styles.tBoyArtPocket}>
+              <Image
+                source={tBoyImage}
+                style={styles.tBoyImage}
+                resizeMode="contain"
+                testID="tboy-image"
+                accessible={false}
+              />
+            </View>
+            <View style={styles.tBoyActionLabel}>
+              <Text style={[styles.tBoyActionText, { color: theme.accent }]}>T-Boy has more to say</Text>
+              <Ionicons name="chevron-forward" size={14} color={theme.accent} />
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.tBoyArtPocket}>
+            <Image
+              source={tBoyImage}
+              style={styles.tBoyImage}
+              resizeMode="contain"
+              testID="tboy-image"
+              accessibilityRole="image"
+              accessibilityLabel="T-Boy"
+            />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -506,7 +534,8 @@ export default function ActivityRenderer({
   onCorrect,
   onWrong,
   language,
-  allowSkip = true
+  allowSkip = true,
+  onOpenPreface
 }) {
   const theme = getTheme(language);
 
@@ -518,6 +547,7 @@ export default function ActivityRenderer({
           language={language}
           onCorrect={onCorrect}
           theme={theme}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -530,6 +560,7 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -542,6 +573,7 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -554,6 +586,7 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -566,6 +599,7 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -578,6 +612,7 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -590,7 +625,7 @@ export default function ActivityRenderer({
   }
 }
 
-function IntroCard({ activity, language, onCorrect, theme }) {
+function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
   const { playAudioKey } = useAudio(language);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
@@ -640,6 +675,7 @@ function IntroCard({ activity, language, onCorrect, theme }) {
         activity={activity}
         language={language}
         visible={shouldShowIntroAddOns(activity)}
+        onOpenPreface={onOpenPreface}
       />
 
       <TouchableOpacity
@@ -652,7 +688,7 @@ function IntroCard({ activity, language, onCorrect, theme }) {
   );
 }
 
-function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
+function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -763,6 +799,7 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
         activity={activity}
         language={language}
         visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
       />
 
       <FeedbackFooter
@@ -785,7 +822,8 @@ function ListeningTargetChoice({
   onCorrect,
   onWrong,
   theme,
-  allowSkip
+  allowSkip,
+  onOpenPreface
 }) {
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
@@ -912,6 +950,7 @@ function ListeningTargetChoice({
         activity={activity}
         language={language}
         visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
       />
 
       <FeedbackFooter
@@ -928,7 +967,7 @@ function ListeningTargetChoice({
   );
 }
 
-function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
+function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
   const [value, setValue] = useState('');
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -1092,6 +1131,7 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
         activity={activity}
         language={language}
         visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
       />
 
       <FeedbackFooter
@@ -1108,7 +1148,7 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
   );
 }
 
-function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
+function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
   const [selected, setSelected] = useState([]);
   const [pool, setPool] = useState(() => shuffle(activity.words || []));
   const [state, setState] = useState('idle');
@@ -1253,6 +1293,7 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
         activity={activity}
         language={language}
         visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
       />
 
       <FeedbackFooter
@@ -1271,7 +1312,7 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
   );
 }
 
-function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip }) {
+function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
   const { left, right } = useMemo(
     () => makeMatchColumns(activity.pairs || []),
     [activity]
@@ -1434,6 +1475,7 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip }
         activity={activity}
         language={language}
         visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
       />
 
       <FeedbackFooter
@@ -1766,12 +1808,38 @@ const styles = StyleSheet.create({
     transform: [{ scaleX: -1 }]
   },
 
+  tBoyAction: {
+    alignItems: 'center',
+    minWidth: 106,
+    minHeight: 130,
+    borderRadius: 40
+  },
+
+  tBoyActionPressed: {
+    backgroundColor: '#EAF3FF'
+  },
+
   tBoyArtPocket: {
     width: 112,
     height: 112,
     borderRadius: 56,
     alignItems: 'center',
     justifyContent: 'center'
+  },
+
+  tBoyActionLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4
+  },
+
+  tBoyActionText: {
+    maxWidth: 112,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '800',
+    textAlign: 'center'
   },
 
   altButtonRow: {

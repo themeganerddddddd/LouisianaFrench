@@ -245,7 +245,7 @@ describe('LessonRunner', () => {
       expect(screen.queryByText('A note before you begin')).toBeNull();
     });
 
-    it('skips the preface for a later Lesson (lessonNumberInUnit > 1)', async () => {
+    it('skips the preface for a Unit without a preface', async () => {
       renderApp({
         initialRouteName: 'Lesson',
         initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u01_l01' }
@@ -253,6 +253,7 @@ describe('LessonRunner', () => {
 
       expect(await screen.findByText('New word')).toBeOnTheScreen();
       expect(screen.queryByText('A note before you begin')).toBeNull();
+      expect(screen.queryByLabelText('T-Boy has more to say')).toBeNull();
     });
 
     it('does not show the preface when it was previously read', async () => {
@@ -282,6 +283,15 @@ describe('LessonRunner', () => {
 
       // Activity should now be visible
       expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
+      expect(screen.getByLabelText('T-Boy has more to say')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
+
+      // T-Boy should open the same reference-mode Unit note without changing progress.
+      await user.press(screen.getByLabelText('T-Boy has more to say'));
+      expect(await screen.findByText('Back to lesson')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Back to lesson'));
+      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
 
       // "Unit note" button should be visible in ProgressHeader
       expect(screen.getByText('Unit note')).toBeOnTheScreen();

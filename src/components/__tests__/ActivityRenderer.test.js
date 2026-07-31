@@ -27,6 +27,7 @@ function renderActivity(activity, handlers = {}) {
       language="cajun"
       onCorrect={onCorrect}
       onWrong={onWrong}
+      onOpenPreface={handlers.onOpenPreface}
     />
   );
 
@@ -90,6 +91,23 @@ describe('ActivityRenderer', () => {
       renderActivity(fixtureActivities.intro);
 
       expect(screen.queryByTestId('tboy-callout')).toBeNull();
+    });
+
+    it('opens the Unit note when T-Boy has a preface action', async () => {
+      const user = userEvent.setup();
+      const onOpenPreface = jest.fn();
+
+      renderActivity(
+        { ...fixtureActivities.intro, extraDetails: 'Helpful context' },
+        { onOpenPreface }
+      );
+
+      await user.press(screen.getByLabelText('T-Boy has more to say'));
+
+      expect(onOpenPreface).toHaveBeenCalledTimes(1);
+      expect(screen.getByLabelText('T-Boy has more to say').props.accessibilityHint).toBe(
+        'Opens the full Unit note'
+      );
     });
 
     it('uses the English phrase, then the target phrase, as its heading fallback', () => {

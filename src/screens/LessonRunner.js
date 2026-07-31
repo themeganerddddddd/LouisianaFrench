@@ -230,6 +230,7 @@ export default function LessonRunner({ route, navigation }) {
               language={language}
               onCorrect={handleCorrect}
               onWrong={handleWrong}
+              onOpenPreface={unitPreface ? handleOpenPreface : undefined}
             />
           </Animated.View>
         )}
