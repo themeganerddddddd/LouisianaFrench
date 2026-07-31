@@ -104,7 +104,7 @@ describe('ActivityRenderer', () => {
 
       const action = screen.getByLabelText('T-Boy: open Unit note');
 
-      expect(screen.getByText('Open Unit note')).toBeOnTheScreen();
+      expect(screen.getByText("T-Boy's Advice")).toBeOnTheScreen();
       expect(screen.UNSAFE_getByType(Ionicons).props.name).toBe('chevron-forward');
 
       await user.press(action);
