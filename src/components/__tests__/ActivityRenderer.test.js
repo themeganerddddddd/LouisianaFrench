@@ -27,6 +27,7 @@ function renderActivity(activity, handlers = {}) {
       language="cajun"
       onCorrect={onCorrect}
       onWrong={onWrong}
+      onOpenPreface={handlers.onOpenPreface}
     />
   );
 
@@ -54,7 +55,7 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('New word')).toBeOnTheScreen();
       expect(screen.getByText('Listen and learn')).toBeOnTheScreen();
       expect(screen.getByText('Bonjour')).toBeOnTheScreen();
-      expect(screen.getByText('Hello')).toBeOnTheScreen();
+      expect(screen.getAllByText('Hello')).toHaveLength(2);
       expect(screen.getByText('Tap the word to hear it again')).toBeOnTheScreen();
 
       await press(user, 'Continue');
@@ -87,9 +88,26 @@ describe('ActivityRenderer', () => {
     });
 
     it('does not render a T-Boy callout when the Activity has no extra details', () => {
-      renderActivity(fixtureActivities.intro);
+      renderActivity({ ...fixtureActivities.intro, extraDetails: undefined });
 
       expect(screen.queryByTestId('tboy-callout')).toBeNull();
+    });
+
+    it('opens the Unit note when T-Boy has a preface action', async () => {
+      const user = userEvent.setup();
+      const onOpenPreface = jest.fn();
+
+      renderActivity(
+        { ...fixtureActivities.intro, extraDetails: 'Helpful context' },
+        { onOpenPreface }
+      );
+
+      await user.press(screen.getByLabelText('T-Boy has more to say'));
+
+      expect(onOpenPreface).toHaveBeenCalledTimes(1);
+      expect(screen.getByLabelText('T-Boy has more to say').props.accessibilityHint).toBe(
+        'Opens the full Unit note'
+      );
     });
 
     it('uses the English phrase, then the target phrase, as its heading fallback', () => {
