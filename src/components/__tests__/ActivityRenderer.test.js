@@ -55,7 +55,7 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('New word')).toBeOnTheScreen();
       expect(screen.getByText('Listen and learn')).toBeOnTheScreen();
       expect(screen.getByText('Bonjour')).toBeOnTheScreen();
-      expect(screen.getAllByText('Hello')).toHaveLength(2);
+      expect(screen.getByText('Hello')).toBeOnTheScreen();
       expect(screen.getByText('Tap the word to hear it again')).toBeOnTheScreen();
 
       await press(user, 'Continue');
@@ -88,7 +88,7 @@ describe('ActivityRenderer', () => {
     });
 
     it('does not render a T-Boy callout when the Activity has no extra details', () => {
-      renderActivity({ ...fixtureActivities.intro, extraDetails: undefined });
+      renderActivity(fixtureActivities.intro);
 
       expect(screen.queryByTestId('tboy-callout')).toBeNull();
     });

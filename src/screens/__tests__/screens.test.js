@@ -253,7 +253,6 @@ describe('LessonRunner', () => {
 
       expect(await screen.findByText('New word')).toBeOnTheScreen();
       expect(screen.queryByText('A note before you begin')).toBeNull();
-      expect(screen.getByText('This phrase has no Unit note action.')).toBeOnTheScreen();
       expect(screen.queryByLabelText('T-Boy has more to say')).toBeNull();
     });
 

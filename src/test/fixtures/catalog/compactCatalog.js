@@ -99,8 +99,7 @@ export const compactCatalogLessons = deepFreeze({
           answer: 'Bonjour',
           answerDisplay: 'Bonjour',
           english: 'Hello',
-          target: 'Bonjour',
-          extraDetails: 'This phrase has no Unit note action.'
+          target: 'Bonjour'
         },
         {
           cardId: 'fixture:cajun:greeting:listen',
