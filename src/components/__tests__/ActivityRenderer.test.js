@@ -84,7 +84,7 @@ describe('ActivityRenderer', () => {
       expect(screen.getByTestId('tboy-text')).toHaveTextContent(longText);
       expect(screen.getByTestId('tboy-text').props.numberOfLines).toBeUndefined();
       expect(screen.getByLabelText('T-Boy')).toBeOnTheScreen();
-      expect(screen.queryByLabelText('T-Boy has more to say')).toBeNull();
+      expect(screen.queryByLabelText('T-Boy: open Unit note')).toBeNull();
     });
 
     it('does not render a T-Boy callout when the Activity has no extra details', () => {
@@ -102,10 +102,15 @@ describe('ActivityRenderer', () => {
         { onOpenPreface }
       );
 
-      await user.press(screen.getByLabelText('T-Boy has more to say'));
+      const action = screen.getByLabelText('T-Boy: open Unit note');
+
+      expect(screen.getByText('Open Unit note')).toBeOnTheScreen();
+      expect(screen.UNSAFE_getByType(Ionicons).props.name).toBe('chevron-forward');
+
+      await user.press(action);
 
       expect(onOpenPreface).toHaveBeenCalledTimes(1);
-      expect(screen.getByLabelText('T-Boy has more to say').props.accessibilityHint).toBe(
+      expect(screen.getByLabelText('T-Boy: open Unit note').props.accessibilityHint).toBe(
         'Opens the full Unit note'
       );
     });

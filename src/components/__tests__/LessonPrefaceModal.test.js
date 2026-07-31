@@ -56,6 +56,20 @@ describe('LessonPrefaceModal', () => {
     expect(screen.getByTestId('preface-summary-scroll')).toBeOnTheScreen();
   });
 
+  it('keeps long Unit note summaries visible inside the summary scroll', () => {
+    const longSummary = 'A regional note '.repeat(40);
+    renderModal({
+      preface: {
+        ...cajunPreface,
+        title: 'A long Unit note title that should wrap on narrow screens',
+        summary: longSummary
+      }
+    });
+
+    expect(screen.getByText(longSummary)).toBeOnTheScreen();
+    expect(screen.getByTestId('preface-summary-scroll')).toBeOnTheScreen();
+  });
+
   it('renders all term chips', () => {
     renderModal();
     for (const term of cajunPreface.terms) {

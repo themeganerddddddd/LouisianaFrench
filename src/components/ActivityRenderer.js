@@ -399,7 +399,7 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
             ]}
             onPress={onOpenPreface}
             accessibilityRole="button"
-            accessibilityLabel="T-Boy has more to say"
+            accessibilityLabel="T-Boy: open Unit note"
             accessibilityHint="Opens the full Unit note"
           >
             <View style={styles.tBoyArtPocket}>
@@ -412,7 +412,7 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
               />
             </View>
             <View style={styles.tBoyActionLabel}>
-              <Text style={[styles.tBoyActionText, { color: theme.accent }]}>T-Boy has more to say</Text>
+              <Text style={[styles.tBoyActionText, { color: theme.accent }]}>Open Unit note</Text>
               <Ionicons name="chevron-forward" size={14} color={theme.accent} />
             </View>
           </TouchableOpacity>
