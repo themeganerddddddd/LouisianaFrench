@@ -37,7 +37,7 @@ export const completedLessons = frozen({
 
 export const lastWorkedUnits = frozen({
   cajunUnitOne: frozen({ cajun: 'u01' }),
-  kreoleUnitOne: frozen({ kreole: 'u01' })
+  kreoleUnitTwo: frozen({ kreole: 'u02' })
 });
 
 export const wordMastery = frozen({

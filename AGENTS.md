@@ -2,6 +2,12 @@
 
 ## Agent skills
 
+### Large project coordination
+
+- Use the repository-wide `coordinator` for multi-stage or multi-ticket work where delegation conserves the primary context.
+- The coordinator only sequences work and evaluates delegated gate verdicts. It delegates all investigation, implementation, repository operations, and review.
+- Use `drift-detector` to compare validated authority, dependencies, base assumptions, and implementation scope before work advances.
+
 ### Issue tracker
 
 GitHub Issues are the source of truth for specs and tickets. Do not create local planning files under `.scratch/`. See `docs/agents/issue-tracker.md`.
@@ -13,6 +19,13 @@ Use the canonical local triage roles. See `docs/agents/triage-labels.md`.
 ### Domain docs
 
 This is a single-context repository. Read `CONTEXT.md` and relevant decisions under `docs/adr/` before exploring or changing code. See `docs/agents/domain.md`.
+
+### HomeScreen redesign
+
+- Execute one sub-issue of #49 per fresh context with `/homescreen-ticket <issue-number>`.
+- The `coordinator` delegates the workflow to `general`, `explore`, `coding-specialist`, `review`, and `drift-detector` with role-specific prompts; do not create HomeScreen-specific agents.
+- It validates blockers, the ticket plan, and design-source drift before coding, then runs independent specification/UI and bug reviews.
+- Issue #56 is a human release gate; do not treat its `ready-for-human` label as an implementation frontier ticket.
 
 ## Engineering workflow
 

@@ -113,10 +113,10 @@ describe('Last worked Unit', () => {
 
   it('persists the last worked Unit separately for each Language', async () => {
     await setLastWorkedUnit('cajun', lastWorkedUnits.cajunUnitOne.cajun);
-    await setLastWorkedUnit('kreole', lastWorkedUnits.kreoleUnitOne.kreole);
+    await setLastWorkedUnit('kreole', lastWorkedUnits.kreoleUnitTwo.kreole);
 
     expect(await getLastWorkedUnit('cajun')).toBe('u01');
-    expect(await getLastWorkedUnit('kreole')).toBe('u01');
+    expect(await getLastWorkedUnit('kreole')).toBe('u02');
   });
 });
 
