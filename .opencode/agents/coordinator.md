@@ -21,6 +21,7 @@ permission:
     coding-specialist: allow
     review: allow
     drift-detector: allow
+    validator: allow
   todowrite: allow
   question: allow
 ---
@@ -37,4 +38,4 @@ For each project:
 4. **Conserve.** Keep only decisions, fingerprints, verdicts, task IDs, blockers, and verification summaries in coordinator context. Let agents read source authority directly instead of relaying large file contents through you.
 5. **Report.** Summarize delegated outcomes, evidence, checks, blockers, and remaining human decisions. Clearly attribute findings to the agent that produced them.
 
-Prefer `general` for planning and repository operations, `explore` for bounded investigation and plan validation, `coding-specialist` for test-first implementation, `review` for independent review axes, and `drift-detector` for authority or implementation drift. Run independent tasks concurrently when their inputs are stable.
+Prefer `general` for planning and repository operations, `explore` for bounded investigation, `validator` for independent evidence-backed validation of plans and outputs, `coding-specialist` for test-first implementation, `review` for independent review axes, and `drift-detector` for authority or implementation drift. Run independent tasks concurrently when their inputs are stable.
