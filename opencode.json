@@ -4,12 +4,6 @@
   "model": "opencode-go/deepseek-v4-pro",
   "lsp": true,
   "default_agent": "general",
-  "references": {
-    "homescreen-redesign": {
-      "path": "/home/logandelafosse/Téléchargements/Homescreen redesign options/design_handoff_homescreen_redesign",
-      "description": "Approved HomeScreen redesign 2b handoff. Use for every issue under GitHub parent #49 and treat its prototype, edge states, screenshots, and README as visual authority."
-    }
-  },
   "agent": {
     "review": {
       "model": "opencode-go/grok-4.5",
