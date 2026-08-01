@@ -6,7 +6,8 @@ const storageKeys = Object.freeze({
   wordProgress: 'lf_word_progress',
   reviewState: 'lf_review_state',
   dailyReviewLog: 'lf_daily_review_log',
-  leaderboard: 'lf_leaderboard'
+  leaderboard: 'lf_leaderboard',
+  lastWorkedUnit: 'lf_last_worked_unit'
 });
 
 function storageEntries(records) {

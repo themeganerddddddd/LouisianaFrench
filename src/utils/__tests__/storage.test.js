@@ -5,6 +5,7 @@ import {
   dailyReviewLogs,
   leaderboardEntries,
   leaderboards,
+  lastWorkedUnits,
   profiles,
   wordMastery
 } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
@@ -20,7 +21,9 @@ import {
   getProfile,
   saveProfile,
   getLessonProgress,
+  getLastWorkedUnit,
   markLessonComplete,
+  setLastWorkedUnit,
   getWordProgress,
   updateWordProgress,
   getReviewState,
@@ -100,6 +103,20 @@ describe('Lesson completion', () => {
 
     const progress = await getLessonProgress();
     expect(Object.keys(progress).sort()).toEqual(['cajun:cajun_u01_l01', 'kreole:kreole_u01_l01']);
+  });
+});
+
+describe('Last worked Unit', () => {
+  it('defaults to no last worked Unit', async () => {
+    expect(await getLastWorkedUnit('cajun')).toBeNull();
+  });
+
+  it('persists the last worked Unit separately for each Language', async () => {
+    await setLastWorkedUnit('cajun', lastWorkedUnits.cajunUnitOne.cajun);
+    await setLastWorkedUnit('kreole', lastWorkedUnits.kreoleUnitTwo.kreole);
+
+    expect(await getLastWorkedUnit('cajun')).toBe('u01');
+    expect(await getLastWorkedUnit('kreole')).toBe('u02');
   });
 });
 

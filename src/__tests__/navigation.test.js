@@ -56,8 +56,9 @@ describe('navigation graph', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText(lesson.lessonTitle)).toBeOnTheScreen();
+    expect(await screen.findByText('Greetings & Check-ins')).toBeOnTheScreen();
 
+    await user.press(screen.getByTestId('unit-toggle-u01'));
     await user.press(screen.getByText(lesson.lessonTitle));
 
     expect(await screen.findByText('New word')).toBeOnTheScreen();
