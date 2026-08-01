@@ -1,7 +1,7 @@
 ---
 description: Detect whether validated project authority, assumptions, dependencies, or implementation have drifted before work continues.
 mode: subagent
-model: opencode-go/grok-4.5
+model: opencode-go/deepseek-v4-pro
 permission:
   edit: deny
   task: deny

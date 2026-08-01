@@ -12,13 +12,16 @@
       "mode": "all"
     },
     "explore": {
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/big-pickle"
     },
     "coding-specialist": {
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4-pro"
     },
     "review": {
-      "model": "opencode-go/kimi-k3"
+      "model": "opencode-go/grok-4.5"
+    },
+    "validator": {
+      "model": "opencode-go/deepseek-v4-pro"
     }
   }
 }
