@@ -1,6 +1,11 @@
 import { clock } from '../clock';
+import { buildCardReviewState } from './cardBuilder';
 
 const frozen = (record) => Object.freeze(record);
+const reviewState = (nextReviewAt, lapses = 0) => frozen(buildCardReviewState({
+  nextReviewAt: nextReviewAt.toISOString(),
+  lapses
+}));
 
 export const profiles = frozen({
   fresh: frozen({
@@ -92,6 +97,37 @@ export const pendingMistakes = frozen({
     source: 'lesson',
     sourceId: 'fixture_cajun_u01_l01',
     timestamp: clock.localCalendarLateEvening().toISOString()
+  })
+});
+
+export const reviewStates = frozen({
+  dueAndWeak: frozen({
+    'fixture:cajun:greeting:intro': reviewState(clock.pastDue()),
+    'fixture:cajun:greeting:choice': reviewState(clock.pastDue()),
+    'fixture:cajun:greeting:listen': reviewState(clock.futureDue(), 2),
+    'fixture:cajun:greeting:typing': reviewState(clock.futureDue(), 1)
+  }),
+  overlap: frozen({
+    'fixture:cajun:greeting:choice': reviewState(clock.pastDue(), 1),
+    'fixture:cajun:greeting:listen': reviewState(clock.futureDue(), 3),
+    'fixture:cajun:greeting:typing': reviewState(clock.futureDue(), 2)
+  }),
+  allFuture: frozen({
+    'fixture:cajun:greeting:intro': reviewState(clock.futureDue()),
+    'fixture:cajun:greeting:listen': reviewState(clock.futureDue()),
+    'fixture:cajun:greeting:choice': reviewState(clock.futureDue()),
+    'fixture:cajun:greeting:typing': reviewState(clock.futureDue()),
+    'fixture:cajun:ready:build': reviewState(clock.futureDue()),
+    'fixture:cajun:greetings:match': reviewState(clock.futureDue()),
+    'fixture:cajun:to-be:intro': reviewState(clock.futureDue())
+  }),
+  languageIsolation: frozen({
+    cajun: frozen({
+      'fixture:cajun:greeting:choice': reviewState(clock.pastDue())
+    }),
+    kreole: frozen({
+      'fixture:kreole:pronouns:choice': reviewState(clock.pastDue())
+    })
   })
 });
 
