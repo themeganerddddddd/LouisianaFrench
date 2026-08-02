@@ -38,9 +38,9 @@ describe('navigation graph', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
+    expect(await screen.findByText('Review')).toBeOnTheScreen();
 
-    await user.press(screen.getByText('Daily Review'));
+    await user.press(screen.getByTestId('home-review-control'));
 
     expect(
       await screen.findByText('Due cards, weak words, and review practice.')
@@ -62,6 +62,37 @@ describe('navigation graph', () => {
     await user.press(screen.getByText(lesson.lessonTitle));
 
     expect(await screen.findByText('New word')).toBeOnTheScreen();
+  });
+
+  it('navigates Dictionary and Hub with the active Language params', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'kreole' }
+    });
+
+    await screen.findByText('Kouri-Vini');
+    await user.press(screen.getByTestId('home-dictionary-control'));
+    expect(await screen.findByText('Kouri-Vini Dictionary')).toBeOnTheScreen();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'kreole' }
+    });
+    await screen.findByText('Kouri-Vini');
+    await user.press(screen.getByTestId('home-hub-control'));
+    expect(await screen.findByText('Advanced Kouri-Vini Hub')).toBeOnTheScreen();
+  });
+
+  it('keeps an empty Mistakes control disabled', async () => {
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByText('Louisiana French');
+    expect(screen.getByTestId('home-mistakes-control')).toBeDisabled();
   });
 
 });

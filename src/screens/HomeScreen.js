@@ -1,6 +1,7 @@
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -19,36 +20,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
 import { getAllWords, getUnits } from '../data/lessonLoader';
 import {
-  getLanguageDailyReviewLog,
   getDefaultLanguage,
   getLastWorkedUnit,
   getLessonProgress,
-  getProfile,
   getPendingMistakes,
-  getTodayKey,
+  getProfile,
   getWordProgress,
   setDefaultLanguage
 } from '../utils/storage';
-
-function getTimeUntilMidnight() {
-  const now = new Date();
-  const nextMidnight = new Date(now);
-
-  nextMidnight.setHours(24, 0, 0, 0);
-
-  const diffMs = Math.max(0, nextMidnight.getTime() - now.getTime());
-  const totalSeconds = Math.floor(diffMs / 1000);
-
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  const hh = String(hours).padStart(2, '0');
-  const mm = String(minutes).padStart(2, '0');
-  const ss = String(seconds).padStart(2, '0');
-
-  return `${hh}:${mm}:${ss}`;
-}
+import { getDailyReviewQueue } from '../utils/reviewQueue';
 
 function getLessonButtonText(done, locked = false) {
   if (done) return 'Done';
@@ -64,20 +44,64 @@ function getUnitNumber(unitCode) {
   return `Unit ${Number(match[1])}`;
 }
 
+function DashboardControl({
+  controlId,
+  iconId,
+  icon,
+  label,
+  accessibilityLabel,
+  badge,
+  badgeBackgroundColor = '#FFCD00',
+  badgeTestId,
+  badgeTextColor,
+  disabled = false,
+  reduceMotion,
+  onPress
+}) {
+  return (
+    <Pressable
+      testID={controlId}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.dashboardControl,
+        disabled && styles.controlDisabled,
+        pressed && (reduceMotion ? styles.controlPressedReduced : styles.controlPressed)
+      ]}
+    >
+      <View testID={`${controlId.replace('-control', '')}-circle`} style={styles.dashboardCircle}>
+        <Feather testID={iconId} name={icon} size={21} color="#FFFFFF" />
+        {badge ? (
+          <View
+            testID={badgeTestId}
+            style={[styles.reviewBadge, { backgroundColor: badgeBackgroundColor }]}
+          >
+            <Text style={[styles.reviewBadgeText, { color: badgeTextColor }]}>{badge}</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text style={styles.dashboardLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export default function HomeScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
 
   const [language, setLanguage] = useState(route.params?.language || 'cajun');
   const [units, setUnits] = useState([]);
   const [profile, setProfile] = useState({ xp: 0, streak: 0 });
   const [lessonProgress, setLessonProgress] = useState({});
   const [wordProgress, setWordProgress] = useState({});
-  const [dailyDone, setDailyDone] = useState(false);
+  const [reviewQueueCount, setReviewQueueCount] = useState(0);
   const [pendingMistakesCount, setPendingMistakesCount] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [timeUntilReset, setTimeUntilReset] = useState(getTimeUntilMidnight());
   const [expandedUnit, setExpandedUnit] = useState(null);
 
   useEffect(() => {
@@ -110,7 +134,6 @@ export default function HomeScreen() {
       setProfile(loadedProfile);
       setLessonProgress(loadedLessonProgress);
       setWordProgress(loadedWordProgress);
-      setTimeUntilReset(getTimeUntilMidnight());
       setExpandedUnit(
         loadedUnits.some((unitObj) => unitObj.unit === lastWorkedUnit)
           ? lastWorkedUnit
@@ -123,17 +146,23 @@ export default function HomeScreen() {
 
   useFocusEffect(useCallback(() => {
     let cancelled = false;
-    getLanguageDailyReviewLog(language).then((reviewLog) => {
-      if (!cancelled) setDailyDone(!!reviewLog[getTodayKey()]);
-    });
-    return () => { cancelled = true; };
-  }, [language]));
+    async function loadBadges() {
+      const [reviewQueue, mistakes, loadedProfile, loadedWordProgress] = await Promise.all([
+        getDailyReviewQueue(language),
+        getPendingMistakes(language),
+        getProfile(),
+        getWordProgress()
+      ]);
 
-  useFocusEffect(useCallback(() => {
-    let cancelled = false;
-    getPendingMistakes(language).then((mistakes) => {
-      if (!cancelled) setPendingMistakesCount(mistakes.length);
-    });
+      if (!cancelled) {
+        setReviewQueueCount(reviewQueue.length);
+        setPendingMistakesCount(mistakes.length);
+        setProfile(loadedProfile);
+        setWordProgress(loadedWordProgress);
+      }
+    }
+
+    loadBadges();
     return () => { cancelled = true; };
   }, [language]));
 
@@ -141,14 +170,6 @@ export default function HomeScreen() {
     const preference = AccessibilityInfo.isReduceMotionEnabled?.();
     preference?.then(setReduceMotion);
   }, []);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeUntilReset(getTimeUntilMidnight());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -185,27 +206,21 @@ export default function HomeScreen() {
           topBarGrad: ['#498BDC', '#2771CB'],
           headerGrad: ['#498BDC', '#2771CB'],
           start: '#2771CB',
-          done: '#3B82F6',
           doneSoft: '#3B82F6',
           progressFill: '#7DD3FC',
           subtitle: '#DCEBFF',
-          dailyDoneBg: '#1E3A8A',
-          dailyTimer: '#DBEAFE',
           accent: '#2771CB',
-          stat: '#17324D'
+          badgeText: '#102A43'
         }
       : {
           topBarGrad: ['#0AA35F', '#066B3F'],
           headerGrad: ['#0AA35F', '#066B3F'],
           start: '#08834C',
-          done: '#10B981',
           doneSoft: '#34D399',
           progressFill: '#6EE7B7',
           subtitle: '#E7F5EE',
-          dailyDoneBg: '#064E32',
-          dailyTimer: '#D1FAE5',
           accent: '#08834C',
-          stat: '#066B3F'
+          badgeText: '#064E32'
         };
 
   const allWords = useMemo(() => getAllWords(language), [language]);
@@ -219,136 +234,107 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar style={isFocused ? 'light' : 'dark'} testID="home-status-bar" />
       <LinearGradient
         colors={theme.topBarGrad}
         style={[styles.topBar, { paddingTop: insets.top + 16 }]}
         testID="home-top-bar"
       >
-        <View style={{ flex: 1 }}>
-          <Text style={styles.topTitle}>
-            {language === 'cajun' ? 'Louisiana French' : 'Kouri-Vini'}
-          </Text>
-
-          <Text style={[styles.topSubtitle, { color: theme.subtitle }]}>
-            {masteredWords} / {totalWords} words mastered
-          </Text>
-        </View>
-
-        <View style={styles.flagRow}>
-          <TouchableOpacity onPress={() => switchLanguage('cajun')} accessibilityLabel="Louisiana French flag">
+        <View style={styles.identityRow}>
+          <View style={styles.identityDetails}>
             <Image
-              source={require('../../assets/images/cajun_flag.png')}
-              style={[
-                styles.flagImage,
-                language === 'cajun' && styles.flagSelected
-              ]}
+              testID="home-pelican"
+              source={require('../../assets/images/pelicanicon.png')}
+              style={styles.pelican}
             />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => switchLanguage('kreole')} accessibilityLabel="Kouri-Vini flag">
-            <Image
-              source={require('../../assets/images/creole_flag.png')}
-              style={[
-                styles.flagImage,
-                language === 'kreole' && styles.flagSelected
-              ]}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.mistakesRow}>
-          <Pressable
-            testID="home-mistakes-control"
-            disabled={!pendingMistakesCount}
-            accessibilityRole="button"
-            accessibilityLabel={pendingMistakesCount ? `Mistakes, ${pendingMistakesCount} pending` : 'Mistakes, none pending'}
-            accessibilityState={{ disabled: !pendingMistakesCount }}
-            onPress={() => pendingMistakesCount && navigation.navigate('MistakeReview', { language, source: 'home' })}
-            style={({ pressed }) => [
-              styles.mistakesControl,
-              !pendingMistakesCount && styles.mistakesDisabled,
-              pressed && (reduceMotion ? styles.mistakesPressedReduced : styles.mistakesPressed)
-            ]}
-          >
-            <View style={styles.mistakesCircle}>
-              <Feather name="alert-triangle" size={21} color="#FFFFFF" />
-              {pendingMistakesCount ? (
-                <View testID="mistakes-count" style={styles.mistakesBadge}>
-                  <Text style={styles.mistakesBadgeText}>{pendingMistakesCount}</Text>
-                </View>
-              ) : null}
+            <View style={styles.identityText}>
+              <Text style={styles.topTitle}>
+                {language === 'cajun' ? 'Louisiana French' : 'Kouri-Vini'}
+              </Text>
+              <Text
+                testID="home-stats"
+                numberOfLines={1}
+                style={[styles.topSubtitle, { color: theme.subtitle }]}
+              >
+                ⚡ {profile.xp || 0} · 🔥 {profile.streak || 0} · {overallPct}% mastered
+              </Text>
             </View>
-            <Text style={styles.mistakesLabel}>Mistakes</Text>
+          </View>
+
+          <Pressable
+            testID="home-language-flag"
+            onPress={() => switchLanguage(language === 'cajun' ? 'kreole' : 'cajun')}
+            accessibilityRole="button"
+            accessibilityLabel={`${language === 'cajun' ? 'Louisiana French' : 'Kouri-Vini'} flag`}
+            style={styles.flagControl}
+          >
+            <Image
+              testID="home-language-flag-image"
+              source={
+                language === 'cajun'
+                  ? require('../../assets/images/cajun_flag.png')
+                  : require('../../assets/images/creole_flag.png')
+              }
+              style={styles.flagImage}
+            />
           </Pressable>
+        </View>
+
+        <View style={styles.dashboard}>
+          <DashboardControl
+            controlId="home-review-control"
+            iconId="home-review-icon"
+            icon="refresh-cw"
+            label="Review"
+            accessibilityLabel={reviewQueueCount ? `Review, ${reviewQueueCount} due` : 'Review'}
+            badge={reviewQueueCount || null}
+            badgeTestId="review-count"
+            badgeTextColor={theme.badgeText}
+            reduceMotion={reduceMotion}
+            onPress={() => navigation.navigate('DailyReview', { language })}
+          />
+          <DashboardControl
+            controlId="home-dictionary-control"
+            iconId="home-dictionary-icon"
+            icon="book-open"
+            label="Dictionary"
+            accessibilityLabel="Dictionary"
+            reduceMotion={reduceMotion}
+            onPress={() => navigation.navigate('Dictionary', { language })}
+          />
+          <DashboardControl
+            controlId="home-hub-control"
+            iconId="home-hub-icon"
+            icon="layers"
+            label="Hub"
+            accessibilityLabel="Hub"
+            reduceMotion={reduceMotion}
+            onPress={() => navigation.navigate('Advanced', { language })}
+          />
+          <DashboardControl
+            controlId="home-mistakes-control"
+            iconId="home-mistakes-icon"
+            icon="alert-triangle"
+            label="Mistakes"
+            accessibilityLabel={
+              pendingMistakesCount
+                ? `Mistakes, ${pendingMistakesCount} pending`
+                : 'Mistakes, none pending'
+            }
+            badge={pendingMistakesCount || null}
+            badgeBackgroundColor="#DC2626"
+            badgeTestId="mistakes-count"
+            badgeTextColor="#FFFFFF"
+            disabled={!pendingMistakesCount}
+            reduceMotion={reduceMotion}
+            onPress={() =>
+              navigation.navigate('MistakeReview', { language, source: 'home' })
+            }
+          />
         </View>
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={[styles.statNum, { color: theme.stat }]}>{profile.xp || 0}</Text>
-            <Text style={styles.statLabel}>XP</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <Text style={[styles.statNum, { color: theme.stat }]}>
-              🔥 {profile.streak || 0}
-            </Text>
-            <Text style={styles.statLabel}>Streak</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <Text style={[styles.statNum, { color: theme.stat }]}>{overallPct}%</Text>
-            <Text style={styles.statLabel}>Mastered</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.dailyCard,
-            dailyDone && { backgroundColor: theme.dailyDoneBg }
-          ]}
-          onPress={() => navigation.navigate('DailyReview', { language })}
-          accessibilityRole="button"
-          accessibilityLabel="Daily Review"
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.dailyTitle}>Daily Review</Text>
-
-            <Text style={styles.dailyDesc}>
-              {dailyDone
-                ? 'Complete! Your daily review will renew at midnight.'
-                : 'Review due words, weak cards, and mistakes.'}
-            </Text>
-
-            {dailyDone ? (
-              <Text style={[styles.dailyTimer, { color: theme.dailyTimer }]}>
-                Renews in {timeUntilReset}
-              </Text>
-            ) : null}
-          </View>
-
-          <Text style={styles.dailyStatus}>{dailyDone ? 'Done' : 'Start'}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.dictionaryBtn}
-          onPress={() => navigation.navigate('Dictionary', { language })}
-          accessibilityRole="button"
-          accessibilityLabel="Open Dictionary"
-        >
-          <Text style={styles.dictionaryBtnText}>Open Dictionary</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.advancedBtn}
-          onPress={() => navigation.navigate('Advanced', { language })}
-          accessibilityRole="button"
-          accessibilityLabel="Advanced Review Hub"
-        >
-          <Text style={styles.advancedBtnText}>Advanced / Review Hub</Text>
-        </TouchableOpacity>
-
         {units.map((unitObj) => {
           const uniqueWords = [];
 
@@ -513,56 +499,78 @@ const styles = StyleSheet.create({
   },
 
   topBar: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    rowGap: 16,
-    paddingBottom: 22,
+    paddingBottom: 20,
     paddingHorizontal: 20
+  },
+
+  identityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+
+  identityDetails: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8
+  },
+
+  identityText: {
+    flex: 1,
+    minWidth: 0
+  },
+
+  pelican: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    marginRight: 10
   },
 
   topTitle: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800'
   },
 
   topSubtitle: {
-    fontSize: 14,
+    fontSize: 12.5,
     fontWeight: '600',
-    marginTop: 6
+    marginTop: 3
   },
 
-  flagRow: {
-    flexDirection: 'row'
+  flagControl: {
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
 
-  mistakesRow: {
-    width: '100%',
-    alignItems: 'center'
+  flagImage: {
+    width: 44,
+    height: 28,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF'
   },
 
-  mistakesControl: {
+  dashboard: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16
+  },
+
+  dashboardControl: {
+    flex: 1,
     minWidth: 48,
     minHeight: 48,
     alignItems: 'center',
     position: 'relative'
   },
 
-  mistakesDisabled: {
-    opacity: 0.55
-  },
-
-  mistakesPressed: {
-    transform: [{ scale: 0.94 }]
-  },
-
-  mistakesPressedReduced: {
-    opacity: 0.7
-  },
-
-  mistakesCircle: {
+  dashboardCircle: {
     width: 46,
     height: 46,
     borderRadius: 23,
@@ -573,7 +581,26 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)'
   },
 
-  mistakesBadge: {
+  dashboardLabel: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 6
+  },
+
+  controlDisabled: {
+    opacity: 0.55
+  },
+
+  controlPressed: {
+    transform: [{ scale: 0.94 }]
+  },
+
+  controlPressedReduced: {
+    opacity: 0.7
+  },
+
+  reviewBadge: {
     position: 'absolute',
     top: -4,
     right: -4,
@@ -582,128 +609,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#DC2626'
+    justifyContent: 'center'
   },
 
-  mistakesBadgeText: {
-    color: '#FFFFFF',
+  reviewBadgeText: {
     fontSize: 10,
     fontWeight: '900'
-  },
-
-  mistakesLabel: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 6
-  },
-
-  flagImage: {
-    width: 64,
-    height: 40,
-    marginLeft: 12,
-    opacity: 0.8,
-    borderRadius: 4
-  },
-
-  flagSelected: {
-    opacity: 1,
-    borderWidth: 2,
-    borderColor: '#FFFFFF'
   },
 
   scroll: {
     paddingVertical: 16,
     paddingHorizontal: 14
-  },
-
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 14
-  },
-
-  statCard: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-
-  statNum: {
-    fontSize: 20,
-    fontWeight: '900'
-  },
-
-  statLabel: {
-    marginTop: 4,
-    color: '#64748B',
-    fontWeight: '700'
-  },
-
-  dailyCard: {
-    backgroundColor: '#102A43',
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-
-  dailyTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '900'
-  },
-
-  dailyDesc: {
-    color: '#DCEBFF',
-    marginTop: 4,
-    fontWeight: '600'
-  },
-
-  dailyTimer: {
-    marginTop: 8,
-    fontWeight: '800',
-    fontSize: 13
-  },
-
-  dailyStatus: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    marginLeft: 12
-  },
-
-  dictionaryBtn: {
-    backgroundColor: '#0F172A',
-    borderRadius: 18,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 10
-  },
-
-  dictionaryBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 16
-  },
-
-  advancedBtn: {
-    backgroundColor: '#334155',
-    borderRadius: 18,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 14
-  },
-
-  advancedBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 16
   },
 
   unitCard: {

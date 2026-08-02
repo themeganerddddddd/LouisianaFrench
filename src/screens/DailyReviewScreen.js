@@ -4,11 +4,8 @@ import ActivityRenderer from '../components/ActivityRenderer';
 import ProgressHeader from '../components/ProgressHeader';
 import SafeScreenView from '../components/SafeScreenView';
 import { getAllActivities } from '../data/lessonLoader';
-import {
-  getDueReviewItems,
-  getWeakItems,
-  updateCardReview
-} from '../utils/spacedRepetition';
+import { updateCardReview } from '../utils/spacedRepetition';
+import { getDailyReviewQueue } from '../utils/reviewQueue';
 import {
   getTodayKey,
   markLanguageDailyReviewDone,
@@ -16,15 +13,6 @@ import {
   upsertPendingMistake,
   updateWordProgress
 } from '../utils/storage';
-
-function dedupeByCardId(items) {
-  const seen = new Set();
-  return items.filter((item) => {
-    if (seen.has(item.cardId)) return false;
-    seen.add(item.cardId);
-    return true;
-  });
-}
 
 export default function DailyReviewScreen({ route, navigation }) {
   const { language } = route.params;
@@ -35,20 +23,17 @@ export default function DailyReviewScreen({ route, navigation }) {
 
   useEffect(() => {
     async function init() {
-      const allActivities = getAllActivities(language).filter((a) => a.type !== 'intro_card');
-      const due = await getDueReviewItems(allActivities);
-      const weak = await getWeakItems(allActivities);
+      const queue = await getDailyReviewQueue(language);
+      if (queue.length) {
+        setQueue(queue);
+        return;
+      }
 
-      const merged = dedupeByCardId([
-        ...due.map((x) => ({ ...x, isReview: true })),
-        ...weak.map((x) => ({ ...x, isReview: true }))
-      ]).slice(0, 15);
-
-      setQueue(
-        merged.length
-          ? merged
-          : allActivities.slice(0, 10).map((x) => ({ ...x, isReview: true }))
-      );
+      const fallback = getAllActivities(language)
+        .filter((activity) => activity.type !== 'intro_card')
+        .slice(0, 10)
+        .map((activity) => ({ ...activity, isReview: true }));
+      setQueue(fallback);
     }
 
     init();

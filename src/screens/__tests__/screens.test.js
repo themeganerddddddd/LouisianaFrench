@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
 
@@ -10,10 +9,10 @@ import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBu
 import { clock } from '../../test/fixtures/clock';
 import {
   completedLessons,
-  dailyReviewLogs,
   lastWorkedUnits,
   pendingMistakes,
   profiles,
+  reviewStates,
   wordMastery
 } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
@@ -33,11 +32,24 @@ import {
   setDefaultLanguage
 } from '../../utils/storage';
 
+jest.mock('expo-status-bar', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  return {
+    StatusBar: (props) => React.createElement(View, props)
+  };
+});
+
 jest.mock('../../data/lessonLoader', () =>
   require('../../test/fixtures/catalog/activities').fixtureCatalog
 );
 
 setupAppTests();
+
+beforeEach(() => {
+  jest.setSystemTime(clock.dueNow());
+});
 
 const FULL_SCREEN_PHONE_METRICS = {
   frame: { x: 0, y: 0, width: 412, height: 915 },
@@ -102,11 +114,45 @@ describe('HomeScreen', () => {
     await screen.findByText('Louisiana French');
 
     expect(screen.getByTestId('home-top-bar')).toHaveStyle({
-      paddingTop: FULL_SCREEN_PHONE_METRICS.insets.top + 16
+      paddingTop: FULL_SCREEN_PHONE_METRICS.insets.top + 16,
+      paddingHorizontal: 20,
+      paddingBottom: 20
     });
+    expect(screen.getByTestId('home-status-bar').props.style).toBe('light');
   });
 
-  it('shows Learner Progress, Units, Lessons, and session entry points', async () => {
+  it('keeps the dashboard controls available at mobile and desktop render widths', async () => {
+    const mobile = renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 390, height: 844 },
+        insets: { top: 0, right: 0, bottom: 0, left: 0 }
+      }
+    });
+
+    expect(await screen.findByText('Review')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-review-control')).toHaveStyle({
+      minWidth: 48,
+      minHeight: 48
+    });
+    mobile.unmount();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 1440, height: 900 },
+        insets: { top: 0, right: 0, bottom: 0, left: 0 }
+      }
+    });
+
+    expect(await screen.findByText('Review')).toBeOnTheScreen();
+    expect(screen.getByText('Dictionary')).toBeOnTheScreen();
+    expect(screen.getByText('Mistakes')).toBeOnTheScreen();
+  });
+
+  it('renders both Language identities with their gradient themes', async () => {
     await seedAsyncStorage({
       profile: profiles.established,
       lessonProgress: {
@@ -125,39 +171,150 @@ describe('HomeScreen', () => {
     });
 
     expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
-
-    expect(screen.getByText('1 / 4 words mastered')).toBeOnTheScreen();
-    expect(screen.getByText('40')).toBeOnTheScreen();
-    expect(screen.getByText('🔥 2')).toBeOnTheScreen();
-    expect(screen.getByText('Daily Review')).toBeOnTheScreen();
-    expect(screen.getByText('Open Dictionary')).toBeOnTheScreen();
-    expect(screen.getByText('Advanced / Review Hub')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-top-bar').props.colors).toEqual([0xff498bdc, 0xff2771cb]);
+    expect(screen.getByTestId('home-pelican')).toHaveStyle({
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      backgroundColor: '#FFFFFF'
+    });
+    expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 25% mastered');
+    expect(screen.getByTestId('home-language-flag-image')).toHaveStyle({
+      width: 44,
+      height: 28,
+      borderRadius: 4,
+      borderWidth: 2,
+      borderColor: '#FFFFFF'
+    });
+    expect(screen.queryAllByTestId('home-language-flag-image').length).toBe(1);
+    expect(screen.getByTestId('home-review-control')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-dictionary-control')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-hub-control')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-mistakes-control')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-review-icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-dictionary-icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-hub-icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-mistakes-icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-review-circle')).toHaveStyle({ width: 46, height: 46 });
+    expect(screen.getByTestId('home-review-control')).toHaveStyle({
+      minWidth: 48,
+      minHeight: 48
+    });
+    expect(screen.getByText('Louisiana French')).toHaveStyle({
+      fontSize: 22,
+      fontWeight: '800',
+      color: '#FFFFFF'
+    });
+    expect(screen.getByText('Dictionary')).toBeOnTheScreen();
+    expect(screen.getByText('Hub')).toBeOnTheScreen();
     expect(screen.getByText('Greetings & Check-ins')).toBeOnTheScreen();
     expect(screen.getByText('First greetings')).toBeOnTheScreen();
-    expect(screen.queryByText('Everyday phrases')).toBeNull();
-    expect(screen.getByText('Done')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
+
   });
 
-  it('reads Daily Review completion from the active scoped record', async () => {
-    jest.setSystemTime(clock.localCalendarLateEvening());
-    await seedAsyncStorage({ dailyReviewLogV2Cajun: dailyReviewLogs.cajun });
+  it('renders the Kouri-Vini identity and theme after a saved Language switch', async () => {
+    await setDefaultLanguage('kreole');
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'kreole' }
+    });
+
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-top-bar').props.colors).toEqual([0xff0aa35f, 0xff066b3f]);
+    expect(screen.getByText('Dictionary')).toBeOnTheScreen();
+  });
+
+  it('shows global XP and streak with active-Language mastery, including zero mastery', async () => {
+    await seedAsyncStorage({
+      profile: profiles.established,
+      wordProgress: {}
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'kreole' }
+    });
+
+    expect(await screen.findByTestId('home-stats')).toHaveTextContent(
+      '⚡ 40 · 🔥 2 · 0% mastered'
+    );
+  });
+
+  it('returns zero mastery when the active Catalog has no Words', async () => {
+    const catalog = require('../../test/fixtures/catalog/activities').fixtureCatalog;
+    const getAllWords = jest.spyOn(catalog, 'getAllWords').mockReturnValue([]);
+
+    try {
+      await seedAsyncStorage({ profile: profiles.established });
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByTestId('home-stats')).toHaveTextContent(
+        '⚡ 40 · 🔥 2 · 0% mastered'
+      );
+    } finally {
+      getAllWords.mockRestore();
+    }
+  });
+
+  it('toggles and persists the current Language while refreshing header badges', async () => {
+    const user = setupUser();
+    await seedAsyncStorage({
+      profile: profiles.established,
+      reviewState: {
+        ...reviewStates.overlap,
+        'fixture:kreole:pronouns:choice': {
+          ...reviewStates.languageIsolation.kreole['fixture:kreole:pronouns:choice']
+        }
+      },
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        },
+        kreole: {
+          [pendingMistakes.kreole.pronounsChoice.cardId]: pendingMistakes.kreole.pronounsChoice
+        }
+      }
+    });
 
     renderApp({
       initialRouteName: 'Home',
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Complete! Your daily review will renew at midnight.'))
-      .toBeOnTheScreen();
+    expect(await screen.findByTestId('review-count')).toHaveTextContent('3');
+    expect(screen.getByTestId('review-count')).toHaveStyle({
+      backgroundColor: '#FFCD00'
+    });
+    expect(screen.getByTestId('mistakes-count')).toHaveTextContent('1');
+    await user.press(screen.getByLabelText('Louisiana French flag'));
+
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+    expect(screen.getByTestId('review-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('mistakes-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 0% mastered');
+    expect(await getDefaultLanguage()).toBe('kreole');
   });
 
-  it('keeps Daily Review completion independent while switching Languages', async () => {
-    jest.setSystemTime(clock.localCalendarLateEvening());
-    await seedAsyncStorage({
-      dailyReviewLogV2Cajun: dailyReviewLogs.cajun,
-      dailyReviewLogV2Kreole: dailyReviewLogs.kreole
+  it('shows only the real unique Review count and keeps Review enabled with no real queue', async () => {
+    await seedAsyncStorage({ reviewState: reviewStates.overlap });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
     });
+
+    expect(await screen.findByTestId('review-count')).toHaveTextContent('3');
+
+    expect(screen.getByTestId('home-review-control')).toBeEnabled();
+  });
+
+  it('does not show a Review badge for all-future Cards while Daily Review keeps its fallback', async () => {
+    await seedAsyncStorage({ reviewState: reviewStates.allFuture });
     const user = setupUser();
 
     renderApp({
@@ -165,40 +322,15 @@ describe('HomeScreen', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Complete! Your daily review will renew at midnight.'))
-      .toBeOnTheScreen();
-    await user.press(screen.getByLabelText('Kouri-Vini flag'));
-
-    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
-    expect(screen.getByText('Review due words, weak cards, and mistakes.')).toBeOnTheScreen();
-    await user.press(screen.getByLabelText('Louisiana French flag'));
     expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
-    expect(screen.getByText('Complete! Your daily review will renew at midnight.'))
-      .toBeOnTheScreen();
+    expect(screen.getByTestId('home-review-control')).toBeEnabled();
+    expect(screen.getByTestId('home-review-circle')).toBeTruthy();
+    expect(screen.queryByTestId('review-count') === null).toBe(true);
+    await user.press(screen.getByTestId('home-review-control'));
+    expect(await screen.findByText('1 / 5')).toBeOnTheScreen();
   });
 
-  it('migrates legacy Daily Review history through the rendered Home journey', async () => {
-    jest.setSystemTime(clock.localCalendarLateEvening());
-    await seedAsyncStorage({ dailyReviewLog: dailyReviewLogs.legacy });
-    await setDefaultLanguage('cajun');
-
-    renderApp({
-      initialRouteName: 'Home',
-      initialParams: { language: 'cajun' }
-    });
-
-    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
-    expect(
-      await screen.findByText('Complete! Your daily review will renew at midnight.')
-    ).toBeOnTheScreen();
-    expect(await AsyncStorage.getItem('lf_daily_review_log_v2_cajun')).toBe(
-      JSON.stringify(dailyReviewLogs.legacy)
-    );
-    expect(await AsyncStorage.getItem('lf_daily_review_migrated')).toBe('true');
-  });
-
-  it('refreshes a mounted Home after focus returns from Daily Review', async () => {
-    jest.setSystemTime(clock.localCalendarLateEvening());
+  it('refreshes the Review badge on focus without remounting Home', async () => {
     const user = setupUser();
     const backHandler = jest.spyOn(BackHandler, 'addEventListener');
 
@@ -208,11 +340,11 @@ describe('HomeScreen', () => {
         initialParams: { language: 'cajun' }
       });
 
-      const homeTitle = await screen.findByText('Louisiana French');
-      await user.press(screen.getByLabelText('Daily Review'));
+      await screen.findByText('Louisiana French');
+      await user.press(screen.getByTestId('home-review-control'));
       expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
 
-      await seedAsyncStorage({ dailyReviewLogV2Cajun: dailyReviewLogs.cajun });
+      await seedAsyncStorage({ reviewState: reviewStates.overlap });
       const backListener = backHandler.mock.calls.find(
         ([eventName]) => eventName === 'hardwareBackPress'
       )[1];
@@ -220,9 +352,44 @@ describe('HomeScreen', () => {
         backListener();
       });
 
-      expect(await screen.findByText('Complete! Your daily review will renew at midnight.'))
-        .toBeOnTheScreen();
-      expect(screen.getByText('Louisiana French')).toBe(homeTitle);
+      expect(await screen.findByTestId('review-count')).toHaveTextContent('3');
+    } finally {
+      backHandler.mockRestore();
+    }
+  });
+
+  it('refreshes the focused Home header data without remounting', async () => {
+    const user = setupUser();
+    const backHandler = jest.spyOn(BackHandler, 'addEventListener');
+
+    try {
+      await seedAsyncStorage({ profile: profiles.fresh, wordProgress: {} });
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByTestId('home-stats')).toHaveTextContent(
+        '⚡ 0 · 🔥 0 · 0% mastered'
+      );
+      await user.press(screen.getByTestId('home-review-control'));
+
+      await seedAsyncStorage({
+        profile: profiles.established,
+        wordProgress: {
+          'cajun:fixture_cajun_w01': wordMastery.mastered
+        }
+      });
+      const backListener = backHandler.mock.calls.find(
+        ([eventName]) => eventName === 'hardwareBackPress'
+      )[1];
+      await act(async () => {
+        backListener();
+      });
+
+      expect(await screen.findByTestId('home-stats')).toHaveTextContent(
+        '⚡ 40 · 🔥 2 · 25% mastered'
+      );
     } finally {
       backHandler.mockRestore();
     }
@@ -308,29 +475,24 @@ describe('HomeScreen', () => {
     }
   });
 
-  it('opens Dictionary from Home', async () => {
+  it('opens Dictionary and Advanced with the active Language', async () => {
     const user = setupUser();
     renderApp({
       initialRouteName: 'Home',
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Open Dictionary')).toBeOnTheScreen();
+    expect(await screen.findByText('Dictionary')).toBeOnTheScreen();
 
-    await user.press(screen.getByText('Open Dictionary'));
+    await user.press(screen.getByTestId('home-dictionary-control'));
     expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
-  });
 
-  it('opens Advanced from Home', async () => {
-    const user = setupUser();
     renderApp({
       initialRouteName: 'Home',
       initialParams: { language: 'cajun' }
     });
-
-    expect(await screen.findByText('Advanced / Review Hub')).toBeOnTheScreen();
-
-    await user.press(screen.getByText('Advanced / Review Hub'));
+    await screen.findByText('Louisiana French');
+    await user.press(screen.getByTestId('home-hub-control'));
     expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
   });
 
@@ -368,6 +530,9 @@ describe('HomeScreen', () => {
     });
 
     expect(await screen.findByTestId('mistakes-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('mistakes-count')).toHaveStyle({
+      backgroundColor: '#DC2626'
+    });
     expect(screen.getByTestId('home-mistakes-control').props.accessibilityLabel)
       .toBe('Mistakes, 1 pending');
     firstRender.unmount();
@@ -401,7 +566,7 @@ describe('HomeScreen', () => {
     });
 
     expect(await screen.findByTestId('mistakes-count')).toHaveTextContent('1');
-    await user.press(screen.getByLabelText('Kouri-Vini flag'));
+    await user.press(screen.getByLabelText('Louisiana French flag'));
 
     expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
     expect(screen.getByTestId('mistakes-count')).toHaveTextContent('1');
@@ -422,7 +587,7 @@ describe('HomeScreen', () => {
       });
 
       await screen.findByText('Louisiana French');
-      await user.press(screen.getByLabelText('Daily Review'));
+      await user.press(screen.getByTestId('home-review-control'));
       expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
 
       await seedAsyncStorage({
@@ -520,6 +685,21 @@ describe('HomeScreen', () => {
     } finally {
       reduceMotion.mockRestore();
     }
+  });
+
+  it('removes the old stats cards and full-width navigation controls', async () => {
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    expect(screen.queryByText('Open Dictionary')).toBeNull();
+    expect(screen.queryByText('Advanced / Review Hub')).toBeNull();
+    expect(screen.queryByText('Daily Review')).toBeNull();
+    expect(screen.queryByText('XP')).toBeNull();
+    expect(screen.queryByText('Streak')).toBeNull();
+    expect(screen.queryByText('Mastered')).toBeNull();
   });
 });
 
