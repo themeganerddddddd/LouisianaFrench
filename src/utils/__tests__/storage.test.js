@@ -3,6 +3,7 @@ import { clock } from '../../test/fixtures/clock';
 import {
   completedLessons,
   dailyReviewLogs,
+  dailyReviewMigration,
   leaderboardEntries,
   leaderboards,
   lastWorkedUnits,
@@ -28,7 +29,9 @@ import {
   updateWordProgress,
   getReviewState,
   getDailyReviewLog,
+  getLanguageDailyReviewLog,
   markDailyReviewDone,
+  markLanguageDailyReviewDone,
   getTodayKey,
   getLeaderboard,
   upsertLeaderboard,
@@ -180,6 +183,98 @@ describe('Daily Review log', () => {
   it('computes today\'s local date key from the system clock', () => {
     jest.setSystemTime(clock.localCalendarLateEvening());
     expect(getTodayKey()).toBe('2026-03-05');
+  });
+
+  it('starts with an empty scoped record for each Language', async () => {
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.fresh);
+    expect(await getLanguageDailyReviewLog('kreole')).toEqual(dailyReviewLogs.fresh);
+  });
+
+  it('writes the date to the active scoped record and the legacy record', async () => {
+    await markLanguageDailyReviewDone('cajun', '2026-01-15');
+
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.completed);
+    expect(await getDailyReviewLog()).toEqual(dailyReviewLogs.completed);
+  });
+
+  it('keeps a completed Language invisible to the other Language', async () => {
+    await markLanguageDailyReviewDone('cajun', '2026-01-15');
+
+    expect(await getLanguageDailyReviewLog('kreole')).toEqual(dailyReviewLogs.fresh);
+  });
+
+  it.each([
+    ['cajun', 'lf_daily_review_log_v2_cajun'],
+    ['kreole', 'lf_daily_review_log_v2_kreole']
+  ])('imports legacy history into saved default %s', async (language, scopedKey) => {
+    await seedAsyncStorage({ dailyReviewLog: dailyReviewLogs.legacy });
+    await setDefaultLanguage(language);
+
+    expect(await getLanguageDailyReviewLog(language)).toEqual(dailyReviewLogs.legacy);
+    expect(await AsyncStorage.getItem(scopedKey)).toBe(
+      JSON.stringify(dailyReviewLogs.legacy)
+    );
+    expect(await AsyncStorage.getItem('lf_daily_review_migrated')).toBe(
+      JSON.stringify(dailyReviewMigration.marker)
+    );
+  });
+
+  it('defers legacy migration until a default Language exists', async () => {
+    await seedAsyncStorage({ dailyReviewLog: dailyReviewLogs.legacy });
+
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.fresh);
+    expect(await AsyncStorage.getItem('lf_daily_review_migrated')).toBeNull();
+
+    await setDefaultLanguage('cajun');
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.legacy);
+  });
+
+  it('does not change the legacy record while migrating it', async () => {
+    await seedAsyncStorage({ dailyReviewLog: dailyReviewLogs.legacy });
+    await setDefaultLanguage('cajun');
+    const before = await AsyncStorage.getItem('lf_daily_review_log');
+
+    await getLanguageDailyReviewLog('cajun');
+
+    expect(await AsyncStorage.getItem('lf_daily_review_log')).toBe(before);
+  });
+
+  it('marks migration after an empty legacy decision', async () => {
+    await seedAsyncStorage({ dailyReviewLog: dailyReviewLogs.fresh });
+    await setDefaultLanguage('cajun');
+
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.fresh);
+    expect(await AsyncStorage.getItem('lf_daily_review_migrated')).toBe('true');
+  });
+
+  it('preserves a pre-existing scoped record and marks migration', async () => {
+    await seedAsyncStorage({
+      dailyReviewLog: dailyReviewLogs.legacy,
+      dailyReviewLogV2Cajun: dailyReviewLogs.cajun
+    });
+    await setDefaultLanguage('cajun');
+
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.cajun);
+    expect(await AsyncStorage.getItem('lf_daily_review_migrated')).toBe('true');
+  });
+
+  it('does not import legacy history into a changed default Language', async () => {
+    await seedAsyncStorage({ dailyReviewLog: dailyReviewLogs.legacy });
+    await setDefaultLanguage('cajun');
+    await getLanguageDailyReviewLog('cajun');
+
+    await setDefaultLanguage('kreole');
+    expect(await getLanguageDailyReviewLog('kreole')).toEqual(dailyReviewLogs.fresh);
+    expect(await AsyncStorage.getItem('lf_daily_review_log_v2_kreole')).toBeNull();
+  });
+
+  it('propagates malformed scoped v2 JSON through the scoped interface', async () => {
+    await seedRawAsyncStorage({
+      dailyReviewLogV2Cajun: 'not-json',
+      dailyReviewMigrated: 'true'
+    });
+
+    await expect(getLanguageDailyReviewLog('cajun')).rejects.toThrow();
   });
 });
 

@@ -50,7 +50,14 @@ export const wordMastery = frozen({
 
 export const dailyReviewLogs = frozen({
   fresh: frozen({}),
-  completed: frozen({ '2026-01-15': true })
+  completed: frozen({ '2026-01-15': true }),
+  legacy: frozen({ '2026-03-05': true, '2026-03-06': true }),
+  cajun: frozen({ '2026-03-05': true }),
+  kreole: frozen({ '2026-03-04': true })
+});
+
+export const dailyReviewMigration = frozen({
+  marker: true
 });
 
 export const leaderboardEntries = frozen({
