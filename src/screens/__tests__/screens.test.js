@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, screen } from '@testing-library/react-native';
-import { LayoutAnimation } from 'react-native';
+import { BackHandler, LayoutAnimation } from 'react-native';
 
 import {
   activityByCardId,
@@ -9,6 +10,7 @@ import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBu
 import { clock } from '../../test/fixtures/clock';
 import {
   completedLessons,
+  dailyReviewLogs,
   lastWorkedUnits,
   profiles,
   wordMastery
@@ -18,7 +20,10 @@ import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import {
   getDefaultLanguage,
+  getDailyReviewLog,
+  getLanguageDailyReviewLog,
   getLastWorkedUnit,
+  getTodayKey,
   hasSelectedLanguage,
   markLanguageSelected,
   setDefaultLanguage
@@ -128,6 +133,95 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Everyday phrases')).toBeNull();
     expect(screen.getByText('Done')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
+  });
+
+  it('reads Daily Review completion from the active scoped record', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({ dailyReviewLogV2Cajun: dailyReviewLogs.cajun });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('Complete! Your daily review will renew at midnight.'))
+      .toBeOnTheScreen();
+  });
+
+  it('keeps Daily Review completion independent while switching Languages', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({
+      dailyReviewLogV2Cajun: dailyReviewLogs.cajun,
+      dailyReviewLogV2Kreole: dailyReviewLogs.kreole
+    });
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('Complete! Your daily review will renew at midnight.'))
+      .toBeOnTheScreen();
+    await user.press(screen.getByLabelText('Kouri-Vini flag'));
+
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+    expect(screen.getByText('Review due words, weak cards, and mistakes.')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('Louisiana French flag'));
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    expect(screen.getByText('Complete! Your daily review will renew at midnight.'))
+      .toBeOnTheScreen();
+  });
+
+  it('migrates legacy Daily Review history through the rendered Home journey', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({ dailyReviewLog: dailyReviewLogs.legacy });
+    await setDefaultLanguage('cajun');
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    expect(
+      await screen.findByText('Complete! Your daily review will renew at midnight.')
+    ).toBeOnTheScreen();
+    expect(await AsyncStorage.getItem('lf_daily_review_log_v2_cajun')).toBe(
+      JSON.stringify(dailyReviewLogs.legacy)
+    );
+    expect(await AsyncStorage.getItem('lf_daily_review_migrated')).toBe('true');
+  });
+
+  it('refreshes a mounted Home after focus returns from Daily Review', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    const user = setupUser();
+    const backHandler = jest.spyOn(BackHandler, 'addEventListener');
+
+    try {
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      const homeTitle = await screen.findByText('Louisiana French');
+      await user.press(screen.getByLabelText('Daily Review'));
+      expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
+
+      await seedAsyncStorage({ dailyReviewLogV2Cajun: dailyReviewLogs.cajun });
+      const backListener = backHandler.mock.calls.find(
+        ([eventName]) => eventName === 'hardwareBackPress'
+      )[1];
+      await act(async () => {
+        backListener();
+      });
+
+      expect(await screen.findByText('Complete! Your daily review will renew at midnight.'))
+        .toBeOnTheScreen();
+      expect(screen.getByText('Louisiana French')).toBe(homeTitle);
+    } finally {
+      backHandler.mockRestore();
+    }
   });
 
   it('collapses Units by default and allows only one open Unit', async () => {
@@ -497,6 +591,11 @@ describe('DailyReviewScreen', () => {
 
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText('Daily Review')).toBeOnTheScreen();
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual({
+      [getTodayKey()]: true
+    });
+    expect(await getLanguageDailyReviewLog('kreole')).toEqual({});
+    expect(await getDailyReviewLog()).toEqual({ [getTodayKey()]: true });
   });
 
   it('completes after a final wrong answer without double-scoring (KD-01)', async () => {
@@ -534,6 +633,11 @@ describe('DailyReviewScreen', () => {
     expect(screen.getByText('Daily Review')).toBeOnTheScreen();
     expect(screen.getByText('⚡ 0')).toBeOnTheScreen();
     expect(screen.getByText('📝 1')).toBeOnTheScreen();
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual({
+      [getTodayKey()]: true
+    });
+    expect(await getLanguageDailyReviewLog('kreole')).toEqual({});
+    expect(await getDailyReviewLog()).toEqual({ [getTodayKey()]: true });
   });
 });
 

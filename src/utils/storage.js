@@ -7,6 +7,9 @@ const KEYS = {
   WORD_PROGRESS: 'lf_word_progress',
   REVIEW_STATE: 'lf_review_state',
   DAILY_REVIEW_LOG: 'lf_daily_review_log',
+  DAILY_REVIEW_LOG_V2_CAJUN: 'lf_daily_review_log_v2_cajun',
+  DAILY_REVIEW_LOG_V2_KREOLE: 'lf_daily_review_log_v2_kreole',
+  DAILY_REVIEW_MIGRATED: 'lf_daily_review_migrated',
   LEADERBOARD: 'lf_leaderboard',
   DEFAULT_LANGUAGE: 'lf_default_language',
   HAS_SELECTED_LANGUAGE: 'lf_has_selected_language',
@@ -130,6 +133,47 @@ export async function markDailyReviewDone(dateKey) {
   const log = await getDailyReviewLog();
   log[dateKey] = true;
   await AsyncStorage.setItem(KEYS.DAILY_REVIEW_LOG, JSON.stringify(log));
+}
+
+function getLanguageDailyReviewKey(language) {
+  return KEYS[`DAILY_REVIEW_LOG_V2_${language.toUpperCase()}`];
+}
+
+export async function getLanguageDailyReviewLog(language) {
+  const key = getLanguageDailyReviewKey(language);
+  const raw = await AsyncStorage.getItem(key);
+  const current = raw ? JSON.parse(raw) : {};
+
+  if ((await AsyncStorage.getItem(KEYS.DAILY_REVIEW_MIGRATED)) === 'true') {
+    return current;
+  }
+
+  const defaultLanguage = await getDefaultLanguage();
+  if (!defaultLanguage) return current;
+
+  const legacy = await getDailyReviewLog();
+  const defaultKey = getLanguageDailyReviewKey(defaultLanguage);
+  const defaultRaw = defaultLanguage === language
+    ? raw
+    : await AsyncStorage.getItem(defaultKey);
+  const defaultLog = defaultRaw ? JSON.parse(defaultRaw) : {};
+
+  const shouldImport = !Object.keys(defaultLog).length && Object.keys(legacy).length;
+  if (shouldImport) {
+    await AsyncStorage.setItem(defaultKey, JSON.stringify(legacy));
+  }
+
+  await AsyncStorage.setItem(KEYS.DAILY_REVIEW_MIGRATED, 'true');
+  return shouldImport && defaultLanguage === language
+    ? JSON.parse(await AsyncStorage.getItem(key))
+    : current;
+}
+
+export async function markLanguageDailyReviewDone(language, dateKey) {
+  const log = await getLanguageDailyReviewLog(language);
+  log[dateKey] = true;
+  await AsyncStorage.setItem(getLanguageDailyReviewKey(language), JSON.stringify(log));
+  await markDailyReviewDone(dateKey);
 }
 
 export function getTodayKey() {

@@ -11,7 +11,7 @@ import {
 } from '../utils/spacedRepetition';
 import {
   getTodayKey,
-  markDailyReviewDone,
+  markLanguageDailyReviewDone,
   recordStudyAndXp,
   updateWordProgress
 } from '../utils/storage';
@@ -71,7 +71,7 @@ export default function DailyReviewScreen({ route, navigation }) {
       return;
     }
 
-    await markDailyReviewDone(getTodayKey());
+    await markLanguageDailyReviewDone(language, getTodayKey());
     const profile = await recordStudyAndXp(nextXp);
 
     navigation.replace('LessonComplete', {
@@ -97,7 +97,7 @@ export default function DailyReviewScreen({ route, navigation }) {
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
-      await markDailyReviewDone(getTodayKey());
+      await markLanguageDailyReviewDone(language, getTodayKey());
       const profile = await recordStudyAndXp(xp);
 
       navigation.replace('LessonComplete', {

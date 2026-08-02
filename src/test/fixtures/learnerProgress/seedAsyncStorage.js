@@ -6,6 +6,9 @@ const storageKeys = Object.freeze({
   wordProgress: 'lf_word_progress',
   reviewState: 'lf_review_state',
   dailyReviewLog: 'lf_daily_review_log',
+  dailyReviewLogV2Cajun: 'lf_daily_review_log_v2_cajun',
+  dailyReviewLogV2Kreole: 'lf_daily_review_log_v2_kreole',
+  dailyReviewMigrated: 'lf_daily_review_migrated',
   leaderboard: 'lf_leaderboard',
   lastWorkedUnit: 'lf_last_worked_unit'
 });

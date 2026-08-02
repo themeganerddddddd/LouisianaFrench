@@ -1,6 +1,6 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Image,
   LayoutAnimation,
@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
 import { getAllWords, getUnits } from '../data/lessonLoader';
 import {
-  getDailyReviewLog,
+  getLanguageDailyReviewLog,
   getDefaultLanguage,
   getLastWorkedUnit,
   getLessonProgress,
@@ -98,14 +98,12 @@ export default function HomeScreen() {
       const loadedLessonProgress = await getLessonProgress();
       const loadedWordProgress = await getWordProgress();
 
-      const reviewLog = await getDailyReviewLog();
       const lastWorkedUnit = await getLastWorkedUnit(language);
 
       setUnits(loadedUnits);
       setProfile(loadedProfile);
       setLessonProgress(loadedLessonProgress);
       setWordProgress(loadedWordProgress);
-      setDailyDone(!!reviewLog[getTodayKey()]);
       setTimeUntilReset(getTimeUntilMidnight());
       setExpandedUnit(
         loadedUnits.some((unitObj) => unitObj.unit === lastWorkedUnit)
@@ -117,6 +115,13 @@ export default function HomeScreen() {
     loadData();
   }, [language]);
 
+  useFocusEffect(useCallback(() => {
+    let cancelled = false;
+    getLanguageDailyReviewLog(language).then((reviewLog) => {
+      if (!cancelled) setDailyDone(!!reviewLog[getTodayKey()]);
+    });
+    return () => { cancelled = true; };
+  }, [language]));
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeUntilReset(getTimeUntilMidnight());
@@ -211,7 +216,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.flagRow}>
-          <TouchableOpacity onPress={() => switchLanguage('cajun')}>
+          <TouchableOpacity onPress={() => switchLanguage('cajun')} accessibilityLabel="Louisiana French flag">
             <Image
               source={require('../../assets/images/cajun_flag.png')}
               style={[
@@ -221,7 +226,7 @@ export default function HomeScreen() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => switchLanguage('kreole')}>
+          <TouchableOpacity onPress={() => switchLanguage('kreole')} accessibilityLabel="Kouri-Vini flag">
             <Image
               source={require('../../assets/images/creole_flag.png')}
               style={[
