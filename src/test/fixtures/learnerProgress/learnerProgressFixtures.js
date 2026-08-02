@@ -60,6 +60,50 @@ export const dailyReviewMigration = frozen({
   marker: true
 });
 
+export const pendingMistakes = frozen({
+  cajun: frozen({
+    greetingChoice: frozen({
+      cardId: 'fixture:cajun:greeting:choice',
+      answer: 'Bonjour',
+      source: 'lesson',
+      sourceId: 'fixture_cajun_u01_l01',
+      timestamp: clock.localCalendarLateEvening().toISOString()
+    }),
+    greetingListen: frozen({
+      cardId: 'fixture:cajun:greeting:listen',
+      answer: 'Bonjour',
+      source: 'lesson',
+      sourceId: 'fixture_cajun_u01_l01',
+      timestamp: clock.localCalendarLateEvening().toISOString()
+    })
+  }),
+  kreole: frozen({
+    pronounsChoice: frozen({
+      cardId: 'fixture:kreole:pronouns:choice',
+      answer: 'vouzòt',
+      source: 'dailyReview',
+      sourceId: null,
+      timestamp: clock.localCalendarLateEvening().toISOString()
+    })
+  }),
+  obsoleteCard: frozen({
+    cardId: 'fixture:cajun:obsolete:missing',
+    answer: 'ancienne réponse',
+    source: 'lesson',
+    sourceId: 'fixture_cajun_u01_l01',
+    timestamp: clock.localCalendarLateEvening().toISOString()
+  })
+});
+
+export const practiceLogs = frozen({
+  todayMistakeReview: frozen({
+    '2026-03-05': frozen({
+      type: 'mistakeReview',
+      completedAt: clock.localCalendarLateEvening().toISOString()
+    })
+  })
+});
+
 export const leaderboardEntries = frozen({
   marie: frozen({ name: 'Marie', xp: 40 }),
   beau: frozen({ name: 'Beau', xp: 90 })

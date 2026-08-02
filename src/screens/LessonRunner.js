@@ -15,6 +15,7 @@ import {
   markPrefaceRead,
   recordStudyAndXp,
   setLastWorkedUnit,
+  upsertPendingMistake,
   updateWordProgress
 } from '../utils/storage';
 
@@ -173,6 +174,12 @@ export default function LessonRunner({ route, navigation }) {
     if (current.rowId) {
       await updateWordProgress(language, current.rowId, false);
     }
+
+    await upsertPendingMistake(language, current.cardId, {
+      answer: userAnswer,
+      source: 'lesson',
+      sourceId: lesson.id
+    });
 
     const nextMistake = { ...current, userAnswer };
     setMistakes((prev) => [...prev, nextMistake]);

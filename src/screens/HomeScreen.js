@@ -1,10 +1,13 @@
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  AccessibilityInfo,
   Image,
   LayoutAnimation,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,6 +24,7 @@ import {
   getLastWorkedUnit,
   getLessonProgress,
   getProfile,
+  getPendingMistakes,
   getTodayKey,
   getWordProgress,
   setDefaultLanguage
@@ -71,6 +75,8 @@ export default function HomeScreen() {
   const [lessonProgress, setLessonProgress] = useState({});
   const [wordProgress, setWordProgress] = useState({});
   const [dailyDone, setDailyDone] = useState(false);
+  const [pendingMistakesCount, setPendingMistakesCount] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [timeUntilReset, setTimeUntilReset] = useState(getTimeUntilMidnight());
   const [expandedUnit, setExpandedUnit] = useState(null);
 
@@ -122,6 +128,19 @@ export default function HomeScreen() {
     });
     return () => { cancelled = true; };
   }, [language]));
+
+  useFocusEffect(useCallback(() => {
+    let cancelled = false;
+    getPendingMistakes(language).then((mistakes) => {
+      if (!cancelled) setPendingMistakesCount(mistakes.length);
+    });
+    return () => { cancelled = true; };
+  }, [language]));
+
+  useEffect(() => {
+    const preference = AccessibilityInfo.isReduceMotionEnabled?.();
+    preference?.then(setReduceMotion);
+  }, []);
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeUntilReset(getTimeUntilMidnight());
@@ -235,6 +254,32 @@ export default function HomeScreen() {
               ]}
             />
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.mistakesRow}>
+          <Pressable
+            testID="home-mistakes-control"
+            disabled={!pendingMistakesCount}
+            accessibilityRole="button"
+            accessibilityLabel={pendingMistakesCount ? `Mistakes, ${pendingMistakesCount} pending` : 'Mistakes, none pending'}
+            accessibilityState={{ disabled: !pendingMistakesCount }}
+            onPress={() => pendingMistakesCount && navigation.navigate('MistakeReview', { language, source: 'home' })}
+            style={({ pressed }) => [
+              styles.mistakesControl,
+              !pendingMistakesCount && styles.mistakesDisabled,
+              pressed && (reduceMotion ? styles.mistakesPressedReduced : styles.mistakesPressed)
+            ]}
+          >
+            <View style={styles.mistakesCircle}>
+              <Feather name="alert-triangle" size={21} color="#FFFFFF" />
+              {pendingMistakesCount ? (
+                <View testID="mistakes-count" style={styles.mistakesBadge}>
+                  <Text style={styles.mistakesBadgeText}>{pendingMistakesCount}</Text>
+                </View>
+              ) : null}
+            </View>
+            <Text style={styles.mistakesLabel}>Mistakes</Text>
+          </Pressable>
         </View>
       </LinearGradient>
 
@@ -469,8 +514,10 @@ const styles = StyleSheet.create({
 
   topBar: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
+    rowGap: 16,
     paddingBottom: 22,
     paddingHorizontal: 20
   },
@@ -489,6 +536,67 @@ const styles = StyleSheet.create({
 
   flagRow: {
     flexDirection: 'row'
+  },
+
+  mistakesRow: {
+    width: '100%',
+    alignItems: 'center'
+  },
+
+  mistakesControl: {
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    position: 'relative'
+  },
+
+  mistakesDisabled: {
+    opacity: 0.55
+  },
+
+  mistakesPressed: {
+    transform: [{ scale: 0.94 }]
+  },
+
+  mistakesPressedReduced: {
+    opacity: 0.7
+  },
+
+  mistakesCircle: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)'
+  },
+
+  mistakesBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#DC2626'
+  },
+
+  mistakesBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900'
+  },
+
+  mistakesLabel: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 6
   },
 
   flagImage: {
