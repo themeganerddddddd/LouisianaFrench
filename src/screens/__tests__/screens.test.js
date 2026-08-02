@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { act, screen } from '@testing-library/react-native';
-import { BackHandler, LayoutAnimation } from 'react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
 
 import {
   activityByCardId,
@@ -12,6 +12,7 @@ import {
   completedLessons,
   dailyReviewLogs,
   lastWorkedUnits,
+  pendingMistakes,
   profiles,
   wordMastery
 } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
@@ -21,8 +22,11 @@ import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import {
   getDefaultLanguage,
   getDailyReviewLog,
+  getPendingMistakes,
+  getProfile,
   getLanguageDailyReviewLog,
   getLastWorkedUnit,
+  getTodayPractice,
   getTodayKey,
   hasSelectedLanguage,
   markLanguageSelected,
@@ -329,6 +333,194 @@ describe('HomeScreen', () => {
     await user.press(screen.getByText('Advanced / Review Hub'));
     expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
   });
+
+  it('shows an empty Mistakes control as disabled without a badge or navigation', async () => {
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    const control = await screen.findByTestId('home-mistakes-control');
+
+    expect(control.props.accessibilityState).toEqual({ disabled: true });
+    expect(control.props.accessibilityLabel).toBe('Mistakes, none pending');
+    expect(control).toHaveStyle({ alignItems: 'center', minWidth: 48, minHeight: 48 });
+    expect(screen.getByText('Mistakes')).toHaveStyle({ marginTop: 6 });
+    expect(screen.queryByTestId('mistakes-count')).toBeNull();
+    expect(control).toHaveStyle({ opacity: 0.55 });
+
+    fireEvent.press(control);
+    expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
+  });
+
+  it('shows the active Language pending count and opens the persisted Card after remount', async () => {
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        }
+      }
+    });
+
+    const firstRender = renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByTestId('mistakes-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('home-mistakes-control').props.accessibilityLabel)
+      .toBe('Mistakes, 1 pending');
+    firstRender.unmount();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('mistakes-count');
+    fireEvent.press(screen.getByTestId('home-mistakes-control'));
+    expect(await screen.findByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+  });
+
+  it('keeps the Mistakes count and Catalog queue independent while switching Languages', async () => {
+    const user = setupUser();
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        },
+        kreole: {
+          [pendingMistakes.kreole.pronounsChoice.cardId]: pendingMistakes.kreole.pronounsChoice
+        }
+      }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByTestId('mistakes-count')).toHaveTextContent('1');
+    await user.press(screen.getByLabelText('Kouri-Vini flag'));
+
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+    expect(screen.getByTestId('mistakes-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('home-mistakes-control').props.accessibilityLabel)
+      .toBe('Mistakes, 1 pending');
+    fireEvent.press(screen.getByTestId('home-mistakes-control'));
+    expect(await screen.findByText("Choose the match for 'we'")).toBeOnTheScreen();
+  });
+
+  it('refreshes the pending count on focus without remounting Home', async () => {
+    const user = setupUser();
+    const backHandler = jest.spyOn(BackHandler, 'addEventListener');
+
+    try {
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      await screen.findByText('Louisiana French');
+      await user.press(screen.getByLabelText('Daily Review'));
+      expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
+
+      await seedAsyncStorage({
+        pendingMistakes: {
+          cajun: {
+            [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+          }
+        }
+      });
+      const backListener = backHandler.mock.calls.find(
+        ([eventName]) => eventName === 'hardwareBackPress'
+      )[1];
+
+      await act(async () => {
+        backListener();
+      });
+
+      expect(await screen.findByTestId('mistakes-count')).toHaveTextContent('1');
+    } finally {
+      backHandler.mockRestore();
+    }
+  });
+
+  it('cleans obsolete Cards silently without XP or Practice completion', async () => {
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: { [pendingMistakes.obsoleteCard.cardId]: pendingMistakes.obsoleteCard }
+      }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('mistakes-count');
+    fireEvent.press(screen.getByTestId('home-mistakes-control'));
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    expect(screen.queryByText('Session Complete 🎉')).toBeNull();
+    expect(await getPendingMistakes('cajun')).toEqual([]);
+    expect(await getTodayPractice('cajun')).toBeNull();
+    expect((await getProfile()).xp).toBe(0);
+  });
+
+  it('shows pressed scale feedback and reduced-motion opacity feedback', async () => {
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        }
+      }
+    });
+    const initialRender = renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('mistakes-count');
+    const control = screen.getByTestId('home-mistakes-control');
+    fireEvent(control, 'responderGrant', {
+      persist: () => {},
+      nativeEvent: { timestamp: Date.now() }
+    });
+    expect(screen.getByTestId('home-mistakes-control')).toHaveStyle({
+      transform: [{ scale: 0.94 }]
+    });
+    initialRender.unmount();
+
+    const reduceMotion = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+
+    try {
+      const firstRender = renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+      await screen.findByTestId('mistakes-count');
+      firstRender.unmount();
+
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+      await screen.findByTestId('mistakes-count');
+      const reducedControl = screen.getByTestId('home-mistakes-control');
+      fireEvent(reducedControl, 'responderGrant', {
+        persist: () => {},
+        nativeEvent: { timestamp: Date.now() }
+      });
+      expect(screen.getByTestId('home-mistakes-control')).toHaveStyle({ opacity: 0.7 });
+      expect(screen.getByTestId('home-mistakes-control')).not.toHaveStyle({
+        transform: [{ scale: 0.94 }]
+      });
+    } finally {
+      reduceMotion.mockRestore();
+    }
+  });
 });
 
 describe('LessonRunner', () => {
@@ -375,6 +567,14 @@ describe('LessonRunner', () => {
     await user.press(screen.getByText('Continue'));
 
     expect(await screen.findByText('Mistake Review')).toBeOnTheScreen();
+    expect(await getPendingMistakes('cajun')).toEqual([
+      expect.objectContaining({
+        cardId: 'fixture:cajun:ready:build',
+        source: 'lesson',
+        sourceId: 'fixture_cajun_u02_l01',
+        answer: "C'est"
+      })
+    ]);
 
     await user.press(screen.getByText("C'est"));
     await user.press(screen.getByText('paré'));
@@ -514,6 +714,97 @@ describe('MistakeReviewScreen', () => {
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
   });
+
+  it('removes only the corrected Card while the next pending Card remains', async () => {
+    const user = setupUser();
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice,
+          [pendingMistakes.cajun.greetingListen.cardId]: pendingMistakes.cajun.greetingListen
+        }
+      }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('mistakes-count');
+    fireEvent.press(screen.getByTestId('home-mistakes-control'));
+    expect(await screen.findByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    expect(await screen.findByText('Listen and choose the word')).toBeOnTheScreen();
+    expect(await getPendingMistakes('cajun')).toEqual([pendingMistakes.cajun.greetingListen]);
+    expect(await getTodayPractice('cajun')).toBeNull();
+  });
+
+  it('keeps a Home-launched Card visible after another wrong answer', async () => {
+    const user = setupUser();
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        }
+      }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('mistakes-count');
+    fireEvent.press(screen.getByTestId('home-mistakes-control'));
+    await screen.findByText("Choose the match for 'How’s it going?'");
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+
+    expect(screen.getByText('Not quite')).toBeOnTheScreen();
+    expect(screen.getByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+    expect(await getPendingMistakes('cajun')).toHaveLength(1);
+  });
+
+  it('clears the final Home Card, records Practice, awards 10 XP, and returns Home', async () => {
+    const user = setupUser();
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        },
+        kreole: {
+          [pendingMistakes.kreole.pronounsChoice.cardId]: pendingMistakes.kreole.pronounsChoice
+        }
+      }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('mistakes-count');
+    fireEvent.press(screen.getByTestId('home-mistakes-control'));
+    await screen.findByText("Choose the match for 'How’s it going?'");
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    expect(await getPendingMistakes('cajun')).toEqual([]);
+    expect(await getPendingMistakes('kreole')).toEqual([
+      pendingMistakes.kreole.pronounsChoice
+    ]);
+    expect((await getProfile()).xp).toBe(10);
+    expect(await getTodayPractice('cajun')).toEqual({
+      type: 'mistakeReview',
+      completedAt: expect.any(String)
+    });
+  });
 });
 
 describe('LessonCompleteScreen', () => {
@@ -638,6 +929,14 @@ describe('DailyReviewScreen', () => {
     });
     expect(await getLanguageDailyReviewLog('kreole')).toEqual({});
     expect(await getDailyReviewLog()).toEqual({ [getTodayKey()]: true });
+    expect(await getPendingMistakes('cajun')).toEqual([
+      expect.objectContaining({
+        cardId: 'fixture:cajun:greeting:choice',
+        answer: 'Bonjour',
+        source: 'dailyReview',
+        sourceId: null
+      })
+    ]);
   });
 });
 

@@ -14,7 +14,9 @@ const KEYS = {
   DEFAULT_LANGUAGE: 'lf_default_language',
   HAS_SELECTED_LANGUAGE: 'lf_has_selected_language',
   PREFACE_READ: 'lf_preface_read',
-  LAST_WORKED_UNIT: 'lf_last_worked_unit'
+  LAST_WORKED_UNIT: 'lf_last_worked_unit',
+  PENDING_MISTAKES: 'lf_pending_mistakes',
+  PRACTICE_LOG: 'lf_practice_log'
 };
 
 const defaultProfile = {
@@ -183,6 +185,53 @@ export function getTodayKey() {
     String(d.getMonth() + 1).padStart(2, '0'),
     String(d.getDate()).padStart(2, '0')
   ].join('-');
+}
+
+export async function getPendingMistakes(language) {
+  const raw = await AsyncStorage.getItem(KEYS.PENDING_MISTAKES);
+  const data = raw ? JSON.parse(raw) : {};
+  return Object.values(data[language] || {});
+}
+
+export async function upsertPendingMistake(language, cardId, { answer, source, sourceId }) {
+  const raw = await AsyncStorage.getItem(KEYS.PENDING_MISTAKES);
+  const data = raw ? JSON.parse(raw) : {};
+  data[language] = data[language] || {};
+  data[language][cardId] = {
+    cardId,
+    answer,
+    source,
+    sourceId,
+    timestamp: getNow().toISOString()
+  };
+  await AsyncStorage.setItem(KEYS.PENDING_MISTAKES, JSON.stringify(data));
+}
+
+export async function removePendingMistake(language, cardId) {
+  const raw = await AsyncStorage.getItem(KEYS.PENDING_MISTAKES);
+  const data = raw ? JSON.parse(raw) : {};
+  if (!data[language]?.[cardId]) return;
+
+  delete data[language][cardId];
+  if (!Object.keys(data[language]).length) delete data[language];
+  await AsyncStorage.setItem(KEYS.PENDING_MISTAKES, JSON.stringify(data));
+}
+
+export async function recordPracticeCompletion(language, type) {
+  const raw = await AsyncStorage.getItem(KEYS.PRACTICE_LOG);
+  const data = raw ? JSON.parse(raw) : {};
+  data[language] = data[language] || {};
+  data[language][getTodayKey()] = {
+    type,
+    completedAt: getNow().toISOString()
+  };
+  await AsyncStorage.setItem(KEYS.PRACTICE_LOG, JSON.stringify(data));
+}
+
+export async function getTodayPractice(language) {
+  const raw = await AsyncStorage.getItem(KEYS.PRACTICE_LOG);
+  const data = raw ? JSON.parse(raw) : {};
+  return data[language]?.[getTodayKey()] || null;
 }
 
 export async function getLeaderboard() {

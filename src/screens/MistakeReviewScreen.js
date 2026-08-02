@@ -1,15 +1,50 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
+import { getAllActivities } from '../data/lessonLoader';
 import SafeScreenView from '../components/SafeScreenView';
-import { recordStudyAndXp } from '../utils/storage';
+import {
+  getPendingMistakes,
+  recordPracticeCompletion,
+  recordStudyAndXp,
+  removePendingMistake
+} from '../utils/storage';
 
 export default function MistakeReviewScreen({ route, navigation }) {
   const { language, lessonTitle, mistakes, lessonXp } = route.params;
-  const [queue] = useState(mistakes || []);
+  const homeMode = route.params?.source === 'home';
+  const [queue, setQueue] = useState(() => (homeMode ? [] : mistakes || []));
   const [index, setIndex] = useState(0);
+  const [loading, setLoading] = useState(homeMode);
+
+  useEffect(() => {
+    if (!homeMode) return;
+
+    async function loadPendingQueue() {
+      const pending = await getPendingMistakes(language);
+      const activities = new Map(
+        getAllActivities(language).map((activity) => [activity.cardId, activity])
+      );
+      const resolved = [];
+
+      for (const record of pending) {
+        const activity = activities.get(record.cardId);
+        if (activity) resolved.push({ ...activity, userAnswer: record.answer });
+        else await removePendingMistake(language, record.cardId);
+      }
+
+      setQueue(resolved);
+      setLoading(false);
+      if (!resolved.length) navigation.replace('Home', { language });
+    }
+
+    loadPendingQueue();
+  }, [homeMode, language, navigation]);
+
+  if (loading) return null;
 
   if (!queue.length) {
+    if (homeMode) return null;
     navigation.replace('LessonComplete', {
       lessonTitle,
       xpEarned: lessonXp || 0,
@@ -31,20 +66,28 @@ export default function MistakeReviewScreen({ route, navigation }) {
     : 0;
 
   async function handleCorrect() {
+    await removePendingMistake(language, current.cardId);
+    if (!(await getPendingMistakes(language)).length) {
+      await recordPracticeCompletion(language, 'mistakeReview');
+    }
+
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
       const updatedProfile = await recordStudyAndXp(10);
 
-      navigation.replace('LessonComplete', {
-        lessonTitle,
-        xpEarned: (lessonXp || 0) + 10,
-        mistakesCount: queue.length,
-        streak: updatedProfile.streak,
-        scoreEarned: null,
-        scorePossible: null,
-        language
-      });
+      if (homeMode) navigation.replace('Home', { language });
+      else {
+        navigation.replace('LessonComplete', {
+          lessonTitle,
+          xpEarned: (lessonXp || 0) + 10,
+          mistakesCount: queue.length,
+          streak: updatedProfile.streak,
+          scoreEarned: null,
+          scorePossible: null,
+          language
+        });
+      }
     }
   }
 

@@ -13,6 +13,7 @@ import {
   getTodayKey,
   markLanguageDailyReviewDone,
   recordStudyAndXp,
+  upsertPendingMistake,
   updateWordProgress
 } from '../utils/storage';
 
@@ -90,6 +91,12 @@ export default function DailyReviewScreen({ route, navigation }) {
     if (current.rowId) {
       await updateWordProgress(language, current.rowId, false);
     }
+
+    await upsertPendingMistake(language, current.cardId, {
+      answer: userAnswer,
+      source: 'dailyReview',
+      sourceId: null
+    });
 
     const nextMistakes = [...mistakes, { ...current, userAnswer }];
     setMistakes(nextMistakes);

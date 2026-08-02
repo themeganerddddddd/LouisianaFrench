@@ -10,7 +10,9 @@ const storageKeys = Object.freeze({
   dailyReviewLogV2Kreole: 'lf_daily_review_log_v2_kreole',
   dailyReviewMigrated: 'lf_daily_review_migrated',
   leaderboard: 'lf_leaderboard',
-  lastWorkedUnit: 'lf_last_worked_unit'
+  lastWorkedUnit: 'lf_last_worked_unit',
+  pendingMistakes: 'lf_pending_mistakes',
+  practiceLog: 'lf_practice_log'
 });
 
 function storageEntries(records) {

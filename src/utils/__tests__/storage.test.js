@@ -7,6 +7,8 @@ import {
   leaderboardEntries,
   leaderboards,
   lastWorkedUnits,
+  pendingMistakes,
+  practiceLogs,
   profiles,
   wordMastery
 } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
@@ -33,6 +35,11 @@ import {
   markDailyReviewDone,
   markLanguageDailyReviewDone,
   getTodayKey,
+  getPendingMistakes,
+  upsertPendingMistake,
+  removePendingMistake,
+  recordPracticeCompletion,
+  getTodayPractice,
   getLeaderboard,
   upsertLeaderboard,
   recordStudyAndXp,
@@ -275,6 +282,118 @@ describe('Daily Review log', () => {
     });
 
     await expect(getLanguageDailyReviewLog('cajun')).rejects.toThrow();
+  });
+});
+
+describe('Pending Mistake Review and Practice persistence', () => {
+  it('starts with no pending Cards', async () => {
+    expect(await getPendingMistakes('cajun')).toEqual([]);
+  });
+
+  it('stores only stable Card identity and learner-owned context', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+
+    await upsertPendingMistake('cajun', pendingMistakes.cajun.greetingChoice.cardId, {
+      answer: pendingMistakes.cajun.greetingChoice.answer,
+      source: pendingMistakes.cajun.greetingChoice.source,
+      sourceId: pendingMistakes.cajun.greetingChoice.sourceId
+    });
+
+    expect(await getPendingMistakes('cajun')).toEqual([pendingMistakes.cajun.greetingChoice]);
+    expect(await AsyncStorage.getItem('lf_pending_mistakes')).toBe(
+      JSON.stringify({ cajun: { [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice } })
+    );
+  });
+
+  it('deduplicates a Card and refreshes its context and timestamp', async () => {
+    await upsertPendingMistake('cajun', 'card-1', {
+      answer: 'first',
+      source: 'lesson',
+      sourceId: 'lesson-1'
+    });
+
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await upsertPendingMistake('cajun', 'card-1', {
+      answer: 'second',
+      source: 'dailyReview',
+      sourceId: null
+    });
+
+    expect(await getPendingMistakes('cajun')).toEqual([{
+      cardId: 'card-1',
+      answer: 'second',
+      source: 'dailyReview',
+      sourceId: null,
+      timestamp: clock.localCalendarLateEvening().toISOString()
+    }]);
+  });
+
+  it('removes one Card, prunes empty Language data, and makes removal idempotent', async () => {
+    await upsertPendingMistake('cajun', 'card-1', {
+      answer: 'answer',
+      source: 'lesson',
+      sourceId: 'lesson-1'
+    });
+
+    await removePendingMistake('cajun', 'card-1');
+    await removePendingMistake('cajun', 'card-1');
+
+    expect(await getPendingMistakes('cajun')).toEqual([]);
+    expect(await AsyncStorage.getItem('lf_pending_mistakes')).toBe('{}');
+  });
+
+  it('keeps pending Cards isolated by Language', async () => {
+    await upsertPendingMistake('cajun', pendingMistakes.cajun.greetingChoice.cardId, {
+      answer: 'cajun answer',
+      source: 'lesson',
+      sourceId: 'cajun-lesson'
+    });
+    await upsertPendingMistake('kreole', pendingMistakes.kreole.pronounsChoice.cardId, {
+      answer: 'kouri answer',
+      source: 'dailyReview',
+      sourceId: null
+    });
+
+    expect(await getPendingMistakes('cajun')).toHaveLength(1);
+    expect(await getPendingMistakes('kreole')).toHaveLength(1);
+
+    await removePendingMistake('cajun', pendingMistakes.cajun.greetingChoice.cardId);
+    expect(await getPendingMistakes('kreole')).toHaveLength(1);
+  });
+
+  it('records and reads today\'s Practice completion using the local date', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+
+    await recordPracticeCompletion('cajun', 'mistakeReview');
+
+    expect(await getTodayPractice('cajun')).toEqual(
+      practiceLogs.todayMistakeReview['2026-03-05']
+    );
+    expect(await getTodayPractice('kreole')).toBeNull();
+  });
+
+  it('overwrites same-day Practice completion without duplicating it', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+
+    await recordPracticeCompletion('cajun', 'mistakeReview');
+    await recordPracticeCompletion('cajun', 'mistakeReview');
+
+    expect(await AsyncStorage.getItem('lf_practice_log')).toBe(
+      JSON.stringify({
+        cajun: {
+          '2026-03-05': practiceLogs.todayMistakeReview['2026-03-05']
+        }
+      })
+    );
+  });
+
+  it('propagates malformed pending and Practice records', async () => {
+    await seedRawAsyncStorage({ pendingMistakes: 'not-json' });
+    await expect(getPendingMistakes('cajun')).rejects.toThrow();
+
+    await AsyncStorage.clear();
+    await seedRawAsyncStorage({ practiceLog: 'not-json' });
+    await expect(getTodayPractice('cajun')).rejects.toThrow();
   });
 });
 
