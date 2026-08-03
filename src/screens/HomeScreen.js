@@ -2,7 +2,7 @@ import { useFocusEffect, useIsFocused, useNavigation, useRoute } from '@react-na
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Image,
@@ -37,6 +37,105 @@ function getUnitNumber(unitCode) {
   if (!match) return 'Unit';
 
   return `Unit ${Number(match[1])}`;
+}
+
+function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
+  const activeIndex = plan.steps.findIndex((step) => !step.complete);
+  const activeActionLabel = plan.activeAction?.kind === 'lesson'
+    ? 'Continue to lesson'
+    : plan.activeAction?.label;
+
+  return (
+    <View
+      testID="home-plan"
+      style={[styles.planCard, { backgroundColor: theme.planBackground }]}
+    >
+      <View style={styles.planHeader}>
+        <Text testID="home-plan-title" style={styles.planTitle}>{"Today's plan"}</Text>
+        <Text testID="home-plan-status" style={[styles.planStatus, { color: theme.planSoft }]}>
+          {plan.completedCount} of 3 done
+        </Text>
+      </View>
+
+      <View style={styles.planStepper}>
+        {plan.steps.map((step, index) => {
+          const active = index === activeIndex;
+          const circleStyle = step.complete
+            ? [styles.planCircle, { backgroundColor: theme.planSoft }]
+            : active
+              ? [styles.planCircle, styles.planCircleActive]
+              : [styles.planCircle, styles.planCirclePending];
+          const labelStyle = step.complete || active
+            ? styles.planStepLabelActive
+            : styles.planStepLabelPending;
+
+          return (
+            <Fragment key={step.id}>
+              <View testID={`home-plan-step-${step.id}`} style={styles.planStep}>
+                <View
+                  testID={`home-plan-circle-${step.id}`}
+                  style={circleStyle}
+                >
+                  <Text style={step.complete || active
+                    ? [styles.planCircleTextActive, { color: theme.planBackground }]
+                    : styles.planCircleTextPending}
+                  >
+                    {step.complete ? '✓' : index + 1}
+                  </Text>
+                </View>
+                <Text style={labelStyle}>{step.label}</Text>
+              </View>
+              {index < plan.steps.length - 1 ? (
+                <View
+                  testID={`home-plan-connector-${index}`}
+                  style={[
+                    styles.planConnector,
+                    { backgroundColor: step.complete ? theme.planSoft : 'rgba(255,255,255,0.18)' }
+                  ]}
+                />
+              ) : null}
+            </Fragment>
+          );
+        })}
+      </View>
+
+      {plan.allDone ? (
+        <Pressable
+          testID="home-plan-completion"
+          accessibilityRole="button"
+          accessibilityLabel="All done with today's plan! Practice more in the Hub"
+          accessibilityState={{ disabled: true }}
+          disabled
+          style={[styles.planCta, styles.planCtaDisabled]}
+        >
+          <Text style={styles.planCtaText}>
+            All done with today&apos;s plan! Practice more in the Hub
+          </Text>
+        </Pressable>
+      ) : plan.activeAction ? (
+        <>
+          {plan.helperText ? (
+            <Text testID="home-plan-helper" style={styles.planHelper}>
+              {plan.helperText}
+            </Text>
+          ) : null}
+          <Pressable
+            testID="home-plan-cta"
+            accessibilityRole="button"
+            accessibilityLabel={activeActionLabel}
+            onPress={onAction}
+            style={({ pressed }) => [
+              styles.planCta,
+              { backgroundColor: theme.accent },
+              pressed && (reduceMotion ? styles.planCtaPressedReduced : styles.planCtaPressed)
+            ]}
+          >
+            <Text style={styles.planCtaText}>{activeActionLabel}</Text>
+          </Pressable>
+        </>
+      ) : null}
+    </View>
+  );
 }
 
 function DashboardControl({
@@ -182,7 +281,9 @@ export default function HomeScreen() {
           progressFill: '#7DD3FC',
           subtitle: '#DCEBFF',
           accent: '#2771CB',
-          badgeText: '#102A43'
+          badgeText: '#102A43',
+          planBackground: '#102A43',
+          planSoft: '#7DD3FC'
         }
       : {
           topBarGrad: ['#0AA35F', '#066B3F'],
@@ -192,12 +293,15 @@ export default function HomeScreen() {
           progressFill: '#6EE7B7',
           subtitle: '#E7F5EE',
           accent: '#08834C',
-          badgeText: '#064E32'
+          badgeText: '#064E32',
+          planBackground: '#064E32',
+          planSoft: '#6EE7B7'
         };
 
   const units = projection?.units || [];
   const reviewQueueCount = projection?.dashboard.reviewCount || 0;
   const pendingMistakesCount = projection?.dashboard.pendingMistakeCount || 0;
+  const plan = projection?.plan;
 
   return (
     <View style={styles.container}>
@@ -304,6 +408,17 @@ export default function HomeScreen() {
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {plan ? (
+          <TodaysPlan
+            plan={plan}
+            theme={theme}
+            reduceMotion={reduceMotion}
+            onAction={() => navigation.navigate(
+              plan.activeAction.destination,
+              plan.activeAction.params
+            )}
+          />
+        ) : null}
         {units.map((unitObj) => {
           return (
             <View key={unitObj.unitCode} style={styles.unitCard}>
@@ -441,7 +556,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF'
+    backgroundColor: '#F4F7FB'
   },
 
   topBar: {
@@ -564,8 +679,124 @@ const styles = StyleSheet.create({
   },
 
   scroll: {
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 14
+  },
+
+  planCard: {
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 12
+  },
+
+  planHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 16
+  },
+
+  planTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '900'
+  },
+
+  planStatus: {
+    fontSize: 12,
+    fontWeight: '700'
+  },
+
+  planStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
+  },
+
+  planStep: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6
+  },
+
+  planCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+
+  planCircleActive: {
+    backgroundColor: '#FFFFFF'
+  },
+
+  planCirclePending: {
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.35)'
+  },
+
+  planCircleTextActive: {
+    fontSize: 14,
+    fontWeight: '900'
+  },
+
+  planCircleTextPending: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    fontWeight: '900'
+  },
+
+  planStepLabelActive: {
+    color: '#FFFFFF',
+    fontSize: 11.5,
+    fontWeight: '800'
+  },
+
+  planStepLabelPending: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 11.5,
+    fontWeight: '700'
+  },
+
+  planConnector: {
+    flex: 1,
+    height: 3,
+    borderRadius: 2,
+    marginBottom: 20
+  },
+
+  planHelper: {
+    color: 'rgba(220,235,255,0.7)',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 12,
+    textAlign: 'center'
+  },
+
+  planCta: {
+    marginTop: 16,
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center'
+  },
+
+  planCtaText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800'
+  },
+
+  planCtaPressed: {
+    transform: [{ scale: 0.97 }]
+  },
+
+  planCtaPressedReduced: {
+    opacity: 0.7
+  },
+
+  planCtaDisabled: {
+    backgroundColor: '#64748B'
   },
 
   unitCard: {
