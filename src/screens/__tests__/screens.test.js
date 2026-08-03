@@ -283,7 +283,9 @@ describe('HomeScreen', () => {
     });
     expect(screen.getByText('Dictionary')).toBeOnTheScreen();
     expect(screen.getByText('Hub')).toBeOnTheScreen();
-    expect(screen.getByText('Greetings & Check-ins')).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+    ).toBeOnTheScreen();
     expect(screen.getByText('First greetings')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
@@ -308,6 +310,117 @@ describe('HomeScreen', () => {
       expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
       expect(screen.queryByText('Greetings & Check-ins')).toBeNull();
       expect(getProjection).toHaveBeenCalledWith('cajun');
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it('renders the projected current Unit and opens its first unfinished Lesson', async () => {
+    const user = setupUser();
+    await seedAsyncStorage({
+      lessonProgress: {
+        'cajun:fixture_cajun_u01_l01': completedLessons.cajunFirst
+      },
+      wordProgress: {
+        'cajun:fixture_cajun_w01': wordMastery.mastered
+      }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    const currentUnit = await screen.findByTestId('home-current-unit');
+    expect(screen.getByTestId('home-current-unit-arrow')).toBeOnTheScreen();
+    expect(screen.getByText('WHERE YOU LEFT OFF')).toHaveStyle({
+      color: '#64748B',
+      fontSize: 12,
+      fontWeight: '800',
+      letterSpacing: 0.48
+    });
+    expect(currentUnit).toHaveStyle({
+      backgroundColor: '#FFFFFF',
+      borderColor: '#E2E8F0',
+      borderRadius: 18,
+      borderWidth: 1,
+      overflow: 'hidden'
+    });
+    expect(within(currentUnit).getByText('Unit 1')).toBeOnTheScreen();
+    expect(within(currentUnit).getByText('Greetings & Check-ins')).toBeOnTheScreen();
+    expect(within(currentUnit).getByText('1 / 2 words · 1 / 2 lessons')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-current-unit-progress')).toHaveStyle({
+      width: '50%',
+      height: 10,
+      backgroundColor: '#7DD3FC'
+    });
+    expect(within(currentUnit).getByText('Greetings review')).toBeOnTheScreen();
+    expect(within(currentUnit).getByText('Next up · 1 words · Review')).toBeOnTheScreen();
+
+    await user.press(screen.getByTestId('home-current-unit-continue'));
+
+    expect(await screen.findByText('Match the words')).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['cajun', [0xff498bdc, 0xff2771cb], '#2771CB', '#7DD3FC'],
+    ['kreole', [0xff0aa35f, 0xff066b3f], '#08834C', '#6EE7B7']
+  ])('uses the approved %s current Unit colors without changing its structure', async (
+    language,
+    gradient,
+    accent,
+    progress
+  ) => {
+    renderApp({ initialRouteName: 'Home', initialParams: { language } });
+
+    const currentUnit = await screen.findByTestId('home-current-unit');
+    expect(screen.getByTestId('home-current-unit-header').props.colors).toEqual(gradient);
+    expect(screen.getByTestId('home-current-unit-continue')).toHaveStyle({
+      backgroundColor: accent,
+      borderRadius: 999
+    });
+    expect(screen.getByTestId('home-current-unit-progress')).toHaveStyle({
+      backgroundColor: progress,
+      height: 10
+    });
+    expect(within(currentUnit).getByText('Next up · 2 words · Core lesson')).toBeOnTheScreen();
+  });
+
+  it('renders coherent completed and zero-Lesson Catalog fallbacks', async () => {
+    const completed = {
+      ...projectionFixture(),
+      catalogComplete: true
+    };
+    const empty = {
+      ...projectionFixture({ title: 'Unused Unit' }),
+      catalogComplete: true,
+      units: []
+    };
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValueOnce(completed)
+      .mockResolvedValueOnce(empty);
+
+    try {
+      const completedRender = renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(within(await screen.findByTestId('home-catalog-complete')).getByText(
+        'You completed every Lesson in this Language.'
+      )).toBeOnTheScreen();
+      expect(screen.queryByTestId('home-current-unit')).toBeNull();
+      completedRender.unmount();
+
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(within(await screen.findByTestId('home-catalog-complete')).getByText(
+        'No Lessons are available for this Language yet.'
+      )).toBeOnTheScreen();
+      expect(screen.queryByTestId('home-current-unit')).toBeNull();
     } finally {
       getProjection.mockRestore();
     }
@@ -561,22 +674,24 @@ describe('HomeScreen', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Greetings & Check-ins')).toBeOnTheScreen();
-    expect(screen.queryByText('First greetings')).toBeNull();
+    expect(
+      within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+    ).toBeOnTheScreen();
+    expect(screen.getAllByText('First greetings')).toHaveLength(1);
     expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
       expanded: false
     });
 
     await user.press(screen.getByTestId('unit-toggle-u01'));
 
-    expect(screen.getByText('First greetings')).toBeOnTheScreen();
+    expect(screen.getAllByText('First greetings')).toHaveLength(2);
     expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
       expanded: true
     });
 
     await user.press(screen.getByTestId('unit-toggle-u02'));
 
-    expect(screen.queryByText('First greetings')).toBeNull();
+    expect(screen.getAllByText('First greetings')).toHaveLength(1);
     expect(screen.getByText('Everyday phrases')).toBeOnTheScreen();
     expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
       expanded: false
@@ -605,7 +720,9 @@ describe('HomeScreen', () => {
         initialParams: { language: 'cajun' }
       });
 
-      expect(await screen.findByText('Greetings & Check-ins')).toBeOnTheScreen();
+      expect(
+        within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+      ).toBeOnTheScreen();
       expect(configureNext).not.toHaveBeenCalled();
 
       await user.press(screen.getByTestId('unit-toggle-u01'));

@@ -138,6 +138,89 @@ function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
   );
 }
 
+function CurrentUnit({ currentUnit, catalogComplete, hasLessons, theme, onContinue }) {
+  if (!currentUnit) {
+    if (!catalogComplete) return null;
+
+    return (
+      <View testID="home-catalog-complete" style={[styles.unitCard, styles.catalogComplete]}>
+        <Text style={styles.catalogCompleteTitle}>Catalog complete</Text>
+        <Text style={styles.catalogCompleteText}>
+          {hasLessons
+            ? 'You completed every Lesson in this Language.'
+            : 'No Lessons are available for this Language yet.'}
+        </Text>
+      </View>
+    );
+  }
+
+  const { nextLesson } = currentUnit;
+
+  return (
+    <>
+      <View style={styles.currentUnitEyebrow}>
+        <Feather
+          testID="home-current-unit-arrow"
+          name="arrow-right"
+          size={14}
+          color="#64748B"
+        />
+        <Text style={styles.currentUnitEyebrowText}>WHERE YOU LEFT OFF</Text>
+      </View>
+      <View testID="home-current-unit" style={styles.unitCard}>
+        <LinearGradient
+          testID="home-current-unit-header"
+          colors={theme.headerGrad}
+          style={styles.unitHeader}
+        >
+          <View style={styles.unitNumberPill}>
+            <Text style={[styles.unitNumberText, { color: theme.accent }]}>
+              {currentUnit.unitLabel}
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.unitTitle, styles.currentUnitTitle]}>{currentUnit.title}</Text>
+            <Text style={[styles.unitMeta, styles.currentUnitMeta]}>
+              {currentUnit.masteredWords} / {currentUnit.totalWords} words ·{' '}
+              {currentUnit.completedLessons} / {currentUnit.totalLessons} lessons
+            </Text>
+          </View>
+        </LinearGradient>
+        <View style={styles.progressBarBg}>
+          <View
+            testID="home-current-unit-progress"
+            style={[
+              styles.progressBarFill,
+              {
+                width: `${currentUnit.masteryPercent}%`,
+                backgroundColor: theme.progressFill
+              }
+            ]}
+          />
+        </View>
+        <View style={styles.lessonRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.lessonTitle, styles.currentLessonTitle]}>{nextLesson.title}</Text>
+            <Text style={styles.lessonDesc}>
+              Next up · {nextLesson.wordCount} words · {nextLesson.typeLabel}
+            </Text>
+          </View>
+          <Pressable
+            testID="home-current-unit-continue"
+            accessibilityRole="button"
+            accessibilityLabel={`Continue ${nextLesson.title}`}
+            hitSlop={6}
+            onPress={onContinue}
+            style={[styles.badge, styles.currentUnitContinue, { backgroundColor: theme.accent }]}
+          >
+            <Text style={[styles.badgeText, styles.currentUnitContinueText]}>Continue</Text>
+          </Pressable>
+        </View>
+      </View>
+    </>
+  );
+}
+
 function DashboardControl({
   controlId,
   iconId,
@@ -417,6 +500,18 @@ export default function HomeScreen() {
               plan.activeAction.destination,
               plan.activeAction.params
             )}
+          />
+        ) : null}
+        {projection ? (
+          <CurrentUnit
+            currentUnit={projection.currentUnit}
+            catalogComplete={projection.catalogComplete}
+            hasLessons={units.some((unit) => unit.totalLessons > 0)}
+            theme={theme}
+            onContinue={() => navigation.navigate('Lesson', {
+              language,
+              lessonId: projection.currentUnit.nextLesson.id
+            })}
           />
         ) : null}
         {units.map((unitObj) => {
@@ -797,6 +892,58 @@ const styles = StyleSheet.create({
 
   planCtaDisabled: {
     backgroundColor: '#64748B'
+  },
+
+  currentUnitEyebrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 2,
+    marginTop: 2,
+    marginBottom: 8
+  },
+
+  currentUnitEyebrowText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.48,
+    marginLeft: 6
+  },
+
+  currentUnitTitle: {
+    fontSize: 17
+  },
+
+  currentUnitMeta: {
+    fontSize: 12.5
+  },
+
+  currentLessonTitle: {
+    fontSize: 15
+  },
+
+  currentUnitContinue: {
+    paddingHorizontal: 14
+  },
+
+  currentUnitContinueText: {
+    fontSize: 13
+  },
+
+  catalogComplete: {
+    padding: 18
+  },
+
+  catalogCompleteTitle: {
+    color: '#102A43',
+    fontSize: 17,
+    fontWeight: '800'
+  },
+
+  catalogCompleteText: {
+    color: '#64748B',
+    fontSize: 13,
+    marginTop: 4
   },
 
   unitCard: {
