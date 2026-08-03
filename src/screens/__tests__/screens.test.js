@@ -1,4 +1,5 @@
-import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
 
 import {
@@ -9,6 +10,8 @@ import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBu
 import { clock } from '../../test/fixtures/clock';
 import {
   completedLessons,
+  dailyReviewLogs,
+  homeProjectionProgress,
   lastWorkedUnits,
   pendingMistakes,
   profiles,
@@ -1119,6 +1122,78 @@ describe('HomeScreen', () => {
       expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
     } finally {
       getProjection.mockRestore();
+    }
+  });
+
+  it('refreshes the same Home after accepted reviewed Speech practice', async () => {
+    const user = setupUser();
+    const backHandler = jest.spyOn(BackHandler, 'addEventListener');
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection');
+    const defaultRecorder = useAudioRecorder.getMockImplementation();
+    const defaultRecorderState = useAudioRecorderState.getMockImplementation();
+    let isRecording = false;
+    const recorder = {
+      uri: 'file:///accepted-attempt.m4a',
+      prepareToRecordAsync: jest.fn(async () => {}),
+      record: jest.fn(() => { isRecording = true; }),
+      stop: jest.fn(async () => { isRecording = false; })
+    };
+    useAudioRecorder.mockReturnValue(recorder);
+    useAudioRecorderState.mockImplementation(() => ({
+      isRecording,
+      durationMillis: 1200
+    }));
+
+    try {
+      jest.setSystemTime(clock.localCalendarLateEvening());
+      await seedAsyncStorage({
+        dailyReviewLogV2Cajun: dailyReviewLogs.today,
+        dailyReviewMigrated: true,
+        lessonProgress: homeProjectionProgress.lessonToday
+      });
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+      expect(await screen.findByTestId('home-plan-cta')).toHaveTextContent('Practice Speech');
+      expect(await getTodayPractice('cajun')).toBeNull();
+      await user.press(screen.getByTestId('home-plan-cta'));
+
+      expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
+      expect(await getTodayPractice('cajun')).toBeNull();
+      await user.press(screen.getByText('Record'));
+      expect(await screen.findByText('Stop recording (1.2s)')).toBeOnTheScreen();
+      expect(await getTodayPractice('cajun')).toBeNull();
+
+      await user.press(screen.getByText('Stop recording (1.2s)'));
+      expect(await screen.findByText('Play my recording')).toBeOnTheScreen();
+      expect(screen.getByText('Sounds good, next phrase')).toBeDisabled();
+      expect(await getTodayPractice('cajun')).toBeNull();
+
+      await user.press(screen.getByText('Play my recording'));
+      expect(await screen.findByText('Sounds good, next phrase')).toBeEnabled();
+      expect(await getTodayPractice('cajun')).toBeNull();
+
+      await user.press(screen.getByText('Sounds good, next phrase'));
+      await waitFor(async () => {
+        expect(await getTodayPractice('cajun')).toEqual(expect.objectContaining({ type: 'speech' }));
+      });
+      expect(await getTodayPractice('kreole')).toBeNull();
+
+      const backListener = backHandler.mock.calls.find(
+        ([eventName]) => eventName === 'hardwareBackPress'
+      )[1];
+      await act(async () => { backListener(); });
+
+      expect(await screen.findByTestId('home-plan-completion')).toBeDisabled();
+      expect(screen.getByTestId('home-plan-circle-practice')).toHaveStyle({
+        backgroundColor: '#7DD3FC'
+      });
+      expect(getProjection.mock.calls.filter(([language]) => language === 'cajun').length)
+        .toBeGreaterThanOrEqual(2);
+    } finally {
+      backHandler.mockRestore();
+      getProjection.mockRestore();
+      useAudioRecorder.mockImplementation(defaultRecorder);
+      useAudioRecorderState.mockImplementation(defaultRecorderState);
     }
   });
 
