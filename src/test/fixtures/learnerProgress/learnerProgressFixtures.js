@@ -57,6 +57,7 @@ export const dailyReviewLogs = frozen({
   fresh: frozen({}),
   completed: frozen({ '2026-01-15': true }),
   legacy: frozen({ '2026-03-05': true, '2026-03-06': true }),
+  today: frozen({ '2026-03-05': true }),
   cajun: frozen({ '2026-03-05': true }),
   kreole: frozen({ '2026-03-04': true })
 });
@@ -137,7 +138,35 @@ export const practiceLogs = frozen({
       type: 'mistakeReview',
       completedAt: clock.localCalendarLateEvening().toISOString()
     })
+  }),
+  todaySpeech: frozen({
+    '2026-03-05': frozen({
+      type: 'speech',
+      completedAt: clock.localCalendarLateEvening().toISOString()
+    })
   })
+});
+
+export const homeProjectionProgress = frozen({
+  lessonToday: frozen({
+    'cajun:fixture_cajun_u01_l01': frozen({
+      completed: true,
+      completedAt: clock.localCalendarLateEvening().toISOString()
+    })
+  }),
+  lessonYesterday: frozen({
+    'cajun:fixture_cajun_u01_l01': frozen({
+      completed: true,
+      completedAt: new Date(2026, 2, 4, 23, 30, 0).toISOString()
+    })
+  }),
+  allLessonsComplete: frozen({
+    'cajun:fixture_cajun_u01_l01': frozen({ completed: true }),
+    'cajun:fixture_cajun_u01_review': frozen({ completed: true }),
+    'cajun:fixture_cajun_u02_l01': frozen({ completed: true }),
+    'cajun:fixture_cajun_u03_l01': frozen({ completed: true })
+  }),
+  empty: frozen({})
 });
 
 export const leaderboardEntries = frozen({
