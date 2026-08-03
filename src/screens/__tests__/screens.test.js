@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
 
 import {
@@ -96,6 +96,39 @@ function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 
       }]
     }],
     initialExpandedUnit: 'u99'
+  };
+}
+
+function planProjectionFixture({
+  language = 'cajun',
+  steps = [
+    { id: 'review', label: 'Review', complete: false },
+    { id: 'lesson', label: 'Lesson', complete: false },
+    { id: 'practice', label: 'Mistakes', complete: false }
+  ],
+  activeAction,
+  helperText = null,
+  allDone = false
+} = {}) {
+  const action = activeAction === undefined
+    ? {
+        kind: 'review',
+        label: 'Start Daily Review · ~2 min',
+        destination: 'DailyReview',
+        params: { language }
+      }
+    : activeAction;
+
+  return {
+    ...projectionFixture({ language }),
+    language,
+    plan: {
+      steps,
+      completedCount: steps.filter((step) => step.complete).length,
+      activeAction: action,
+      helperText,
+      allDone
+    }
   };
 }
 
@@ -809,6 +842,342 @@ describe('HomeScreen', () => {
       });
     } finally {
       reduceMotion.mockRestore();
+    }
+  });
+
+  it('renders the active Review and Lesson actions from the projection', async () => {
+    const user = setupUser();
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValueOnce(planProjectionFixture())
+      .mockResolvedValueOnce(planProjectionFixture({
+        steps: [
+          { id: 'review', label: 'Review', complete: true },
+          { id: 'lesson', label: 'Lesson', complete: false },
+          { id: 'practice', label: 'Mistakes', complete: false }
+        ],
+        activeAction: {
+          kind: 'lesson',
+          label: 'Continue lesson · First greetings',
+          destination: 'Lesson',
+          params: { language: 'cajun', lessonId: 'fixture_cajun_u01_l01' }
+        }
+      }));
+
+    try {
+      const firstRender = renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByTestId('home-plan-cta')).toHaveTextContent(
+        'Start Daily Review · ~2 min'
+      );
+      await user.press(screen.getByTestId('home-plan-cta'));
+      expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
+
+      firstRender.unmount();
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByTestId('home-plan-cta')).toHaveTextContent(
+        'Continue lesson · First greetings'
+      );
+      await user.press(screen.getByTestId('home-plan-cta'));
+      expect(await screen.findByText('New word')).toBeOnTheScreen();
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it.each([
+    [1, 'Fix 1 mistake'],
+    [2, 'Fix 2 mistakes']
+  ])('uses singular/plural Mistake Review CTA copy for %i pending Cards', async (count, label) => {
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValue(planProjectionFixture({
+        steps: [
+          { id: 'review', label: 'Review', complete: true },
+          { id: 'lesson', label: 'Lesson', complete: true },
+          { id: 'practice', label: 'Mistakes', complete: false }
+        ],
+        activeAction: {
+          kind: 'mistakes',
+          label,
+          destination: 'MistakeReview',
+          params: { language: 'cajun', source: 'home' }
+        }
+      }));
+
+    try {
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByTestId('home-plan-cta')).toHaveTextContent(label);
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it('keeps a later completed step done while the earlier Review step is active', async () => {
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValue(planProjectionFixture({
+        steps: [
+          { id: 'review', label: 'Review', complete: false },
+          { id: 'lesson', label: 'Lesson', complete: true },
+          { id: 'practice', label: 'Mistakes', complete: false }
+        ]
+      }));
+
+    try {
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      await screen.findByTestId('home-plan');
+      expect(screen.getByTestId('home-plan-circle-review')).toHaveStyle({
+        backgroundColor: '#FFFFFF'
+      });
+      expect(screen.getByTestId('home-plan-circle-lesson')).toHaveStyle({
+        backgroundColor: '#7DD3FC'
+      });
+      expect(screen.getByTestId('home-plan-circle-practice')).toHaveStyle({
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.35)'
+      });
+      expect(screen.getByTestId('home-plan-status')).toHaveTextContent('1 of 3 done');
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it('substitutes Speech with the exact helper and Advanced destination', async () => {
+    const user = setupUser();
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValue(planProjectionFixture({
+        steps: [
+          { id: 'review', label: 'Review', complete: true },
+          { id: 'lesson', label: 'Lesson', complete: true },
+          { id: 'practice', label: 'Speech', complete: false }
+        ],
+        activeAction: {
+          kind: 'speech',
+          label: 'Practice Speech',
+          destination: 'Advanced',
+          params: { language: 'cajun' }
+        },
+        helperText: 'No mistakes to fix — speech practice instead.'
+      }));
+
+    try {
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByTestId('home-plan-helper')).toHaveTextContent(
+        'No mistakes to fix — speech practice instead.'
+      );
+      expect(screen.getByText('Speech')).toBeOnTheScreen();
+      await user.press(screen.getByTestId('home-plan-cta'));
+      expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it.each([
+    ['cajun', '#102A43', '#2771CB', '#7DD3FC', '#DBEAFE'],
+    ['kreole', '#064E32', '#08834C', '#6EE7B7', '#D1FAE5']
+  ])('uses the approved %s plan tokens', async (
+    language,
+    planBackground,
+    accent,
+    softAccent,
+    timerColor
+  ) => {
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValueOnce(planProjectionFixture({
+        language,
+        activeAction: {
+          kind: 'review',
+          label: 'Start Daily Review · ~2 min',
+          destination: 'DailyReview',
+          params: { language }
+        }
+      }))
+      .mockResolvedValueOnce(planProjectionFixture({
+        language,
+        steps: [
+          { id: 'review', label: 'Review', complete: true },
+          { id: 'lesson', label: 'Lesson', complete: true },
+          { id: 'practice', label: 'Speech', complete: true }
+        ],
+        activeAction: null,
+        allDone: true
+    }));
+
+    try {
+      const activeRender = renderApp({ initialRouteName: 'Home', initialParams: { language } });
+
+      expect(await screen.findByTestId('home-plan-cta')).toHaveStyle({
+        backgroundColor: accent,
+        borderRadius: 12,
+        paddingVertical: 13
+      });
+      activeRender.unmount();
+      renderApp({ initialRouteName: 'Home', initialParams: { language } });
+
+      expect(await screen.findByTestId('home-plan')).toHaveStyle({
+        backgroundColor: planBackground,
+        borderRadius: 18,
+        padding: 18,
+        marginBottom: 12
+      });
+      expect(screen.getByTestId('home-plan-circle-lesson')).toHaveStyle({
+        backgroundColor: softAccent
+      });
+      expect(
+        within(screen.getByTestId('home-plan-circle-lesson')).getByText('✓')
+      ).toHaveStyle({ color: planBackground });
+      expect(screen.getByTestId('home-plan-completion')).toHaveStyle({
+        borderRadius: 12,
+        padding: 13
+      });
+      expect(screen.getByTestId('home-plan-timer')).toHaveStyle({ color: timerColor });
+      expect(screen.getByText('All done for today')).toHaveStyle({
+        color: '#FFFFFF',
+        fontSize: 15,
+        fontWeight: '800'
+      });
+      expect(screen.getByTestId('home-plan-title')).toHaveStyle({
+        fontSize: 18,
+        fontWeight: '900'
+      });
+      expect(screen.queryByTestId('home-plan-cta')).toBeNull();
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it('formats the all-done timer immediately and on its one-second local-midnight tick', async () => {
+    jest.setSystemTime(new Date(2026, 0, 12, 23, 59, 58));
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValue(planProjectionFixture({
+        steps: [
+          { id: 'review', label: 'Review', complete: true },
+          { id: 'lesson', label: 'Lesson', complete: true },
+          { id: 'practice', label: 'Speech', complete: true }
+        ],
+        activeAction: null,
+        allDone: true
+    }));
+
+    try {
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(screen.getByTestId('home-plan-timer')).toHaveTextContent(
+        'Renews in 00:00:02 · Keep going for extra XP'
+      );
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(screen.getByTestId('home-plan-timer')).toHaveTextContent(
+        'Renews in 00:00:01 · Keep going for extra XP'
+      );
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it('cleans the countdown on focus loss, plan state change, Language change, and unmount', async () => {
+    const user = setupUser();
+    const backHandler = jest.spyOn(BackHandler, 'addEventListener');
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    let cajunCalls = 0;
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockImplementation((language) => {
+        if (language === 'kreole') {
+          return Promise.resolve(planProjectionFixture({
+            language,
+            steps: [
+              { id: 'review', label: 'Review', complete: true },
+              { id: 'lesson', label: 'Lesson', complete: true },
+              { id: 'practice', label: 'Speech', complete: true }
+            ],
+            activeAction: null,
+            allDone: true
+          }));
+        }
+
+        cajunCalls += 1;
+        return Promise.resolve(planProjectionFixture({
+          allDone: cajunCalls === 1,
+          activeAction: cajunCalls === 1 ? null : undefined
+        }));
+      });
+
+    try {
+      const rendered = renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+      await screen.findByTestId('home-plan-timer');
+
+      await user.press(screen.getByTestId('home-review-control'));
+      expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
+      expect(clearIntervalSpy).toHaveBeenCalled();
+
+      const backListener = backHandler.mock.calls.find(
+        ([eventName]) => eventName === 'hardwareBackPress'
+      )[1];
+      await act(async () => {
+        backListener();
+      });
+      expect(await screen.findByTestId('home-plan-cta')).toBeOnTheScreen();
+      expect(clearIntervalSpy).toHaveBeenCalledTimes(2);
+
+      await user.press(screen.getByLabelText('Louisiana French flag'));
+      await screen.findByText('Kouri-Vini');
+      await screen.findByTestId('home-plan-timer');
+      rendered.unmount();
+      expect(clearIntervalSpy).toHaveBeenCalledTimes(3);
+    } finally {
+      backHandler.mockRestore();
+      clearIntervalSpy.mockRestore();
+      getProjection.mockRestore();
+    }
+  });
+
+  it('uses reduced-motion opacity instead of CTA scale feedback', async () => {
+    const reduceMotion = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValue(planProjectionFixture());
+
+    try {
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+      const cta = await screen.findByTestId('home-plan-cta');
+      fireEvent(cta, 'responderGrant', {
+        persist: () => {},
+        nativeEvent: { timestamp: Date.now() }
+      });
+      expect(screen.getByTestId('home-plan-cta')).toHaveStyle({ opacity: 0.7 });
+      expect(screen.getByTestId('home-plan-cta')).not.toHaveStyle({
+        transform: [{ scale: 0.97 }]
+      });
+    } finally {
+      reduceMotion.mockRestore();
+      getProjection.mockRestore();
     }
   });
 
