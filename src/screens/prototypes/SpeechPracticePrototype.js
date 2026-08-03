@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getAudioSource } from '../../data/audioManifest';
 import { getAllWords } from '../../data/lessonLoader';
+import { recordPracticeCompletion } from '../../utils/storage';
 
 const MIN_ATTEMPT_MS = 600;
 const INITIAL_STATUS = 'Play the speaker, then record yourself saying the same phrase.';
@@ -127,12 +128,15 @@ export default function SpeechPracticePrototype({ language }) {
     }
   }
 
-  function acceptAttempt() {
+  async function acceptAttempt() {
+    setBusy(true);
+    await recordPracticeCompletion(language, 'speech');
     setLearnerUri(null);
     setAttemptDurationMs(null);
     setHasReviewedAttempt(false);
     setStatus(INITIAL_STATUS);
     setWordIndex((index) => (index + 1) % prototypeWords.length);
+    setBusy(false);
   }
 
   const accent = language === 'kreole' ? '#08834c' : '#2771CB';
