@@ -56,10 +56,10 @@ describe('navigation graph', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Greetings & Check-ins')).toBeOnTheScreen();
+    expect(await screen.findByTestId('unit-toggle-u01')).toBeOnTheScreen();
 
     await user.press(screen.getByTestId('unit-toggle-u01'));
-    await user.press(screen.getByText(lesson.lessonTitle));
+    await user.press(screen.getByLabelText(lesson.lessonTitle));
 
     expect(await screen.findByText('New word')).toBeOnTheScreen();
   });
