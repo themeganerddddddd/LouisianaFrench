@@ -39,24 +39,7 @@ function getUnitNumber(unitCode) {
   return `Unit ${Number(match[1])}`;
 }
 
-function getTimeUntilMidnight() {
-  const midnight = new Date();
-  midnight.setHours(24, 0, 0, 0);
-  return Math.max(0, midnight.getTime() - Date.now());
-}
-
-function formatCountdown(milliseconds) {
-  const seconds = Math.floor(milliseconds / 1000);
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainder = seconds % 60;
-
-  return [hours, minutes, remainder]
-    .map((value) => String(value).padStart(2, '0'))
-    .join(':');
-}
-
-function TodaysPlan({ plan, theme, reduceMotion, renewalTime, onAction }) {
+function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
   const activeIndex = plan.steps.findIndex((step) => !step.complete);
 
   return (
@@ -114,15 +97,18 @@ function TodaysPlan({ plan, theme, reduceMotion, renewalTime, onAction }) {
       </View>
 
       {plan.allDone ? (
-        <View testID="home-plan-completion" style={styles.planCompletion}>
-          <Text style={styles.planCompletionTitle}>All done for today</Text>
-          <Text
-            testID="home-plan-timer"
-            style={[styles.planCompletionTimer, { color: theme.timerColor }]}
-          >
-            Renews in {renewalTime || '00:00:00'} · Keep going for extra XP
+        <Pressable
+          testID="home-plan-completion"
+          accessibilityRole="button"
+          accessibilityLabel="All done with today's plan! Practice more in the Hub"
+          accessibilityState={{ disabled: true }}
+          disabled
+          style={[styles.planCta, styles.planCtaDisabled]}
+        >
+          <Text style={styles.planCtaText}>
+            All done with today&apos;s plan! Practice more in the Hub
           </Text>
-        </View>
+        </Pressable>
       ) : plan.activeAction ? (
         <>
           {plan.helperText ? (
@@ -202,7 +188,6 @@ export default function HomeScreen() {
   const [language, setLanguage] = useState(route.params?.language || 'cajun');
   const [projection, setProjection] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [renewalTime, setRenewalTime] = useState(null);
   const [expandedUnit, setExpandedUnit] = useState(null);
   const initialExpansionLanguage = useRef(null);
 
@@ -259,18 +244,6 @@ export default function HomeScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!isFocused || !projection?.plan?.allDone) {
-      return undefined;
-    }
-
-    const updateRenewalTime = () => setRenewalTime(formatCountdown(getTimeUntilMidnight()));
-    updateRenewalTime();
-    const interval = setInterval(updateRenewalTime, 1000);
-
-    return () => clearInterval(interval);
-  }, [isFocused, language, projection?.plan?.allDone]);
-
   async function switchLanguage(nextLanguage) {
     setLanguage(nextLanguage);
     await setDefaultLanguage(nextLanguage);
@@ -303,26 +276,24 @@ export default function HomeScreen() {
           start: '#2771CB',
           doneSoft: '#3B82F6',
           progressFill: '#7DD3FC',
-           subtitle: '#DCEBFF',
-           accent: '#2771CB',
-           badgeText: '#102A43',
-           planBackground: '#102A43',
-           planSoft: '#7DD3FC',
-           timerColor: '#DBEAFE'
-         }
+          subtitle: '#DCEBFF',
+          accent: '#2771CB',
+          badgeText: '#102A43',
+          planBackground: '#102A43',
+          planSoft: '#7DD3FC'
+        }
       : {
           topBarGrad: ['#0AA35F', '#066B3F'],
           headerGrad: ['#0AA35F', '#066B3F'],
           start: '#08834C',
           doneSoft: '#34D399',
           progressFill: '#6EE7B7',
-           subtitle: '#E7F5EE',
-           accent: '#08834C',
-           badgeText: '#064E32',
-           planBackground: '#064E32',
-           planSoft: '#6EE7B7',
-           timerColor: '#D1FAE5'
-         };
+          subtitle: '#E7F5EE',
+          accent: '#08834C',
+          badgeText: '#064E32',
+          planBackground: '#064E32',
+          planSoft: '#6EE7B7'
+        };
 
   const units = projection?.units || [];
   const reviewQueueCount = projection?.dashboard.reviewCount || 0;
@@ -439,7 +410,6 @@ export default function HomeScreen() {
             plan={plan}
             theme={theme}
             reduceMotion={reduceMotion}
-            renewalTime={renewalTime}
             onAction={() => navigation.navigate(
               plan.activeAction.destination,
               plan.activeAction.params
@@ -822,25 +792,8 @@ const styles = StyleSheet.create({
     opacity: 0.7
   },
 
-  planCompletion: {
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
-    padding: 13,
-    alignItems: 'center'
-  },
-
-  planCompletionTitle: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800'
-  },
-
-  planCompletionTimer: {
-    fontSize: 12.5,
-    fontWeight: '800',
-    marginTop: 5
+  planCtaDisabled: {
+    backgroundColor: '#64748B'
   },
 
   unitCard: {

@@ -991,14 +991,13 @@ describe('HomeScreen', () => {
   });
 
   it.each([
-    ['cajun', '#102A43', '#2771CB', '#7DD3FC', '#DBEAFE'],
-    ['kreole', '#064E32', '#08834C', '#6EE7B7', '#D1FAE5']
+    ['cajun', '#102A43', '#2771CB', '#7DD3FC'],
+    ['kreole', '#064E32', '#08834C', '#6EE7B7']
   ])('uses the approved %s plan tokens', async (
     language,
     planBackground,
     accent,
-    softAccent,
-    timerColor
+    softAccent
   ) => {
     const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
       .mockResolvedValueOnce(planProjectionFixture({
@@ -1044,12 +1043,14 @@ describe('HomeScreen', () => {
       expect(
         within(screen.getByTestId('home-plan-circle-lesson')).getByText('✓')
       ).toHaveStyle({ color: planBackground });
-      expect(screen.getByTestId('home-plan-completion')).toHaveStyle({
+      const completion = screen.getByTestId('home-plan-completion');
+      expect(completion).toBeDisabled();
+      expect(completion).toHaveStyle({
+        backgroundColor: '#64748B',
         borderRadius: 12,
-        padding: 13
+        paddingVertical: 13
       });
-      expect(screen.getByTestId('home-plan-timer')).toHaveStyle({ color: timerColor });
-      expect(screen.getByText('All done for today')).toHaveStyle({
+      expect(screen.getByText("All done with today's plan! Practice more in the Hub")).toHaveStyle({
         color: '#FFFFFF',
         fontSize: 15,
         fontWeight: '800'
@@ -1060,99 +1061,6 @@ describe('HomeScreen', () => {
       });
       expect(screen.queryByTestId('home-plan-cta')).toBeNull();
     } finally {
-      getProjection.mockRestore();
-    }
-  });
-
-  it('formats the all-done timer immediately and on its one-second local-midnight tick', async () => {
-    jest.setSystemTime(new Date(2026, 0, 12, 23, 59, 58));
-    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
-      .mockResolvedValue(planProjectionFixture({
-        steps: [
-          { id: 'review', label: 'Review', complete: true },
-          { id: 'lesson', label: 'Lesson', complete: true },
-          { id: 'practice', label: 'Speech', complete: true }
-        ],
-        activeAction: null,
-        allDone: true
-    }));
-
-    try {
-      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
-      await act(async () => {
-        await Promise.resolve();
-        await Promise.resolve();
-      });
-
-      expect(screen.getByTestId('home-plan-timer')).toHaveTextContent(
-        'Renews in 00:00:02 · Keep going for extra XP'
-      );
-      await act(async () => {
-        jest.advanceTimersByTime(1000);
-      });
-      expect(screen.getByTestId('home-plan-timer')).toHaveTextContent(
-        'Renews in 00:00:01 · Keep going for extra XP'
-      );
-    } finally {
-      getProjection.mockRestore();
-    }
-  });
-
-  it('cleans the countdown on focus loss, plan state change, Language change, and unmount', async () => {
-    const user = setupUser();
-    const backHandler = jest.spyOn(BackHandler, 'addEventListener');
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    let cajunCalls = 0;
-    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
-      .mockImplementation((language) => {
-        if (language === 'kreole') {
-          return Promise.resolve(planProjectionFixture({
-            language,
-            steps: [
-              { id: 'review', label: 'Review', complete: true },
-              { id: 'lesson', label: 'Lesson', complete: true },
-              { id: 'practice', label: 'Speech', complete: true }
-            ],
-            activeAction: null,
-            allDone: true
-          }));
-        }
-
-        cajunCalls += 1;
-        return Promise.resolve(planProjectionFixture({
-          allDone: cajunCalls === 1,
-          activeAction: cajunCalls === 1 ? null : undefined
-        }));
-      });
-
-    try {
-      const rendered = renderApp({
-        initialRouteName: 'Home',
-        initialParams: { language: 'cajun' }
-      });
-      await screen.findByTestId('home-plan-timer');
-
-      await user.press(screen.getByTestId('home-review-control'));
-      expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
-      expect(clearIntervalSpy).toHaveBeenCalled();
-
-      const backListener = backHandler.mock.calls.find(
-        ([eventName]) => eventName === 'hardwareBackPress'
-      )[1];
-      await act(async () => {
-        backListener();
-      });
-      expect(await screen.findByTestId('home-plan-cta')).toBeOnTheScreen();
-      expect(clearIntervalSpy).toHaveBeenCalledTimes(2);
-
-      await user.press(screen.getByLabelText('Louisiana French flag'));
-      await screen.findByText('Kouri-Vini');
-      await screen.findByTestId('home-plan-timer');
-      rendered.unmount();
-      expect(clearIntervalSpy).toHaveBeenCalledTimes(3);
-    } finally {
-      backHandler.mockRestore();
-      clearIntervalSpy.mockRestore();
       getProjection.mockRestore();
     }
   });
