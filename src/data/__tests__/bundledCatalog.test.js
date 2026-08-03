@@ -18,7 +18,11 @@ const supportedActivityTypes = [
 const languages = [
   {
     language: 'cajun',
-    anchorLesson: { id: 'cajun_u01_l01', unit: 'u01' },
+    anchorLesson: {
+      id: 'cajun_u01_l01',
+      unit: 'u01',
+      lessonTitle: 'Part 1 — Hello! Hi!, How’s it going?, Are things OK? Are you OK?'
+    },
     audioWord: {
       rowId: 'u01_w0002',
       target: 'Comment ça va?',
@@ -27,7 +31,11 @@ const languages = [
   },
   {
     language: 'kreole',
-    anchorLesson: { id: 'kreole_u01_l01', unit: 'u01' },
+    anchorLesson: {
+      id: 'kreole_u01_l01',
+      unit: 'u01',
+      lessonTitle: 'Part 1 — Hello, Good day, How is it going?, How goes it?'
+    },
     audioWord: {
       rowId: 'u01_w0004',
       target: "Ç'ap kouri",
@@ -45,6 +53,10 @@ describe('bundled Catalog', () => {
     expect(getLessonById(language, anchorLesson.id)).toEqual(
       expect.objectContaining(anchorLesson)
     );
+    expect(getUnits(language)[0].lessons[0]).toEqual(expect.objectContaining({
+      ...anchorLesson,
+      wordCount: 5
+    }));
     expect(getLessonById(language, 'does-not-exist')).toBeUndefined();
   });
 

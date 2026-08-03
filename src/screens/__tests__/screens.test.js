@@ -70,7 +70,8 @@ function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 
       totalWords: 2,
       masteryPercent: 50,
       reviewCount: 4,
-      pendingMistakeCount: 2
+      pendingMistakeCount: 2,
+      reviewEnabled: true
     },
     plan: {
       steps: [],
@@ -81,6 +82,7 @@ function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 
     },
     currentUnit: null,
     catalogComplete: false,
+    firstDay: false,
     units: [{
       unitCode: 'u99',
       unitLabel: 'Unit 99',
@@ -183,6 +185,86 @@ describe('LanguageSelectScreen', () => {
 });
 
 describe('HomeScreen', () => {
+  it.each([
+    ['cajun', 'Louisiana French', 'First greetings'],
+    ['kreole', 'Kouri-Vini', 'First pronouns']
+  ])('renders the zero-progress first-day Home for %s', async (language, languageName, lessonTitle) => {
+    renderApp({ initialRouteName: 'Home', initialParams: { language } });
+
+    expect(await screen.findByText(languageName)).toBeOnTheScreen();
+    expect(screen.getByTestId('home-stats')).toHaveTextContent(
+      "Welcome! Let's learn your first words."
+    );
+    expect(screen.getByTestId('home-plan-status')).toHaveTextContent('Day 1');
+    expect(screen.getAllByText('Lesson')).toHaveLength(2);
+    expect(screen.getByTestId('home-plan-helper')).toHaveTextContent(
+      "Reviews unlock once you've learned your first words."
+    );
+    expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Start your first lesson');
+    expect(screen.getByTestId('home-plan-cta')).toHaveStyle({ marginTop: 12 });
+    expect(screen.getByTestId('home-review-control')).toBeDisabled();
+    expect(screen.getByTestId('home-review-control').props.accessibilityState).toEqual({
+      disabled: true
+    });
+    expect(screen.getByTestId('home-mistakes-control')).toBeDisabled();
+    expect(screen.queryByTestId('review-count')).toBeNull();
+    expect(screen.queryByTestId('mistakes-count')).toBeNull();
+    expect(screen.getByText('START HERE')).toBeOnTheScreen();
+
+    const currentUnit = screen.getByTestId('home-current-unit');
+    expect(within(currentUnit).getByText(lessonTitle)).toBeOnTheScreen();
+    expect(within(currentUnit).getByText('First lesson · 2 words')).toBeOnTheScreen();
+    expect(within(currentUnit).getByText('Start')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-current-unit-progress')).toHaveStyle({ width: '0%' });
+  });
+
+  it('keeps first-day controls truthful through Lesson and Review progress', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    const firstRender = renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    await screen.findByText('START HERE');
+    fireEvent.press(screen.getByTestId('home-review-control'));
+    expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
+    firstRender.unmount();
+
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.lessonToday,
+      wordProgress: { 'cajun:fixture_cajun_w01': wordMastery.learningAfterWrong }
+    });
+    const oneLessonRender = renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('Day 1');
+    expect(screen.getByTestId('home-plan-circle-lesson-1')).toHaveTextContent('✓');
+    expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Continue to lesson');
+    expect(screen.getByTestId('home-review-control')).toBeEnabled();
+    expect(screen.getByText('START HERE')).toBeOnTheScreen();
+    oneLessonRender.unmount();
+
+    await seedAsyncStorage({ lessonProgress: homeProjectionProgress.twoLessonsToday });
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByTestId('home-plan-circle-lesson-2')).toHaveTextContent('✓');
+    expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Start Daily Review · ~1 min');
+  });
+
+  it('enables first-day Mistakes only for an active-Language pending Card', async () => {
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        }
+      }
+    });
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    const mistakes = await screen.findByTestId('home-mistakes-control');
+    expect(mistakes).toBeEnabled();
+    expect(mistakes.props.accessibilityState).toEqual({ disabled: false });
+    expect(screen.getByTestId('mistakes-count')).toHaveTextContent('1');
+  });
   it('positions the top bar below the device safe area', async () => {
     renderApp({
       initialRouteName: 'Home',
@@ -374,6 +456,7 @@ describe('HomeScreen', () => {
     accent,
     progress
   ) => {
+    await seedAsyncStorage({ lessonProgress: homeProjectionProgress.priorLessonsByLanguage });
     renderApp({ initialRouteName: 'Home', initialParams: { language } });
 
     const currentUnit = await screen.findByTestId('home-current-unit');
@@ -517,6 +600,7 @@ describe('HomeScreen', () => {
   it('shows global XP and streak with active-Language mastery, including zero mastery', async () => {
     await seedAsyncStorage({
       profile: profiles.established,
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       wordProgress: {}
     });
 
@@ -535,7 +619,10 @@ describe('HomeScreen', () => {
     const getAllWords = jest.spyOn(catalog, 'getAllWords').mockReturnValue([]);
 
     try {
-      await seedAsyncStorage({ profile: profiles.established });
+      await seedAsyncStorage({
+        profile: profiles.established,
+        lessonProgress: homeProjectionProgress.priorLessonsByLanguage
+      });
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
@@ -553,6 +640,7 @@ describe('HomeScreen', () => {
     const user = setupUser();
     await seedAsyncStorage({
       profile: profiles.established,
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       reviewState: {
         ...reviewStates.overlap,
         'fixture:kreole:pronouns:choice': {
@@ -589,7 +677,10 @@ describe('HomeScreen', () => {
   });
 
   it('shows only the real unique Review count and keeps Review enabled with no real queue', async () => {
-    await seedAsyncStorage({ reviewState: reviewStates.overlap });
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: reviewStates.overlap
+    });
 
     renderApp({
       initialRouteName: 'Home',
@@ -602,7 +693,10 @@ describe('HomeScreen', () => {
   });
 
   it('does not show a Review badge for all-future Cards while Daily Review keeps its fallback', async () => {
-    await seedAsyncStorage({ reviewState: reviewStates.allFuture });
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: reviewStates.allFuture
+    });
     const user = setupUser();
 
     renderApp({
@@ -623,6 +717,7 @@ describe('HomeScreen', () => {
     const backHandler = jest.spyOn(BackHandler, 'addEventListener');
 
     try {
+      await seedAsyncStorage({ lessonProgress: homeProjectionProgress.priorLessonsByLanguage });
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
@@ -651,7 +746,11 @@ describe('HomeScreen', () => {
     const backHandler = jest.spyOn(BackHandler, 'addEventListener');
 
     try {
-      await seedAsyncStorage({ profile: profiles.fresh, wordProgress: {} });
+      await seedAsyncStorage({
+        profile: profiles.fresh,
+        lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+        wordProgress: {}
+      });
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
@@ -1149,7 +1248,7 @@ describe('HomeScreen', () => {
       await seedAsyncStorage({
         dailyReviewLogV2Cajun: dailyReviewLogs.today,
         dailyReviewMigrated: true,
-        lessonProgress: homeProjectionProgress.lessonToday
+        lessonProgress: homeProjectionProgress.establishedLessonToday
       });
       renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
 

@@ -64,6 +64,28 @@ describe('navigation graph', () => {
     expect(await screen.findByText('New word')).toBeOnTheScreen();
   });
 
+  it.each([
+    ['cajun', 'New word'],
+    ['kreole', 'Pronouns & Greetings']
+  ])('opens the real first %s Lesson from the Day 1 plan', async (language, destinationText) => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Home', initialParams: { language } });
+
+    await user.press(await screen.findByTestId('home-plan-cta'));
+
+    expect(await screen.findByText(destinationText)).toBeOnTheScreen();
+  });
+
+  it('opens the active-Language first Lesson from START HERE', async () => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'kreole' } });
+
+    await screen.findByText('START HERE');
+    await user.press(screen.getByTestId('home-current-unit-continue'));
+
+    expect(await screen.findByText('Pronouns & Greetings')).toBeOnTheScreen();
+  });
+
   it('navigates Dictionary and Hub with the active Language params', async () => {
     const user = setupUser();
 

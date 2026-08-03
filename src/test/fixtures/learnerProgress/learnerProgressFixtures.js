@@ -154,10 +154,46 @@ export const homeProjectionProgress = frozen({
       completedAt: clock.localCalendarLateEvening().toISOString()
     })
   }),
+  twoLessonsToday: frozen({
+    'cajun:fixture_cajun_u01_l01': frozen({
+      completed: true,
+      completedAt: clock.localCalendarLateEvening().toISOString()
+    }),
+    'cajun:fixture_cajun_u01_review': frozen({
+      completed: true,
+      completedAt: clock.localCalendarLateEvening().toISOString()
+    })
+  }),
+  kreoleLessonToday: frozen({
+    'kreole:fixture_kreole_u01_l01': frozen({
+      completed: true,
+      completedAt: clock.localCalendarLateEvening().toISOString()
+    })
+  }),
   lessonYesterday: frozen({
     'cajun:fixture_cajun_u01_l01': frozen({
       completed: true,
       completedAt: new Date(2026, 2, 4, 23, 30, 0).toISOString()
+    })
+  }),
+  establishedLessonToday: frozen({
+    'cajun:fixture_cajun_u01_l01': frozen({
+      completed: true,
+      completedAt: new Date(2026, 2, 4, 23, 30, 0).toISOString()
+    }),
+    'cajun:fixture_cajun_u01_review': frozen({
+      completed: true,
+      completedAt: clock.localCalendarLateEvening().toISOString()
+    })
+  }),
+  priorLessonsByLanguage: frozen({
+    'cajun:fixture_cajun_u03_l01': frozen({
+      completed: true,
+      completedAt: clock.studyDay().toISOString()
+    }),
+    'kreole:fixture_kreole_u02_l01': frozen({
+      completed: true,
+      completedAt: clock.studyDay().toISOString()
     })
   }),
   allLessonsComplete: frozen({
