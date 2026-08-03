@@ -41,6 +41,9 @@ function getUnitNumber(unitCode) {
 
 function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
   const activeIndex = plan.steps.findIndex((step) => !step.complete);
+  const activeActionLabel = plan.activeAction?.kind === 'lesson'
+    ? 'Continue to lesson'
+    : plan.activeAction?.label;
 
   return (
     <View
@@ -119,7 +122,7 @@ function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
           <Pressable
             testID="home-plan-cta"
             accessibilityRole="button"
-            accessibilityLabel={plan.activeAction.label}
+            accessibilityLabel={activeActionLabel}
             onPress={onAction}
             style={({ pressed }) => [
               styles.planCta,
@@ -127,7 +130,7 @@ function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
               pressed && (reduceMotion ? styles.planCtaPressedReduced : styles.planCtaPressed)
             ]}
           >
-            <Text style={styles.planCtaText}>{plan.activeAction.label}</Text>
+            <Text style={styles.planCtaText}>{activeActionLabel}</Text>
           </Pressable>
         </>
       ) : null}

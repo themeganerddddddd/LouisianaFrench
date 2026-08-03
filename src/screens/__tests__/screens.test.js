@@ -845,7 +845,7 @@ describe('HomeScreen', () => {
     }
   });
 
-  it('renders the active Review and Lesson actions from the projection', async () => {
+  it('renders the active Review action and simplified Lesson action', async () => {
     const user = setupUser();
     const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
       .mockResolvedValueOnce(planProjectionFixture())
@@ -882,8 +882,9 @@ describe('HomeScreen', () => {
       });
 
       expect(await screen.findByTestId('home-plan-cta')).toHaveTextContent(
-        'Continue lesson · First greetings'
+        'Continue to lesson'
       );
+      expect(screen.getByLabelText('Continue to lesson')).toBeOnTheScreen();
       await user.press(screen.getByTestId('home-plan-cta'));
       expect(await screen.findByText('New word')).toBeOnTheScreen();
     } finally {
