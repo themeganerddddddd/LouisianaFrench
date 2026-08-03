@@ -2,7 +2,7 @@ import { useFocusEffect, useIsFocused, useNavigation, useRoute } from '@react-na
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Image,
@@ -18,17 +18,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
-import { getAllWords, getUnits } from '../data/lessonLoader';
 import {
   getDefaultLanguage,
   getLastWorkedUnit,
-  getLessonProgress,
-  getPendingMistakes,
-  getProfile,
-  getWordProgress,
   setDefaultLanguage
 } from '../utils/storage';
-import { getDailyReviewQueue } from '../utils/reviewQueue';
+import { getHomeProjection } from '../utils/homeProjection';
 
 function getLessonButtonText(done, locked = false) {
   if (done) return 'Done';
@@ -95,14 +90,10 @@ export default function HomeScreen() {
   const isFocused = useIsFocused();
 
   const [language, setLanguage] = useState(route.params?.language || 'cajun');
-  const [units, setUnits] = useState([]);
-  const [profile, setProfile] = useState({ xp: 0, streak: 0 });
-  const [lessonProgress, setLessonProgress] = useState({});
-  const [wordProgress, setWordProgress] = useState({});
-  const [reviewQueueCount, setReviewQueueCount] = useState(0);
-  const [pendingMistakesCount, setPendingMistakesCount] = useState(0);
+  const [projection, setProjection] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [expandedUnit, setExpandedUnit] = useState(null);
+  const initialExpansionLanguage = useRef(null);
 
   useEffect(() => {
     async function bootstrapLanguage() {
@@ -121,48 +112,29 @@ export default function HomeScreen() {
     bootstrapLanguage();
   }, [route.params?.language]);
 
-  useEffect(() => {
-    async function loadData() {
-      const loadedUnits = getUnits(language);
-      const loadedProfile = await getProfile();
-      const loadedLessonProgress = await getLessonProgress();
-      const loadedWordProgress = await getWordProgress();
-
-      const lastWorkedUnit = await getLastWorkedUnit(language);
-
-      setUnits(loadedUnits);
-      setProfile(loadedProfile);
-      setLessonProgress(loadedLessonProgress);
-      setWordProgress(loadedWordProgress);
-      setExpandedUnit(
-        loadedUnits.some((unitObj) => unitObj.unit === lastWorkedUnit)
-          ? lastWorkedUnit
-          : null
-      );
-    }
-
-    loadData();
-  }, [language]);
-
   useFocusEffect(useCallback(() => {
     let cancelled = false;
-    async function loadBadges() {
-      const [reviewQueue, mistakes, loadedProfile, loadedWordProgress] = await Promise.all([
-        getDailyReviewQueue(language),
-        getPendingMistakes(language),
-        getProfile(),
-        getWordProgress()
+    async function loadHome() {
+      const needsInitialExpansion = initialExpansionLanguage.current !== language;
+      const [loadedProjection, lastWorkedUnit] = await Promise.all([
+        getHomeProjection(language),
+        needsInitialExpansion ? getLastWorkedUnit(language) : Promise.resolve(null)
       ]);
 
-      if (!cancelled) {
-        setReviewQueueCount(reviewQueue.length);
-        setPendingMistakesCount(mistakes.length);
-        setProfile(loadedProfile);
-        setWordProgress(loadedWordProgress);
+      if (cancelled) return;
+
+      setProjection(loadedProjection);
+      if (needsInitialExpansion) {
+        initialExpansionLanguage.current = language;
+        setExpandedUnit(
+          loadedProjection.units.some((unit) => unit.unitCode === lastWorkedUnit)
+            ? lastWorkedUnit
+            : null
+        );
       }
     }
 
-    loadBadges();
+    loadHome();
     return () => { cancelled = true; };
   }, [language]));
 
@@ -223,14 +195,9 @@ export default function HomeScreen() {
           badgeText: '#064E32'
         };
 
-  const allWords = useMemo(() => getAllWords(language), [language]);
-  const totalWords = allWords.length;
-
-  const masteredWords = allWords.filter(
-    (word) => wordProgress[`${language}:${word.rowId}`]?.status === 'mastered'
-  ).length;
-
-  const overallPct = totalWords ? Math.round((masteredWords / totalWords) * 100) : 0;
+  const units = projection?.units || [];
+  const reviewQueueCount = projection?.dashboard.reviewCount || 0;
+  const pendingMistakesCount = projection?.dashboard.pendingMistakeCount || 0;
 
   return (
     <View style={styles.container}>
@@ -256,7 +223,9 @@ export default function HomeScreen() {
                 numberOfLines={1}
                 style={[styles.topSubtitle, { color: theme.subtitle }]}
               >
-                ⚡ {profile.xp || 0} · 🔥 {profile.streak || 0} · {overallPct}% mastered
+                {projection
+                  ? `⚡ ${projection.dashboard.xp} · 🔥 ${projection.dashboard.streak} · ${projection.dashboard.masteryPercent}% mastered`
+                  : null}
               </Text>
             </View>
           </View>
@@ -336,56 +305,34 @@ export default function HomeScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {units.map((unitObj) => {
-          const uniqueWords = [];
-
-          unitObj.lessons.forEach((lesson) => {
-            (lesson.words || []).forEach((word) => {
-              if (!uniqueWords.find((w) => w.rowId === word.rowId)) {
-                uniqueWords.push(word);
-              }
-            });
-          });
-
-          const masteredInUnit = uniqueWords.filter(
-            (word) => wordProgress[`${language}:${word.rowId}`]?.status === 'mastered'
-          ).length;
-
-          const completedLessons = unitObj.lessons.filter(
-            (lesson) => lessonProgress[`${language}:${lesson.id}`]?.completed
-          ).length;
-
-          const pct = uniqueWords.length
-            ? Math.round((masteredInUnit / uniqueWords.length) * 100)
-            : 0;
-
           return (
-            <View key={unitObj.unit} style={styles.unitCard}>
+            <View key={unitObj.unitCode} style={styles.unitCard}>
               <TouchableOpacity
-                testID={`unit-toggle-${unitObj.unit}`}
-                onPress={() => toggleUnit(unitObj.unit)}
+                testID={`unit-toggle-${unitObj.unitCode}`}
+                onPress={() => toggleUnit(unitObj.unitCode)}
                 accessibilityRole="button"
-                accessibilityLabel={`Toggle ${unitObj.unitTitle}`}
-                accessibilityState={{ expanded: expandedUnit === unitObj.unit }}
+                accessibilityLabel={`Toggle ${unitObj.title}`}
+                accessibilityState={{ expanded: expandedUnit === unitObj.unitCode }}
               >
                 <LinearGradient colors={theme.headerGrad} style={styles.unitHeader}>
                   <View style={styles.unitNumberPill}>
                     <Text style={[styles.unitNumberText, { color: theme.accent }]}>
-                      {getUnitNumber(unitObj.unit)}
+                      {getUnitNumber(unitObj.unitCode)}
                     </Text>
                   </View>
 
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.unitTitle}>{unitObj.unitTitle}</Text>
+                    <Text style={styles.unitTitle}>{unitObj.title}</Text>
 
                     <Text style={styles.unitMeta}>
-                      {masteredInUnit} / {uniqueWords.length} words mastered ·{' '}
-                      {completedLessons} / {unitObj.lessons.length} lessons done
+                      {unitObj.masteredWords} / {unitObj.totalWords} words mastered ·{' '}
+                      {unitObj.completedLessons} / {unitObj.totalLessons} lessons done
                     </Text>
                   </View>
 
                   <View style={styles.unitToggleIcon}>
                     <Text style={styles.unitToggleIconText}>
-                      {expandedUnit === unitObj.unit ? '-' : '+'}
+                      {expandedUnit === unitObj.unitCode ? '-' : '+'}
                     </Text>
                   </View>
                 </LinearGradient>
@@ -396,16 +343,16 @@ export default function HomeScreen() {
                   style={[
                     styles.progressBarFill,
                     {
-                      width: `${pct}%`,
+                      width: `${unitObj.masteryPercent}%`,
                       backgroundColor: theme.progressFill
                     }
                   ]}
                 />
               </View>
 
-              {expandedUnit === unitObj.unit
+              {expandedUnit === unitObj.unitCode
                 ? unitObj.lessons.map((lesson) => {
-                    const done = !!lessonProgress[`${language}:${lesson.id}`]?.completed;
+                    const done = lesson.complete;
                     const buttonText = getLessonButtonText(done);
 
                     return (
@@ -425,7 +372,7 @@ export default function HomeScreen() {
                           })
                         }
                         accessibilityRole="button"
-                        accessibilityLabel={`${lesson.lessonTitle || lesson.title || 'Lesson'}`}
+                        accessibilityLabel={lesson.title}
                       >
                         <View style={{ flex: 1 }}>
                           <Text
@@ -434,7 +381,7 @@ export default function HomeScreen() {
                               done && styles.lessonTitleDone
                             ]}
                           >
-                            {lesson.lessonTitle || lesson.title || 'Lesson'}
+                            {lesson.title}
                           </Text>
 
                           <Text
@@ -443,8 +390,7 @@ export default function HomeScreen() {
                               done && styles.lessonDescDone
                             ]}
                           >
-                            {lesson.wordCount || (lesson.words || []).length || 0} words ·{' '}
-                            {lesson.type === 'review' ? 'Review' : 'Core lesson'}
+                            {lesson.wordCount} words · {lesson.typeLabel}
                           </Text>
                         </View>
 

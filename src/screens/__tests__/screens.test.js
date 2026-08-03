@@ -18,6 +18,7 @@ import {
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
+import * as homeProjection from '../../utils/homeProjection';
 import {
   getDefaultLanguage,
   getDailyReviewLog,
@@ -55,6 +56,48 @@ const FULL_SCREEN_PHONE_METRICS = {
   frame: { x: 0, y: 0, width: 412, height: 915 },
   insets: { top: 38, right: 0, bottom: 24, left: 0 }
 };
+
+function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 91 } = {}) {
+  return {
+    language,
+    dashboard: {
+      xp,
+      streak: 7,
+      masteredWords: 1,
+      totalWords: 2,
+      masteryPercent: 50,
+      reviewCount: 4,
+      pendingMistakeCount: 2
+    },
+    plan: {
+      steps: [],
+      completedCount: 0,
+      activeAction: null,
+      helperText: null,
+      allDone: false
+    },
+    currentUnit: null,
+    catalogComplete: false,
+    units: [{
+      unitCode: 'u99',
+      unitLabel: 'Unit 99',
+      title,
+      masteredWords: 1,
+      totalWords: 2,
+      masteryPercent: 50,
+      completedLessons: 1,
+      totalLessons: 1,
+      lessons: [{
+        id: 'projected_lesson',
+        title: 'Projected lesson',
+        wordCount: 2,
+        typeLabel: 'Core lesson',
+        complete: true
+      }]
+    }],
+    initialExpandedUnit: 'u99'
+  };
+}
 
 describe('LoadingScreen', () => {
   it('routes first launch to Language selection', async () => {
@@ -211,6 +254,88 @@ describe('HomeScreen', () => {
     expect(screen.getByText('First greetings')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
+  });
+
+  it('renders Catalog and Learner Progress values from one Home projection snapshot', async () => {
+    const getProjection = jest
+      .spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValue(projectionFixture());
+
+    try {
+      await seedAsyncStorage({ lastWorkedUnit: { cajun: 'u99' } });
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByText('Projected Unit')).toBeOnTheScreen();
+      expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 91 · 🔥 7 · 50% mastered');
+      expect(screen.getByTestId('review-count')).toHaveTextContent('4');
+      expect(screen.getByTestId('mistakes-count')).toHaveTextContent('2');
+      expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
+      expect(screen.queryByText('Greetings & Check-ins')).toBeNull();
+      expect(getProjection).toHaveBeenCalledWith('cajun');
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it('ignores a stale focus projection after the active Language changes', async () => {
+    const user = setupUser();
+    const backHandler = jest.spyOn(BackHandler, 'addEventListener');
+    let resolveStaleCajun;
+    let cajunCalls = 0;
+    const staleCajun = new Promise((resolve) => {
+      resolveStaleCajun = resolve;
+    });
+    const getProjection = jest
+      .spyOn(homeProjection, 'getHomeProjection')
+      .mockImplementation((language) => {
+        if (language === 'cajun') {
+          cajunCalls += 1;
+          return cajunCalls === 2
+            ? staleCajun
+            : Promise.resolve(projectionFixture());
+        }
+
+        return Promise.resolve(projectionFixture({
+          language: 'kreole',
+          title: 'Kouri Projected Unit',
+          xp: 73
+        }));
+      });
+
+    try {
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+      await user.press(screen.getByTestId('home-review-control'));
+      expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
+
+      const backListener = backHandler.mock.calls.find(
+        ([eventName]) => eventName === 'hardwareBackPress'
+      )[1];
+      await act(async () => {
+        backListener();
+      });
+      await user.press(screen.getByLabelText('Louisiana French flag'));
+
+      expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+      await act(async () => {
+        resolveStaleCajun(projectionFixture({ xp: 12 }));
+      });
+
+      expect(screen.getByText('Kouri-Vini')).toBeOnTheScreen();
+      expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 73 · 🔥 7 · 50% mastered');
+      expect(getProjection).toHaveBeenCalledWith('cajun');
+      expect(getProjection).toHaveBeenCalledWith('kreole');
+    } finally {
+      backHandler.mockRestore();
+      getProjection.mockRestore();
+    }
   });
 
   it('renders the Kouri-Vini identity and theme after a saved Language switch', async () => {
