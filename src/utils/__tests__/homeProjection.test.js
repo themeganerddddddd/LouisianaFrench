@@ -285,6 +285,7 @@ describe('getHomeProjection', () => {
       'cajun:fixture_cajun_w01': wordMastery.mastered
     };
     useProgress({
+      dailyReview: dailyReviewLogs.today,
       lessonProgress: homeProjectionProgress.allLessonsComplete,
       wordProgress
     });
@@ -305,7 +306,47 @@ describe('getHomeProjection', () => {
       totalWords: 4,
       masteryPercent: 25
     }));
+    expect(complete.plan.steps).toEqual([
+      { id: 'review', label: 'Review', complete: true },
+      { id: 'lesson', label: 'Lesson', complete: true },
+      { id: 'practice', label: 'Speech', complete: false }
+    ]);
+    expect(complete.plan.activeAction).toEqual({
+      kind: 'speech',
+      label: 'Practice Speech',
+      destination: 'Advanced',
+      params: { language: 'cajun' }
+    });
 
+    useProgress({
+      dailyReview: dailyReviewLogs.today,
+      lessonProgress: homeProjectionProgress.allLessonsComplete,
+      pending: [pendingMistakes.cajun.greetingChoice]
+    });
+    const mistakes = await getHomeProjection('cajun');
+    expect(mistakes.plan.activeAction).toEqual({
+      kind: 'mistakes',
+      label: 'Fix 1 mistake',
+      destination: 'MistakeReview',
+      params: { language: 'cajun', source: 'home' }
+    });
+
+    useProgress({
+      dailyReview: dailyReviewLogs.today,
+      lessonProgress: homeProjectionProgress.allLessonsComplete,
+      practice: practiceLogs.todaySpeech['2026-03-05']
+    });
+    const allDone = await getHomeProjection('cajun');
+    expect(allDone.plan).toEqual(expect.objectContaining({
+      completedCount: 3,
+      activeAction: null,
+      allDone: true
+    }));
+
+    useProgress({
+      dailyReview: dailyReviewLogs.today,
+      lessonProgress: homeProjectionProgress.allLessonsComplete
+    });
     getUnits.mockReturnValue([]);
     getAllWords.mockReturnValue([]);
     const empty = await getHomeProjection('kreole');
@@ -318,6 +359,13 @@ describe('getHomeProjection', () => {
       totalWords: 0,
       masteryPercent: 0
     }));
+    expect(empty.plan.steps[1]).toEqual({ id: 'lesson', label: 'Lesson', complete: true });
+    expect(empty.plan.activeAction).toEqual({
+      kind: 'speech',
+      label: 'Practice Speech',
+      destination: 'Advanced',
+      params: { language: 'kreole' }
+    });
   });
 
   it('keeps Language data independent while returning the same sanitized structure', async () => {
