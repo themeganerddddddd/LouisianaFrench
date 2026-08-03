@@ -152,11 +152,16 @@ export async function getHomeProjection(language) {
     summarizeUnit(unit, language, lessonProgress, wordProgress)
   );
   const currentUnit = currentUnitFor(units);
+  const catalogComplete = currentUnit === null;
   const pendingCount = pendingMistakes.length;
   const practiceComplete = todayPractice !== null && pendingCount === 0;
   const steps = [
     { id: 'review', label: 'Review', complete: Boolean(reviewLog[today]) },
-    { id: 'lesson', label: 'Lesson', complete: completedToday(lessonProgress, language, today) },
+    {
+      id: 'lesson',
+      label: 'Lesson',
+      complete: catalogComplete || completedToday(lessonProgress, language, today)
+    },
     { id: 'practice', label: pendingCount ? 'Mistakes' : 'Speech', complete: practiceComplete }
   ];
   const firstIncomplete = steps.findIndex((step) => !step.complete);
@@ -192,7 +197,7 @@ export async function getHomeProjection(language) {
       allDone: firstIncomplete < 0
     },
     currentUnit,
-    catalogComplete: currentUnit === null,
+    catalogComplete,
     units,
     initialExpandedUnit: null
   };

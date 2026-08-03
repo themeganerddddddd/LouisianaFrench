@@ -388,7 +388,20 @@ describe('HomeScreen', () => {
 
   it('renders coherent completed and zero-Lesson Catalog fallbacks', async () => {
     const completed = {
-      ...projectionFixture(),
+      ...planProjectionFixture({
+        steps: [
+          { id: 'review', label: 'Review', complete: true },
+          { id: 'lesson', label: 'Lesson', complete: true },
+          { id: 'practice', label: 'Speech', complete: false }
+        ],
+        activeAction: {
+          kind: 'speech',
+          label: 'Practice Speech',
+          destination: 'Advanced',
+          params: { language: 'cajun' }
+        },
+        helperText: 'No mistakes to fix — speech practice instead.'
+      }),
       catalogComplete: true
     };
     const empty = {
@@ -410,6 +423,7 @@ describe('HomeScreen', () => {
         'You completed every Lesson in this Language.'
       )).toBeOnTheScreen();
       expect(screen.queryByTestId('home-current-unit')).toBeNull();
+      expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Practice Speech');
       completedRender.unmount();
 
       renderApp({
