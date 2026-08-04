@@ -42,9 +42,7 @@ describe('navigation graph', () => {
 
     await user.press(screen.getByTestId('home-review-control'));
 
-    expect(
-      await screen.findByText('Due cards, weak words, and review practice.')
-    ).toBeOnTheScreen();
+    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
   });
 
   it('navigates Home → Lesson with lesson identity params', async () => {
