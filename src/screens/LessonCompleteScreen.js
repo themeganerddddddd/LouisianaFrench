@@ -37,13 +37,6 @@ export default function LessonCompleteScreen({ route, navigation }) {
           >
             <Text style={styles.primaryText}>Back to Home</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryBtn}
-            onPress={() => navigation.navigate('Leaderboard')}
-          >
-            <Text style={styles.secondaryText}>Open Leaderboard (WIP)</Text>
-          </TouchableOpacity>
         </View>
       </View>
       <BugReportButton screenName="LessonComplete" language={language} />
@@ -127,20 +120,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '900',
     fontSize: 16
-  },
-  secondaryBtn: {
-    marginTop: 12,
-    backgroundColor: '#EAF3FF',
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    width: '100%',
-    alignItems: 'center'
-  },
-  secondaryText: {
-    color: '#2771CB',
-    fontWeight: '900',
-    fontSize: 16,
-    textAlign: 'center'
   }
 });
