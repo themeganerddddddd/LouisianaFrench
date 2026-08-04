@@ -52,6 +52,31 @@ export default function DailyReviewScreen({ route, navigation }) {
 
   const current = queue[index];
 
+  async function finishDailyReview(totalXp, reviewMistakes) {
+    await markLanguageDailyReviewDone(language, getTodayKey());
+
+    if (reviewMistakes.length) {
+      navigation.replace('MistakeReview', {
+        lessonTitle: 'Daily Review',
+        mistakes: reviewMistakes,
+        lessonXp: totalXp,
+        language
+      });
+      return;
+    }
+
+    const profile = await recordStudyAndXp(totalXp);
+    navigation.replace('LessonComplete', {
+      lessonTitle: 'Daily Review',
+      xpEarned: totalXp,
+      mistakesCount: 0,
+      streak: profile.streak,
+      scoreEarned: null,
+      scorePossible: null,
+      language
+    });
+  }
+
   async function handleCorrect() {
     await updateCardReview(current.cardId, 5);
     if (current.rowId) {
@@ -66,18 +91,7 @@ export default function DailyReviewScreen({ route, navigation }) {
       return;
     }
 
-    await markLanguageDailyReviewDone(language, getTodayKey());
-    const profile = await recordStudyAndXp(nextXp);
-
-    navigation.replace('LessonComplete', {
-      lessonTitle: 'Daily Review',
-      xpEarned: nextXp,
-      mistakesCount: mistakes.length,
-      streak: profile.streak,
-      scoreEarned: null,
-      scorePossible: null,
-      language
-    });
+    await finishDailyReview(nextXp, mistakes);
   }
 
   async function handleWrong(userAnswer) {
@@ -98,18 +112,7 @@ export default function DailyReviewScreen({ route, navigation }) {
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
-      await markLanguageDailyReviewDone(language, getTodayKey());
-      const profile = await recordStudyAndXp(xp);
-
-      navigation.replace('LessonComplete', {
-        lessonTitle: 'Daily Review',
-        xpEarned: xp,
-        mistakesCount: nextMistakes.length,
-        streak: profile.streak,
-        scoreEarned: null,
-        scorePossible: null,
-        language
-      });
+      await finishDailyReview(xp, nextMistakes);
     }
   }
 
