@@ -2,7 +2,7 @@ import { useFocusEffect, useIsFocused, useNavigation, useRoute } from '@react-na
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import {
   AccessibilityInfo,
   Image,
@@ -20,7 +20,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
 import {
   getDefaultLanguage,
-  getLastWorkedUnit,
   setDefaultLanguage
 } from '../utils/storage';
 import { getHomeProjection } from '../utils/homeProjection';
@@ -283,8 +282,7 @@ export default function HomeScreen() {
   const [language, setLanguage] = useState(route.params?.language || 'cajun');
   const [projection, setProjection] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [expandedUnit, setExpandedUnit] = useState(null);
-  const initialExpansionLanguage = useRef(null);
+  const [expandedUnits, setExpandedUnits] = useState(new Set());
 
   useEffect(() => {
     async function bootstrapLanguage() {
@@ -306,23 +304,9 @@ export default function HomeScreen() {
   useFocusEffect(useCallback(() => {
     let cancelled = false;
     async function loadHome() {
-      const needsInitialExpansion = initialExpansionLanguage.current !== language;
-      const [loadedProjection, lastWorkedUnit] = await Promise.all([
-        getHomeProjection(language),
-        needsInitialExpansion ? getLastWorkedUnit(language) : Promise.resolve(null)
-      ]);
-
+      const loadedProjection = await getHomeProjection(language);
       if (cancelled) return;
-
       setProjection(loadedProjection);
-      if (needsInitialExpansion) {
-        initialExpansionLanguage.current = language;
-        setExpandedUnit(
-          loadedProjection.units.some((unit) => unit.unitCode === lastWorkedUnit)
-            ? lastWorkedUnit
-            : null
-        );
-      }
     }
 
     loadHome();
@@ -341,26 +325,34 @@ export default function HomeScreen() {
 
   async function switchLanguage(nextLanguage) {
     setLanguage(nextLanguage);
+    setExpandedUnits(new Set());
     await setDefaultLanguage(nextLanguage);
   }
 
   function toggleUnit(unitCode) {
-    LayoutAnimation.configureNext({
-      duration: 220,
-      create: {
-        type: LayoutAnimation.Types.easeInEaseOut,
-        property: LayoutAnimation.Properties.scaleY
-      },
-      update: {
-        type: LayoutAnimation.Types.easeInEaseOut
-      },
-      delete: {
-        type: LayoutAnimation.Types.easeInEaseOut,
-        property: LayoutAnimation.Properties.scaleY
-      }
-    });
+    if (!reduceMotion) {
+      LayoutAnimation.configureNext({
+        duration: 150,
+        create: {
+          type: LayoutAnimation.Types.easeInEaseOut,
+          property: LayoutAnimation.Properties.scaleY
+        },
+        update: {
+          type: LayoutAnimation.Types.easeInEaseOut
+        },
+        delete: {
+          type: LayoutAnimation.Types.easeInEaseOut,
+          property: LayoutAnimation.Properties.scaleY
+        }
+      });
+    }
 
-    setExpandedUnit((currentUnit) => (currentUnit === unitCode ? null : unitCode));
+    setExpandedUnits((current) => {
+      const next = new Set(current);
+      if (next.has(unitCode)) next.delete(unitCode);
+      else next.add(unitCode);
+      return next;
+    });
   }
 
   const theme =
@@ -370,6 +362,7 @@ export default function HomeScreen() {
           headerGrad: ['#498BDC', '#2771CB'],
           start: '#2771CB',
           doneSoft: '#3B82F6',
+          lessonComplete: '#3B82F6',
           progressFill: '#7DD3FC',
           subtitle: '#DCEBFF',
           accent: '#2771CB',
@@ -382,6 +375,7 @@ export default function HomeScreen() {
           headerGrad: ['#0AA35F', '#066B3F'],
           start: '#08834C',
           doneSoft: '#34D399',
+          lessonComplete: '#10B981',
           progressFill: '#6EE7B7',
           subtitle: '#E7F5EE',
           accent: '#08834C',
@@ -533,17 +527,25 @@ export default function HomeScreen() {
             })}
           />
         ) : null}
+        {units.length > 0 ? (
+          <View style={styles.allUnitsEyebrow}>
+            <Feather name="arrow-right" size={14} color="#64748B" />
+            <Text style={styles.allUnitsEyebrowText}>ALL UNITS</Text>
+          </View>
+        ) : null}
         {units.map((unitObj) => {
+          const isExpanded = expandedUnits.has(unitObj.unitCode);
+
           return (
-            <View key={unitObj.unitCode} style={styles.unitCard}>
+            <View key={unitObj.unitCode} style={[styles.unitCard, styles.accordionCard]}>
               <TouchableOpacity
                 testID={`unit-toggle-${unitObj.unitCode}`}
                 onPress={() => toggleUnit(unitObj.unitCode)}
                 accessibilityRole="button"
                 accessibilityLabel={`Toggle ${unitObj.title}`}
-                accessibilityState={{ expanded: expandedUnit === unitObj.unitCode }}
+                accessibilityState={{ expanded: isExpanded }}
               >
-                <LinearGradient colors={theme.headerGrad} style={styles.unitHeader}>
+                <LinearGradient colors={theme.headerGrad} style={styles.accordionHeader}>
                   <View style={styles.unitNumberPill}>
                     <Text style={[styles.unitNumberText, { color: theme.accent }]}>
                       {getUnitNumber(unitObj.unitCode)}
@@ -551,26 +553,30 @@ export default function HomeScreen() {
                   </View>
 
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.unitTitle}>{unitObj.title}</Text>
+                    <Text style={styles.accordionTitle}>{unitObj.title}</Text>
 
-                    <Text style={styles.unitMeta}>
-                      {unitObj.masteredWords} / {unitObj.totalWords} words mastered ·{' '}
-                      {unitObj.completedLessons} / {unitObj.totalLessons} lessons done
+                    <Text style={styles.accordionMeta}>
+                      {unitObj.masteredWords} / {unitObj.totalWords} words ·{' '}
+                      {unitObj.completedLessons} / {unitObj.totalLessons} lessons
                     </Text>
                   </View>
 
-                  <View style={styles.unitToggleIcon}>
-                    <Text style={styles.unitToggleIconText}>
-                      {expandedUnit === unitObj.unitCode ? '-' : '+'}
-                    </Text>
-                  </View>
+                  <Feather
+                    name="chevron-down"
+                    size={20}
+                    color="#FFFFFF"
+                    style={[
+                      styles.chevron,
+                      isExpanded && !reduceMotion && styles.chevronOpen
+                    ]}
+                  />
                 </LinearGradient>
               </TouchableOpacity>
 
-              <View style={styles.progressBarBg}>
+              <View style={styles.accordionProgressBg}>
                 <View
                   style={[
-                    styles.progressBarFill,
+                    styles.accordionProgressFill,
                     {
                       width: `${unitObj.masteryPercent}%`,
                       backgroundColor: theme.progressFill
@@ -579,7 +585,7 @@ export default function HomeScreen() {
                 />
               </View>
 
-              {expandedUnit === unitObj.unitCode
+              {isExpanded
                 ? unitObj.lessons.map((lesson) => {
                     const done = lesson.complete;
                     const buttonText = getLessonButtonText(done);
@@ -590,8 +596,8 @@ export default function HomeScreen() {
                         style={[
                           styles.lessonRow,
                           done && {
-                            backgroundColor: theme.doneSoft,
-                            borderTopColor: theme.doneSoft
+                            backgroundColor: theme.lessonComplete,
+                            borderTopColor: theme.lessonComplete
                           }
                         ]}
                         onPress={() =>
@@ -933,6 +939,22 @@ const styles = StyleSheet.create({
     marginLeft: 6
   },
 
+  allUnitsEyebrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 2,
+    marginTop: 14,
+    marginBottom: 8
+  },
+
+  allUnitsEyebrowText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.48,
+    marginLeft: 6
+  },
+
   currentUnitTitle: {
     fontSize: 17
   },
@@ -978,27 +1000,29 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0'
   },
 
+  accordionCard: {
+    marginBottom: 10
+  },
+
   unitHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16
   },
 
-  unitToggleIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  accordionHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16
+  },
+
+  chevron: {
     marginLeft: 10
   },
 
-  unitToggleIconText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-    lineHeight: 22
+  chevronOpen: {
+    transform: [{ rotate: '180deg' }]
   },
 
   unitNumberPill: {
@@ -1020,8 +1044,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF'
   },
 
+  accordionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF'
+  },
+
   unitMeta: {
     fontSize: 13,
+    color: 'rgba(255,255,255,0.88)',
+    marginTop: 5,
+    fontWeight: '600'
+  },
+
+  accordionMeta: {
+    fontSize: 12,
     color: 'rgba(255,255,255,0.88)',
     marginTop: 5,
     fontWeight: '600'
@@ -1034,6 +1071,15 @@ const styles = StyleSheet.create({
 
   progressBarFill: {
     height: 10
+  },
+
+  accordionProgressBg: {
+    height: 8,
+    backgroundColor: '#E2E8F0'
+  },
+
+  accordionProgressFill: {
+    height: 8
   },
 
   lessonRow: {

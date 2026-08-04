@@ -371,18 +371,19 @@ describe('HomeScreen', () => {
     expect(
       within(screen.getByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
     ).toBeOnTheScreen();
-    expect(screen.getByText('First greetings')).toBeOnTheScreen();
+    expect(screen.getByText('ALL UNITS')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
   });
 
   it('renders Catalog and Learner Progress values from one Home projection snapshot', async () => {
+    const user = setupUser();
     const getProjection = jest
       .spyOn(homeProjection, 'getHomeProjection')
       .mockResolvedValue(projectionFixture());
 
     try {
-      await seedAsyncStorage({ lastWorkedUnit: { cajun: 'u99' } });
+      await seedAsyncStorage({});
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
@@ -392,6 +393,7 @@ describe('HomeScreen', () => {
       expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 91 · 🔥 7 · 50% mastered');
       expect(screen.getByTestId('review-count')).toHaveTextContent('4');
       expect(screen.getByTestId('mistakes-count')).toHaveTextContent('2');
+      await user.press(screen.getByTestId('unit-toggle-u99'));
       expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
       expect(screen.queryByText('Greetings & Check-ins')).toBeNull();
       expect(getProjection).toHaveBeenCalledWith('cajun');
@@ -782,7 +784,7 @@ describe('HomeScreen', () => {
     }
   });
 
-  it('collapses Units by default and allows only one open Unit', async () => {
+  it('collapses Units by default and allows multiple open Units', async () => {
     const user = setupUser();
 
     renderApp({
@@ -807,10 +809,10 @@ describe('HomeScreen', () => {
 
     await user.press(screen.getByTestId('unit-toggle-u02'));
 
-    expect(screen.getAllByText('First greetings')).toHaveLength(1);
+    expect(screen.getAllByText('First greetings')).toHaveLength(2);
     expect(screen.getByText('Everyday phrases')).toBeOnTheScreen();
     expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
-      expanded: false
+      expanded: true
     });
     expect(screen.getByTestId('unit-toggle-u02').props.accessibilityState).toEqual({
       expanded: true
@@ -822,6 +824,178 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('unit-toggle-u02').props.accessibilityState).toEqual({
       expanded: false
     });
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: true
+    });
+
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+
+    expect(screen.getAllByText('First greetings')).toHaveLength(1);
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: false
+    });
+  });
+
+  it('collapses all Units when Language switches', async () => {
+    const user = setupUser();
+    await seedAsyncStorage({
+      profile: profiles.established,
+      lessonProgress: { 'cajun:fixture_cajun_u01_l01': completedLessons.cajunFirst },
+      wordProgress: { 'cajun:fixture_cajun_w01': wordMastery.mastered }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: true
+    });
+
+    await user.press(screen.getByLabelText('Louisiana French flag'));
+
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: false
+    });
+  });
+
+  it('renders each Unit toggle with a button role, label, and expanded state', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    const toggle = await screen.findByTestId('unit-toggle-u01');
+    expect(toggle.props.accessibilityRole).toBe('button');
+    expect(toggle.props.accessibilityLabel).toBe('Toggle Greetings & Check-ins');
+    expect(toggle.props.accessibilityState).toEqual({ expanded: false });
+
+    await user.press(toggle);
+    expect(toggle.props.accessibilityState).toEqual({ expanded: true });
+  });
+
+  it('skips layout animation when reduceMotion is enabled', async () => {
+    const reduceMotion = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+    const configureNext = jest
+      .spyOn(LayoutAnimation, 'configureNext')
+      .mockImplementation(() => {});
+
+    try {
+      const user = setupUser();
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(
+        within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+      ).toBeOnTheScreen();
+      await user.press(screen.getByTestId('unit-toggle-u01'));
+      expect(configureNext).not.toHaveBeenCalled();
+    } finally {
+      reduceMotion.mockRestore();
+      configureNext.mockRestore();
+    }
+  });
+
+  it('preserves immediate state direction when reduceMotion is enabled', async () => {
+    const reduceMotion = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+
+    try {
+      const user = setupUser();
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      const toggle = await screen.findByTestId('unit-toggle-u01');
+      expect(toggle.props.accessibilityState).toEqual({ expanded: false });
+
+      await user.press(toggle);
+      expect(toggle.props.accessibilityState).toEqual({ expanded: true });
+
+      await user.press(toggle);
+      expect(toggle.props.accessibilityState).toEqual({ expanded: false });
+    } finally {
+      reduceMotion.mockRestore();
+    }
+  });
+
+  it('navigates to a Lesson from the expanded accordion row', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(
+      within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+    ).toBeOnTheScreen();
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+    await user.press(screen.getByLabelText('First greetings'));
+
+    expect(await screen.findByText('New word')).toBeOnTheScreen();
+  });
+
+  it('keeps the accordion browsable when all Lessons are complete', async () => {
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValue({
+        ...projectionFixture({ title: 'Completed Unit' }),
+        catalogComplete: true,
+        currentUnit: null
+      });
+
+    try {
+      const user = setupUser();
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByTestId('home-catalog-complete')).toBeOnTheScreen();
+      expect(screen.getByText('ALL UNITS')).toBeOnTheScreen();
+      await user.press(screen.getByTestId('unit-toggle-u99'));
+      expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
+  it.each([
+    ['cajun', '#3B82F6'],
+    ['kreole', '#10B981']
+  ])('renders completed accordion rows with the approved %s completion color', async (
+    language,
+    completeColor
+  ) => {
+    const lessonProgress = language === 'cajun'
+      ? { 'cajun:fixture_cajun_u01_l01': completedLessons.cajunFirst }
+      : { 'kreole:fixture_kreole_u01_l01': completedLessons.kouriViniFirst };
+    await seedAsyncStorage({ lessonProgress });
+
+    const user = setupUser();
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language }
+    });
+
+    expect(await screen.findByText('ALL UNITS')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+
+    const completedLabel = language === 'cajun' ? 'First greetings' : 'First pronouns';
+    const row = screen.getByLabelText(completedLabel);
+    expect(row).toHaveStyle({ backgroundColor: completeColor });
   });
 
   it('schedules a layout transition when a Unit expands or collapses', async () => {
@@ -844,7 +1018,7 @@ describe('HomeScreen', () => {
       await user.press(screen.getByTestId('unit-toggle-u01'));
 
       expect(configureNext).toHaveBeenCalledWith({
-        duration: 220,
+        duration: 150,
         create: {
           type: LayoutAnimation.Types.easeInEaseOut,
           property: LayoutAnimation.Properties.scaleY
