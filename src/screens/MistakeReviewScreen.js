@@ -3,12 +3,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
 import { getAllActivities } from '../data/lessonLoader';
 import SafeScreenView from '../components/SafeScreenView';
+import { updateCardReview } from '../utils/spacedRepetition';
 import {
   getPendingMistakes,
   markLessonComplete,
   recordPracticeCompletion,
   recordStudyAndXp,
-  removePendingMistake
+  removePendingMistake,
+  updateWordProgress
 } from '../utils/storage';
 
 export default function MistakeReviewScreen({ route, navigation }) {
@@ -67,6 +69,11 @@ export default function MistakeReviewScreen({ route, navigation }) {
     : 0;
 
   async function handleCorrect() {
+    await updateCardReview(current.cardId, 4);
+    if (current.rowId) {
+      await updateWordProgress(language, current.rowId, true);
+    }
+
     await removePendingMistake(language, current.cardId);
     if (!(await getPendingMistakes(language)).length) {
       await recordPracticeCompletion(language, 'mistakeReview');

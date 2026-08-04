@@ -30,8 +30,10 @@ import {
   getLessonProgress,
   getLanguageDailyReviewLog,
   getLastWorkedUnit,
+  getReviewState,
   getTodayPractice,
   getTodayKey,
+  getWordProgress,
   hasSelectedLanguage,
   markLanguageSelected,
   setDefaultLanguage
@@ -60,6 +62,14 @@ const FULL_SCREEN_PHONE_METRICS = {
   frame: { x: 0, y: 0, width: 412, height: 915 },
   insets: { top: 38, right: 0, bottom: 24, left: 0 }
 };
+
+const MISTAKE_REVIEW_VIEWPORTS = [
+  ['mobile', FULL_SCREEN_PHONE_METRICS],
+  ['desktop', {
+    frame: { x: 0, y: 0, width: 1440, height: 900 },
+    insets: { top: 0, right: 0, bottom: 0, left: 0 }
+  }]
+];
 
 function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 91 } = {}) {
   return {
@@ -136,6 +146,34 @@ function planProjectionFixture({
       allDone
     }
   };
+}
+
+const MISTAKE_REVIEW_WORD_KEY = 'cajun:fixture_cajun_w02';
+
+function mistakeReviewProgressFixture(cardId) {
+  return {
+    reviewState: { [cardId]: reviewStates.overlap[cardId] },
+    wordProgress: { [MISTAKE_REVIEW_WORD_KEY]: wordMastery.learningAfterWrong }
+  };
+}
+
+async function expectMistakeReviewProgress(cardId) {
+  expect(await getReviewState()).toEqual(expect.objectContaining({
+    [cardId]: expect.objectContaining({
+      repetitions: 2,
+      interval: 3,
+      easeFactor: 2.5,
+      lapses: 1
+    })
+  }));
+  expect(await getWordProgress()).toEqual({
+    [MISTAKE_REVIEW_WORD_KEY]: {
+      seen: 2,
+      correct: 1,
+      wrong: 1,
+      status: 'learning'
+    }
+  });
 }
 
 describe('LoadingScreen', () => {
@@ -1841,35 +1879,42 @@ describe('LessonRunner', () => {
 });
 
 describe('MistakeReviewScreen', () => {
-  it('shows missed Activities and reaches completion after correction', async () => {
-    const user = setupUser();
-    const activity = activityByCardId('fixture:cajun:greeting:choice');
+  it.each(MISTAKE_REVIEW_VIEWPORTS)(
+    'applies quality-4 Card and Word recovery before lesson completion at %s width',
+    async (_viewport, safeAreaMetrics) => {
+      const user = setupUser();
+      const activity = activityByCardId('fixture:cajun:greeting:choice');
 
-    renderApp({
-      initialRouteName: 'MistakeReview',
-      initialParams: {
-        language: 'cajun',
-        lessonId: 'fixture_cajun_u01_l01',
-        lessonTitle: 'Greetings & Check-ins — First greetings',
-        mistakes: [{ ...activity, userAnswer: 'Bonjour' }],
-        lessonXp: 20
-      }
-    });
+      await seedAsyncStorage(mistakeReviewProgressFixture(activity.cardId));
 
-    expect(screen.getByText('Mistake Review')).toBeOnTheScreen();
-    expect(screen.getByText('Let’s fix the questions you missed.')).toBeOnTheScreen();
-    expect(screen.getByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
-    expect(screen.queryByLabelText('Report a bug')).toBeNull();
+      renderApp({
+        initialRouteName: 'MistakeReview',
+        initialParams: {
+          language: 'cajun',
+          lessonId: 'fixture_cajun_u01_l01',
+          lessonTitle: 'Greetings & Check-ins — First greetings',
+          mistakes: [{ ...activity, userAnswer: 'Bonjour' }],
+          lessonXp: 20
+        },
+        safeAreaMetrics
+      });
 
-    await user.press(screen.getByText('Ça va?'));
-    await user.press(screen.getByText('Check'));
-    await user.press(screen.getByText('Next Question'));
+      expect(screen.getByText('Mistake Review')).toBeOnTheScreen();
+      expect(screen.getByText('Let’s fix the questions you missed.')).toBeOnTheScreen();
+      expect(screen.getByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+      expect(screen.queryByLabelText('Report a bug')).toBeNull();
 
-    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
-    expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
-    expect((await getProfile()).xp).toBe(30);
-    expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01'].completed).toBe(true);
-  });
+      await user.press(screen.getByText('Ça va?'));
+      await user.press(screen.getByText('Check'));
+      await user.press(screen.getByText('Next Question'));
+
+      expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
+      expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
+      expect((await getProfile()).xp).toBe(30);
+      expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01'].completed).toBe(true);
+      await expectMistakeReviewProgress(activity.cardId);
+    }
+  );
 
   it('removes only the corrected Card while the next pending Card remains', async () => {
     const user = setupUser();
@@ -1925,9 +1970,10 @@ describe('MistakeReviewScreen', () => {
     expect(await getPendingMistakes('cajun')).toHaveLength(1);
   });
 
-  it('clears the final Home Card, records Practice, awards 10 XP, and returns Home', async () => {
+  it('applies quality-4 Card and Word recovery before returning Home', async () => {
     const user = setupUser();
     await seedAsyncStorage({
+      ...mistakeReviewProgressFixture(pendingMistakes.cajun.greetingChoice.cardId),
       pendingMistakes: {
         cajun: {
           [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
@@ -1957,6 +2003,7 @@ describe('MistakeReviewScreen', () => {
     ]);
     expect((await getProfile()).xp).toBe(10);
     expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01']).toBeUndefined();
+    await expectMistakeReviewProgress(pendingMistakes.cajun.greetingChoice.cardId);
     expect(await getTodayPractice('cajun')).toEqual({
       type: 'mistakeReview',
       completedAt: expect.any(String)
