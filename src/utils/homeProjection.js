@@ -20,14 +20,24 @@ function localDateKey(date) {
     String(date.getDate()).padStart(2, '0')
   ].join('-');
 }
-function completedToday(progress, language, today) {
-  return Object.entries(progress).some(([key, record]) => {
-    if (!key.startsWith(`${language}:`) || !record?.completedAt || !record.completed) {
-      return false;
-    }
+function lessonHistory(progress, language, today) {
+  let completedToday = 0;
+  let completedBeforeToday = false;
+
+  Object.entries(progress).forEach(([key, record]) => {
+    if (!key.startsWith(`${language}:`) || !record?.completed) return;
+
     const completedAt = new Date(record.completedAt);
-    return !Number.isNaN(completedAt.getTime()) && localDateKey(completedAt) === today;
+    if (!record.completedAt || Number.isNaN(completedAt.getTime())) {
+      completedBeforeToday = true;
+    } else if (localDateKey(completedAt) === today) {
+      completedToday += 1;
+    } else {
+      completedBeforeToday = true;
+    }
   });
+
+  return { completedToday, completedBeforeToday };
 }
 function percentage(part, whole) {
   return whole ? Math.round((part / whole) * 100) : 0;
@@ -125,6 +135,20 @@ function actionFor(index, language, reviewMinutes, nextLesson, pendingCount) {
   return null;
 }
 
+function firstDayActionFor(step, language, reviewMinutes, nextLesson, completedToday) {
+  if (step.id === 'review') return actionFor(0, language, reviewMinutes);
+  if (!nextLesson) return null;
+
+  return {
+    kind: 'lesson',
+    label: completedToday === 0
+      ? 'Start your first lesson'
+      : `Continue lesson · ${nextLesson.title}`,
+    destination: 'Lesson',
+    params: { language, lessonId: nextLesson.id }
+  };
+}
+
 export async function getHomeProjection(language) {
   const [catalogUnits, catalogWords, profile, lessonProgress, wordProgress, reviewLog,
     reviewQueue, pendingMistakes, todayPractice, today] = await Promise.all([
@@ -153,22 +177,57 @@ export async function getHomeProjection(language) {
   );
   const currentUnit = currentUnitFor(units);
   const catalogComplete = currentUnit === null;
+  const hasCatalogLessons = units.some((unit) => unit.totalLessons > 0);
+  const history = lessonHistory(lessonProgress, language, today);
+  const firstDay = hasCatalogLessons && !history.completedBeforeToday;
   const pendingCount = pendingMistakes.length;
   const practiceComplete = todayPractice !== null && pendingCount === 0;
-  const steps = [
-    { id: 'review', label: 'Review', complete: Boolean(reviewLog[today]) },
-    {
-      id: 'lesson',
-      label: 'Lesson',
-      complete: catalogComplete || completedToday(lessonProgress, language, today)
-    },
-    { id: 'practice', label: pendingCount ? 'Mistakes' : 'Speech', complete: practiceComplete }
-  ];
+  const reviewComplete = Boolean(reviewLog[today]);
+  const learnedWords = [...uniqueWords.values()].filter(
+    (rowId) => (wordProgress[`${language}:${rowId}`]?.seen || 0) > 0
+  ).length;
+  const reviewMinutes = Math.max(1, Math.ceil(reviewQueue.length / 3));
+  const steps = firstDay
+    ? [
+        {
+          id: 'lesson-1',
+          label: 'Lesson',
+          complete: catalogComplete || history.completedToday >= 1
+        },
+        {
+          id: 'lesson-2',
+          label: 'Lesson',
+          complete: catalogComplete || history.completedToday >= 2
+        },
+        { id: 'review', label: 'Review', complete: reviewComplete }
+      ]
+    : [
+        { id: 'review', label: 'Review', complete: reviewComplete },
+        {
+          id: 'lesson',
+          label: 'Lesson',
+          complete: catalogComplete || history.completedToday > 0
+        },
+        { id: 'practice', label: pendingCount ? 'Mistakes' : 'Speech', complete: practiceComplete }
+      ];
   const firstIncomplete = steps.findIndex((step) => !step.complete);
   const nextLesson = currentUnit?.nextLesson || null;
-  const helperText = pendingCount === 0 && !practiceComplete
-    ? 'No mistakes to fix — speech practice instead.'
-    : null;
+  const helperText = firstDay
+    ? "Reviews unlock once you've learned your first words."
+    : pendingCount === 0 && !practiceComplete
+      ? 'No mistakes to fix — speech practice instead.'
+      : null;
+  const activeAction = firstIncomplete < 0
+    ? null
+    : firstDay
+      ? firstDayActionFor(
+          steps[firstIncomplete],
+          language,
+          reviewMinutes,
+          nextLesson,
+          history.completedToday
+        )
+      : actionFor(firstIncomplete, language, reviewMinutes, nextLesson, pendingCount);
 
   return {
     language,
@@ -179,25 +238,19 @@ export async function getHomeProjection(language) {
       totalWords: uniqueWords.size,
       masteryPercent: percentage(masteredWords, uniqueWords.size),
       reviewCount: reviewQueue.length,
-      pendingMistakeCount: pendingCount
+      pendingMistakeCount: pendingCount,
+      reviewEnabled: !firstDay || learnedWords > 0
     },
     plan: {
       steps,
       completedCount: steps.filter((step) => step.complete).length,
-      activeAction: firstIncomplete < 0
-        ? null
-        : actionFor(
-          firstIncomplete,
-          language,
-          Math.max(1, Math.ceil(reviewQueue.length / 3)),
-          nextLesson,
-          pendingCount
-        ),
+      activeAction,
       helperText,
       allDone: firstIncomplete < 0
     },
     currentUnit,
     catalogComplete,
+    firstDay,
     units,
     initialExpandedUnit: null
   };

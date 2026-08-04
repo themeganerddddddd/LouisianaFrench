@@ -82,22 +82,23 @@ describe('getHomeProjection', () => {
         totalWords: 4,
         masteryPercent: 0,
         reviewCount: 0,
-        pendingMistakeCount: 0
+        pendingMistakeCount: 0,
+        reviewEnabled: false
       },
       plan: {
         steps: [
-          { id: 'review', label: 'Review', complete: false },
-          { id: 'lesson', label: 'Lesson', complete: false },
-          { id: 'practice', label: 'Speech', complete: false }
+          { id: 'lesson-1', label: 'Lesson', complete: false },
+          { id: 'lesson-2', label: 'Lesson', complete: false },
+          { id: 'review', label: 'Review', complete: false }
         ],
         completedCount: 0,
         activeAction: {
-          kind: 'review',
-          label: 'Start Daily Review · ~1 min',
-          destination: 'DailyReview',
-          params: { language: 'cajun' }
+          kind: 'lesson',
+          label: 'Start your first lesson',
+          destination: 'Lesson',
+          params: { language: 'cajun', lessonId: 'fixture_cajun_u01_l01' }
         },
-        helperText: 'No mistakes to fix — speech practice instead.',
+        helperText: "Reviews unlock once you've learned your first words.",
         allDone: false
       },
       currentUnit: {
@@ -117,6 +118,7 @@ describe('getHomeProjection', () => {
         }
       },
       catalogComplete: false,
+      firstDay: true,
       units: [
         {
           unitCode: 'u01',
@@ -191,10 +193,82 @@ describe('getHomeProjection', () => {
     expect(JSON.stringify(projection)).not.toContain('target');
   });
 
+  it('keeps Day 1 through two Lessons and active-Language Daily Review completion', async () => {
+    const learnedWord = { 'cajun:fixture_cajun_w01': wordMastery.learningAfterWrong };
+
+    useProgress({
+      lessonProgress: homeProjectionProgress.lessonToday,
+      wordProgress: learnedWord
+    });
+    const oneLesson = await getHomeProjection('cajun');
+
+    expect(oneLesson.firstDay).toBe(true);
+    expect(oneLesson.dashboard.reviewEnabled).toBe(true);
+    expect(oneLesson.plan.steps).toEqual([
+      { id: 'lesson-1', label: 'Lesson', complete: true },
+      { id: 'lesson-2', label: 'Lesson', complete: false },
+      { id: 'review', label: 'Review', complete: false }
+    ]);
+    expect(oneLesson.plan.activeAction).toEqual({
+      kind: 'lesson',
+      label: 'Continue lesson · Greetings review',
+      destination: 'Lesson',
+      params: { language: 'cajun', lessonId: 'fixture_cajun_u01_review' }
+    });
+
+    useProgress({
+      lessonProgress: homeProjectionProgress.twoLessonsToday,
+      wordProgress: learnedWord
+    });
+    const twoLessons = await getHomeProjection('cajun');
+
+    expect(twoLessons.firstDay).toBe(true);
+    expect(twoLessons.plan.steps.map((step) => step.complete)).toEqual([true, true, false]);
+    expect(twoLessons.plan.activeAction).toEqual({
+      kind: 'review',
+      label: 'Start Daily Review · ~1 min',
+      destination: 'DailyReview',
+      params: { language: 'cajun' }
+    });
+
+    useProgress({
+      dailyReview: dailyReviewLogs.today,
+      lessonProgress: homeProjectionProgress.twoLessonsToday,
+      wordProgress: learnedWord
+    });
+    const reviewComplete = await getHomeProjection('cajun');
+
+    expect(reviewComplete.firstDay).toBe(true);
+    expect(reviewComplete.plan.steps.map((step) => step.complete)).toEqual([true, true, true]);
+    expect(reviewComplete.plan).toEqual(expect.objectContaining({
+      completedCount: 3,
+      activeAction: null,
+      allDone: true
+    }));
+  });
+
+  it('selects the returning plan after a Lesson completed before today', async () => {
+    useProgress({ lessonProgress: homeProjectionProgress.lessonYesterday });
+
+    const projection = await getHomeProjection('cajun');
+
+    expect(projection.firstDay).toBe(false);
+    expect(projection.dashboard.reviewEnabled).toBe(true);
+    expect(projection.plan.steps).toEqual([
+      { id: 'review', label: 'Review', complete: false },
+      { id: 'lesson', label: 'Lesson', complete: false },
+      { id: 'practice', label: 'Speech', complete: false }
+    ]);
+    expect(projection.plan.activeAction).toEqual(expect.objectContaining({
+      kind: 'review',
+      destination: 'DailyReview'
+    }));
+  });
+
   it('uses the local date for Lesson completion and preserves later completed steps', async () => {
     useProgress({
       dailyReview: dailyReviewLogs.today,
-      lessonProgress: homeProjectionProgress.lessonToday,
+      lessonProgress: homeProjectionProgress.establishedLessonToday,
       pending: [],
       practice: practiceLogs.todaySpeech['2026-03-05']
     });
@@ -212,7 +286,7 @@ describe('getHomeProjection', () => {
     expect(projection.plan.allDone).toBe(true);
 
     useProgress({
-      lessonProgress: homeProjectionProgress.lessonToday,
+      lessonProgress: homeProjectionProgress.establishedLessonToday,
       practice: practiceLogs.todaySpeech['2026-03-05']
     });
 
@@ -247,6 +321,7 @@ describe('getHomeProjection', () => {
     'uses the shared bounded queue for the Review estimate at length %i',
     async (length) => {
       useProgress({ reviewQueue: Array.from({ length }, (_, index) => ({ cardId: `card-${index}` })) });
+      getLessonProgress.mockResolvedValue(homeProjectionProgress.lessonYesterday);
 
       const projection = await getHomeProjection('cajun');
 
@@ -260,7 +335,7 @@ describe('getHomeProjection', () => {
   it('invalidates Practice with a new Card and selects the Mistake Review action', async () => {
     useProgress({
       dailyReview: dailyReviewLogs.today,
-      lessonProgress: homeProjectionProgress.lessonToday,
+      lessonProgress: homeProjectionProgress.establishedLessonToday,
       pending: [pendingMistakes.cajun.greetingChoice],
       practice: practiceLogs.todayMistakeReview['2026-03-05']
     });
@@ -304,7 +379,8 @@ describe('getHomeProjection', () => {
     expect(complete.dashboard).toEqual(expect.objectContaining({
       masteredWords: 1,
       totalWords: 4,
-      masteryPercent: 25
+      masteryPercent: 25,
+      reviewEnabled: true
     }));
     expect(complete.plan.steps).toEqual([
       { id: 'review', label: 'Review', complete: true },
@@ -388,12 +464,14 @@ describe('getHomeProjection', () => {
     const kreole = await getHomeProjection('kreole');
 
     expect(cajun.language).toBe('cajun');
-    expect(cajun.plan.steps[0].complete).toBe(true);
+    expect(cajun.firstDay).toBe(true);
+    expect(cajun.plan.steps[2].complete).toBe(true);
     expect(cajun.dashboard.pendingMistakeCount).toBe(0);
     expect(kreole.language).toBe('kreole');
-    expect(kreole.plan.steps[0].complete).toBe(false);
+    expect(kreole.firstDay).toBe(true);
+    expect(kreole.plan.steps[2].complete).toBe(false);
     expect(kreole.dashboard.pendingMistakeCount).toBe(1);
-    expect(kreole.plan.steps[2].label).toBe('Mistakes');
+    expect(kreole.plan.steps.map((step) => step.label)).toEqual(['Lesson', 'Lesson', 'Review']);
     expect(kreole.currentUnit.title).toBe('Greetings & Check-ins');
   });
 });

@@ -39,11 +39,13 @@ function getUnitNumber(unitCode) {
   return `Unit ${Number(match[1])}`;
 }
 
-function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
+function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
   const activeIndex = plan.steps.findIndex((step) => !step.complete);
-  const activeActionLabel = plan.activeAction?.kind === 'lesson'
+  const activeActionLabel = plan.activeAction?.kind === 'lesson' && !firstDay
     ? 'Continue to lesson'
-    : plan.activeAction?.label;
+    : plan.activeAction?.kind === 'lesson' && plan.activeAction.label !== 'Start your first lesson'
+      ? 'Continue to lesson'
+      : plan.activeAction?.label;
 
   return (
     <View
@@ -53,7 +55,7 @@ function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
       <View style={styles.planHeader}>
         <Text testID="home-plan-title" style={styles.planTitle}>{"Today's plan"}</Text>
         <Text testID="home-plan-status" style={[styles.planStatus, { color: theme.planSoft }]}>
-          {plan.completedCount} of 3 done
+          {firstDay ? 'Day 1' : `${plan.completedCount} of 3 done`}
         </Text>
       </View>
 
@@ -126,6 +128,7 @@ function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
             onPress={onAction}
             style={({ pressed }) => [
               styles.planCta,
+              firstDay && styles.firstDayPlanCta,
               { backgroundColor: theme.accent },
               pressed && (reduceMotion ? styles.planCtaPressedReduced : styles.planCtaPressed)
             ]}
@@ -138,7 +141,7 @@ function TodaysPlan({ plan, theme, reduceMotion, onAction }) {
   );
 }
 
-function CurrentUnit({ currentUnit, catalogComplete, hasLessons, theme, onContinue }) {
+function CurrentUnit({ currentUnit, catalogComplete, hasLessons, firstDay, firstLesson, theme, onContinue }) {
   if (!currentUnit) {
     if (!catalogComplete) return null;
 
@@ -165,7 +168,9 @@ function CurrentUnit({ currentUnit, catalogComplete, hasLessons, theme, onContin
           size={14}
           color="#64748B"
         />
-        <Text style={styles.currentUnitEyebrowText}>WHERE YOU LEFT OFF</Text>
+        <Text style={styles.currentUnitEyebrowText}>
+          {firstDay ? 'START HERE' : 'WHERE YOU LEFT OFF'}
+        </Text>
       </View>
       <View testID="home-current-unit" style={styles.unitCard}>
         <LinearGradient
@@ -202,18 +207,22 @@ function CurrentUnit({ currentUnit, catalogComplete, hasLessons, theme, onContin
           <View style={{ flex: 1 }}>
             <Text style={[styles.lessonTitle, styles.currentLessonTitle]}>{nextLesson.title}</Text>
             <Text style={styles.lessonDesc}>
-              Next up · {nextLesson.wordCount} words · {nextLesson.typeLabel}
+              {firstLesson
+                ? `First lesson · ${nextLesson.wordCount} words`
+                : `Next up · ${nextLesson.wordCount} words · ${nextLesson.typeLabel}`}
             </Text>
           </View>
           <Pressable
             testID="home-current-unit-continue"
             accessibilityRole="button"
-            accessibilityLabel={`Continue ${nextLesson.title}`}
+            accessibilityLabel={`${firstLesson ? 'Start' : 'Continue'} ${nextLesson.title}`}
             hitSlop={6}
             onPress={onContinue}
             style={[styles.badge, styles.currentUnitContinue, { backgroundColor: theme.accent }]}
           >
-            <Text style={[styles.badgeText, styles.currentUnitContinueText]}>Continue</Text>
+            <Text style={[styles.badgeText, styles.currentUnitContinueText]}>
+              {firstLesson ? 'Start' : 'Continue'}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -384,7 +393,11 @@ export default function HomeScreen() {
   const units = projection?.units || [];
   const reviewQueueCount = projection?.dashboard.reviewCount || 0;
   const pendingMistakesCount = projection?.dashboard.pendingMistakeCount || 0;
+  const reviewEnabled = projection?.dashboard.reviewEnabled ?? true;
   const plan = projection?.plan;
+  const firstLesson = Boolean(
+    projection?.firstDay && !plan?.steps.find((step) => step.id === 'lesson-1')?.complete
+  );
 
   return (
     <View style={styles.container}>
@@ -411,7 +424,9 @@ export default function HomeScreen() {
                 style={[styles.topSubtitle, { color: theme.subtitle }]}
               >
                 {projection
-                  ? `⚡ ${projection.dashboard.xp} · 🔥 ${projection.dashboard.streak} · ${projection.dashboard.masteryPercent}% mastered`
+                  ? projection.firstDay
+                    ? "Welcome! Let's learn your first words."
+                    : `⚡ ${projection.dashboard.xp} · 🔥 ${projection.dashboard.streak} · ${projection.dashboard.masteryPercent}% mastered`
                   : null}
               </Text>
             </View>
@@ -443,9 +458,10 @@ export default function HomeScreen() {
             icon="refresh-cw"
             label="Review"
             accessibilityLabel={reviewQueueCount ? `Review, ${reviewQueueCount} due` : 'Review'}
-            badge={reviewQueueCount || null}
+            badge={reviewEnabled ? reviewQueueCount || null : null}
             badgeTestId="review-count"
             badgeTextColor={theme.badgeText}
+            disabled={!reviewEnabled}
             reduceMotion={reduceMotion}
             onPress={() => navigation.navigate('DailyReview', { language })}
           />
@@ -494,6 +510,7 @@ export default function HomeScreen() {
         {plan ? (
           <TodaysPlan
             plan={plan}
+            firstDay={projection.firstDay}
             theme={theme}
             reduceMotion={reduceMotion}
             onAction={() => navigation.navigate(
@@ -507,6 +524,8 @@ export default function HomeScreen() {
             currentUnit={projection.currentUnit}
             catalogComplete={projection.catalogComplete}
             hasLessons={units.some((unit) => unit.totalLessons > 0)}
+            firstDay={projection.firstDay}
+            firstLesson={firstLesson}
             theme={theme}
             onContinue={() => navigation.navigate('Lesson', {
               language,
@@ -874,6 +893,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center'
+  },
+
+  firstDayPlanCta: {
+    marginTop: 12
   },
 
   planCtaText: {
