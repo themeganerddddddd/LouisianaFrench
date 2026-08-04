@@ -29,15 +29,25 @@ function shuffle(arr, randomFn = Math.random) {
 function makeMatchColumns(pairs = []) {
   const safePairs = Array.isArray(pairs) ? pairs : [];
 
-  const leftItems = shuffle(safePairs.map((p) => p.left));
-  let rightItems = shuffle(safePairs.map((p) => p.right));
+  const leftItems = shuffle(
+    safePairs.map((pair, pairIndex) => ({
+      id: `left:${pairIndex}`,
+      value: pair.left,
+      pairIndex
+    }))
+  );
+  let rightItems = shuffle(
+    safePairs.map((pair, pairIndex) => ({
+      id: `right:${pairIndex}`,
+      value: pair.right,
+      pairIndex
+    }))
+  );
 
   function hasDirectMatch(leftList, rightList) {
-    return rightList.some((rightValue, index) => {
-      const leftValue = leftList[index];
-      const matchingPair = safePairs.find((p) => p.left === leftValue);
-      return matchingPair?.right === rightValue;
-    });
+    return rightList.some((rightItem, index) =>
+      leftList[index]?.pairIndex === rightItem.pairIndex
+    );
   }
 
   if (safePairs.length > 1) {
@@ -213,6 +223,10 @@ function getTargetDisplay(activity, showVariantAlt) {
   }
 
   return activity?.answerDisplay || activity?.target || activity?.answer || '';
+}
+
+function valueForId(items, id) {
+  return items.find((item) => item.id === id)?.value || '';
 }
 
 function getPromptDisplay(activity, englishText) {
@@ -1363,24 +1377,32 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
 
   function isMatchedLeft(item) {
-    return matches.some((m) => m.left === item);
+    return matches.some((m) => m.leftId === item.id);
   }
 
   function isMatchedRight(item) {
-    return matches.some((m) => m.right === item);
+    return matches.some((m) => m.rightId === item.id);
   }
 
   function rightAudioKey(item) {
-    return activity.pairs?.find((p) => p.right === item)?.audioKey;
+    return activity.pairs?.[item.pairIndex]?.audioKey;
   }
 
   function checkPair() {
     if (!selectedLeft || !selectedRight) return;
 
-    const pair = activity.pairs?.find((p) => p.left === selectedLeft);
+    const leftItem = left.find((item) => item.id === selectedLeft);
+    const rightItem = right.find((item) => item.id === selectedRight);
+    const leftValue = valueForId(left, selectedLeft);
+    const rightValue = valueForId(right, selectedRight);
+    const pair = activity.pairs?.[leftItem?.pairIndex];
 
-    if (pair?.right === selectedRight) {
-      const nextMatches = [...matches, { left: selectedLeft, right: selectedRight }];
+    if (
+      pair?.left === leftValue &&
+      pair?.right === rightValue &&
+      leftItem?.pairIndex === rightItem?.pairIndex
+    ) {
+      const nextMatches = [...matches, { leftId: selectedLeft, rightId: selectedRight }];
 
       setMatches(nextMatches);
       setSelectedLeft(null);
@@ -1429,11 +1451,11 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
         <View style={styles.matchColumn}>
           {left.map((item) => {
             const matched = isMatchedLeft(item);
-            const active = selectedLeft === item;
+            const active = selectedLeft === item.id;
 
             return (
               <TouchableOpacity
-                key={item}
+                key={item.id}
                 disabled={matched || isLocked(state)}
                 style={[
                   styles.matchItem,
@@ -1444,9 +1466,9 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
                   matched && styles.matchedItem,
                   isLocked(state) && !matched && styles.optionLocked
                 ]}
-                onPress={() => setSelectedLeft(item)}
+                onPress={() => setSelectedLeft(item.id)}
               >
-                <Text style={styles.matchText}>{item}</Text>
+                <Text style={styles.matchText}>{item.value}</Text>
               </TouchableOpacity>
             );
           })}
@@ -1455,11 +1477,11 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
         <View style={styles.matchColumn}>
           {right.map((item) => {
             const matched = isMatchedRight(item);
-            const active = selectedRight === item;
+            const active = selectedRight === item.id;
 
             return (
               <TouchableOpacity
-                key={item}
+                key={item.id}
                 disabled={matched || isLocked(state)}
                 style={[
                   styles.matchItem,
@@ -1471,13 +1493,13 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
                   isLocked(state) && !matched && styles.optionLocked
                 ]}
                 onPress={() => {
-                  setSelectedRight(item);
+                  setSelectedRight(item.id);
 
                   const key = rightAudioKey(item);
                   if (key) playAudioKey(key);
                 }}
               >
-                <Text style={styles.matchText}>{item}</Text>
+                <Text style={styles.matchText}>{item.value}</Text>
               </TouchableOpacity>
             );
           })}
@@ -1520,9 +1542,9 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
         onNext={onCorrect}
         onIncorrect={() =>
           onWrong(
-            state === 'skipped'
-              ? '__skipped__'
-              : `${selectedLeft || ''} ↔ ${selectedRight || ''}`
+              state === 'skipped'
+                ? '__skipped__'
+                : `${valueForId(left, selectedLeft)} ↔ ${valueForId(right, selectedRight)}`
           )
         }
         altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}

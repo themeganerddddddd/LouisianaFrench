@@ -34,6 +34,16 @@ function renderActivity(activity, handlers = {}) {
   return { ...rendered, onCorrect, onWrong };
 }
 
+const duplicateLeftMatchPairsActivity = Object.freeze({
+  type: 'match_pairs',
+  prompt: 'Match the duplicate words',
+  pairs: [
+    { left: 'Hello', right: 'Bonjour' },
+    { left: 'Hello', right: 'Salut' }
+  ],
+  answerDisplay: 'All matched'
+});
+
 async function expectAudioPlayedAfter(callsBeforePress) {
   await waitFor(() => {
     expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(callsBeforePress + 1);
@@ -438,6 +448,22 @@ describe('ActivityRenderer', () => {
       await chooseAndCheck(user, 'Ça va?');
       expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
       await finishCorrect(user, onCorrect);
+    });
+
+    it('keeps duplicate left labels independently matchable', async () => {
+      const user = userEvent.setup();
+      const random = jest.spyOn(Math, 'random').mockReturnValue(0.5);
+      const { onCorrect } = renderActivity(duplicateLeftMatchPairsActivity);
+
+      try {
+        await user.press(screen.getAllByText('Hello')[0]);
+        await chooseAndCheck(user, 'Bonjour');
+        await user.press(screen.getAllByText('Hello')[1]);
+        await chooseAndCheck(user, 'Salut');
+        await finishCorrect(user, onCorrect);
+      } finally {
+        random.mockRestore();
+      }
     });
 
     it('allows retry after a wrong pair, then continues after final wrong', async () => {
