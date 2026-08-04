@@ -20,13 +20,6 @@ Use the canonical local triage roles. See `docs/agents/triage-labels.md`.
 
 This is a single-context repository. Read `CONTEXT.md` and relevant decisions under `docs/adr/` before exploring or changing code. See `docs/agents/domain.md`.
 
-### HomeScreen redesign
-
-- Execute one sub-issue of #49 per fresh context with `/homescreen-ticket <issue-number>`.
-- The `coordinator` delegates the workflow to `general`, `explore`, `coding-specialist`, `review`, and `drift-detector` with role-specific prompts; do not create HomeScreen-specific agents.
-- It validates blockers, the ticket plan, and design-source drift before coding, then runs independent specification/UI and bug reviews.
-- Issue #56 is a human release gate; do not treat its `ready-for-human` label as an implementation frontier ticket.
-
 ## Engineering workflow
 
 - Establish reusable fixtures while writing tests, before broad characterization or substantial production changes. Keep shipped-data validation separate from compact behavior fixtures.

@@ -3,25 +3,9 @@
   "plugin": [
     "oxlint"
   ],
-  "agent": {
-    "plan": {
-      "model": "opencode-go/grok-4.5"
-    },
-    "general": {
-      "model": "opencode-go/deepseek-v4-pro",
-      "mode": "all"
-    },
-    "explore": {
-      "model": "opencode-go/big-pickle"
-    },
-    "coding-specialist": {
-      "model": "opencode-go/deepseek-v4-pro"
-    },
-    "review": {
-      "model": "opencode-go/grok-4.5"
-    },
-    "validator": {
-      "model": "opencode-go/deepseek-v4-pro"
-    }
+  "server": {
+    "port": 4096,
+    "hostname": "0.0.0.0",
+    "mdns": true
   }
 }

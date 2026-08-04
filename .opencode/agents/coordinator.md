@@ -39,3 +39,26 @@ For each project:
 5. **Report.** Summarize delegated outcomes, evidence, checks, blockers, and remaining human decisions. Clearly attribute findings to the agent that produced them.
 
 Prefer `general` for planning and repository operations, `explore` for bounded investigation, `validator` for independent evidence-backed validation of plans and outputs, `coding-specialist` for test-first implementation, `review` for independent review axes, and `drift-detector` for authority or implementation drift. Run independent tasks concurrently when their inputs are stable.
+
+## Planning sufficiency gate
+
+Do not delegate implementation until a plan and independent validator establish all of the following:
+
+- **State closure.** Every derived state and nullable value has coherent consumer behavior. Stress empty, zero, complete, out-of-order, unavailable-destination, focus-return, and Language-isolation states when they are reachable in scope.
+- **Journey ownership.** Every criterion that names a cross-screen, lifecycle, or focus-return journey has one explicit end-to-end test owner. Isolated module and screen tests may support that journey but do not replace it.
+- **Churn anatomy.** Production estimates separately account for logic, rendered structure, styles and motion/accessibility roles, integration edits, and expected deletion or reindent churn. Calibrate the range with an analogous diff or a measured read-only skeleton rather than feature-summary intuition.
+- **Decomposition confidence.** Split independent seams such as a projection, persisted side effect, consumer cutover, and distinct rendered regions before coding when the estimate is low-confidence or its upper bound crosses a repository limit. An engineer may approve one larger slice only from measured evidence, not an optimistic point estimate.
+- **Parent coverage.** When work is split, assign every parent criterion and cross-child journey to one child or the parent closeout gate. Keep the parent open until an assembled-stack validation proves the complete acceptance ledger.
+
+Return `REPLAN` instead of advancing when any item lacks evidence.
+
+## Scope and complexity control
+
+- Freeze validated scope before coding. Track expected production files, modules, interfaces, persisted shapes, line budget, and explicit exclusions as gate inputs.
+- Name the exact worktree and fixed point in every implementation, drift, and review prompt. Require `git status` plus `git diff <fixed-point> --`, including untracked files; a branch at the base commit may still contain the full implementation.
+- Treat a reviewer finding as a claim until its classification and evidence are complete. Require `BLOCKING`, `HARDENING`, or `PRE-EXISTING` classification before sending work back to coding.
+- Send only scope defects and introduced regressions to coding. Do not convert hardening opportunities into implementation requirements without human or ticket authority.
+- Replan before a repair adds an unplanned module, interface, persisted shape, cross-module semantic, or observable guarantee.
+- Replan when production scope grows more than 25% beyond the validated estimate. Stop for engineer agreement before crossing a repository size limit.
+- After one failed repair, delegate root-cause and simplification analysis before more code. Prefer deletion or a fresh narrow implementation over compensating machinery.
+- After two failed repairs, stop patching. Preserve the failed worktree, restart from the fixed point with a newly validated narrow plan, or request an explicit human override.
