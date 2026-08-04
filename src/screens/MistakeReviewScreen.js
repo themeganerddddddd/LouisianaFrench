@@ -5,13 +5,14 @@ import { getAllActivities } from '../data/lessonLoader';
 import SafeScreenView from '../components/SafeScreenView';
 import {
   getPendingMistakes,
+  markLessonComplete,
   recordPracticeCompletion,
   recordStudyAndXp,
   removePendingMistake
 } from '../utils/storage';
 
 export default function MistakeReviewScreen({ route, navigation }) {
-  const { language, lessonTitle, mistakes, lessonXp } = route.params;
+  const { language, lessonTitle, mistakes, lessonXp, lessonId } = route.params;
   const homeMode = route.params?.source === 'home';
   const [queue, setQueue] = useState(() => (homeMode ? [] : mistakes || []));
   const [index, setIndex] = useState(0);
@@ -74,13 +75,15 @@ export default function MistakeReviewScreen({ route, navigation }) {
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
-      const updatedProfile = await recordStudyAndXp(10);
+      const totalXp = homeMode ? 10 : (lessonXp || 0) + 10;
+      const updatedProfile = await recordStudyAndXp(totalXp);
+      if (!homeMode && lessonId) await markLessonComplete(language, lessonId);
 
       if (homeMode) navigation.replace('Home', { language });
       else {
         navigation.replace('LessonComplete', {
           lessonTitle,
-          xpEarned: (lessonXp || 0) + 10,
+          xpEarned: totalXp,
           mistakesCount: queue.length,
           streak: updatedProfile.streak,
           scoreEarned: null,
