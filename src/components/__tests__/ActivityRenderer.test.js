@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import ActivityRenderer from '../ActivityRenderer';
 import { fixtureActivities } from '../../test/fixtures/catalog/activities';
 import {
@@ -59,6 +59,17 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('Tap the word to hear it again')).toBeOnTheScreen();
 
       await press(user, 'Continue');
+      expect(onCorrect).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores a rapid double press on Continue', () => {
+      const { onCorrect } = renderActivity(fixtureActivities.intro);
+      const continueButton = screen.getByText('Continue');
+
+      fireEvent.press(continueButton);
+      expect(screen.getByText('Continue')).toBeDisabled();
+      fireEvent.press(continueButton);
+
       expect(onCorrect).toHaveBeenCalledTimes(1);
     });
 
@@ -205,6 +216,36 @@ describe('ActivityRenderer', () => {
 
       await chooseAndCheck(user, 'Ça va?');
       await finishCorrect(user, onCorrect);
+    });
+
+    it('ignores a rapid double press on Next Question', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity(fixtureActivities.multipleChoice);
+
+      await chooseAndCheck(user, 'Ça va?');
+      const nextButton = screen.getByText('Next Question');
+
+      fireEvent.press(nextButton);
+      expect(screen.getByText('Next Question')).toBeDisabled();
+      fireEvent.press(nextButton);
+
+      expect(onCorrect).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores a rapid double press on final wrong Continue', async () => {
+      const user = userEvent.setup();
+      const { onWrong } = renderActivity(fixtureActivities.multipleChoice);
+
+      await chooseAndCheck(user, 'Bonjour');
+      await retry(user);
+      await chooseAndCheck(user, 'Bonjour');
+
+      const continueButton = screen.getByText('Continue');
+      fireEvent.press(continueButton);
+      expect(screen.getByText('Continue')).toBeDisabled();
+      fireEvent.press(continueButton);
+
+      expect(onWrong).toHaveBeenCalledTimes(1);
     });
 
     it('offers a first-wrong retry with a hint, then shows the answer on final wrong', async () => {
