@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
+import { AccessibilityInfo, Animated, BackHandler } from 'react-native';
 
 import {
   activityByCardId,
@@ -314,6 +314,7 @@ describe('HomeScreen', () => {
   });
 
   it('renders both Language identities with their gradient themes', async () => {
+    const user = setupUser();
     await seedAsyncStorage({
       profile: profiles.established,
       lessonProgress: {
@@ -371,18 +372,19 @@ describe('HomeScreen', () => {
     expect(
       within(screen.getByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
     ).toBeOnTheScreen();
+    await user.press(screen.getByTestId('unit-toggle-u01'));
     expect(screen.getByText('First greetings')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
   });
 
   it('renders Catalog and Learner Progress values from one Home projection snapshot', async () => {
+    const user = setupUser();
     const getProjection = jest
       .spyOn(homeProjection, 'getHomeProjection')
       .mockResolvedValue(projectionFixture());
 
     try {
-      await seedAsyncStorage({ lastWorkedUnit: { cajun: 'u99' } });
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
@@ -392,6 +394,7 @@ describe('HomeScreen', () => {
       expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 91 · 🔥 7 · 50% mastered');
       expect(screen.getByTestId('review-count')).toHaveTextContent('4');
       expect(screen.getByTestId('mistakes-count')).toHaveTextContent('2');
+      await user.press(screen.getByTestId('unit-toggle-u99'));
       expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
       expect(screen.queryByText('Greetings & Check-ins')).toBeNull();
       expect(getProjection).toHaveBeenCalledWith('cajun');
@@ -782,7 +785,7 @@ describe('HomeScreen', () => {
     }
   });
 
-  it('collapses Units by default and allows only one open Unit', async () => {
+  it('collapses Units by default and allows multiple open Units independently', async () => {
     const user = setupUser();
 
     renderApp({
@@ -805,10 +808,22 @@ describe('HomeScreen', () => {
       expanded: true
     });
 
+    // Open second Unit without closing the first — multi-open
     await user.press(screen.getByTestId('unit-toggle-u02'));
 
-    expect(screen.getAllByText('First greetings')).toHaveLength(1);
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: true
+    });
+    expect(screen.getByTestId('unit-toggle-u02').props.accessibilityState).toEqual({
+      expanded: true
+    });
+    expect(screen.getAllByText('First greetings')).toHaveLength(2);
     expect(screen.getByText('Everyday phrases')).toBeOnTheScreen();
+
+    // Collapse only u01; u02 stays open
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+
+    expect(screen.getAllByText('First greetings')).toHaveLength(1);
     expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
       expanded: false
     });
@@ -816,6 +831,7 @@ describe('HomeScreen', () => {
       expanded: true
     });
 
+    // Collapse u02
     await user.press(screen.getByTestId('unit-toggle-u02'));
 
     expect(screen.queryByText('Everyday phrases')).toBeNull();
@@ -824,11 +840,11 @@ describe('HomeScreen', () => {
     });
   });
 
-  it('schedules a layout transition when a Unit expands or collapses', async () => {
+  it('animates the chevron with Animated.timing when a Unit expands or collapses', async () => {
     const user = setupUser();
-    const configureNext = jest
-      .spyOn(LayoutAnimation, 'configureNext')
-      .mockImplementation(() => {});
+    const timing = jest
+      .spyOn(Animated, 'timing')
+      .mockReturnValue({ start: jest.fn() });
 
     try {
       renderApp({
@@ -839,30 +855,131 @@ describe('HomeScreen', () => {
       expect(
         within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
       ).toBeOnTheScreen();
-      expect(configureNext).not.toHaveBeenCalled();
+      expect(timing).not.toHaveBeenCalled();
 
       await user.press(screen.getByTestId('unit-toggle-u01'));
 
-      expect(configureNext).toHaveBeenCalledWith({
-        duration: 220,
-        create: {
-          type: LayoutAnimation.Types.easeInEaseOut,
-          property: LayoutAnimation.Properties.scaleY
-        },
-        update: {
-          type: LayoutAnimation.Types.easeInEaseOut
-        },
-        delete: {
-          type: LayoutAnimation.Types.easeInEaseOut,
-          property: LayoutAnimation.Properties.scaleY
-        }
+      expect(timing).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ toValue: 1, duration: 150, useNativeDriver: true })
+      );
+
+      await user.press(screen.getByTestId('unit-toggle-u01'));
+
+      expect(timing.mock.calls[timing.mock.calls.length - 1][1]).toEqual(
+        expect.objectContaining({ toValue: 0, duration: 150, useNativeDriver: true })
+      );
+    } finally {
+      timing.mockRestore();
+    }
+  });
+
+  it('collapses all Units and resets chevrons when Language switches', async () => {
+    const user = setupUser();
+    const timing = jest
+      .spyOn(Animated, 'timing')
+      .mockReturnValue({ start: jest.fn() });
+
+    try {
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
       });
 
+      // Expand u01
+      expect(
+        within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+      ).toBeOnTheScreen();
       await user.press(screen.getByTestId('unit-toggle-u01'));
 
-      expect(configureNext).toHaveBeenCalledTimes(2);
+      expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+        expanded: true
+      });
+      expect(screen.getAllByText('First greetings')).toHaveLength(2);
+
+      // Switch Language
+      await user.press(screen.getByLabelText('Louisiana French flag'));
+
+      expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+
+      // All Units collapsed in the new Language
+      expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+        expanded: false
+      });
+      // Lesson rows not visible — only the CurrentUnit shows the title once
+      const kouriLessons = screen.queryAllByText('First pronouns');
+      expect(kouriLessons.length).toBeLessThanOrEqual(1);
     } finally {
-      configureNext.mockRestore();
+      timing.mockRestore();
+    }
+  });
+
+  it('reaches the correct final expanded state after rapid repeated presses', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('unit-toggle-u01');
+
+    // Rapid toggle: expand → collapse → expand
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+
+    // Final state: expanded (odd count of toggles)
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+      expanded: true
+    });
+    expect(screen.getAllByText('First greetings')).toHaveLength(2);
+  });
+
+  it('preserves correct chevron direction and skips animation under reduceMotion', async () => {
+    const reduceMotion = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+    const timing = jest
+      .spyOn(Animated, 'timing')
+      .mockReturnValue({ start: jest.fn() });
+
+    try {
+      const user = setupUser();
+
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      await screen.findByTestId('unit-toggle-u01');
+
+      await user.press(screen.getByTestId('unit-toggle-u01'));
+
+      // Animated.timing called with duration: 0 for instant endpoint
+      expect(timing).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ toValue: 1, duration: 0, useNativeDriver: true })
+      );
+
+      // Correct visual endpoint: expanded state and lesson rows visible
+      expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+        expanded: true
+      });
+      expect(screen.getAllByText('First greetings')).toHaveLength(2);
+
+      await user.press(screen.getByTestId('unit-toggle-u01'));
+
+      // Collapse also uses duration: 0
+      expect(timing.mock.calls[timing.mock.calls.length - 1][1]).toEqual(
+        expect.objectContaining({ toValue: 0, duration: 0, useNativeDriver: true })
+      );
+      expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
+        expanded: false
+      });
+    } finally {
+      reduceMotion.mockRestore();
+      timing.mockRestore();
     }
   });
 

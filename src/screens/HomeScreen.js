@@ -5,22 +5,19 @@ import { StatusBar } from 'expo-status-bar';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
+  Animated,
   Image,
-  LayoutAnimation,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  UIManager,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
 import {
   getDefaultLanguage,
-  getLastWorkedUnit,
   setDefaultLanguage
 } from '../utils/storage';
 import { getHomeProjection } from '../utils/homeProjection';
@@ -37,6 +34,38 @@ function getUnitNumber(unitCode) {
   if (!match) return 'Unit';
 
   return `Unit ${Number(match[1])}`;
+}
+
+function AccordionChevron({ expanded, reduceMotion, color = '#FFFFFF' }) {
+  const rotation = useRef(new Animated.Value(expanded ? 1 : 0)).current;
+  const prevExpanded = useRef(expanded);
+
+  useEffect(() => {
+    if (prevExpanded.current === expanded) return;
+    prevExpanded.current = expanded;
+
+    const toValue = expanded ? 1 : 0;
+    Animated.timing(rotation, {
+      toValue,
+      duration: reduceMotion ? 0 : 150,
+      useNativeDriver: true
+    }).start();
+
+    return () => {
+      rotation.stopAnimation();
+    };
+  }, [expanded, reduceMotion, rotation]);
+
+  const rotateInterpolation = rotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg']
+  });
+
+  return (
+    <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+      <Feather name="chevron-down" size={20} color={color} />
+    </Animated.View>
+  );
 }
 
 function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
@@ -283,7 +312,7 @@ export default function HomeScreen() {
   const [language, setLanguage] = useState(route.params?.language || 'cajun');
   const [projection, setProjection] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [expandedUnit, setExpandedUnit] = useState(null);
+  const [expandedUnits, setExpandedUnits] = useState(new Set());
   const initialExpansionLanguage = useRef(null);
 
   useEffect(() => {
@@ -307,21 +336,14 @@ export default function HomeScreen() {
     let cancelled = false;
     async function loadHome() {
       const needsInitialExpansion = initialExpansionLanguage.current !== language;
-      const [loadedProjection, lastWorkedUnit] = await Promise.all([
-        getHomeProjection(language),
-        needsInitialExpansion ? getLastWorkedUnit(language) : Promise.resolve(null)
-      ]);
+      const loadedProjection = await getHomeProjection(language);
 
       if (cancelled) return;
 
       setProjection(loadedProjection);
       if (needsInitialExpansion) {
         initialExpansionLanguage.current = language;
-        setExpandedUnit(
-          loadedProjection.units.some((unit) => unit.unitCode === lastWorkedUnit)
-            ? lastWorkedUnit
-            : null
-        );
+        setExpandedUnits(new Set());
       }
     }
 
@@ -333,11 +355,6 @@ export default function HomeScreen() {
     const preference = AccessibilityInfo.isReduceMotionEnabled?.();
     preference?.then(setReduceMotion);
   }, []);
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
 
   async function switchLanguage(nextLanguage) {
     setLanguage(nextLanguage);
@@ -345,22 +362,15 @@ export default function HomeScreen() {
   }
 
   function toggleUnit(unitCode) {
-    LayoutAnimation.configureNext({
-      duration: 220,
-      create: {
-        type: LayoutAnimation.Types.easeInEaseOut,
-        property: LayoutAnimation.Properties.scaleY
-      },
-      update: {
-        type: LayoutAnimation.Types.easeInEaseOut
-      },
-      delete: {
-        type: LayoutAnimation.Types.easeInEaseOut,
-        property: LayoutAnimation.Properties.scaleY
+    setExpandedUnits((prev) => {
+      const next = new Set(prev);
+      if (next.has(unitCode)) {
+        next.delete(unitCode);
+      } else {
+        next.add(unitCode);
       }
+      return next;
     });
-
-    setExpandedUnit((currentUnit) => (currentUnit === unitCode ? null : unitCode));
   }
 
   const theme =
@@ -541,7 +551,7 @@ export default function HomeScreen() {
                 onPress={() => toggleUnit(unitObj.unitCode)}
                 accessibilityRole="button"
                 accessibilityLabel={`Toggle ${unitObj.title}`}
-                accessibilityState={{ expanded: expandedUnit === unitObj.unitCode }}
+                accessibilityState={{ expanded: expandedUnits.has(unitObj.unitCode) }}
               >
                 <LinearGradient colors={theme.headerGrad} style={styles.unitHeader}>
                   <View style={styles.unitNumberPill}>
@@ -559,11 +569,11 @@ export default function HomeScreen() {
                     </Text>
                   </View>
 
-                  <View style={styles.unitToggleIcon}>
-                    <Text style={styles.unitToggleIconText}>
-                      {expandedUnit === unitObj.unitCode ? '-' : '+'}
-                    </Text>
-                  </View>
+                  <AccordionChevron
+                    expanded={expandedUnits.has(unitObj.unitCode)}
+                    reduceMotion={reduceMotion}
+                    key={`${language}-${unitObj.unitCode}`}
+                  />
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -579,7 +589,7 @@ export default function HomeScreen() {
                 />
               </View>
 
-              {expandedUnit === unitObj.unitCode
+              {expandedUnits.has(unitObj.unitCode)
                 ? unitObj.lessons.map((lesson) => {
                     const done = lesson.complete;
                     const buttonText = getLessonButtonText(done);
@@ -982,23 +992,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16
-  },
-
-  unitToggleIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 10
-  },
-
-  unitToggleIconText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-    lineHeight: 22
   },
 
   unitNumberPill: {
