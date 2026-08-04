@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react';
 import {
   act,
   fireEvent,
@@ -30,6 +31,7 @@ import {
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
+import MistakeReviewScreen from '../MistakeReviewScreen';
 import * as homeProjection from '../../utils/homeProjection';
 import DictionaryScreen from '../DictionaryScreen';
 import {
@@ -1904,6 +1906,46 @@ describe('LessonRunner', () => {
 });
 
 describe('MistakeReviewScreen', () => {
+  it('routes an empty non-home queue from an effect, not during render', () => {
+    let committed = false;
+    const navigation = {
+      replace: jest.fn(() => {
+        if (!committed) throw new Error('navigation.replace called during render');
+      })
+    };
+
+    function RenderProbe() {
+      useLayoutEffect(() => {
+        committed = true;
+      }, []);
+
+      return (
+        <MistakeReviewScreen
+          route={{
+            params: {
+              language: 'cajun',
+              lessonTitle: 'Greetings & Check-ins — First greetings',
+              mistakes: [],
+              lessonXp: 20
+            }
+          }}
+          navigation={navigation}
+        />
+      );
+    }
+
+    expect(() => render(<RenderProbe />)).not.toThrow();
+    expect(navigation.replace).toHaveBeenCalledWith('LessonComplete', {
+      lessonTitle: 'Greetings & Check-ins — First greetings',
+      xpEarned: 20,
+      mistakesCount: 0,
+      streak: null,
+      scoreEarned: null,
+      scorePossible: null,
+      language: 'cajun'
+    });
+  });
+
   it.each(MISTAKE_REVIEW_VIEWPORTS)(
     'applies quality-4 Card and Word recovery before lesson completion at %s width',
     async (_viewport, safeAreaMetrics) => {

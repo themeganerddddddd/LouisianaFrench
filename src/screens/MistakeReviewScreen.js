@@ -44,10 +44,9 @@ export default function MistakeReviewScreen({ route, navigation }) {
     loadPendingQueue();
   }, [homeMode, language, navigation]);
 
-  if (loading) return null;
+  useEffect(() => {
+    if (loading || homeMode || queue.length) return;
 
-  if (!queue.length) {
-    if (homeMode) return null;
     navigation.replace('LessonComplete', {
       lessonTitle,
       xpEarned: lessonXp || 0,
@@ -57,6 +56,11 @@ export default function MistakeReviewScreen({ route, navigation }) {
       scorePossible: null,
       language
     });
+  }, [homeMode, language, lessonTitle, lessonXp, loading, navigation, queue.length]);
+
+  if (loading) return null;
+
+  if (!queue.length) {
     return null;
   }
 
