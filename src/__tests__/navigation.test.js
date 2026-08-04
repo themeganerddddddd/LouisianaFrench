@@ -26,7 +26,7 @@ describe('navigation graph', () => {
     expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
   });
 
-  it('quarantines the unregistered Leaderboard contract pending Issue #27', () => {
+  it('keeps the removed Leaderboard route out of the navigation graph', () => {
     expect(routesDeclaredInAppSource()).not.toContain('Leaderboard');
   });
 

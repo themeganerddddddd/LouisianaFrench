@@ -1965,18 +1965,33 @@ describe('MistakeReviewScreen', () => {
 });
 
 describe('LessonCompleteScreen', () => {
-  it('shows session stats and returns Home', async () => {
+  const lessonCompleteParams = {
+    lessonTitle: 'Greetings & Check-ins — First greetings',
+    xpEarned: 30,
+    mistakesCount: 1,
+    streak: 2,
+    language: 'cajun'
+  };
+
+  it.each([
+    ['mobile', {
+      frame: { x: 0, y: 0, width: 390, height: 844 },
+      insets: { top: 0, right: 0, bottom: 0, left: 0 }
+    }],
+    ['desktop', {
+      frame: { x: 0, y: 0, width: 1440, height: 900 },
+      insets: { top: 0, right: 0, bottom: 0, left: 0 }
+    }]
+  ])('shows session stats and returns Home without Leaderboard at %s size', async (
+    size,
+    safeAreaMetrics
+  ) => {
     const user = setupUser();
 
     renderApp({
       initialRouteName: 'LessonComplete',
-      initialParams: {
-        lessonTitle: 'Greetings & Check-ins — First greetings',
-        xpEarned: 30,
-        mistakesCount: 1,
-        streak: 2,
-        language: 'cajun'
-      }
+      initialParams: lessonCompleteParams,
+      safeAreaMetrics
     });
 
     expect(screen.getByText('Session Complete 🎉')).toBeOnTheScreen();
@@ -1984,7 +1999,7 @@ describe('LessonCompleteScreen', () => {
     expect(screen.getByText('⚡ 30')).toBeOnTheScreen();
     expect(screen.getByText('📝 1')).toBeOnTheScreen();
     expect(screen.getByText('🔥 Streak: 2')).toBeOnTheScreen();
-    expect(screen.getByText('Open Leaderboard (WIP)')).toBeOnTheScreen();
+    expect(screen.queryByText('Open Leaderboard (WIP)')).toBeNull();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Back to Home'));
