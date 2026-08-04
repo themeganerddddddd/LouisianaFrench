@@ -330,6 +330,48 @@ describe('ActivityRenderer', () => {
       expectFinalWrong("C'est paré");
       await finishWrong(user, onWrong, 'paré');
     });
+
+    it('filters punctuation from the word pool and auto-appends it', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.sentenceBuild,
+        words: ["C'est", 'paré', '.'],
+        answerTokens: ["C'est", 'paré', '.'],
+        answer: "C'est paré.",
+        prompt: "Build: 'It's ready.'"
+      });
+
+      // '.' should NOT appear as a tappable chip in the pool
+      const chips = screen.UNSAFE_getAllByType(require('react-native').TouchableOpacity);
+      const chipTexts = chips.map((c) => c.props.children);
+      expect(chipTexts.some((t) => t === '.' || (typeof t === 'string' && t.includes('.')))).toBe(false);
+
+      // '.' should appear as plain text (the auto-appended punctuation)
+      expect(screen.getByText('.')).toBeOnTheScreen();
+
+      // Build and check — punctuation auto-appended, answer should be correct
+      await press(user, "C'est");
+      await chooseAndCheck(user, 'paré');
+      await finishCorrect(user, onCorrect);
+    });
+
+    it('plays audio only after the last content word is selected', async () => {
+      const user = userEvent.setup();
+      const callsBefore = Audio.Sound.createAsync.mock.calls.length;
+
+      renderActivity({
+        ...fixtureActivities.sentenceBuild,
+        audioKey: 'fixture-build-audio'
+      });
+
+      // First word — no audio
+      await press(user, "C'est");
+      expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(callsBefore);
+
+      // Last word — audio should play
+      await press(user, 'paré');
+      await expectAudioPlayedAfter(callsBefore);
+    });
   });
 
   describe('match_pairs', () => {
