@@ -2,9 +2,10 @@ import { useFocusEffect, useIsFocused, useNavigation, useRoute } from '@react-na
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
+  Animated,
   Image,
   LayoutAnimation,
   Platform,
@@ -283,6 +284,7 @@ export default function HomeScreen() {
   const [projection, setProjection] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [expandedUnits, setExpandedUnits] = useState(new Set());
+  const chevronAnims = useRef({});
 
   useEffect(() => {
     async function bootstrapLanguage() {
@@ -346,6 +348,17 @@ export default function HomeScreen() {
         }
       });
     }
+
+    const isCurrentlyExpanded = expandedUnits.has(unitCode);
+    if (!chevronAnims.current[unitCode]) {
+      chevronAnims.current[unitCode] = new Animated.Value(isCurrentlyExpanded ? 1 : 0);
+    }
+
+    Animated.timing(chevronAnims.current[unitCode], {
+      toValue: isCurrentlyExpanded ? 0 : 1,
+      duration: reduceMotion ? 0 : 150,
+      useNativeDriver: true
+    }).start();
 
     setExpandedUnits((current) => {
       const next = new Set(current);
@@ -561,15 +574,27 @@ export default function HomeScreen() {
                     </Text>
                   </View>
 
-                  <Feather
-                    name="chevron-down"
-                    size={20}
-                    color="#FFFFFF"
-                    style={[
-                      styles.chevron,
-                      isExpanded && styles.chevronOpen
-                    ]}
-                  />
+                  {(() => {
+                    if (!chevronAnims.current[unitObj.unitCode]) {
+                      chevronAnims.current[unitObj.unitCode] = new Animated.Value(0);
+                    }
+
+                    const rotation = chevronAnims.current[unitObj.unitCode].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '180deg']
+                    });
+
+                    return (
+                      <Animated.View
+                        style={{
+                          marginLeft: 10,
+                          transform: [{ rotate: rotation }]
+                        }}
+                      >
+                        <Feather name="chevron-down" size={20} color="#FFFFFF" />
+                      </Animated.View>
+                    );
+                  })()}
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -1015,14 +1040,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16
-  },
-
-  chevron: {
-    marginLeft: 10
-  },
-
-  chevronOpen: {
-    transform: [{ rotate: '180deg' }]
   },
 
   unitNumberPill: {

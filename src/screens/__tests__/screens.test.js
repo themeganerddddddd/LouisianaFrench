@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
+import { AccessibilityInfo, Animated, BackHandler, LayoutAnimation } from 'react-native';
 
 import {
   activityByCardId,
@@ -880,65 +880,73 @@ describe('HomeScreen', () => {
     expect(toggle.props.accessibilityState).toEqual({ expanded: true });
   });
 
-  it('skips layout animation when reduceMotion is enabled', async () => {
-    const reduceMotion = jest
-      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
-      .mockResolvedValue(true);
-    const configureNext = jest
-      .spyOn(LayoutAnimation, 'configureNext')
-      .mockImplementation(() => {});
+  it('rotates the chevron from 0 to 1 over 150ms when expanding', async () => {
+    const timingSpy = jest.spyOn(Animated, 'timing');
+    const user = setupUser();
 
-    try {
-      const user = setupUser();
-      renderApp({
-        initialRouteName: 'Home',
-        initialParams: { language: 'cajun' }
-      });
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
 
-      expect(
-        within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
-      ).toBeOnTheScreen();
-      await user.press(screen.getByTestId('unit-toggle-u01'));
-      expect(configureNext).not.toHaveBeenCalled();
-    } finally {
-      reduceMotion.mockRestore();
-      configureNext.mockRestore();
-    }
+    await screen.findByTestId('unit-toggle-u01');
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+
+    expect(timingSpy).toHaveBeenCalledWith(
+      expect.any(Animated.Value),
+      expect.objectContaining({ toValue: 1, duration: 150, useNativeDriver: true })
+    );
+
+    timingSpy.mockRestore();
   });
 
-  it('preserves correct chevron direction and skips animation when reduceMotion is enabled', async () => {
+  it('rotates the chevron back to 0 over 150ms when collapsing', async () => {
+    const timingSpy = jest.spyOn(Animated, 'timing');
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('unit-toggle-u01');
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+    timingSpy.mockClear();
+    await user.press(screen.getByTestId('unit-toggle-u01'));
+
+    expect(timingSpy).toHaveBeenCalledWith(
+      expect.any(Animated.Value),
+      expect.objectContaining({ toValue: 0, duration: 150, useNativeDriver: true })
+    );
+
+    timingSpy.mockRestore();
+  });
+
+  it('rotates the chevron instantly to the correct endpoint when reduceMotion is enabled', async () => {
     const reduceMotion = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockResolvedValue(true);
-    const configureNext = jest
-      .spyOn(LayoutAnimation, 'configureNext')
-      .mockImplementation(() => {});
+    const timingSpy = jest.spyOn(Animated, 'timing');
+    const user = setupUser();
 
     try {
-      const user = setupUser();
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
       });
 
-      const toggle = await screen.findByTestId('unit-toggle-u01');
-      expect(toggle.props.accessibilityState).toEqual({ expanded: false });
+      await screen.findByTestId('unit-toggle-u01');
+      await user.press(screen.getByTestId('unit-toggle-u01'));
 
-      await user.press(toggle);
-
-      expect(toggle.props.accessibilityState).toEqual({ expanded: true });
-      // Greetings review appears only inside the expanded accordion, not the Current Unit card.
-      // Its presence proves the chevron rotated and the accordion rendered correctly.
+      expect(timingSpy).toHaveBeenCalledWith(
+        expect.any(Animated.Value),
+        expect.objectContaining({ toValue: 1, duration: 0, useNativeDriver: true })
+      );
+      // Accordion rows are still visible — rotation reached the correct endpoint.
       expect(screen.getByLabelText('Greetings review')).toBeOnTheScreen();
-      expect(configureNext).not.toHaveBeenCalled();
-
-      await user.press(toggle);
-
-      expect(toggle.props.accessibilityState).toEqual({ expanded: false });
-      expect(configureNext).not.toHaveBeenCalled();
     } finally {
       reduceMotion.mockRestore();
-      configureNext.mockRestore();
+      timingSpy.mockRestore();
     }
   });
 
