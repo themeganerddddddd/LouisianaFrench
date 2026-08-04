@@ -2190,7 +2190,7 @@ describe('DailyReviewScreen', () => {
     expect(await getDailyReviewLog()).toEqual({ [getTodayKey()]: true });
   });
 
-  it('completes after a final wrong answer without double-scoring (KD-01)', async () => {
+  it('routes a final wrong answer to Mistake Review without double-scoring (KD-01)', async () => {
     jest.setSystemTime(clock.pastDue());
 
     await seedAsyncStorage({
@@ -2221,10 +2221,9 @@ describe('DailyReviewScreen', () => {
 
     await user.press(screen.getByText('Continue'));
 
-    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
-    expect(screen.getByText('Daily Review')).toBeOnTheScreen();
-    expect(screen.getByText('⚡ 0')).toBeOnTheScreen();
-    expect(screen.getByText('📝 1')).toBeOnTheScreen();
+    expect(await screen.findByText('Mistake Review')).toBeOnTheScreen();
+    expect(screen.getByText("Choose the match for 'How’s it going?'"))
+      .toBeOnTheScreen();
     expect(await getLanguageDailyReviewLog('cajun')).toEqual({
       [getTodayKey()]: true
     });
