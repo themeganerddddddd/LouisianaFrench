@@ -173,7 +173,7 @@ async function expectMistakeReviewProgress(cardId) {
       repetitions: 2,
       interval: 3,
       easeFactor: 2.5,
-      lapses: 1
+      lapses: 0
     })
   }));
   expect(await getWordProgress()).toEqual({
