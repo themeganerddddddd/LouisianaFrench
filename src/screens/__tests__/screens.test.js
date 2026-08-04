@@ -153,11 +153,26 @@ describe('LoadingScreen', () => {
     expect(await screen.findByText('Choose your language')).toBeOnTheScreen();
   });
 
-  it('routes a returning learner to Home with the saved Language', async () => {
+  it.each([
+    ['mobile', {
+      frame: { x: 0, y: 0, width: 390, height: 844 },
+      insets: { top: 0, right: 0, bottom: 0, left: 0 }
+    }],
+    ['desktop', {
+      frame: { x: 0, y: 0, width: 1440, height: 900 },
+      insets: { top: 0, right: 0, bottom: 0, left: 0 }
+    }]
+  ])('shows the saved Language on the %s splash and routes to Home', async (
+    _viewport,
+    safeAreaMetrics
+  ) => {
     await setDefaultLanguage('kreole');
     await markLanguageSelected();
 
-    renderApp({ initialRouteName: 'Loading' });
+    renderApp({ initialRouteName: 'Loading', safeAreaMetrics });
+
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+    expect(screen.queryByText('Louisiana French')).toBeNull();
 
     await act(async () => {
       jest.advanceTimersByTime(3000);
