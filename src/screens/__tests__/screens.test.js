@@ -27,6 +27,7 @@ import {
   getDailyReviewLog,
   getPendingMistakes,
   getProfile,
+  getLessonProgress,
   getLanguageDailyReviewLog,
   getLastWorkedUnit,
   getTodayPractice,
@@ -1718,6 +1719,26 @@ describe('LessonRunner', () => {
 
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText(/Everyday phrases/)).toBeOnTheScreen();
+    expect((await getProfile()).xp).toBe(10);
+    expect((await getLessonProgress())['cajun:fixture_cajun_u02_l01'].completed).toBe(true);
+  });
+
+  it('marks an all-correct Lesson complete with its full XP', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' }
+    });
+
+    expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
+    await user.press(screen.getByText('Start lesson'));
+    expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
+    await user.press(screen.getByText('Continue'));
+
+    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
+    expect((await getProfile()).xp).toBe(10);
+    expect((await getLessonProgress())['cajun:fixture_cajun_u03_l01'].completed).toBe(true);
   });
 
   it('redirects to Home when the lesson is not found (KD-06)', async () => {
@@ -1846,6 +1867,8 @@ describe('MistakeReviewScreen', () => {
 
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
+    expect((await getProfile()).xp).toBe(30);
+    expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01'].completed).toBe(true);
   });
 
   it('removes only the corrected Card while the next pending Card remains', async () => {
@@ -1933,6 +1956,7 @@ describe('MistakeReviewScreen', () => {
       pendingMistakes.kreole.pronounsChoice
     ]);
     expect((await getProfile()).xp).toBe(10);
+    expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01']).toBeUndefined();
     expect(await getTodayPractice('cajun')).toEqual({
       type: 'mistakeReview',
       completedAt: expect.any(String)
