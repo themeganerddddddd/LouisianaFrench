@@ -73,6 +73,18 @@ describe('updateCardReview', () => {
     expect(lapsed.lapses).toBe(1);
   });
 
+  it('graduates a weak Card after a quality 4 review', async () => {
+    jest.setSystemTime(clock.reviewStart());
+    await saveReviewState({
+      weakCard: buildCardReviewState({ repetitions: 0, lapses: 1 })
+    });
+
+    const card = await updateCardReview('weakCard', 4);
+
+    expect(card.repetitions).toBe(1);
+    expect(card.lapses).toBe(0);
+  });
+
   it('persists Card state across calls, keyed by Card id', async () => {
     jest.setSystemTime(clock.reviewStart());
 
