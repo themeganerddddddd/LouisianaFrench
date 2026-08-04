@@ -763,7 +763,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
   });
 
-  it('does not show a Review badge for all-future Cards while Daily Review keeps its fallback', async () => {
+  it('does not show a Review badge for all-future Cards and Daily Review is empty', async () => {
     await seedAsyncStorage({
       lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       reviewState: reviewStates.allFuture
@@ -780,7 +780,8 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-review-circle')).toBeTruthy();
     expect(screen.queryByTestId('review-count') === null).toBe(true);
     await user.press(screen.getByTestId('home-review-control'));
-    expect(await screen.findByText('1 / 5')).toBeOnTheScreen();
+    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
+    expect(screen.queryByText('1 / 5')).toBeNull();
   });
 
   it('refreshes the Review badge on focus without remounting Home', async () => {
@@ -2080,22 +2081,36 @@ describe('LessonCompleteScreen', () => {
 });
 
 describe('DailyReviewScreen', () => {
-  it('builds a review queue from the Catalog fixture Activities', async () => {
-    renderApp({
+  it('shows an honest empty state at mobile and desktop sizes', async () => {
+    const user = setupUser();
+
+    const mobile = renderApp({
       initialRouteName: 'DailyReview',
-      initialParams: { language: 'cajun' }
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
     });
 
-    expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
-    expect(
-      screen.getByText('Due cards, weak words, and review practice.')
-    ).toBeOnTheScreen();
-    expect(screen.getByText('1 / 5')).toBeOnTheScreen();
-    expect(screen.getByText("Build: 'It's ready'")).toBeOnTheScreen();
-    expect(screen.queryByLabelText('Report a bug')).toBeNull();
+    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Back to Home' })).toBeOnTheScreen();
+    expect(screen.queryByText('1 / 5')).toBeNull();
+    mobile.unmount();
 
-    const check = await screen.findByText('Check');
-    expect(check).toBeDisabled();
+    renderApp({
+      initialRouteName: 'DailyReview',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 1440, height: 900 },
+        insets: { top: 0, right: 0, bottom: 0, left: 0 }
+      }
+    });
+
+    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Back to Home' })).toHaveStyle({ minWidth: 180 });
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual({});
+    expect(await getDailyReviewLog()).toEqual({});
+
+    await user.press(screen.getByRole('button', { name: 'Back to Home' }));
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
   });
 
   it('completes when the sole due Card is answered correctly', async () => {
