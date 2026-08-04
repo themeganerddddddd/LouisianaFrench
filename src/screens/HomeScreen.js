@@ -567,7 +567,7 @@ export default function HomeScreen() {
                     color="#FFFFFF"
                     style={[
                       styles.chevron,
-                      isExpanded && !reduceMotion && styles.chevronOpen
+                      isExpanded && styles.chevronOpen
                     ]}
                   />
                 </LinearGradient>

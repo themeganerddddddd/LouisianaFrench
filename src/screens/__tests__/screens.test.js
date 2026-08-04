@@ -906,10 +906,13 @@ describe('HomeScreen', () => {
     }
   });
 
-  it('preserves immediate state direction when reduceMotion is enabled', async () => {
+  it('preserves correct chevron direction and skips animation when reduceMotion is enabled', async () => {
     const reduceMotion = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockResolvedValue(true);
+    const configureNext = jest
+      .spyOn(LayoutAnimation, 'configureNext')
+      .mockImplementation(() => {});
 
     try {
       const user = setupUser();
@@ -922,12 +925,20 @@ describe('HomeScreen', () => {
       expect(toggle.props.accessibilityState).toEqual({ expanded: false });
 
       await user.press(toggle);
+
       expect(toggle.props.accessibilityState).toEqual({ expanded: true });
+      // Greetings review appears only inside the expanded accordion, not the Current Unit card.
+      // Its presence proves the chevron rotated and the accordion rendered correctly.
+      expect(screen.getByLabelText('Greetings review')).toBeOnTheScreen();
+      expect(configureNext).not.toHaveBeenCalled();
 
       await user.press(toggle);
+
       expect(toggle.props.accessibilityState).toEqual({ expanded: false });
+      expect(configureNext).not.toHaveBeenCalled();
     } finally {
       reduceMotion.mockRestore();
+      configureNext.mockRestore();
     }
   });
 
