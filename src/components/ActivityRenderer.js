@@ -1148,9 +1148,15 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
   );
 }
 
+const SENTENCE_PUNCT = new Set(['.', '?', '!', ',']);
+
 function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
+  const words = activity.words || [];
+  const contentWords = words.filter((w) => !SENTENCE_PUNCT.has(w));
+  const trailingPunct = words.filter((w) => SENTENCE_PUNCT.has(w));
+
   const [selected, setSelected] = useState([]);
-  const [pool, setPool] = useState(() => shuffle(activity.words || []));
+  const [pool, setPool] = useState(() => shuffle(contentWords));
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
@@ -1172,7 +1178,7 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
     setPool(nextPool);
     setSelected([...selected, word]);
 
-    if (activity.audioKey) {
+    if (activity.audioKey && nextPool.length === 0) {
       playAudioKey(activity.audioKey);
     }
   }
@@ -1188,9 +1194,10 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
   }
 
   function checkAnswer() {
-    const selectedText = selected.join(' ');
+    const fullSelected = [...selected, ...trailingPunct];
+    const selectedText = fullSelected.join(' ');
     const ok =
-      JSON.stringify(selected) === JSON.stringify(activity.answerTokens || []) ||
+      JSON.stringify(fullSelected) === JSON.stringify(activity.answerTokens || []) ||
       isTextAnswerCorrect(selectedText, activity);
 
     if (ok) {
@@ -1249,6 +1256,9 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
               <Text style={styles.wordChipText}>{word}</Text>
             </TouchableOpacity>
           ))}
+          {trailingPunct.map((p, idx) => (
+            <Text key={`punct-${idx}`} style={[styles.wordChipText, { lineHeight: undefined, paddingVertical: 8 }]}>{p}</Text>
+          ))}
         </View>
       </View>
 
@@ -1304,7 +1314,7 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() =>
-          onWrong(state === 'skipped' ? '__skipped__' : selected.join(' '))
+          onWrong(state === 'skipped' ? '__skipped__' : [...selected, ...trailingPunct].join(' '))
         }
         altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
       />
