@@ -8525,7 +8525,7 @@
         "prompt": "Match the words",
         "pairs": [
           {
-            "left": "they want",
+            "left": "they want (Standard French)",
             "right": "ils veulent",
             "audioKey": "u04_w0023_cajun"
           },
@@ -11199,7 +11199,7 @@
             "audioKey": "u05_w0019_cajun"
           },
           {
-            "left": "they make",
+            "left": "they make (Standard French)",
             "right": "ils font",
             "audioKey": "u05_w0017_cajun"
           },
@@ -11699,7 +11699,7 @@
         "prompt": "Match the words",
         "pairs": [
           {
-            "left": "they make",
+            "left": "they make (Standard French)",
             "right": "ils font",
             "audioKey": "u05_w0017_cajun"
           },
