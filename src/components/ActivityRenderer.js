@@ -3,6 +3,7 @@ import { Audio } from 'expo-av';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -392,7 +393,7 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
         />
 
         {canOpenPreface ? (
-          <TouchableOpacity
+          <Pressable
             style={({ pressed }) => [
               styles.tBoyAction,
               pressed && styles.tBoyActionPressed
@@ -415,7 +416,7 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
               <Text style={[styles.tBoyActionText, { color: theme.accent }]}>T-Boy&apos;s Advice</Text>
               <Ionicons name="chevron-forward" size={14} color={theme.accent} />
             </View>
-          </TouchableOpacity>
+          </Pressable>
         ) : (
           <View style={styles.tBoyArtPocket}>
             <Image
