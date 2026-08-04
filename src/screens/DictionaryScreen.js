@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -38,27 +39,28 @@ export default function DictionaryScreen({ route }) {
   const [selectedUnit, setSelectedUnit] = useState('all');
   const soundRef = useRef(null);
 
-  useEffect(() => {
-    async function load() {
-      setAllWords(getAllWords(language));
-      setWordProgress(await getWordProgress());
-    }
-
-    load();
-
-    return () => {
-      unloadSound();
-    };
-  }, [language]);
-
-  async function unloadSound() {
+  const unloadSound = useCallback(async () => {
     try {
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
     } catch (_e) {}
-  }
+  }, []);
+
+  useFocusEffect(useCallback(() => {
+    let cancelled = false;
+
+    setAllWords(getAllWords(language));
+    getWordProgress().then((progress) => {
+      if (!cancelled) setWordProgress(progress);
+    });
+
+    return () => {
+      cancelled = true;
+      unloadSound();
+    };
+  }, [language, unloadSound]));
 
   async function playAudio(audioKey) {
     try {

@@ -1,6 +1,15 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from '@testing-library/react-native';
+import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AccessibilityInfo, BackHandler } from 'react-native';
+import { AccessibilityInfo, BackHandler, Text } from 'react-native';
 
 import {
   activityByCardId,
@@ -22,6 +31,7 @@ import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncS
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as homeProjection from '../../utils/homeProjection';
+import DictionaryScreen from '../DictionaryScreen';
 import {
   getDefaultLanguage,
   getDailyReviewLog,
@@ -2098,6 +2108,60 @@ describe('DailyReviewScreen', () => {
 });
 
 describe('DictionaryScreen', () => {
+  it('refreshes Word status when the mounted screen regains focus', async () => {
+    const navigationRef = createNavigationContainerRef();
+    const FocusStack = createStackNavigator();
+    const FocusAwayScreen = () => <Text>Focus away</Text>;
+
+    await seedAsyncStorage({ wordProgress: {} });
+    render(
+      <NavigationContainer ref={navigationRef}>
+        <FocusStack.Navigator initialRouteName="Dictionary" screenOptions={{ headerShown: false }}>
+          <FocusStack.Screen
+            name="Dictionary"
+            component={DictionaryScreen}
+            initialParams={{ language: 'cajun' }}
+          />
+          <FocusStack.Screen name="FocusAway" component={FocusAwayScreen} />
+        </FocusStack.Navigator>
+      </NavigationContainer>
+    );
+
+    expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
+    expect(screen.queryByText('Mastered')).toBeNull();
+
+    await act(async () => {
+      navigationRef.navigate('FocusAway');
+    });
+    expect(await screen.findByText('Focus away')).toBeOnTheScreen();
+
+    await seedAsyncStorage({
+      wordProgress: {
+        'cajun:fixture_cajun_w01': wordMastery.mastered
+      }
+    });
+
+    await act(async () => {
+      navigationRef.goBack();
+    });
+
+    expect(await screen.findByText('Mastered')).toBeOnTheScreen();
+
+    await seedAsyncStorage({
+      wordProgress: {
+        'kreole:fixture_kreole_w01': wordMastery.learningAfterWrong
+      }
+    });
+
+    await act(async () => {
+      navigationRef.setParams({ language: 'kreole' });
+    });
+
+    expect(await screen.findByText('Kouri-Vini Dictionary')).toBeOnTheScreen();
+    expect(await screen.findByText('nouzòt')).toBeOnTheScreen();
+    expect(screen.getByText('Learning')).toBeOnTheScreen();
+  });
+
   it('applies the final top inset on the first render', async () => {
     renderApp({
       initialRouteName: 'Dictionary',
