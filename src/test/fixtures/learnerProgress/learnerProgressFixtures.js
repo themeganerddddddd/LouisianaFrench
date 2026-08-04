@@ -49,7 +49,7 @@ export const wordMastery = frozen({
   new: frozen({ seen: 0, correct: 0, wrong: 0, status: 'new' }),
   learningAfterWrong: frozen({ seen: 1, correct: 0, wrong: 1, status: 'learning' }),
   strong: frozen({ seen: 2, correct: 2, wrong: 0, status: 'strong' }),
-  strongWithEqualAnswers: frozen({ seen: 8, correct: 4, wrong: 4, status: 'strong' }),
+  learningWithEqualAnswers: frozen({ seen: 8, correct: 4, wrong: 4, status: 'learning' }),
   mastered: frozen({ seen: 4, correct: 4, wrong: 0, status: 'mastered' })
 });
 
