@@ -115,6 +115,11 @@ describe('ActivityRenderer', () => {
 
       const action = screen.getByLabelText('T-Boy: open Unit note');
 
+      expect(action.props.style).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ minWidth: 106, minHeight: 130 })
+        ])
+      );
       expect(screen.getByText("T-Boy's Advice")).toBeOnTheScreen();
       expect(screen.UNSAFE_getByType(Ionicons).props.name).toBe('chevron-forward');
 
