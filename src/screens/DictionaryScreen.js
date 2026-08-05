@@ -31,8 +31,9 @@ function statusColor(status) {
   return '#64748B';
 }
 
-export default function DictionaryScreen({ route }) {
+export default function DictionaryScreen({ route, navigation }) {
   const { language } = route.params;
+  const accent = language === 'kreole' ? '#08834C' : '#2771CB';
   const [query, setQuery] = useState('');
   const [allWords, setAllWords] = useState([]);
   const [wordProgress, setWordProgress] = useState({});
@@ -175,11 +176,23 @@ export default function DictionaryScreen({ route }) {
               {word.audioKey ? (
                 <View style={styles.actionsRow}>
                   <TouchableOpacity
-                    style={styles.audioBtn}
+                    style={[styles.audioBtn, { backgroundColor: accent }]}
                     onPress={() => playAudio(word.audioKey)}
                   >
                     <Ionicons name="play" size={16} color="#fff" />
                     <Text style={styles.audioBtnText}>Play audio</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="Practice"
+                    style={[styles.practiceBtn, { borderColor: accent }]}
+                    onPress={() => navigation.navigate('DictionarySpeechPractice', {
+                      language,
+                      word
+                    })}
+                  >
+                    <Ionicons name="mic" size={15} color={accent} />
+                    <Text style={[styles.practiceBtnText, { color: accent }]}>Practice</Text>
                   </TouchableOpacity>
                 </View>
               ) : null}
@@ -281,7 +294,6 @@ const styles = StyleSheet.create({
   audioBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2771CB',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 999
@@ -290,6 +302,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '800',
     marginLeft: 6
+  },
+  practiceBtn: {
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginLeft: 8
+  },
+  practiceBtnText: {
+    fontSize: 13,
+    fontWeight: '800'
   },
   empty: {
     paddingVertical: 40,

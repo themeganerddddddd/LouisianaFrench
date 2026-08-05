@@ -312,6 +312,20 @@ describe('SpeechPractice', () => {
     expect(recordPracticeCompletion).toHaveBeenCalledWith('cajun', 'speech');
   });
 
+  it('skips the Practice write when the host disables accept recording', async () => {
+    const onAccept = jest.fn();
+    await reviewTake({ props: {
+      words: [WORDS[0]],
+      recordPracticeOnAccept: false,
+      onAccept
+    } });
+
+    fireEvent.press(screen.getByLabelText('Sounds good'));
+
+    await waitFor(() => expect(onAccept).toHaveBeenCalledTimes(1));
+    expect(recordPracticeCompletion).not.toHaveBeenCalled();
+  });
+
   it('advances a default multi-Word session after accept', async () => {
     await reviewTake();
     fireEvent.press(screen.getByLabelText('Sounds good'));

@@ -24,6 +24,7 @@ import {
   homeProjectionProgress,
   lastWorkedUnits,
   pendingMistakes,
+  practiceLogs,
   profiles,
   reviewStates,
   wordMastery
@@ -82,6 +83,45 @@ const MISTAKE_REVIEW_VIEWPORTS = [
     insets: { top: 0, right: 0, bottom: 0, left: 0 }
   }]
 ];
+
+function setupSpeechRecorder() {
+  const defaultRecorder = useAudioRecorder.getMockImplementation();
+  const defaultRecorderState = useAudioRecorderState.getMockImplementation();
+  let isRecording = false;
+  const recorder = {
+    uri: 'file:///dictionary-attempt.m4a',
+    prepareToRecordAsync: jest.fn(async () => {}),
+    record: jest.fn(() => { isRecording = true; }),
+    stop: jest.fn(async () => { isRecording = false; })
+  };
+
+  useAudioRecorder.mockReturnValue(recorder);
+  useAudioRecorderState.mockImplementation(() => ({
+    isRecording,
+    durationMillis: 1200
+  }));
+
+  return () => {
+    useAudioRecorder.mockImplementation(defaultRecorder);
+    useAudioRecorderState.mockImplementation(defaultRecorderState);
+  };
+}
+
+async function acceptDictionaryPractice(user) {
+  await user.press(screen.getByRole('button', { name: 'Practice' }));
+  expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
+  expect(screen.queryByText('Phrase 1 / 1')).toBeNull();
+  await user.press(screen.getByLabelText('Record'));
+  expect(await screen.findByLabelText('Stop recording · 1.2s')).toBeOnTheScreen();
+  await user.press(screen.getByLabelText('Stop recording · 1.2s'));
+  expect(await screen.findByLabelText('Hear my recording')).toBeOnTheScreen();
+  await user.press(screen.getByLabelText('Hear my recording'));
+  expect(await screen.findByLabelText('Sounds good')).toBeEnabled();
+  await user.press(screen.getByLabelText('Sounds good'));
+  expect(await screen.findByText('Hello')).toBeOnTheScreen();
+  await act(async () => {});
+  expect(screen.getByTestId('dictionary-screen')).toBeOnTheScreen();
+}
 
 function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 91 } = {}) {
   return {
@@ -2357,6 +2397,132 @@ describe('DictionaryScreen', () => {
     await user.press(screen.getAllByText('Names & Introductions')[0]);
     expect(await screen.findByText("It's ready")).toBeOnTheScreen();
     expect(screen.queryByText('Hello')).toBeNull();
+  });
+
+  it.each([
+    ['cajun', 'French Dictionary', 'Hello', 'Bonjour', '#2771CB'],
+    ['kreole', 'Kouri-Vini Dictionary', 'we', 'nouzòt', '#08834C']
+  ])('shows Practice beside Play audio for a Word with audio in %s', async (
+    language,
+    title,
+    english,
+    target,
+    accent
+  ) => {
+    renderApp({ initialRouteName: 'Dictionary', initialParams: { language } });
+
+    expect(await screen.findByText(title)).toBeOnTheScreen();
+    expect(screen.getByText(english)).toBeOnTheScreen();
+    expect(screen.getByText(target)).toBeOnTheScreen();
+    expect(screen.getByText('Play audio')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Practice' })).toBeOnTheScreen();
+    expect(screen.getByText('Practice')).toHaveStyle({ color: accent });
+  });
+
+  it.each([
+    ['mobile', FULL_SCREEN_PHONE_METRICS],
+    ['desktop', {
+      frame: { x: 0, y: 0, width: 1440, height: 900 },
+      insets: { top: 0, right: 0, bottom: 0, left: 0 }
+    }]
+  ])('keeps the Practice action accessible at %s size', async (_size, safeAreaMetrics) => {
+    renderApp({
+      initialRouteName: 'Dictionary',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics
+    });
+
+    expect(await screen.findByRole('button', { name: 'Practice' })).toBeOnTheScreen();
+  });
+
+  it('does not show Practice for a Word without audio', async () => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
+    await user.type(
+      screen.getByPlaceholderText('Search English, target word, or category'),
+      'How’s it going?'
+    );
+
+    expect(await screen.findByText('How’s it going?')).toBeOnTheScreen();
+    expect(screen.getByText('Ça va?')).toBeOnTheScreen();
+    expect(screen.queryByText('Practice')).toBeNull();
+    expect(screen.queryByText('Play audio')).toBeNull();
+  });
+
+  it('opens single-Word SpeechPractice and returns to Dictionary on back', async () => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Practice' }));
+
+    expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
+    expect(screen.getByText('Bonjour')).toBeOnTheScreen();
+    expect(screen.queryByText('Phrase 1 / 1')).toBeNull();
+    await user.press(screen.getByLabelText('Back'));
+
+    expect(await screen.findByText('Hello')).toBeOnTheScreen();
+    expect(screen.getByTestId('dictionary-screen')).toBeOnTheScreen();
+  });
+
+  it('accept writes Practice when no mistakes and no today Practice exist', async () => {
+    const user = setupUser();
+    const restoreRecorder = setupSpeechRecorder();
+
+    try {
+      renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+
+      await acceptDictionaryPractice(user);
+
+      expect(await getTodayPractice('cajun')).toEqual({
+        type: 'speech',
+        completedAt: expect.any(String)
+      });
+    } finally {
+      restoreRecorder();
+    }
+  });
+
+  it('does not write Practice when pending mistakes exist', async () => {
+    const user = setupUser();
+    const restoreRecorder = setupSpeechRecorder();
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        }
+      }
+    });
+
+    try {
+      renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+      await acceptDictionaryPractice(user);
+
+      expect(await getTodayPractice('cajun')).toBeNull();
+    } finally {
+      restoreRecorder();
+    }
+  });
+
+  it('does not overwrite an existing today Practice entry', async () => {
+    const user = setupUser();
+    const restoreRecorder = setupSpeechRecorder();
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    const existingPractice = practiceLogs.todaySpeech['2026-03-05'];
+    await seedAsyncStorage({
+      practiceLog: { cajun: { [getTodayKey()]: existingPractice } }
+    });
+
+    try {
+      renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+      await acceptDictionaryPractice(user);
+
+      expect(await getTodayPractice('cajun')).toEqual(existingPractice);
+    } finally {
+      restoreRecorder();
+    }
   });
 });
 
