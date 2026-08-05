@@ -419,6 +419,22 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Mistakes')).toBeOnTheScreen();
   });
 
+  it('bounds the Home container width at desktop viewport sizes', async () => {
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 1440, height: 900 },
+        insets: { top: 0, right: 0, bottom: 0, left: 0 }
+      }
+    });
+
+    await screen.findByText('Louisiana French');
+    expect(screen.getByTestId('home-container')).toHaveStyle({
+      maxWidth: 480
+    });
+  });
+
   it('renders both Language identities with their gradient themes', async () => {
     const user = setupUser();
     await seedAsyncStorage({

@@ -435,7 +435,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View testID="home-container" style={styles.container}>
       <StatusBar style={isFocused ? 'light' : 'dark'} testID="home-status-bar" />
       <LinearGradient
         colors={theme.topBarGrad}
@@ -714,7 +714,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F7FB'
+    backgroundColor: '#F4F7FB',
+    maxWidth: 480,
+    alignSelf: 'center',
+    width: '100%'
   },
 
   topBar: {
