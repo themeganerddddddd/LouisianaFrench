@@ -17,6 +17,7 @@ export default function SpeechPractice({
   language,
   words,
   advanceOnAccept = true,
+  recordPracticeOnAccept = true,
   onAccept,
   onBack
 }) {
@@ -137,7 +138,7 @@ export default function SpeechPractice({
     if (busy || phase !== 'reviewed' || !hasReviewedTake || !attemptDurationMs) return;
     setBusy(true);
     try {
-      await recordPracticeCompletion(language, 'speech');
+      if (recordPracticeOnAccept) await recordPracticeCompletion(language, 'speech');
       const nextIndex = advanceOnAccept
         ? wordIndex + 1 >= practiceWords.length ? 0 : wordIndex + 1
         : wordIndex;
