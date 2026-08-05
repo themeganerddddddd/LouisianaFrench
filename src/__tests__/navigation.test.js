@@ -102,7 +102,7 @@ describe('navigation graph', () => {
     });
     await screen.findByText('Kouri-Vini');
     await user.press(screen.getByTestId('home-hub-control'));
-    expect(await screen.findByText('Advanced Kouri-Vini Hub')).toBeOnTheScreen();
+    expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
   });
 
   it('keeps an empty Mistakes control disabled', async () => {

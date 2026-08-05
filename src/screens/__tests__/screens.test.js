@@ -1038,7 +1038,7 @@ describe('HomeScreen', () => {
     });
     await screen.findByText('Louisiana French');
     await user.press(screen.getByTestId('home-hub-control'));
-    expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
+    expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
   });
 
   it('shows an empty Mistakes control as disabled without a badge or navigation', async () => {
@@ -1372,7 +1372,7 @@ describe('HomeScreen', () => {
       );
       expect(screen.getByText('Speech')).toBeOnTheScreen();
       await user.press(screen.getByTestId('home-plan-cta'));
-      expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
+      expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
     } finally {
       getProjection.mockRestore();
     }
@@ -1410,22 +1410,22 @@ describe('HomeScreen', () => {
       expect(await getTodayPractice('cajun')).toBeNull();
       await user.press(screen.getByTestId('home-plan-cta'));
 
-      expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
+      expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
       expect(await getTodayPractice('cajun')).toBeNull();
-      await user.press(screen.getByText('Record'));
-      expect(await screen.findByText('Stop recording (1.2s)')).toBeOnTheScreen();
-      expect(await getTodayPractice('cajun')).toBeNull();
-
-      await user.press(screen.getByText('Stop recording (1.2s)'));
-      expect(await screen.findByText('Play my recording')).toBeOnTheScreen();
-      expect(screen.getByText('Sounds good, next phrase')).toBeDisabled();
+      await user.press(screen.getByLabelText('Record'));
+      expect(await screen.findByLabelText('Stop recording · 1.2s')).toBeOnTheScreen();
       expect(await getTodayPractice('cajun')).toBeNull();
 
-      await user.press(screen.getByText('Play my recording'));
-      expect(await screen.findByText('Sounds good, next phrase')).toBeEnabled();
+      await user.press(screen.getByLabelText('Stop recording · 1.2s'));
+      expect(await screen.findByLabelText('Hear my recording')).toBeOnTheScreen();
+      expect(screen.getByLabelText('Sounds good')).toBeDisabled();
       expect(await getTodayPractice('cajun')).toBeNull();
 
-      await user.press(screen.getByText('Sounds good, next phrase'));
+      await user.press(screen.getByLabelText('Hear my recording'));
+      expect(await screen.findByLabelText('Sounds good')).toBeEnabled();
+      expect(await getTodayPractice('cajun')).toBeNull();
+
+      await user.press(screen.getByLabelText('Sounds good'));
       await waitFor(async () => {
         expect(await getTodayPractice('cajun')).toEqual(expect.objectContaining({ type: 'speech' }));
       });
@@ -2361,18 +2361,25 @@ describe('DictionaryScreen', () => {
 });
 
 describe('AdvancedScreen', () => {
-  it('shows the Language-specific hub placeholder', async () => {
+  it('hosts production SpeechPractice for the active Language', async () => {
     renderApp({
       initialRouteName: 'Advanced',
       initialParams: { language: 'kreole' }
     });
 
-    expect(screen.getByText('Advanced Kouri-Vini Hub')).toHaveStyle({ textAlign: 'center' });
+    expect(screen.getByText('SPEECH PRACTICE')).toBeOnTheScreen();
+    expect(screen.queryByText('Advanced French Hub')).toBeNull();
+    expect(screen.queryByText('Advanced Kouri-Vini Hub')).toBeNull();
     expect(screen.queryByText('Experimental speaking drills')).toBeNull();
     expect(screen.queryByText('Self-reviewed speech practice prototype')).toBeNull();
-    expect(screen.getByText('Play Audio')).toBeOnTheScreen();
-    expect(screen.getByText('Record')).toBeOnTheScreen();
-    expect(screen.getByText(/Pronunciation is not graded/)).toBeOnTheScreen();
+    expect(screen.getByLabelText('Hear the speaker')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Record')).toBeOnTheScreen();
+    expect(screen.getByText('Not graded — you decide when it sounds right.')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Kouri-Vini flag')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Back')).toBeOnTheScreen();
+    expect(screen.queryByText('Play Audio')).toBeNull();
+    expect(screen.queryByText(/Pronunciation is not graded/)).toBeNull();
+    expect(screen.queryByText('Sounds good, next phrase')).toBeNull();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
   });
 });

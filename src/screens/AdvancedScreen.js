@@ -1,29 +1,25 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import BugReportButton from '../components/BugReportButton';
-import SafeScreenView from '../components/SafeScreenView';
-import SpeechPracticePrototype from './prototypes/SpeechPracticePrototype';
+import { getAllWords } from '../data/lessonLoader';
+import SpeechPractice from './SpeechPractice';
 
-export default function AdvancedScreen({ route }) {
+export default function AdvancedScreen({ route, navigation }) {
   const { language } = route.params;
+  const wordsWithAudio = useMemo(
+    () => getAllWords(language).filter((word) => word.audioKey),
+    [language]
+  );
 
   return (
-    <SafeScreenView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>
-            {language === 'cajun' ? 'Advanced French Hub' : 'Advanced Kouri-Vini Hub'}
-          </Text>
-        </View>
-        <SpeechPracticePrototype language={language} />
-      </ScrollView>
-      <BugReportButton screenName="Advanced" language={language} />
-    </SafeScreenView>
+    <View style={styles.container}>
+      <SpeechPractice language={language} words={wordsWithAudio} onBack={() => navigation.goBack()} />
+      <View style={styles.bugReport}><BugReportButton screenName="Advanced" language={language} /></View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7FAFC', padding: 18 },
-  content: { paddingBottom: 100 },
-  header: { marginBottom: 16, alignItems: 'center' },
-  title: { fontSize: 28, fontWeight: '900', color: '#17324D', textAlign: 'center' }
+  container: { flex: 1 },
+  bugReport: { position: 'absolute', right: 12, bottom: 12 }
 });
