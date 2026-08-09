@@ -129,6 +129,10 @@ function shouldShowIntroAddOns(activity) {
   return activity?.type === 'intro_card';
 }
 
+function variantAltLabel(language) {
+  return language === 'kreole' ? 'Kouri-Vini alternative' : 'French alternative';
+}
+
 function useAudio(language) {
   const soundRef = useRef(null);
   const fxRef = useRef(null);
@@ -278,6 +282,7 @@ function QuestionScrollView({ state, children }) {
 
 function AltToggleButtons({
   activity,
+  language,
   showEnglishAlt,
   setShowEnglishAlt,
   showVariantAlt,
@@ -309,7 +314,7 @@ function AltToggleButtons({
           onPress={() => setShowVariantAlt((v) => !v)}
         >
           <Text style={[styles.altButtonText, { color: theme.text }]}>
-            French alternative
+            {variantAltLabel(language)}
           </Text>
         </TouchableOpacity>
       ) : null}
@@ -317,7 +322,7 @@ function AltToggleButtons({
   );
 }
 
-function AnswerAltButtons({ activity, visible, theme }) {
+function AnswerAltButtons({ activity, language, visible, theme }) {
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
@@ -352,7 +357,7 @@ function AnswerAltButtons({ activity, visible, theme }) {
             onPress={() => setShowVariantAlt((v) => !v)}
           >
             <Text style={[styles.altButtonText, { color: theme.text }]}>
-              French alternative
+              {variantAltLabel(language)}
             </Text>
           </TouchableOpacity>
 
@@ -687,6 +692,7 @@ function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
 
       <AltToggleButtons
         activity={activity}
+        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -781,6 +787,7 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
 
       <AltToggleButtons
         activity={activity}
+        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -847,7 +854,14 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : selected)}
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            language={language}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
@@ -932,6 +946,7 @@ function ListeningTargetChoice({
 
       <AltToggleButtons
         activity={activity}
+        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -998,7 +1013,14 @@ function ListeningTargetChoice({
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : selected)}
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            language={language}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
@@ -1062,6 +1084,7 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
 
       <AltToggleButtons
         activity={activity}
+        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -1179,7 +1202,14 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : value)}
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            language={language}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
@@ -1265,6 +1295,7 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
 
       <AltToggleButtons
         activity={activity}
+        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -1353,7 +1384,14 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
         onIncorrect={() =>
           onWrong(state === 'skipped' ? '__skipped__' : [...selected, ...trailingPunct].join(' '))
         }
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            language={language}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
@@ -1439,6 +1477,7 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
 
       <AltToggleButtons
         activity={activity}
+        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -1547,7 +1586,14 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
                 : `${valueForId(left, selectedLeft)} ↔ ${valueForId(right, selectedRight)}`
           )
         }
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            language={language}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );

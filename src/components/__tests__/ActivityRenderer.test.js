@@ -24,7 +24,7 @@ function renderActivity(activity, handlers = {}) {
   const rendered = render(
     <ActivityRenderer
       activity={activity}
-      language="cajun"
+      language={handlers.language || 'cajun'}
       onCorrect={onCorrect}
       onWrong={onWrong}
       onOpenPreface={handlers.onOpenPreface}
@@ -477,6 +477,27 @@ describe('ActivityRenderer', () => {
       await chooseAndCheck(user, 'Ça va?');
       expectFinalWrong();
       await finishWrong(user, onWrong, 'Hello ↔ Ça va?');
+    });
+  });
+
+  describe('variant alternative label', () => {
+    const introWithVariantAlt = Object.freeze({
+      ...fixtureActivities.intro,
+      variantAltResponse: 'Salut'
+    });
+
+    it('labels the variant alternative "French alternative" for Louisiana French', () => {
+      renderActivity(introWithVariantAlt, { language: 'cajun' });
+
+      expect(screen.getByText('French alternative')).toBeOnTheScreen();
+      expect(screen.queryByText('Kouri-Vini alternative')).toBeNull();
+    });
+
+    it('labels the variant alternative "Kouri-Vini alternative" for Kouri-Vini', () => {
+      renderActivity(introWithVariantAlt, { language: 'kreole' });
+
+      expect(screen.getByText('Kouri-Vini alternative')).toBeOnTheScreen();
+      expect(screen.queryByText('French alternative')).toBeNull();
     });
   });
 
