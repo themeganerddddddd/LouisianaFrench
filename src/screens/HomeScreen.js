@@ -6,6 +6,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
+  BackHandler,
   Image,
   LayoutAnimation,
   Platform,
@@ -19,6 +20,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
+import AboutTextModal from '../components/AboutTextModal';
+import HomeAboutMenu from '../components/HomeAboutMenu';
+import PersonCarouselModal from '../components/PersonCarouselModal';
+import { ABOUT_PEOPLE, ABOUT_TEXT } from '../data/aboutContent';
 import {
   getDefaultLanguage,
   setDefaultLanguage
@@ -323,6 +328,9 @@ export default function HomeScreen() {
   const [projection, setProjection] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [expandedUnits, setExpandedUnits] = useState(new Set());
+  const [aboutMenuVisible, setAboutMenuVisible] = useState(false);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
+  const [aboutModal, setAboutModal] = useState(null);
   const initialExpansionLanguage = useRef(null);
 
   useEffect(() => {
@@ -367,6 +375,18 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
+    if (!aboutMenuVisible) return undefined;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setAboutMenuVisible(false);
+      setAboutExpanded(false);
+      return true;
+    });
+
+    return () => subscription.remove();
+  }, [aboutMenuVisible]);
+
+  useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
@@ -394,6 +414,14 @@ export default function HomeScreen() {
       }
       return next;
     });
+  }
+
+  function selectAbout(kind) {
+    setAboutMenuVisible(false);
+    setAboutExpanded(false);
+    setAboutModal(kind === 'team'
+      ? { type: 'team' }
+      : { type: 'text', content: ABOUT_TEXT[kind] });
   }
 
   const theme =
@@ -444,11 +472,21 @@ export default function HomeScreen() {
       >
         <View style={styles.identityRow}>
           <View style={styles.identityDetails}>
-            <Image
+            <Pressable
               testID="home-pelican"
-              source={require('../../assets/images/pelicanicon.png')}
+              accessibilityRole="button"
+              accessibilityLabel="About menu"
+              accessibilityState={{ expanded: aboutMenuVisible }}
+              hitSlop={6}
+              onPress={() => setAboutMenuVisible((visible) => !visible)}
               style={styles.pelican}
-            />
+            >
+              <Image
+                testID="home-pelican-image"
+                source={require('../../assets/images/pelicanicon.png')}
+                style={styles.pelicanImage}
+              />
+            </Pressable>
             <View style={styles.identityText}>
               <Text style={styles.topTitle}>
                 {language === 'cajun' ? 'Louisiana French' : 'Kouri-Vini'}
@@ -707,6 +745,40 @@ export default function HomeScreen() {
 
         <View style={{ height: 30 }} />
       </ScrollView>
+
+      <HomeAboutMenu
+        visible={aboutMenuVisible}
+        anchorTop={insets.top + 68}
+        anchorLeft={20}
+        accentColor={theme.accent}
+        expanded={aboutExpanded}
+        onToggle={() => setAboutExpanded((expanded) => !expanded)}
+        onSelect={selectAbout}
+        onDismiss={() => {
+          setAboutMenuVisible(false);
+          setAboutExpanded(false);
+        }}
+      />
+
+      {aboutModal?.type === 'team' ? (
+        <PersonCarouselModal
+          visible
+          people={ABOUT_PEOPLE}
+          accentColor={theme.accent}
+          reduceMotion={reduceMotion}
+          onClose={() => setAboutModal(null)}
+        />
+      ) : null}
+
+      {aboutModal?.type === 'text' ? (
+        <AboutTextModal
+          visible
+          content={aboutModal.content}
+          accentColor={theme.accent}
+          reduceMotion={reduceMotion}
+          onClose={() => setAboutModal(null)}
+        />
+      ) : null}
     </View>
   );
 }
@@ -749,6 +821,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     marginRight: 10
+  },
+
+  pelicanImage: {
+    width: 42,
+    height: 42,
+    borderRadius: 12
   },
 
   topTitle: {

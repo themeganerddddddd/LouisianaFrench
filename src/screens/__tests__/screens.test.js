@@ -291,6 +291,116 @@ describe('LanguageSelectScreen', () => {
 });
 
 describe('HomeScreen', () => {
+  it('opens the About menu from the header pelican', async () => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    await user.press(await screen.findByLabelText('About menu'));
+
+    expect(screen.getByTestId('home-about-menu')).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['mobile', FULL_SCREEN_PHONE_METRICS],
+    ['desktop', {
+      frame: { x: 0, y: 0, width: 1440, height: 900 },
+      insets: { top: 0, right: 0, bottom: 0, left: 0 }
+    }]
+  ])('keeps the About menu anchored and bounded on %s', async (_viewport, safeAreaMetrics) => {
+    const user = setupUser();
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics
+    });
+
+    const pelican = await screen.findByLabelText('About menu');
+    expect(pelican.props.accessibilityRole).toBe('button');
+    await user.press(pelican);
+
+    expect(screen.getByTestId('home-about-menu')).toHaveStyle({
+      top: safeAreaMetrics.insets.top + 68,
+      left: 20,
+      width: 236,
+      borderColor: '#2771CB'
+    });
+  });
+
+  it('dismisses the About menu from the pelican and Android back', async () => {
+    const user = setupUser();
+    const backHandler = jest.spyOn(BackHandler, 'addEventListener');
+
+    try {
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+      const pelican = await screen.findByLabelText('About menu');
+
+      await user.press(pelican);
+      await user.press(pelican);
+      expect(screen.queryByTestId('home-about-menu')).toBeNull();
+
+      await user.press(pelican);
+      const listener = backHandler.mock.calls
+        .filter(([eventName]) => eventName === 'hardwareBackPress')
+        .at(-1)[1];
+      await act(async () => listener());
+      expect(screen.queryByTestId('home-about-menu')).toBeNull();
+    } finally {
+      backHandler.mockRestore();
+    }
+  });
+
+  it('completes the About journey without affecting Home', async () => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    async function openLeaves() {
+      await user.press(screen.getByLabelText('About menu'));
+      await user.press(screen.getByRole('button', { name: 'About Us' }));
+    }
+
+    await openLeaves();
+    const leaves = screen.getByTestId('about-menu-leaves');
+    expect(within(leaves).getAllByRole('button').map((button) => button.props.accessibilityLabel))
+      .toEqual(['The team', 'Security/Privacy', 'FAQ', 'Support']);
+    expect(screen.queryByText('Account settings')).toBeNull();
+    expect(screen.queryByText('Why make this app')).toBeNull();
+    expect(screen.queryByText('Remerciements')).toBeNull();
+
+    await user.press(screen.getByRole('button', { name: 'About Us' }));
+    expect(screen.queryByTestId('about-menu-leaves')).toBeNull();
+    expect(screen.getByRole('button', { name: 'About Us' }).props.accessibilityState)
+      .toEqual({ expanded: false });
+    await user.press(screen.getByRole('button', { name: 'About Us' }));
+
+    await user.press(screen.getByRole('button', { name: 'The team' }));
+    expect(screen.queryByTestId('home-about-menu')).toBeNull();
+    expect(await screen.findByTestId('about-team-modal')).toBeOnTheScreen();
+    expect(screen.getByText('Voice contributor 1')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('about-team-close'));
+
+    for (const [kind, title] of [
+      ['securityPrivacy', 'Security/Privacy'],
+      ['faq', 'FAQ'],
+      ['support', 'Support']
+    ]) {
+      await openLeaves();
+      await user.press(screen.getByTestId(`about-menu-leaf-${kind}`));
+      expect(await screen.findByText(title)).toBeOnTheScreen();
+      if (kind === 'support') {
+        expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
+      }
+      await user.press(screen.getByTestId('about-text-close'));
+      expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
+    }
+
+    expect(screen.getByTestId('home-plan')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-language-flag')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('Louisiana French flag'));
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByTestId('home-about-menu')).toHaveStyle({ borderColor: '#08834C' });
+  });
+
   it.each([
     ['cajun', 'Louisiana French', 'First greetings'],
     ['kreole', 'Kouri-Vini', 'First pronouns']
