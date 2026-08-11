@@ -3,6 +3,8 @@ export const ABOUT_PEOPLE = [
     id: 'core-team-1',
     name: 'Core team member 1',
     role: 'Core team',
+    bio: 'A core team member who helps make Louisiana languages welcoming to learners.',
+    contribution: 'Builds the lessons and keeps the learning experience welcoming.',
     initials: 'CT',
     color: '#2771CB'
   },
@@ -10,6 +12,8 @@ export const ABOUT_PEOPLE = [
     id: 'core-team-2',
     name: 'Core team member 2',
     role: 'Core team',
+    bio: 'A core team member focused on clear, encouraging learning steps.',
+    contribution: 'Shapes the app so every learning step feels clear and encouraging.',
     initials: 'CT',
     color: '#066B3F'
   },
@@ -17,6 +21,8 @@ export const ABOUT_PEOPLE = [
     id: 'voice-contributor-1',
     name: 'Voice contributor 1',
     role: 'Voice contributor',
+    bio: 'A voice contributor who shares local language knowledge with learners.',
+    contribution: 'Shares a clear local voice to help learners hear each Language.',
     initials: 'VC',
     color: '#D97706'
   },
@@ -24,6 +30,8 @@ export const ABOUT_PEOPLE = [
     id: 'voice-contributor-2',
     name: 'Voice contributor 2',
     role: 'Voice contributor',
+    bio: 'A voice contributor who helps learners hear Louisiana languages naturally.',
+    contribution: 'Contributes pronunciation recordings that bring each phrase to life.',
     initials: 'VC',
     color: '#7C3AED'
   }

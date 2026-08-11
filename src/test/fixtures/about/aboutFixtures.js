@@ -3,6 +3,8 @@ export const aboutPeopleFixture = [
     id: 'core-1',
     name: 'Core team member',
     role: 'Core team',
+    bio: 'Builds the lessons and keeps the learning experience welcoming.',
+    contribution: 'Creates the lesson content learners use every day.',
     initials: 'CT',
     color: '#2771CB'
   },
@@ -10,6 +12,8 @@ export const aboutPeopleFixture = [
     id: 'voice-1',
     name: 'Voice contributor',
     role: 'Voice contributor',
+    bio: 'Shares a clear local voice to help learners hear each Language.',
+    contribution: 'Provides pronunciation recordings for the lessons.',
     initials: 'VC',
     color: '#0AA35F'
   }
