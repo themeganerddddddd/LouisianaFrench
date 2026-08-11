@@ -22,3 +22,11 @@ export const aboutTextFixture = {
     'Final copy will be added in a later content update.'
   ]
 };
+
+export const aboutMenuFixture = {
+  visible: true,
+  anchorTop: 68,
+  anchorLeft: 20,
+  accentColor: '#2771CB',
+  expanded: false
+};

@@ -42,14 +42,14 @@ export default function HomeAboutMenu({
           accessibilityLabel="About Us"
           accessibilityState={{ expanded }}
           onPress={onToggle}
-          style={[styles.sectionButton, { backgroundColor: accentColor }]}
+          style={styles.sectionButton}
         >
           <Text style={styles.sectionLabel}>About Us</Text>
           <Feather
             testID="about-menu-disclosure"
             name={expanded ? 'chevron-up' : 'chevron-down'}
             size={18}
-            color="#FFFFFF"
+            color={accentColor}
           />
         </Pressable>
 
@@ -99,10 +99,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#2771CB'
+    backgroundColor: '#FFFFFF'
   },
   sectionLabel: {
-    color: '#FFFFFF',
+    color: '#102A43',
     fontSize: 15,
     fontWeight: '900'
   },

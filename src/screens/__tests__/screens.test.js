@@ -322,8 +322,13 @@ describe('HomeScreen', () => {
       top: safeAreaMetrics.insets.top + 68,
       left: 20,
       width: 236,
+      backgroundColor: '#FFFFFF',
       borderColor: '#2771CB'
     });
+    expect(screen.getByTestId('about-menu-section')).toHaveStyle({
+      backgroundColor: '#FFFFFF'
+    });
+    expect(screen.getByText('About Us')).toHaveStyle({ color: '#102A43' });
   });
 
   it('dismisses the About menu from the pelican and Android back', async () => {
