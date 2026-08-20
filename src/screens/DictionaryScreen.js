@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -31,37 +30,35 @@ function statusColor(status) {
   return '#64748B';
 }
 
-export default function DictionaryScreen({ route, navigation }) {
+export default function DictionaryScreen({ route }) {
   const { language } = route.params;
-  const accent = language === 'kreole' ? '#08834C' : '#2771CB';
   const [query, setQuery] = useState('');
   const [allWords, setAllWords] = useState([]);
   const [wordProgress, setWordProgress] = useState({});
   const [selectedUnit, setSelectedUnit] = useState('all');
   const soundRef = useRef(null);
 
-  const unloadSound = useCallback(async () => {
+  useEffect(() => {
+    async function load() {
+      setAllWords(getAllWords(language));
+      setWordProgress(await getWordProgress());
+    }
+
+    load();
+
+    return () => {
+      unloadSound();
+    };
+  }, [language]);
+
+  async function unloadSound() {
     try {
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
     } catch (_e) {}
-  }, []);
-
-  useFocusEffect(useCallback(() => {
-    let cancelled = false;
-
-    setAllWords(getAllWords(language));
-    getWordProgress().then((progress) => {
-      if (!cancelled) setWordProgress(progress);
-    });
-
-    return () => {
-      cancelled = true;
-      unloadSound();
-    };
-  }, [language, unloadSound]));
+  }
 
   async function playAudio(audioKey) {
     try {
@@ -176,23 +173,11 @@ export default function DictionaryScreen({ route, navigation }) {
               {word.audioKey ? (
                 <View style={styles.actionsRow}>
                   <TouchableOpacity
-                    style={[styles.audioBtn, { backgroundColor: accent }]}
+                    style={styles.audioBtn}
                     onPress={() => playAudio(word.audioKey)}
                   >
                     <Ionicons name="play" size={16} color="#fff" />
                     <Text style={styles.audioBtnText}>Play audio</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    accessibilityLabel="Practice"
-                    style={[styles.practiceBtn, { borderColor: accent }]}
-                    onPress={() => navigation.navigate('DictionarySpeechPractice', {
-                      language,
-                      word
-                    })}
-                  >
-                    <Ionicons name="mic" size={15} color={accent} />
-                    <Text style={[styles.practiceBtnText, { color: accent }]}>Practice</Text>
                   </TouchableOpacity>
                 </View>
               ) : null}
@@ -294,6 +279,7 @@ const styles = StyleSheet.create({
   audioBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#2771CB',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 999
@@ -302,21 +288,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '800',
     marginLeft: 6
-  },
-  practiceBtn: {
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    marginLeft: 8
-  },
-  practiceBtnText: {
-    fontSize: 13,
-    fontWeight: '800'
   },
   empty: {
     paddingVertical: 40,

@@ -11,7 +11,6 @@ import {
 import AdvancedScreen from './src/screens/AdvancedScreen';
 import DailyReviewScreen from './src/screens/DailyReviewScreen';
 import DictionaryScreen from './src/screens/DictionaryScreen';
-import DictionarySpeechPracticeScreen from './src/screens/DictionarySpeechPracticeScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import LanguageSelectScreen from './src/screens/LanguageSelectScreen';
 import LessonCompleteScreen from './src/screens/LessonCompleteScreen';
@@ -58,7 +57,6 @@ export default function App() {
           <Stack.Screen name="DailyReview" component={DailyReviewScreen} />
           <Stack.Screen name="Advanced" component={AdvancedScreen} />
           <Stack.Screen name="Dictionary" component={DictionaryScreen} />
-          <Stack.Screen name="DictionarySpeechPractice" component={DictionarySpeechPracticeScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

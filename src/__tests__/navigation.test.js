@@ -26,7 +26,7 @@ describe('navigation graph', () => {
     expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
   });
 
-  it('keeps the removed Leaderboard route out of the navigation graph', () => {
+  it('quarantines the unregistered Leaderboard contract pending Issue #27', () => {
     expect(routesDeclaredInAppSource()).not.toContain('Leaderboard');
   });
 
@@ -42,7 +42,9 @@ describe('navigation graph', () => {
 
     await user.press(screen.getByTestId('home-review-control'));
 
-    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
+    expect(
+      await screen.findByText('Due cards, weak words, and review practice.')
+    ).toBeOnTheScreen();
   });
 
   it('navigates Home → Lesson with lesson identity params', async () => {
@@ -102,7 +104,7 @@ describe('navigation graph', () => {
     });
     await screen.findByText('Kouri-Vini');
     await user.press(screen.getByTestId('home-hub-control'));
-    expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
+    expect(await screen.findByText('Advanced Kouri-Vini Hub')).toBeOnTheScreen();
   });
 
   it('keeps an empty Mistakes control disabled', async () => {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
 import ProgressHeader from '../components/ProgressHeader';
 import SafeScreenView from '../components/SafeScreenView';
+import { getAllActivities } from '../data/lessonLoader';
 import { updateCardReview } from '../utils/spacedRepetition';
 import { getDailyReviewQueue } from '../utils/reviewQueue';
 import {
@@ -19,63 +20,28 @@ export default function DailyReviewScreen({ route, navigation }) {
   const [index, setIndex] = useState(0);
   const [xp, setXp] = useState(0);
   const [mistakes, setMistakes] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function init() {
-      setQueue(await getDailyReviewQueue(language));
-      setLoading(false);
+      const queue = await getDailyReviewQueue(language);
+      if (queue.length) {
+        setQueue(queue);
+        return;
+      }
+
+      const fallback = getAllActivities(language)
+        .filter((activity) => activity.type !== 'intro_card')
+        .slice(0, 10)
+        .map((activity) => ({ ...activity, isReview: true }));
+      setQueue(fallback);
     }
 
     init();
   }, [language]);
 
-  if (loading) return null;
-
-  if (!queue.length) {
-    return (
-      <SafeScreenView style={styles.container}>
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Daily Review</Text>
-          <Text style={styles.emptyMessage}>No review cards are due right now.</Text>
-          <TouchableOpacity
-            accessibilityRole="button"
-            style={styles.emptyButton}
-            onPress={() => navigation.replace('Home', { language })}
-          >
-            <Text style={styles.emptyButtonText}>Back to Home</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeScreenView>
-    );
-  }
+  if (!queue.length) return null;
 
   const current = queue[index];
-
-  async function finishDailyReview(totalXp, reviewMistakes) {
-    await markLanguageDailyReviewDone(language, getTodayKey());
-
-    if (reviewMistakes.length) {
-      navigation.replace('MistakeReview', {
-        lessonTitle: 'Daily Review',
-        mistakes: reviewMistakes,
-        lessonXp: totalXp,
-        language
-      });
-      return;
-    }
-
-    const profile = await recordStudyAndXp(totalXp);
-    navigation.replace('LessonComplete', {
-      lessonTitle: 'Daily Review',
-      xpEarned: totalXp,
-      mistakesCount: 0,
-      streak: profile.streak,
-      scoreEarned: null,
-      scorePossible: null,
-      language
-    });
-  }
 
   async function handleCorrect() {
     await updateCardReview(current.cardId, 5);
@@ -91,7 +57,18 @@ export default function DailyReviewScreen({ route, navigation }) {
       return;
     }
 
-    await finishDailyReview(nextXp, mistakes);
+    await markLanguageDailyReviewDone(language, getTodayKey());
+    const profile = await recordStudyAndXp(nextXp);
+
+    navigation.replace('LessonComplete', {
+      lessonTitle: 'Daily Review',
+      xpEarned: nextXp,
+      mistakesCount: mistakes.length,
+      streak: profile.streak,
+      scoreEarned: null,
+      scorePossible: null,
+      language
+    });
   }
 
   async function handleWrong(userAnswer) {
@@ -112,7 +89,18 @@ export default function DailyReviewScreen({ route, navigation }) {
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
-      await finishDailyReview(xp, nextMistakes);
+      await markLanguageDailyReviewDone(language, getTodayKey());
+      const profile = await recordStudyAndXp(xp);
+
+      navigation.replace('LessonComplete', {
+        lessonTitle: 'Daily Review',
+        xpEarned: xp,
+        mistakesCount: nextMistakes.length,
+        streak: profile.streak,
+        scoreEarned: null,
+        scorePossible: null,
+        language
+      });
     }
   }
 
@@ -145,18 +133,5 @@ export default function DailyReviewScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F0F9FF' },
   inner: { flex: 1, paddingHorizontal: 18, paddingBottom: 18 },
-  sub: { marginBottom: 14, color: '#475569', fontWeight: '700' },
-  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  emptyTitle: { fontSize: 28, fontWeight: '900', color: '#17324D' },
-  emptyMessage: { marginTop: 10, color: '#475569', fontWeight: '700', textAlign: 'center' },
-  emptyButton: {
-    marginTop: 22,
-    backgroundColor: '#2771CB',
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    minWidth: 180,
-    alignItems: 'center'
-  },
-  emptyButtonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 16 }
+  sub: { marginBottom: 14, color: '#475569', fontWeight: '700' }
 });

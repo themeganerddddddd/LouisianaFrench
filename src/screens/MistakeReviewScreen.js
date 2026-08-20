@@ -3,18 +3,15 @@ import { StyleSheet, Text, View } from 'react-native';
 import ActivityRenderer from '../components/ActivityRenderer';
 import { getAllActivities } from '../data/lessonLoader';
 import SafeScreenView from '../components/SafeScreenView';
-import { updateCardReview } from '../utils/spacedRepetition';
 import {
   getPendingMistakes,
-  markLessonComplete,
   recordPracticeCompletion,
   recordStudyAndXp,
-  removePendingMistake,
-  updateWordProgress
+  removePendingMistake
 } from '../utils/storage';
 
 export default function MistakeReviewScreen({ route, navigation }) {
-  const { language, lessonTitle, mistakes, lessonXp, lessonId } = route.params;
+  const { language, lessonTitle, mistakes, lessonXp } = route.params;
   const homeMode = route.params?.source === 'home';
   const [queue, setQueue] = useState(() => (homeMode ? [] : mistakes || []));
   const [index, setIndex] = useState(0);
@@ -44,9 +41,10 @@ export default function MistakeReviewScreen({ route, navigation }) {
     loadPendingQueue();
   }, [homeMode, language, navigation]);
 
-  useEffect(() => {
-    if (loading || homeMode || queue.length) return;
+  if (loading) return null;
 
+  if (!queue.length) {
+    if (homeMode) return null;
     navigation.replace('LessonComplete', {
       lessonTitle,
       xpEarned: lessonXp || 0,
@@ -56,11 +54,6 @@ export default function MistakeReviewScreen({ route, navigation }) {
       scorePossible: null,
       language
     });
-  }, [homeMode, language, lessonTitle, lessonXp, loading, navigation, queue.length]);
-
-  if (loading) return null;
-
-  if (!queue.length) {
     return null;
   }
 
@@ -73,11 +66,6 @@ export default function MistakeReviewScreen({ route, navigation }) {
     : 0;
 
   async function handleCorrect() {
-    await updateCardReview(current.cardId, 4);
-    if (current.rowId) {
-      await updateWordProgress(language, current.rowId, true);
-    }
-
     await removePendingMistake(language, current.cardId);
     if (!(await getPendingMistakes(language)).length) {
       await recordPracticeCompletion(language, 'mistakeReview');
@@ -86,15 +74,13 @@ export default function MistakeReviewScreen({ route, navigation }) {
     if (index < queue.length - 1) {
       setIndex((i) => i + 1);
     } else {
-      const totalXp = homeMode ? 10 : (lessonXp || 0) + 10;
-      const updatedProfile = await recordStudyAndXp(totalXp);
-      if (!homeMode && lessonId) await markLessonComplete(language, lessonId);
+      const updatedProfile = await recordStudyAndXp(10);
 
       if (homeMode) navigation.replace('Home', { language });
       else {
         navigation.replace('LessonComplete', {
           lessonTitle,
-          xpEarned: totalXp,
+          xpEarned: (lessonXp || 0) + 10,
           mistakesCount: queue.length,
           streak: updatedProfile.streak,
           scoreEarned: null,

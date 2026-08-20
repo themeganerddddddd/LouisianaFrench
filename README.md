@@ -56,6 +56,24 @@ If a phone cannot connect through the QR code, the local network may be blocking
 npx expo start --tunnel
 ```
 
+### Speech Practice Prototype
+
+Open speech practice from Home -> Advanced / Review Hub. For Expo Go, start the normal development server and scan its QR code:
+
+```bash
+npm run prototype
+```
+
+For web microphone access, use the localhost script and open the localhost URL printed by Expo:
+
+```bash
+npm run prototype -- --web --localhost
+```
+
+Do not replace `localhost` with the computer's LAN IP. Browsers block microphone access on insecure LAN origins.
+
+If microphone access was previously denied, allow it in the browser's site settings and reload the page before trying again.
+
 On first launch, the app opens the Language selection screen. Learner Progress is stored locally on the device through AsyncStorage, so restarting the app should keep local progress for that device.
 
 ## Tests

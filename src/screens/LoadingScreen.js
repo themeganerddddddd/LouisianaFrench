@@ -1,26 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { getDefaultLanguage, hasSelectedLanguage } from '../utils/storage';
 
 export default function LoadingScreen({ navigation }) {
   const opacity = useRef(new Animated.Value(1)).current;
-  const [languageName, setLanguageName] = useState('Louisiana French');
 
   useEffect(() => {
-    let active = true;
-    const languageState = Promise.all([
-      hasSelectedLanguage(),
-      getDefaultLanguage()
-    ]);
-
-    languageState.then(([selected, savedLanguage]) => {
-      if (active && selected && savedLanguage === 'kreole') {
-        setLanguageName('Kouri-Vini');
-      }
-    });
-
     const timer = setTimeout(async () => {
-      const [selected, savedLanguage] = await languageState;
+      const selected = await hasSelectedLanguage();
+      const savedLanguage = await getDefaultLanguage();
 
       Animated.timing(opacity, {
         toValue: 0,
@@ -35,10 +23,7 @@ export default function LoadingScreen({ navigation }) {
       });
     }, 2500);
 
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [navigation, opacity]);
 
   return (
@@ -49,7 +34,7 @@ export default function LoadingScreen({ navigation }) {
         resizeMode="contain"
       />
       <Text style={styles.header}>Learn</Text>
-      <Text style={styles.header}>{languageName}</Text>
+      <Text style={styles.header}>Louisiana French</Text>
     </View>
   );
 }
