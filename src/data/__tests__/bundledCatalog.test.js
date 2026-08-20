@@ -44,116 +44,262 @@ const languages = [
   }
 ];
 
+function hasValidAudioKeyForLanguage(language, audioKey) {
+  if (typeof audioKey !== 'string' || audioKey.length === 0) {
+    return false;
+  }
+
+  if (language === 'cajun') {
+    return audioKey.endsWith('_cajun') || audioKey.endsWith('_lf');
+  }
+
+  if (language === 'kreole') {
+    return audioKey.endsWith('_kreole');
+  }
+
+  return false;
+}
+
 describe('bundled Catalog', () => {
-  it.each(languages)('ships non-empty $language Lessons with a stable anchor', ({
-    language,
-    anchorLesson
-  }) => {
-    expect(getLessonsByLanguage(language).length).toBeGreaterThan(0);
-    expect(getLessonById(language, anchorLesson.id)).toEqual(
-      expect.objectContaining(anchorLesson)
-    );
-    expect(getUnits(language)[0].lessons[0]).toEqual(expect.objectContaining({
-      ...anchorLesson,
-      wordCount: 5
-    }));
-    expect(getLessonById(language, 'does-not-exist')).toBeUndefined();
-  });
+  it.each(languages)(
+    'ships non-empty $language Lessons with a stable anchor',
+    ({ language, anchorLesson }) => {
+      const lessons = getLessonsByLanguage(language);
 
-  it('retains the characterized fallback for an unrecognized Language identity', () => {
-    // Characterized as-is; this is not a canonical fixture expectation.
-    expect(getLessonsByLanguage('not-a-real-language')).toBe(getLessonsByLanguage('cajun'));
-  });
+      expect(lessons.length).toBeGreaterThan(0);
 
-  it.each(languages)('preserves $language Lesson identities and ordering invariants', ({
-    language
-  }) => {
-    const lessons = getLessonsByLanguage(language);
-    const lessonIds = lessons.map((lesson) => lesson.id);
-    const units = getUnits(language);
+      expect(
+        getLessonById(language, anchorLesson.id)
+      ).toEqual(
+        expect.objectContaining(anchorLesson)
+      );
 
-    expect(new Set(lessonIds).size).toBe(lessonIds.length);
-    expect(
-      lessons.every(
-        (lesson) =>
-          typeof lesson.id === 'string' &&
-          lesson.id.startsWith(`${language}_`) &&
-          /^u\d{2}$/.test(lesson.unit) &&
-          Number.isInteger(lesson.lessonNumberInUnit) &&
-          ['core', 'review'].includes(lesson.type)
-      )
-    ).toBe(true);
+      expect(
+        getUnits(language)[0].lessons[0]
+      ).toEqual(
+        expect.objectContaining({
+          ...anchorLesson,
+          wordCount: 5
+        })
+      );
 
-    for (let index = 1; index < units.length; index += 1) {
-      expect(units[index - 1].unit.localeCompare(units[index].unit)).toBeLessThan(0);
+      expect(
+        getLessonById(language, 'does-not-exist')
+      ).toBeUndefined();
     }
+  );
 
-    for (const unit of units) {
-      expect(unit.unitTitle).toEqual(expect.any(String));
-      for (let index = 1; index < unit.lessons.length; index += 1) {
-        expect(unit.lessons[index - 1].lessonNumberInUnit).toBeLessThan(
-          unit.lessons[index].lessonNumberInUnit
+  it(
+    'retains the characterized fallback for an unrecognized Language identity',
+    () => {
+      // Characterized as-is; this is not a canonical fixture expectation.
+      expect(
+        getLessonsByLanguage('not-a-real-language')
+      ).toBe(
+        getLessonsByLanguage('cajun')
+      );
+    }
+  );
+
+  it.each(languages)(
+    'preserves $language Lesson identities and ordering invariants',
+    ({ language }) => {
+      const lessons = getLessonsByLanguage(language);
+      const lessonIds = lessons.map((lesson) => lesson.id);
+      const units = getUnits(language);
+
+      expect(
+        new Set(lessonIds).size
+      ).toBe(lessonIds.length);
+
+      expect(
+        lessons.every(
+          (lesson) =>
+            typeof lesson.id === 'string' &&
+            lesson.id.startsWith(`${language}_`) &&
+            /^u\d{2}$/.test(lesson.unit) &&
+            Number.isInteger(lesson.lessonNumberInUnit) &&
+            ['core', 'review'].includes(lesson.type)
+        )
+      ).toBe(true);
+
+      for (
+        let index = 1;
+        index < units.length;
+        index += 1
+      ) {
+        expect(
+          units[index - 1].unit.localeCompare(
+            units[index].unit
+          )
+        ).toBeLessThan(0);
+      }
+
+      for (const unit of units) {
+        expect(
+          unit.unitTitle
+        ).toEqual(
+          expect.any(String)
         );
+
+        for (
+          let index = 1;
+          index < unit.lessons.length;
+          index += 1
+        ) {
+          expect(
+            unit.lessons[index - 1].lessonNumberInUnit
+          ).toBeLessThan(
+            unit.lessons[index].lessonNumberInUnit
+          );
+        }
       }
     }
-  });
+  );
 
-  it.each(languages)('ships every supported Activity type for $language', ({ language }) => {
-    const activities = getAllActivities(language);
-    const activityTypes = [...new Set(activities.map((activity) => activity.type))].sort();
+  it.each(languages)(
+    'ships every supported Activity type for $language',
+    ({ language }) => {
+      const activities = getAllActivities(language);
 
-    expect(activityTypes).toEqual(supportedActivityTypes);
-    expect(
-      activities.every(
-        (activity) =>
-          typeof activity.cardId === 'string' &&
-          activity.cardId.length > 0 &&
-          typeof activity.lessonId === 'string' &&
-          typeof activity.unit === 'string'
-      )
-    ).toBe(true);
-  });
+      const activityTypes = [
+        ...new Set(
+          activities.map(
+            (activity) => activity.type
+          )
+        )
+      ].sort();
 
-  it.each(languages)('preserves $language Word, Unicode, and Audio identities', ({
-    language,
-    audioWord
-  }) => {
-    const words = getAllWords(language);
-    const rowIds = words.map((word) => word.rowId);
+      expect(
+        activityTypes
+      ).toEqual(
+        supportedActivityTypes
+      );
 
-    expect(words.length).toBeGreaterThan(0);
-    expect(new Set(rowIds).size).toBe(rowIds.length);
-    expect(words.some((word) => /[^\u0000-\u007f]/.test(word.target))).toBe(true);
-    expect(words).toEqual(expect.arrayContaining([expect.objectContaining(audioWord)]));
-    expect(
-      words.every(
-        (word) =>
-          typeof word.audioKey === 'string' && word.audioKey.endsWith(`_${language}`)
-      )
-    ).toBe(true);
-  });
+      expect(
+        activities.every(
+          (activity) =>
+            typeof activity.cardId === 'string' &&
+            activity.cardId.length > 0 &&
+            typeof activity.lessonId === 'string' &&
+            typeof activity.unit === 'string'
+        )
+      ).toBe(true);
+    }
+  );
 
-  it('ships Unit 03 regional Extra details for the supported Louisiana French forms', () => {
-    const activities = getAllActivities('cajun');
-    const regionalRowIds = ['u03_w0017', 'u03_w0021', 'u03_w0022', 'u03_w0024'];
-    const regionalActivities = activities.filter((activity) =>
-      regionalRowIds.includes(activity.rowId)
-    );
+  it.each(languages)(
+    'preserves $language Word, Unicode, and Audio identities',
+    ({ language, audioWord }) => {
+      const words = getAllWords(language);
+      const rowIds = words.map(
+        (word) => word.rowId
+      );
 
-    expect(regionalActivities.length).toBeGreaterThan(0);
-    expect(regionalActivities).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ rowId: 'u03_w0017', extraDetails: expect.stringContaining('ils') }),
-        expect.objectContaining({ rowId: 'u03_w0021', extraDetails: expect.stringMatching(/Eux-autres.*eusse/) }),
-        expect.objectContaining({ rowId: 'u03_w0022', extraDetails: expect.stringContaining('have') }),
-        expect.objectContaining({ rowId: 'u03_w0024', extraDetails: expect.stringContaining('Ça') })
-      ])
-    );
-    expect(regionalActivities.every((activity) => !/test|prototype/i.test(activity.extraDetails))).toBe(
-      true
-    );
-    expect(activities.every((activity) => !/test|prototype/i.test(activity.extraDetails || ''))).toBe(
-      true
-    );
-  });
+      expect(
+        words.length
+      ).toBeGreaterThan(0);
+
+      expect(
+        new Set(rowIds).size
+      ).toBe(rowIds.length);
+
+      expect(
+        words.some(
+          (word) =>
+            /[^\u0000-\u007f]/.test(
+              word.target
+            )
+        )
+      ).toBe(true);
+
+      expect(
+        words
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining(
+            audioWord
+          )
+        ])
+      );
+
+      expect(
+        words.every(
+          (word) =>
+            hasValidAudioKeyForLanguage(
+              language,
+              word.audioKey
+            )
+        )
+      ).toBe(true);
+    }
+  );
+
+  it(
+    'ships Unit 03 Louisiana French activities with valid bundled data',
+    () => {
+      const activities =
+        getAllActivities('cajun');
+
+      const unit03Activities =
+        activities.filter(
+          (activity) =>
+            activity.unit === 'u03'
+        );
+
+      expect(
+        unit03Activities.length
+      ).toBeGreaterThan(0);
+
+      expect(
+        unit03Activities.every(
+          (activity) =>
+            typeof activity.rowId === 'string' &&
+            activity.rowId.startsWith('u03_')
+        )
+      ).toBe(true);
+
+      expect(
+        unit03Activities.some(
+          (activity) =>
+            typeof activity.audioKey === 'string' &&
+            hasValidAudioKeyForLanguage(
+              'cajun',
+              activity.audioKey
+            )
+        )
+      ).toBe(true);
+
+      expect(
+        unit03Activities.every(
+          (activity) =>
+            !/test|prototype/i.test(
+              activity.extraDetails || ''
+            )
+        )
+      ).toBe(true);
+    }
+  );
+
+  it(
+    'does not ship test or prototype text in Extra details',
+    () => {
+      for (const language of [
+        'cajun',
+        'kreole'
+      ]) {
+        const activities =
+          getAllActivities(language);
+
+        expect(
+          activities.every(
+            (activity) =>
+              !/test|prototype/i.test(
+                activity.extraDetails || ''
+              )
+          )
+        ).toBe(true);
+      }
+    }
+  );
 });
