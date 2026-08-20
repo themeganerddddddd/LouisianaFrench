@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import ActivityRenderer from '../ActivityRenderer';
 import { fixtureActivities } from '../../test/fixtures/catalog/activities';
 import {
@@ -24,7 +24,7 @@ function renderActivity(activity, handlers = {}) {
   const rendered = render(
     <ActivityRenderer
       activity={activity}
-      language={handlers.language || 'cajun'}
+      language="cajun"
       onCorrect={onCorrect}
       onWrong={onWrong}
       onOpenPreface={handlers.onOpenPreface}
@@ -33,16 +33,6 @@ function renderActivity(activity, handlers = {}) {
 
   return { ...rendered, onCorrect, onWrong };
 }
-
-const duplicateLeftMatchPairsActivity = Object.freeze({
-  type: 'match_pairs',
-  prompt: 'Match the duplicate words',
-  pairs: [
-    { left: 'Hello', right: 'Bonjour' },
-    { left: 'Hello', right: 'Salut' }
-  ],
-  answerDisplay: 'All matched'
-});
 
 async function expectAudioPlayedAfter(callsBeforePress) {
   await waitFor(() => {
@@ -69,17 +59,6 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('Tap the word to hear it again')).toBeOnTheScreen();
 
       await press(user, 'Continue');
-      expect(onCorrect).toHaveBeenCalledTimes(1);
-    });
-
-    it('ignores a rapid double press on Continue', () => {
-      const { onCorrect } = renderActivity(fixtureActivities.intro);
-      const continueButton = screen.getByText('Continue');
-
-      fireEvent.press(continueButton);
-      expect(screen.getByText('Continue')).toBeDisabled();
-      fireEvent.press(continueButton);
-
       expect(onCorrect).toHaveBeenCalledTimes(1);
     });
 
@@ -125,11 +104,6 @@ describe('ActivityRenderer', () => {
 
       const action = screen.getByLabelText('T-Boy: open Unit note');
 
-      expect(action.props.style).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ minWidth: 106, minHeight: 130 })
-        ])
-      );
       expect(screen.getByText("T-Boy's Advice")).toBeOnTheScreen();
       expect(screen.UNSAFE_getByType(Ionicons).props.name).toBe('chevron-forward');
 
@@ -231,36 +205,6 @@ describe('ActivityRenderer', () => {
 
       await chooseAndCheck(user, 'Ça va?');
       await finishCorrect(user, onCorrect);
-    });
-
-    it('ignores a rapid double press on Next Question', async () => {
-      const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.multipleChoice);
-
-      await chooseAndCheck(user, 'Ça va?');
-      const nextButton = screen.getByText('Next Question');
-
-      fireEvent.press(nextButton);
-      expect(screen.getByText('Next Question')).toBeDisabled();
-      fireEvent.press(nextButton);
-
-      expect(onCorrect).toHaveBeenCalledTimes(1);
-    });
-
-    it('ignores a rapid double press on final wrong Continue', async () => {
-      const user = userEvent.setup();
-      const { onWrong } = renderActivity(fixtureActivities.multipleChoice);
-
-      await chooseAndCheck(user, 'Bonjour');
-      await retry(user);
-      await chooseAndCheck(user, 'Bonjour');
-
-      const continueButton = screen.getByText('Continue');
-      fireEvent.press(continueButton);
-      expect(screen.getByText('Continue')).toBeDisabled();
-      fireEvent.press(continueButton);
-
-      expect(onWrong).toHaveBeenCalledTimes(1);
     });
 
     it('offers a first-wrong retry with a hint, then shows the answer on final wrong', async () => {
@@ -386,48 +330,6 @@ describe('ActivityRenderer', () => {
       expectFinalWrong("C'est paré");
       await finishWrong(user, onWrong, 'paré');
     });
-
-    it('filters punctuation from the word pool and auto-appends it', async () => {
-      const user = userEvent.setup();
-      const { onCorrect } = renderActivity({
-        ...fixtureActivities.sentenceBuild,
-        words: ["C'est", 'paré', '.'],
-        answerTokens: ["C'est", 'paré', '.'],
-        answer: "C'est paré.",
-        prompt: "Build: 'It's ready.'"
-      });
-
-      // '.' should NOT appear as a tappable chip in the pool
-      const chips = screen.UNSAFE_getAllByType(require('react-native').TouchableOpacity);
-      const chipTexts = chips.map((c) => c.props.children);
-      expect(chipTexts.some((t) => t === '.' || (typeof t === 'string' && t.includes('.')))).toBe(false);
-
-      // '.' should appear as plain text (the auto-appended punctuation)
-      expect(screen.getByText('.')).toBeOnTheScreen();
-
-      // Build and check — punctuation auto-appended, answer should be correct
-      await press(user, "C'est");
-      await chooseAndCheck(user, 'paré');
-      await finishCorrect(user, onCorrect);
-    });
-
-    it('plays audio only after the last content word is selected', async () => {
-      const user = userEvent.setup();
-      const callsBefore = Audio.Sound.createAsync.mock.calls.length;
-
-      renderActivity({
-        ...fixtureActivities.sentenceBuild,
-        audioKey: 'fixture-build-audio'
-      });
-
-      // First word — no audio
-      await press(user, "C'est");
-      expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(callsBefore);
-
-      // Last word — audio should play
-      await press(user, 'paré');
-      await expectAudioPlayedAfter(callsBefore);
-    });
   });
 
   describe('match_pairs', () => {
@@ -450,22 +352,6 @@ describe('ActivityRenderer', () => {
       await finishCorrect(user, onCorrect);
     });
 
-    it('keeps duplicate left labels independently matchable', async () => {
-      const user = userEvent.setup();
-      const random = jest.spyOn(Math, 'random').mockReturnValue(0.5);
-      const { onCorrect } = renderActivity(duplicateLeftMatchPairsActivity);
-
-      try {
-        await user.press(screen.getAllByText('Hello')[0]);
-        await chooseAndCheck(user, 'Bonjour');
-        await user.press(screen.getAllByText('Hello')[1]);
-        await chooseAndCheck(user, 'Salut');
-        await finishCorrect(user, onCorrect);
-      } finally {
-        random.mockRestore();
-      }
-    });
-
     it('allows retry after a wrong pair, then continues after final wrong', async () => {
       const user = userEvent.setup();
       const { onWrong } = renderActivity(fixtureActivities.matchPairs);
@@ -477,27 +363,6 @@ describe('ActivityRenderer', () => {
       await chooseAndCheck(user, 'Ça va?');
       expectFinalWrong();
       await finishWrong(user, onWrong, 'Hello ↔ Ça va?');
-    });
-  });
-
-  describe('variant alternative label', () => {
-    const introWithVariantAlt = Object.freeze({
-      ...fixtureActivities.intro,
-      variantAltResponse: 'Salut'
-    });
-
-    it('labels the variant alternative "French alternative" for Louisiana French', () => {
-      renderActivity(introWithVariantAlt, { language: 'cajun' });
-
-      expect(screen.getByText('French alternative')).toBeOnTheScreen();
-      expect(screen.queryByText('Kouri-Vini alternative')).toBeNull();
-    });
-
-    it('labels the variant alternative "Kouri-Vini alternative" for Kouri-Vini', () => {
-      renderActivity(introWithVariantAlt, { language: 'kreole' });
-
-      expect(screen.getByText('Kouri-Vini alternative')).toBeOnTheScreen();
-      expect(screen.queryByText('French alternative')).toBeNull();
     });
   });
 

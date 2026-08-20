@@ -24,7 +24,6 @@ export async function updateCardReview(cardId, quality) {
     if (card.repetitions === 1) card.interval = 1;
     else if (card.repetitions === 2) card.interval = 3;
     else card.interval = Math.round(card.interval * card.easeFactor);
-    if (quality >= 4) card.lapses = 0;
   }
 
   card.easeFactor = Math.max(

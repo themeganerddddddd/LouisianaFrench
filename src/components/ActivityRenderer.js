@@ -3,7 +3,6 @@ import { Audio } from 'expo-av';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -29,25 +28,15 @@ function shuffle(arr, randomFn = Math.random) {
 function makeMatchColumns(pairs = []) {
   const safePairs = Array.isArray(pairs) ? pairs : [];
 
-  const leftItems = shuffle(
-    safePairs.map((pair, pairIndex) => ({
-      id: `left:${pairIndex}`,
-      value: pair.left,
-      pairIndex
-    }))
-  );
-  let rightItems = shuffle(
-    safePairs.map((pair, pairIndex) => ({
-      id: `right:${pairIndex}`,
-      value: pair.right,
-      pairIndex
-    }))
-  );
+  const leftItems = shuffle(safePairs.map((p) => p.left));
+  let rightItems = shuffle(safePairs.map((p) => p.right));
 
   function hasDirectMatch(leftList, rightList) {
-    return rightList.some((rightItem, index) =>
-      leftList[index]?.pairIndex === rightItem.pairIndex
-    );
+    return rightList.some((rightValue, index) => {
+      const leftValue = leftList[index];
+      const matchingPair = safePairs.find((p) => p.left === leftValue);
+      return matchingPair?.right === rightValue;
+    });
   }
 
   if (safePairs.length > 1) {
@@ -127,10 +116,6 @@ function shouldRevealAfterAnswer(state, attempts) {
 
 function shouldShowIntroAddOns(activity) {
   return activity?.type === 'intro_card';
-}
-
-function variantAltLabel(language) {
-  return language === 'kreole' ? 'Kouri-Vini alternative' : 'French alternative';
 }
 
 function useAudio(language) {
@@ -229,10 +214,6 @@ function getTargetDisplay(activity, showVariantAlt) {
   return activity?.answerDisplay || activity?.target || activity?.answer || '';
 }
 
-function valueForId(items, id) {
-  return items.find((item) => item.id === id)?.value || '';
-}
-
 function getPromptDisplay(activity, englishText) {
   if (!activity) return '';
 
@@ -282,7 +263,6 @@ function QuestionScrollView({ state, children }) {
 
 function AltToggleButtons({
   activity,
-  language,
   showEnglishAlt,
   setShowEnglishAlt,
   showVariantAlt,
@@ -314,7 +294,7 @@ function AltToggleButtons({
           onPress={() => setShowVariantAlt((v) => !v)}
         >
           <Text style={[styles.altButtonText, { color: theme.text }]}>
-            {variantAltLabel(language)}
+            Alternative
           </Text>
         </TouchableOpacity>
       ) : null}
@@ -322,7 +302,7 @@ function AltToggleButtons({
   );
 }
 
-function AnswerAltButtons({ activity, language, visible, theme }) {
+function AnswerAltButtons({ activity, visible, theme }) {
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
@@ -357,7 +337,7 @@ function AnswerAltButtons({ activity, language, visible, theme }) {
             onPress={() => setShowVariantAlt((v) => !v)}
           >
             <Text style={[styles.altButtonText, { color: theme.text }]}>
-              {variantAltLabel(language)}
+              Alternative
             </Text>
           </TouchableOpacity>
 
@@ -412,7 +392,7 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
         />
 
         {canOpenPreface ? (
-          <Pressable
+          <TouchableOpacity
             style={({ pressed }) => [
               styles.tBoyAction,
               pressed && styles.tBoyActionPressed
@@ -435,7 +415,7 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
               <Text style={[styles.tBoyActionText, { color: theme.accent }]}>T-Boy&apos;s Advice</Text>
               <Ionicons name="chevron-forward" size={14} color={theme.accent} />
             </View>
-          </Pressable>
+          </TouchableOpacity>
         ) : (
           <View style={styles.tBoyArtPocket}>
             <Image
@@ -475,13 +455,6 @@ function FeedbackFooter({
   onIncorrect,
   altContent
 }) {
-  const [submitted, setSubmitted] = useState(false);
-
-  function submit(handler) {
-    setSubmitted(true);
-    handler();
-  }
-
   if (state === 'correct') {
     return (
       <View style={[styles.footer, styles.footerGreen]}>
@@ -489,7 +462,7 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={[styles.footerButtonGreen, submitted && styles.disabledButton]} onPress={() => submit(onNext)} disabled={submitted}>
+        <TouchableOpacity style={styles.footerButtonGreen} onPress={onNext}>
           <Text style={styles.footerButtonText}>Next Question</Text>
         </TouchableOpacity>
       </View>
@@ -507,7 +480,7 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={[styles.footerButtonRed, submitted && styles.disabledButton]} onPress={() => submit(onIncorrect)} disabled={submitted}>
+        <TouchableOpacity style={styles.footerButtonRed} onPress={onIncorrect}>
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -546,7 +519,7 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={[styles.footerButtonRed, submitted && styles.disabledButton]} onPress={() => submit(onIncorrect)} disabled={submitted}>
+        <TouchableOpacity style={styles.footerButtonRed} onPress={onIncorrect}>
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -565,20 +538,6 @@ export default function ActivityRenderer({
   onOpenPreface
 }) {
   const theme = getTheme(language);
-  const submittedRef = useRef(false);
-
-  function submitOnce(handler, ...args) {
-    if (submittedRef.current) return;
-
-    submittedRef.current = true;
-    handler(...args);
-  }
-
-  const correctSubmission = { onCorrect: () => submitOnce(onCorrect) };
-  const feedbackSubmission = {
-    ...correctSubmission,
-    onWrong: (answer) => submitOnce(onWrong, answer)
-  };
 
   switch (activity.type) {
     case 'intro_card':
@@ -586,7 +545,7 @@ export default function ActivityRenderer({
         <IntroCard
           activity={activity}
           language={language}
-          {...correctSubmission}
+          onCorrect={onCorrect}
           theme={theme}
           onOpenPreface={onOpenPreface}
         />
@@ -597,7 +556,8 @@ export default function ActivityRenderer({
         <MultipleChoice
           activity={activity}
           language={language}
-          {...feedbackSubmission}
+          onCorrect={onCorrect}
+          onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
           onOpenPreface={onOpenPreface}
@@ -609,7 +569,8 @@ export default function ActivityRenderer({
         <ListeningTargetChoice
           activity={activity}
           language={language}
-          {...feedbackSubmission}
+          onCorrect={onCorrect}
+          onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
           onOpenPreface={onOpenPreface}
@@ -621,7 +582,8 @@ export default function ActivityRenderer({
         <Typing
           activity={activity}
           language={language}
-          {...feedbackSubmission}
+          onCorrect={onCorrect}
+          onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
           onOpenPreface={onOpenPreface}
@@ -633,7 +595,8 @@ export default function ActivityRenderer({
         <SentenceBuild
           activity={activity}
           language={language}
-          {...feedbackSubmission}
+          onCorrect={onCorrect}
+          onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
           onOpenPreface={onOpenPreface}
@@ -645,7 +608,8 @@ export default function ActivityRenderer({
         <MatchPairs
           activity={activity}
           language={language}
-          {...feedbackSubmission}
+          onCorrect={onCorrect}
+          onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
           onOpenPreface={onOpenPreface}
@@ -663,14 +627,8 @@ export default function ActivityRenderer({
 
 function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
   const { playAudioKey } = useAudio(language);
-  const [submitted, setSubmitted] = useState(false);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
-
-  function submit() {
-    setSubmitted(true);
-    onCorrect();
-  }
 
   const englishText = getEnglishDisplay(activity, showEnglishAlt);
   const targetText = getTargetDisplay(activity, showVariantAlt);
@@ -692,7 +650,6 @@ function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
 
       <AltToggleButtons
         activity={activity}
-        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -722,8 +679,8 @@ function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
       />
 
       <TouchableOpacity
-        style={[styles.primaryBtn, { backgroundColor: theme.accent }, submitted && styles.primaryBtnDisabled]}
-        onPress={submit} disabled={submitted}
+        style={[styles.primaryBtn, { backgroundColor: theme.accent }]}
+        onPress={onCorrect}
       >
         <Text style={styles.primaryBtnText}>Continue</Text>
       </TouchableOpacity>
@@ -787,7 +744,6 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
 
       <AltToggleButtons
         activity={activity}
-        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -854,14 +810,7 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : selected)}
-        altContent={
-          <AnswerAltButtons
-            activity={activity}
-            language={language}
-            visible={revealAddOns}
-            theme={theme}
-          />
-        }
+        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
       />
     </QuestionScrollView>
   );
@@ -946,7 +895,6 @@ function ListeningTargetChoice({
 
       <AltToggleButtons
         activity={activity}
-        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -1013,14 +961,7 @@ function ListeningTargetChoice({
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : selected)}
-        altContent={
-          <AnswerAltButtons
-            activity={activity}
-            language={language}
-            visible={revealAddOns}
-            theme={theme}
-          />
-        }
+        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
       />
     </QuestionScrollView>
   );
@@ -1084,7 +1025,6 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
 
       <AltToggleButtons
         activity={activity}
-        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -1202,28 +1142,15 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : value)}
-        altContent={
-          <AnswerAltButtons
-            activity={activity}
-            language={language}
-            visible={revealAddOns}
-            theme={theme}
-          />
-        }
+        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
       />
     </QuestionScrollView>
   );
 }
 
-const SENTENCE_PUNCT = new Set(['.', '?', '!', ',']);
-
 function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
-  const words = activity.words || [];
-  const contentWords = words.filter((w) => !SENTENCE_PUNCT.has(w));
-  const trailingPunct = words.filter((w) => SENTENCE_PUNCT.has(w));
-
   const [selected, setSelected] = useState([]);
-  const [pool, setPool] = useState(() => shuffle(contentWords));
+  const [pool, setPool] = useState(() => shuffle(activity.words || []));
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
@@ -1245,7 +1172,7 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
     setPool(nextPool);
     setSelected([...selected, word]);
 
-    if (activity.audioKey && nextPool.length === 0) {
+    if (activity.audioKey) {
       playAudioKey(activity.audioKey);
     }
   }
@@ -1261,10 +1188,9 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
   }
 
   function checkAnswer() {
-    const fullSelected = [...selected, ...trailingPunct];
-    const selectedText = fullSelected.join(' ');
+    const selectedText = selected.join(' ');
     const ok =
-      JSON.stringify(fullSelected) === JSON.stringify(activity.answerTokens || []) ||
+      JSON.stringify(selected) === JSON.stringify(activity.answerTokens || []) ||
       isTextAnswerCorrect(selectedText, activity);
 
     if (ok) {
@@ -1295,7 +1221,6 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
 
       <AltToggleButtons
         activity={activity}
-        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -1323,9 +1248,6 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
             >
               <Text style={styles.wordChipText}>{word}</Text>
             </TouchableOpacity>
-          ))}
-          {trailingPunct.map((p, idx) => (
-            <Text key={`punct-${idx}`} style={[styles.wordChipText, { lineHeight: undefined, paddingVertical: 8 }]}>{p}</Text>
           ))}
         </View>
       </View>
@@ -1382,16 +1304,9 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() =>
-          onWrong(state === 'skipped' ? '__skipped__' : [...selected, ...trailingPunct].join(' '))
+          onWrong(state === 'skipped' ? '__skipped__' : selected.join(' '))
         }
-        altContent={
-          <AnswerAltButtons
-            activity={activity}
-            language={language}
-            visible={revealAddOns}
-            theme={theme}
-          />
-        }
+        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
       />
     </QuestionScrollView>
   );
@@ -1415,32 +1330,24 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
 
   function isMatchedLeft(item) {
-    return matches.some((m) => m.leftId === item.id);
+    return matches.some((m) => m.left === item);
   }
 
   function isMatchedRight(item) {
-    return matches.some((m) => m.rightId === item.id);
+    return matches.some((m) => m.right === item);
   }
 
   function rightAudioKey(item) {
-    return activity.pairs?.[item.pairIndex]?.audioKey;
+    return activity.pairs?.find((p) => p.right === item)?.audioKey;
   }
 
   function checkPair() {
     if (!selectedLeft || !selectedRight) return;
 
-    const leftItem = left.find((item) => item.id === selectedLeft);
-    const rightItem = right.find((item) => item.id === selectedRight);
-    const leftValue = valueForId(left, selectedLeft);
-    const rightValue = valueForId(right, selectedRight);
-    const pair = activity.pairs?.[leftItem?.pairIndex];
+    const pair = activity.pairs?.find((p) => p.left === selectedLeft);
 
-    if (
-      pair?.left === leftValue &&
-      pair?.right === rightValue &&
-      leftItem?.pairIndex === rightItem?.pairIndex
-    ) {
-      const nextMatches = [...matches, { leftId: selectedLeft, rightId: selectedRight }];
+    if (pair?.right === selectedRight) {
+      const nextMatches = [...matches, { left: selectedLeft, right: selectedRight }];
 
       setMatches(nextMatches);
       setSelectedLeft(null);
@@ -1477,7 +1384,6 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
 
       <AltToggleButtons
         activity={activity}
-        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -1490,11 +1396,11 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
         <View style={styles.matchColumn}>
           {left.map((item) => {
             const matched = isMatchedLeft(item);
-            const active = selectedLeft === item.id;
+            const active = selectedLeft === item;
 
             return (
               <TouchableOpacity
-                key={item.id}
+                key={item}
                 disabled={matched || isLocked(state)}
                 style={[
                   styles.matchItem,
@@ -1505,9 +1411,9 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
                   matched && styles.matchedItem,
                   isLocked(state) && !matched && styles.optionLocked
                 ]}
-                onPress={() => setSelectedLeft(item.id)}
+                onPress={() => setSelectedLeft(item)}
               >
-                <Text style={styles.matchText}>{item.value}</Text>
+                <Text style={styles.matchText}>{item}</Text>
               </TouchableOpacity>
             );
           })}
@@ -1516,11 +1422,11 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
         <View style={styles.matchColumn}>
           {right.map((item) => {
             const matched = isMatchedRight(item);
-            const active = selectedRight === item.id;
+            const active = selectedRight === item;
 
             return (
               <TouchableOpacity
-                key={item.id}
+                key={item}
                 disabled={matched || isLocked(state)}
                 style={[
                   styles.matchItem,
@@ -1532,13 +1438,13 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
                   isLocked(state) && !matched && styles.optionLocked
                 ]}
                 onPress={() => {
-                  setSelectedRight(item.id);
+                  setSelectedRight(item);
 
                   const key = rightAudioKey(item);
                   if (key) playAudioKey(key);
                 }}
               >
-                <Text style={styles.matchText}>{item.value}</Text>
+                <Text style={styles.matchText}>{item}</Text>
               </TouchableOpacity>
             );
           })}
@@ -1581,19 +1487,12 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
         onNext={onCorrect}
         onIncorrect={() =>
           onWrong(
-              state === 'skipped'
-                ? '__skipped__'
-                : `${valueForId(left, selectedLeft)} ↔ ${valueForId(right, selectedRight)}`
+            state === 'skipped'
+              ? '__skipped__'
+              : `${selectedLeft || ''} ↔ ${selectedRight || ''}`
           )
         }
-        altContent={
-          <AnswerAltButtons
-            activity={activity}
-            language={language}
-            visible={revealAddOns}
-            theme={theme}
-          />
-        }
+        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
       />
     </QuestionScrollView>
   );

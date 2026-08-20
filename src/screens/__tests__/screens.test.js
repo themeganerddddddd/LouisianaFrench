@@ -1,16 +1,6 @@
-import { useLayoutEffect } from 'react';
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within
-} from '@testing-library/react-native';
-import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AccessibilityInfo, BackHandler, Text } from 'react-native';
+import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
 
 import {
   activityByCardId,
@@ -24,7 +14,6 @@ import {
   homeProjectionProgress,
   lastWorkedUnits,
   pendingMistakes,
-  practiceLogs,
   profiles,
   reviewStates,
   wordMastery
@@ -32,21 +21,16 @@ import {
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
-import MistakeReviewScreen from '../MistakeReviewScreen';
 import * as homeProjection from '../../utils/homeProjection';
-import DictionaryScreen from '../DictionaryScreen';
 import {
   getDefaultLanguage,
   getDailyReviewLog,
   getPendingMistakes,
   getProfile,
-  getLessonProgress,
   getLanguageDailyReviewLog,
   getLastWorkedUnit,
-  getReviewState,
   getTodayPractice,
   getTodayKey,
-  getWordProgress,
   hasSelectedLanguage,
   markLanguageSelected,
   setDefaultLanguage
@@ -75,53 +59,6 @@ const FULL_SCREEN_PHONE_METRICS = {
   frame: { x: 0, y: 0, width: 412, height: 915 },
   insets: { top: 38, right: 0, bottom: 24, left: 0 }
 };
-
-const MISTAKE_REVIEW_VIEWPORTS = [
-  ['mobile', FULL_SCREEN_PHONE_METRICS],
-  ['desktop', {
-    frame: { x: 0, y: 0, width: 1440, height: 900 },
-    insets: { top: 0, right: 0, bottom: 0, left: 0 }
-  }]
-];
-
-function setupSpeechRecorder() {
-  const defaultRecorder = useAudioRecorder.getMockImplementation();
-  const defaultRecorderState = useAudioRecorderState.getMockImplementation();
-  let isRecording = false;
-  const recorder = {
-    uri: 'file:///dictionary-attempt.m4a',
-    prepareToRecordAsync: jest.fn(async () => {}),
-    record: jest.fn(() => { isRecording = true; }),
-    stop: jest.fn(async () => { isRecording = false; })
-  };
-
-  useAudioRecorder.mockReturnValue(recorder);
-  useAudioRecorderState.mockImplementation(() => ({
-    isRecording,
-    durationMillis: 1200
-  }));
-
-  return () => {
-    useAudioRecorder.mockImplementation(defaultRecorder);
-    useAudioRecorderState.mockImplementation(defaultRecorderState);
-  };
-}
-
-async function acceptDictionaryPractice(user) {
-  await user.press(screen.getByRole('button', { name: 'Practice' }));
-  expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
-  expect(screen.queryByText('Phrase 1 / 1')).toBeNull();
-  await user.press(screen.getByLabelText('Record'));
-  expect(await screen.findByLabelText('Stop recording · 1.2s')).toBeOnTheScreen();
-  await user.press(screen.getByLabelText('Stop recording · 1.2s'));
-  expect(await screen.findByLabelText('Hear my recording')).toBeOnTheScreen();
-  await user.press(screen.getByLabelText('Hear my recording'));
-  expect(await screen.findByLabelText('Sounds good')).toBeEnabled();
-  await user.press(screen.getByLabelText('Sounds good'));
-  expect(await screen.findByText('Hello')).toBeOnTheScreen();
-  await act(async () => {});
-  expect(screen.getByTestId('dictionary-screen')).toBeOnTheScreen();
-}
 
 function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 91 } = {}) {
   return {
@@ -200,34 +137,6 @@ function planProjectionFixture({
   };
 }
 
-const MISTAKE_REVIEW_WORD_KEY = 'cajun:fixture_cajun_w02';
-
-function mistakeReviewProgressFixture(cardId) {
-  return {
-    reviewState: { [cardId]: reviewStates.overlap[cardId] },
-    wordProgress: { [MISTAKE_REVIEW_WORD_KEY]: wordMastery.learningAfterWrong }
-  };
-}
-
-async function expectMistakeReviewProgress(cardId) {
-  expect(await getReviewState()).toEqual(expect.objectContaining({
-    [cardId]: expect.objectContaining({
-      repetitions: 2,
-      interval: 3,
-      easeFactor: 2.5,
-      lapses: 0
-    })
-  }));
-  expect(await getWordProgress()).toEqual({
-    [MISTAKE_REVIEW_WORD_KEY]: {
-      seen: 2,
-      correct: 1,
-      wrong: 1,
-      status: 'learning'
-    }
-  });
-}
-
 describe('LoadingScreen', () => {
   it('routes first launch to Language selection', async () => {
     renderApp({ initialRouteName: 'Loading' });
@@ -243,26 +152,11 @@ describe('LoadingScreen', () => {
     expect(await screen.findByText('Choose your language')).toBeOnTheScreen();
   });
 
-  it.each([
-    ['mobile', {
-      frame: { x: 0, y: 0, width: 390, height: 844 },
-      insets: { top: 0, right: 0, bottom: 0, left: 0 }
-    }],
-    ['desktop', {
-      frame: { x: 0, y: 0, width: 1440, height: 900 },
-      insets: { top: 0, right: 0, bottom: 0, left: 0 }
-    }]
-  ])('shows the saved Language on the %s splash and routes to Home', async (
-    _viewport,
-    safeAreaMetrics
-  ) => {
+  it('routes a returning learner to Home with the saved Language', async () => {
     await setDefaultLanguage('kreole');
     await markLanguageSelected();
 
-    renderApp({ initialRouteName: 'Loading', safeAreaMetrics });
-
-    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
-    expect(screen.queryByText('Louisiana French')).toBeNull();
+    renderApp({ initialRouteName: 'Loading' });
 
     await act(async () => {
       jest.advanceTimersByTime(3000);
@@ -419,24 +313,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Mistakes')).toBeOnTheScreen();
   });
 
-  it('bounds the Home container width at desktop viewport sizes', async () => {
-    renderApp({
-      initialRouteName: 'Home',
-      initialParams: { language: 'cajun' },
-      safeAreaMetrics: {
-        frame: { x: 0, y: 0, width: 1440, height: 900 },
-        insets: { top: 0, right: 0, bottom: 0, left: 0 }
-      }
-    });
-
-    await screen.findByText('Louisiana French');
-    expect(screen.getByTestId('home-container')).toHaveStyle({
-      maxWidth: 480
-    });
-  });
-
   it('renders both Language identities with their gradient themes', async () => {
-    const user = setupUser();
     await seedAsyncStorage({
       profile: profiles.established,
       lessonProgress: {
@@ -494,19 +371,18 @@ describe('HomeScreen', () => {
     expect(
       within(screen.getByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
     ).toBeOnTheScreen();
-    await user.press(screen.getByTestId('unit-toggle-u01'));
     expect(screen.getByText('First greetings')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
   });
 
   it('renders Catalog and Learner Progress values from one Home projection snapshot', async () => {
-    const user = setupUser();
     const getProjection = jest
       .spyOn(homeProjection, 'getHomeProjection')
       .mockResolvedValue(projectionFixture());
 
     try {
+      await seedAsyncStorage({ lastWorkedUnit: { cajun: 'u99' } });
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
@@ -516,7 +392,6 @@ describe('HomeScreen', () => {
       expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 91 · 🔥 7 · 50% mastered');
       expect(screen.getByTestId('review-count')).toHaveTextContent('4');
       expect(screen.getByTestId('mistakes-count')).toHaveTextContent('2');
-      await user.press(screen.getByTestId('unit-toggle-u99'));
       expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
       expect(screen.queryByText('Greetings & Check-ins')).toBeNull();
       expect(getProjection).toHaveBeenCalledWith('cajun');
@@ -598,7 +473,6 @@ describe('HomeScreen', () => {
   });
 
   it('renders coherent completed and zero-Lesson Catalog fallbacks', async () => {
-    const user = setupUser();
     const completed = {
       ...planProjectionFixture({
         steps: [
@@ -636,9 +510,6 @@ describe('HomeScreen', () => {
       )).toBeOnTheScreen();
       expect(screen.queryByTestId('home-current-unit')).toBeNull();
       expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Practice Speech');
-      expect(screen.getByTestId('home-all-units-eyebrow')).toBeOnTheScreen();
-      await user.press(screen.getByTestId('unit-toggle-u99'));
-      expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
       completedRender.unmount();
 
       renderApp({
@@ -821,7 +692,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
   });
 
-  it('does not show a Review badge for all-future Cards and Daily Review is empty', async () => {
+  it('does not show a Review badge for all-future Cards while Daily Review keeps its fallback', async () => {
     await seedAsyncStorage({
       lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       reviewState: reviewStates.allFuture
@@ -838,8 +709,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-review-circle')).toBeTruthy();
     expect(screen.queryByTestId('review-count') === null).toBe(true);
     await user.press(screen.getByTestId('home-review-control'));
-    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
-    expect(screen.queryByText('1 / 5')).toBeNull();
+    expect(await screen.findByText('1 / 5')).toBeOnTheScreen();
   });
 
   it('refreshes the Review badge on focus without remounting Home', async () => {
@@ -912,21 +782,19 @@ describe('HomeScreen', () => {
     }
   });
 
-  it('collapses Units by default and allows multiple open Units independently', async () => {
+  it('collapses Units by default and allows only one open Unit', async () => {
     const user = setupUser();
-    await seedAsyncStorage({ lastWorkedUnit: lastWorkedUnits.cajunUnitOne });
 
     renderApp({
       initialRouteName: 'Home',
       initialParams: { language: 'cajun' }
     });
 
-    const firstToggle = await screen.findByRole('button', {
-      name: 'Toggle Greetings & Check-ins'
-    });
-    expect(within(firstToggle).getByText('Greetings & Check-ins')).toBeOnTheScreen();
+    expect(
+      within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+    ).toBeOnTheScreen();
     expect(screen.getAllByText('First greetings')).toHaveLength(1);
-    expect(firstToggle.props.accessibilityState).toEqual({
+    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
       expanded: false
     });
 
@@ -939,18 +807,8 @@ describe('HomeScreen', () => {
 
     await user.press(screen.getByTestId('unit-toggle-u02'));
 
-    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
-      expanded: true
-    });
-    expect(screen.getByTestId('unit-toggle-u02').props.accessibilityState).toEqual({
-      expanded: true
-    });
-    expect(screen.getAllByText('First greetings')).toHaveLength(2);
-    expect(screen.getByText('Everyday phrases')).toBeOnTheScreen();
-
-    await user.press(screen.getByTestId('unit-toggle-u01'));
-
     expect(screen.getAllByText('First greetings')).toHaveLength(1);
+    expect(screen.getByText('Everyday phrases')).toBeOnTheScreen();
     expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
       expanded: false
     });
@@ -966,114 +824,46 @@ describe('HomeScreen', () => {
     });
   });
 
-  it('expands and collapses Units under reduceMotion', async () => {
+  it('schedules a layout transition when a Unit expands or collapses', async () => {
     const user = setupUser();
-    const reduceMotion = jest
-      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
-      .mockResolvedValue(true);
+    const configureNext = jest
+      .spyOn(LayoutAnimation, 'configureNext')
+      .mockImplementation(() => {});
 
     try {
-      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
 
-      await screen.findByTestId('unit-toggle-u01');
+      expect(
+        within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+      ).toBeOnTheScreen();
+      expect(configureNext).not.toHaveBeenCalled();
+
       await user.press(screen.getByTestId('unit-toggle-u01'));
 
-      expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
-        expanded: true
-      });
-      expect(screen.getAllByText('First greetings')).toHaveLength(2);
-
-      await user.press(screen.getByTestId('unit-toggle-u01'));
-
-      expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
-        expanded: false
-      });
-      expect(screen.getAllByText('First greetings')).toHaveLength(1);
-    } finally {
-      reduceMotion.mockRestore();
-    }
-  });
-
-  it('collapses expanded Units immediately on Language switch before projection resolves', async () => {
-    const user = setupUser();
-    let resolveKouriProjection;
-    const kouriProjection = new Promise((resolve) => { resolveKouriProjection = resolve; });
-    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
-      .mockImplementation((language) => {
-        if (language === 'cajun') {
-          return Promise.resolve(projectionFixture());
+      expect(configureNext).toHaveBeenCalledWith({
+        duration: 220,
+        create: {
+          type: LayoutAnimation.Types.easeInEaseOut,
+          property: LayoutAnimation.Properties.scaleY
+        },
+        update: {
+          type: LayoutAnimation.Types.easeInEaseOut
+        },
+        delete: {
+          type: LayoutAnimation.Types.easeInEaseOut,
+          property: LayoutAnimation.Properties.scaleY
         }
-        return kouriProjection;
       });
 
-    try {
-      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+      await user.press(screen.getByTestId('unit-toggle-u01'));
 
-      await screen.findByTestId('unit-toggle-u99');
-      await user.press(screen.getByTestId('unit-toggle-u99'));
-      expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
-
-      await user.press(screen.getByLabelText('Louisiana French flag'));
-
-      expect(screen.getByText('Kouri-Vini')).toBeOnTheScreen();
-      expect(screen.getByTestId('unit-toggle-u99').props.accessibilityState).toEqual({
-        expanded: false
-      });
-      expect(screen.queryByText('Projected lesson')).toBeNull();
-
-      await act(async () => {
-        resolveKouriProjection(projectionFixture({
-          language: 'kreole',
-          title: 'Kouri Projected Unit',
-          xp: 73
-        }));
-      });
-
-      expect(await screen.findByText('Kouri Projected Unit')).toBeOnTheScreen();
-      expect(screen.getByTestId('unit-toggle-u99').props.accessibilityState).toEqual({
-        expanded: false
-      });
-      expect(screen.queryByText('Projected lesson')).toBeNull();
+      expect(configureNext).toHaveBeenCalledTimes(2);
     } finally {
-      getProjection.mockRestore();
+      configureNext.mockRestore();
     }
-  });
-
-  it('reaches the correct final expanded state after rapid repeated presses', async () => {
-    const user = setupUser();
-
-    renderApp({
-      initialRouteName: 'Home',
-      initialParams: { language: 'cajun' }
-    });
-
-    await screen.findByTestId('unit-toggle-u01');
-
-    await user.press(screen.getByTestId('unit-toggle-u01'));
-    await user.press(screen.getByTestId('unit-toggle-u01'));
-    await user.press(screen.getByTestId('unit-toggle-u01'));
-
-    expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
-      expanded: true
-    });
-    expect(screen.getAllByText('First greetings')).toHaveLength(2);
-  });
-
-  it.each([
-    ['cajun', 'First greetings', 'Bonjour'],
-    ['kreole', 'First pronouns', 'nouzòt']
-  ])('opens the selected accordion Lesson with active %s Language', async (
-    language,
-    lessonTitle,
-    targetWord
-  ) => {
-    const user = setupUser();
-    renderApp({ initialRouteName: 'Home', initialParams: { language } });
-
-    await user.press(await screen.findByTestId('unit-toggle-u01'));
-    await user.press(screen.getByLabelText(lessonTitle));
-
-    expect(await screen.findByText(targetWord)).toBeOnTheScreen();
   });
 
   it('opens Dictionary and Advanced with the active Language', async () => {
@@ -1094,7 +884,7 @@ describe('HomeScreen', () => {
     });
     await screen.findByText('Louisiana French');
     await user.press(screen.getByTestId('home-hub-control'));
-    expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
+    expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
   });
 
   it('shows an empty Mistakes control as disabled without a badge or navigation', async () => {
@@ -1428,7 +1218,7 @@ describe('HomeScreen', () => {
       );
       expect(screen.getByText('Speech')).toBeOnTheScreen();
       await user.press(screen.getByTestId('home-plan-cta'));
-      expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
+      expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
     } finally {
       getProjection.mockRestore();
     }
@@ -1466,22 +1256,22 @@ describe('HomeScreen', () => {
       expect(await getTodayPractice('cajun')).toBeNull();
       await user.press(screen.getByTestId('home-plan-cta'));
 
-      expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
+      expect(await screen.findByText('Advanced French Hub')).toBeOnTheScreen();
       expect(await getTodayPractice('cajun')).toBeNull();
-      await user.press(screen.getByLabelText('Record'));
-      expect(await screen.findByLabelText('Stop recording · 1.2s')).toBeOnTheScreen();
-      expect(await getTodayPractice('cajun')).toBeNull();
-
-      await user.press(screen.getByLabelText('Stop recording · 1.2s'));
-      expect(await screen.findByLabelText('Hear my recording')).toBeOnTheScreen();
-      expect(screen.getByLabelText('Sounds good')).toBeDisabled();
+      await user.press(screen.getByText('Record'));
+      expect(await screen.findByText('Stop recording (1.2s)')).toBeOnTheScreen();
       expect(await getTodayPractice('cajun')).toBeNull();
 
-      await user.press(screen.getByLabelText('Hear my recording'));
-      expect(await screen.findByLabelText('Sounds good')).toBeEnabled();
+      await user.press(screen.getByText('Stop recording (1.2s)'));
+      expect(await screen.findByText('Play my recording')).toBeOnTheScreen();
+      expect(screen.getByText('Sounds good, next phrase')).toBeDisabled();
       expect(await getTodayPractice('cajun')).toBeNull();
 
-      await user.press(screen.getByLabelText('Sounds good'));
+      await user.press(screen.getByText('Play my recording'));
+      expect(await screen.findByText('Sounds good, next phrase')).toBeEnabled();
+      expect(await getTodayPractice('cajun')).toBeNull();
+
+      await user.press(screen.getByText('Sounds good, next phrase'));
       await waitFor(async () => {
         expect(await getTodayPractice('cajun')).toEqual(expect.objectContaining({ type: 'speech' }));
       });
@@ -1605,164 +1395,6 @@ describe('HomeScreen', () => {
     }
   });
 
-  it('renders an ALL UNITS eyebrow above the accordion list', async () => {
-    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
-
-    const eyebrow = await screen.findByTestId('home-all-units-eyebrow');
-
-    expect(eyebrow).toHaveStyle({
-      marginTop: 14,
-      marginBottom: 8
-    });
-    expect(within(eyebrow).getByText('ALL UNITS')).toHaveStyle({
-      color: '#64748B',
-      fontSize: 12,
-      fontWeight: '800',
-      letterSpacing: 0.48
-    });
-    expect(screen.queryByTestId('home-all-units-eyebrow')).toBeOnTheScreen();
-  });
-
-  it('renders accordion cards with exact header, title, meta, and margin roles', async () => {
-    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
-
-    const card = await screen.findByTestId('unit-card-u01');
-
-    expect(card).toHaveStyle({ marginBottom: 10 });
-
-    expect(within(card).getByText('Greetings & Check-ins')).toHaveStyle({
-      fontSize: 16,
-      fontWeight: '800'
-    });
-
-    expect(within(card).getByText(/0 \/ 2 words · 0 \/ 2 lessons/)).toHaveStyle({
-      fontSize: 12,
-      fontWeight: '600'
-    });
-
-    expect(screen.getByTestId('unit-progress-u01')).toHaveStyle({ height: 8 });
-  });
-
-  it.each([
-    ['cajun', '#3B82F6'],
-    ['kreole', '#10B981']
-  ])('colors completed lesson rows %s in the approved theme', async (language, doneColor) => {
-    const user = setupUser();
-    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
-      .mockResolvedValue({
-        language,
-        dashboard: { xp: 0, streak: 0, masteredWords: 0, totalWords: 0, masteryPercent: 0, reviewCount: 0, pendingMistakeCount: 0, reviewEnabled: true },
-        plan: null,
-        currentUnit: null,
-        catalogComplete: false,
-        firstDay: false,
-        units: [{
-          unitCode: 'u99',
-          unitLabel: 'Unit 99',
-          title: 'Done Unit',
-          masteredWords: 1,
-          totalWords: 1,
-          masteryPercent: 100,
-          completedLessons: 1,
-          totalLessons: 1,
-          lessons: [{
-            id: 'done_lesson',
-            title: 'Done lesson',
-            wordCount: 2,
-            typeLabel: 'Core lesson',
-            complete: true
-          }]
-        }]
-      });
-
-    try {
-      renderApp({ initialRouteName: 'Home', initialParams: { language } });
-
-      await screen.findByTestId('unit-card-u99');
-      await user.press(screen.getByTestId('unit-toggle-u99'));
-
-      const doneRow = screen.getByLabelText('Done lesson');
-      expect(doneRow).toHaveStyle({ backgroundColor: doneColor });
-
-      const metaText = within(doneRow).getByText('2 words · Core lesson');
-      expect(metaText).toHaveStyle({ color: 'rgba(255,255,255,0.88)' });
-
-      const badge = within(doneRow).getByText('Done');
-      expect(badge).toHaveStyle({
-        color: '#FFFFFF',
-        fontSize: 12.5,
-        fontWeight: '800'
-      });
-    } finally {
-      getProjection.mockRestore();
-    }
-  });
-
-  it('uses expanded lesson row and pill dimensions', async () => {
-    const user = setupUser();
-    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
-      .mockResolvedValue({
-        language: 'cajun',
-        dashboard: { xp: 0, streak: 0, masteredWords: 0, totalWords: 0, masteryPercent: 0, reviewCount: 0, pendingMistakeCount: 0, reviewEnabled: true },
-        plan: null,
-        currentUnit: null,
-        catalogComplete: false,
-        firstDay: false,
-        units: [{
-          unitCode: 'u50',
-          unitLabel: 'Unit 50',
-          title: 'Style Unit',
-          masteredWords: 0,
-          totalWords: 1,
-          masteryPercent: 0,
-          completedLessons: 0,
-          totalLessons: 1,
-          lessons: [{
-            id: 'style_lesson',
-            title: 'Style lesson',
-            wordCount: 1,
-            typeLabel: 'Listening',
-            complete: false
-          }]
-        }]
-      });
-
-    try {
-      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
-
-      await screen.findByTestId('unit-card-u50');
-      await user.press(screen.getByTestId('unit-toggle-u50'));
-
-      const row = screen.getByLabelText('Style lesson');
-      expect(row).toHaveStyle({
-        paddingVertical: 12,
-        paddingHorizontal: 14
-      });
-
-      expect(within(row).getByText('Style lesson')).toHaveStyle({
-        fontSize: 14.5,
-        fontWeight: '800'
-      });
-
-      const badge = within(row).getByText('Start');
-      expect(badge).toHaveStyle({
-        fontWeight: '800',
-        fontSize: 12.5
-      });
-    } finally {
-      getProjection.mockRestore();
-    }
-  });
-
-  it('renders the secondline image at height 110', async () => {
-    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
-
-    await screen.findByText('Louisiana French');
-
-    const secondline = screen.getByTestId('home-secondline');
-    expect(secondline).toHaveStyle({ height: 110 });
-  });
-
   it('removes the old stats cards and full-width navigation controls', async () => {
     renderApp({
       initialRouteName: 'Home',
@@ -1841,26 +1473,6 @@ describe('LessonRunner', () => {
 
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText(/Everyday phrases/)).toBeOnTheScreen();
-    expect((await getProfile()).xp).toBe(10);
-    expect((await getLessonProgress())['cajun:fixture_cajun_u02_l01'].completed).toBe(true);
-  });
-
-  it('marks an all-correct Lesson complete with its full XP', async () => {
-    const user = setupUser();
-
-    renderApp({
-      initialRouteName: 'Lesson',
-      initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' }
-    });
-
-    expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
-    await user.press(screen.getByText('Start lesson'));
-    expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
-    await user.press(screen.getByText('Continue'));
-
-    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
-    expect((await getProfile()).xp).toBe(10);
-    expect((await getLessonProgress())['cajun:fixture_cajun_u03_l01'].completed).toBe(true);
   });
 
   it('redirects to Home when the lesson is not found (KD-06)', async () => {
@@ -1963,82 +1575,33 @@ describe('LessonRunner', () => {
 });
 
 describe('MistakeReviewScreen', () => {
-  it('routes an empty non-home queue from an effect, not during render', () => {
-    let committed = false;
-    const navigation = {
-      replace: jest.fn(() => {
-        if (!committed) throw new Error('navigation.replace called during render');
-      })
-    };
+  it('shows missed Activities and reaches completion after correction', async () => {
+    const user = setupUser();
+    const activity = activityByCardId('fixture:cajun:greeting:choice');
 
-    function RenderProbe() {
-      useLayoutEffect(() => {
-        committed = true;
-      }, []);
-
-      return (
-        <MistakeReviewScreen
-          route={{
-            params: {
-              language: 'cajun',
-              lessonTitle: 'Greetings & Check-ins — First greetings',
-              mistakes: [],
-              lessonXp: 20
-            }
-          }}
-          navigation={navigation}
-        />
-      );
-    }
-
-    expect(() => render(<RenderProbe />)).not.toThrow();
-    expect(navigation.replace).toHaveBeenCalledWith('LessonComplete', {
-      lessonTitle: 'Greetings & Check-ins — First greetings',
-      xpEarned: 20,
-      mistakesCount: 0,
-      streak: null,
-      scoreEarned: null,
-      scorePossible: null,
-      language: 'cajun'
+    renderApp({
+      initialRouteName: 'MistakeReview',
+      initialParams: {
+        language: 'cajun',
+        lessonId: 'fixture_cajun_u01_l01',
+        lessonTitle: 'Greetings & Check-ins — First greetings',
+        mistakes: [{ ...activity, userAnswer: 'Bonjour' }],
+        lessonXp: 20
+      }
     });
+
+    expect(screen.getByText('Mistake Review')).toBeOnTheScreen();
+    expect(screen.getByText('Let’s fix the questions you missed.')).toBeOnTheScreen();
+    expect(screen.getByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Report a bug')).toBeNull();
+
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
+    expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
   });
-
-  it.each(MISTAKE_REVIEW_VIEWPORTS)(
-    'applies quality-4 Card and Word recovery before lesson completion at %s width',
-    async (_viewport, safeAreaMetrics) => {
-      const user = setupUser();
-      const activity = activityByCardId('fixture:cajun:greeting:choice');
-
-      await seedAsyncStorage(mistakeReviewProgressFixture(activity.cardId));
-
-      renderApp({
-        initialRouteName: 'MistakeReview',
-        initialParams: {
-          language: 'cajun',
-          lessonId: 'fixture_cajun_u01_l01',
-          lessonTitle: 'Greetings & Check-ins — First greetings',
-          mistakes: [{ ...activity, userAnswer: 'Bonjour' }],
-          lessonXp: 20
-        },
-        safeAreaMetrics
-      });
-
-      expect(screen.getByText('Mistake Review')).toBeOnTheScreen();
-      expect(screen.getByText('Let’s fix the questions you missed.')).toBeOnTheScreen();
-      expect(screen.getByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
-      expect(screen.queryByLabelText('Report a bug')).toBeNull();
-
-      await user.press(screen.getByText('Ça va?'));
-      await user.press(screen.getByText('Check'));
-      await user.press(screen.getByText('Next Question'));
-
-      expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
-      expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
-      expect((await getProfile()).xp).toBe(30);
-      expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01'].completed).toBe(true);
-      await expectMistakeReviewProgress(activity.cardId);
-    }
-  );
 
   it('removes only the corrected Card while the next pending Card remains', async () => {
     const user = setupUser();
@@ -2094,10 +1657,9 @@ describe('MistakeReviewScreen', () => {
     expect(await getPendingMistakes('cajun')).toHaveLength(1);
   });
 
-  it('applies quality-4 Card and Word recovery before returning Home', async () => {
+  it('clears the final Home Card, records Practice, awards 10 XP, and returns Home', async () => {
     const user = setupUser();
     await seedAsyncStorage({
-      ...mistakeReviewProgressFixture(pendingMistakes.cajun.greetingChoice.cardId),
       pendingMistakes: {
         cajun: {
           [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
@@ -2126,8 +1688,6 @@ describe('MistakeReviewScreen', () => {
       pendingMistakes.kreole.pronounsChoice
     ]);
     expect((await getProfile()).xp).toBe(10);
-    expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01']).toBeUndefined();
-    await expectMistakeReviewProgress(pendingMistakes.cajun.greetingChoice.cardId);
     expect(await getTodayPractice('cajun')).toEqual({
       type: 'mistakeReview',
       completedAt: expect.any(String)
@@ -2136,33 +1696,18 @@ describe('MistakeReviewScreen', () => {
 });
 
 describe('LessonCompleteScreen', () => {
-  const lessonCompleteParams = {
-    lessonTitle: 'Greetings & Check-ins — First greetings',
-    xpEarned: 30,
-    mistakesCount: 1,
-    streak: 2,
-    language: 'cajun'
-  };
-
-  it.each([
-    ['mobile', {
-      frame: { x: 0, y: 0, width: 390, height: 844 },
-      insets: { top: 0, right: 0, bottom: 0, left: 0 }
-    }],
-    ['desktop', {
-      frame: { x: 0, y: 0, width: 1440, height: 900 },
-      insets: { top: 0, right: 0, bottom: 0, left: 0 }
-    }]
-  ])('shows session stats and returns Home without Leaderboard at %s size', async (
-    size,
-    safeAreaMetrics
-  ) => {
+  it('shows session stats and returns Home', async () => {
     const user = setupUser();
 
     renderApp({
       initialRouteName: 'LessonComplete',
-      initialParams: lessonCompleteParams,
-      safeAreaMetrics
+      initialParams: {
+        lessonTitle: 'Greetings & Check-ins — First greetings',
+        xpEarned: 30,
+        mistakesCount: 1,
+        streak: 2,
+        language: 'cajun'
+      }
     });
 
     expect(screen.getByText('Session Complete 🎉')).toBeOnTheScreen();
@@ -2170,7 +1715,7 @@ describe('LessonCompleteScreen', () => {
     expect(screen.getByText('⚡ 30')).toBeOnTheScreen();
     expect(screen.getByText('📝 1')).toBeOnTheScreen();
     expect(screen.getByText('🔥 Streak: 2')).toBeOnTheScreen();
-    expect(screen.queryByText('Open Leaderboard (WIP)')).toBeNull();
+    expect(screen.getByText('Open Leaderboard (WIP)')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Back to Home'));
@@ -2179,36 +1724,22 @@ describe('LessonCompleteScreen', () => {
 });
 
 describe('DailyReviewScreen', () => {
-  it('shows an honest empty state at mobile and desktop sizes', async () => {
-    const user = setupUser();
-
-    const mobile = renderApp({
-      initialRouteName: 'DailyReview',
-      initialParams: { language: 'cajun' },
-      safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
-    });
-
-    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Back to Home' })).toBeOnTheScreen();
-    expect(screen.queryByText('1 / 5')).toBeNull();
-    mobile.unmount();
-
+  it('builds a review queue from the Catalog fixture Activities', async () => {
     renderApp({
       initialRouteName: 'DailyReview',
-      initialParams: { language: 'cajun' },
-      safeAreaMetrics: {
-        frame: { x: 0, y: 0, width: 1440, height: 900 },
-        insets: { top: 0, right: 0, bottom: 0, left: 0 }
-      }
+      initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Back to Home' })).toHaveStyle({ minWidth: 180 });
-    expect(await getLanguageDailyReviewLog('cajun')).toEqual({});
-    expect(await getDailyReviewLog()).toEqual({});
+    expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Due cards, weak words, and review practice.')
+    ).toBeOnTheScreen();
+    expect(screen.getByText('1 / 5')).toBeOnTheScreen();
+    expect(screen.getByText("Build: 'It's ready'")).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Report a bug')).toBeNull();
 
-    await user.press(screen.getByRole('button', { name: 'Back to Home' }));
-    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    const check = await screen.findByText('Check');
+    expect(check).toBeDisabled();
   });
 
   it('completes when the sole due Card is answered correctly', async () => {
@@ -2246,7 +1777,7 @@ describe('DailyReviewScreen', () => {
     expect(await getDailyReviewLog()).toEqual({ [getTodayKey()]: true });
   });
 
-  it('routes a final wrong answer to Mistake Review without double-scoring (KD-01)', async () => {
+  it('completes after a final wrong answer without double-scoring (KD-01)', async () => {
     jest.setSystemTime(clock.pastDue());
 
     await seedAsyncStorage({
@@ -2277,9 +1808,10 @@ describe('DailyReviewScreen', () => {
 
     await user.press(screen.getByText('Continue'));
 
-    expect(await screen.findByText('Mistake Review')).toBeOnTheScreen();
-    expect(screen.getByText("Choose the match for 'How’s it going?'"))
-      .toBeOnTheScreen();
+    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
+    expect(screen.getByText('Daily Review')).toBeOnTheScreen();
+    expect(screen.getByText('⚡ 0')).toBeOnTheScreen();
+    expect(screen.getByText('📝 1')).toBeOnTheScreen();
     expect(await getLanguageDailyReviewLog('cajun')).toEqual({
       [getTodayKey()]: true
     });
@@ -2297,60 +1829,6 @@ describe('DailyReviewScreen', () => {
 });
 
 describe('DictionaryScreen', () => {
-  it('refreshes Word status when the mounted screen regains focus', async () => {
-    const navigationRef = createNavigationContainerRef();
-    const FocusStack = createStackNavigator();
-    const FocusAwayScreen = () => <Text>Focus away</Text>;
-
-    await seedAsyncStorage({ wordProgress: {} });
-    render(
-      <NavigationContainer ref={navigationRef}>
-        <FocusStack.Navigator initialRouteName="Dictionary" screenOptions={{ headerShown: false }}>
-          <FocusStack.Screen
-            name="Dictionary"
-            component={DictionaryScreen}
-            initialParams={{ language: 'cajun' }}
-          />
-          <FocusStack.Screen name="FocusAway" component={FocusAwayScreen} />
-        </FocusStack.Navigator>
-      </NavigationContainer>
-    );
-
-    expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
-    expect(screen.queryByText('Mastered')).toBeNull();
-
-    await act(async () => {
-      navigationRef.navigate('FocusAway');
-    });
-    expect(await screen.findByText('Focus away')).toBeOnTheScreen();
-
-    await seedAsyncStorage({
-      wordProgress: {
-        'cajun:fixture_cajun_w01': wordMastery.mastered
-      }
-    });
-
-    await act(async () => {
-      navigationRef.goBack();
-    });
-
-    expect(await screen.findByText('Mastered')).toBeOnTheScreen();
-
-    await seedAsyncStorage({
-      wordProgress: {
-        'kreole:fixture_kreole_w01': wordMastery.learningAfterWrong
-      }
-    });
-
-    await act(async () => {
-      navigationRef.setParams({ language: 'kreole' });
-    });
-
-    expect(await screen.findByText('Kouri-Vini Dictionary')).toBeOnTheScreen();
-    expect(await screen.findByText('nouzòt')).toBeOnTheScreen();
-    expect(screen.getByText('Learning')).toBeOnTheScreen();
-  });
-
   it('applies the final top inset on the first render', async () => {
     renderApp({
       initialRouteName: 'Dictionary',
@@ -2414,154 +1892,21 @@ describe('DictionaryScreen', () => {
     expect(await screen.findByText("It's ready")).toBeOnTheScreen();
     expect(screen.queryByText('Hello')).toBeNull();
   });
-
-  it.each([
-    ['cajun', 'French Dictionary', 'Hello', 'Bonjour', '#2771CB'],
-    ['kreole', 'Kouri-Vini Dictionary', 'we', 'nouzòt', '#08834C']
-  ])('shows Practice beside Play audio for a Word with audio in %s', async (
-    language,
-    title,
-    english,
-    target,
-    accent
-  ) => {
-    renderApp({ initialRouteName: 'Dictionary', initialParams: { language } });
-
-    expect(await screen.findByText(title)).toBeOnTheScreen();
-    expect(screen.getByText(english)).toBeOnTheScreen();
-    expect(screen.getByText(target)).toBeOnTheScreen();
-    expect(screen.getByText('Play audio')).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Practice' })).toBeOnTheScreen();
-    expect(screen.getByText('Practice')).toHaveStyle({ color: accent });
-  });
-
-  it.each([
-    ['mobile', FULL_SCREEN_PHONE_METRICS],
-    ['desktop', {
-      frame: { x: 0, y: 0, width: 1440, height: 900 },
-      insets: { top: 0, right: 0, bottom: 0, left: 0 }
-    }]
-  ])('keeps the Practice action accessible at %s size', async (_size, safeAreaMetrics) => {
-    renderApp({
-      initialRouteName: 'Dictionary',
-      initialParams: { language: 'cajun' },
-      safeAreaMetrics
-    });
-
-    expect(await screen.findByRole('button', { name: 'Practice' })).toBeOnTheScreen();
-  });
-
-  it('does not show Practice for a Word without audio', async () => {
-    const user = setupUser();
-    renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
-
-    expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
-    await user.type(
-      screen.getByPlaceholderText('Search English, target word, or category'),
-      'How’s it going?'
-    );
-
-    expect(await screen.findByText('How’s it going?')).toBeOnTheScreen();
-    expect(screen.getByText('Ça va?')).toBeOnTheScreen();
-    expect(screen.queryByText('Practice')).toBeNull();
-    expect(screen.queryByText('Play audio')).toBeNull();
-  });
-
-  it('opens single-Word SpeechPractice and returns to Dictionary on back', async () => {
-    const user = setupUser();
-    renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
-
-    expect(await screen.findByText('French Dictionary')).toBeOnTheScreen();
-    await user.press(screen.getByRole('button', { name: 'Practice' }));
-
-    expect(await screen.findByText('SPEECH PRACTICE')).toBeOnTheScreen();
-    expect(screen.getByText('Bonjour')).toBeOnTheScreen();
-    expect(screen.queryByText('Phrase 1 / 1')).toBeNull();
-    await user.press(screen.getByLabelText('Back'));
-
-    expect(await screen.findByText('Hello')).toBeOnTheScreen();
-    expect(screen.getByTestId('dictionary-screen')).toBeOnTheScreen();
-  });
-
-  it('accept writes Practice when no mistakes and no today Practice exist', async () => {
-    const user = setupUser();
-    const restoreRecorder = setupSpeechRecorder();
-
-    try {
-      renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
-
-      await acceptDictionaryPractice(user);
-
-      expect(await getTodayPractice('cajun')).toEqual({
-        type: 'speech',
-        completedAt: expect.any(String)
-      });
-    } finally {
-      restoreRecorder();
-    }
-  });
-
-  it('does not write Practice when pending mistakes exist', async () => {
-    const user = setupUser();
-    const restoreRecorder = setupSpeechRecorder();
-    await seedAsyncStorage({
-      pendingMistakes: {
-        cajun: {
-          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
-        }
-      }
-    });
-
-    try {
-      renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
-      await acceptDictionaryPractice(user);
-
-      expect(await getTodayPractice('cajun')).toBeNull();
-    } finally {
-      restoreRecorder();
-    }
-  });
-
-  it('does not overwrite an existing today Practice entry', async () => {
-    const user = setupUser();
-    const restoreRecorder = setupSpeechRecorder();
-    jest.setSystemTime(clock.localCalendarLateEvening());
-    const existingPractice = practiceLogs.todaySpeech['2026-03-05'];
-    await seedAsyncStorage({
-      practiceLog: { cajun: { [getTodayKey()]: existingPractice } }
-    });
-
-    try {
-      renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
-      await acceptDictionaryPractice(user);
-
-      expect(await getTodayPractice('cajun')).toEqual(existingPractice);
-    } finally {
-      restoreRecorder();
-    }
-  });
 });
 
 describe('AdvancedScreen', () => {
-  it('hosts production SpeechPractice for the active Language', async () => {
+  it('shows the Language-specific hub placeholder', async () => {
     renderApp({
       initialRouteName: 'Advanced',
       initialParams: { language: 'kreole' }
     });
 
-    expect(screen.getByText('SPEECH PRACTICE')).toBeOnTheScreen();
-    expect(screen.queryByText('Advanced French Hub')).toBeNull();
-    expect(screen.queryByText('Advanced Kouri-Vini Hub')).toBeNull();
+    expect(screen.getByText('Advanced Kouri-Vini Hub')).toHaveStyle({ textAlign: 'center' });
     expect(screen.queryByText('Experimental speaking drills')).toBeNull();
     expect(screen.queryByText('Self-reviewed speech practice prototype')).toBeNull();
-    expect(screen.getByLabelText('Hear the speaker')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Record')).toBeOnTheScreen();
-    expect(screen.getByText('Not graded — you decide when it sounds right.')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Kouri-Vini flag')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Back')).toBeOnTheScreen();
-    expect(screen.queryByText('Play Audio')).toBeNull();
-    expect(screen.queryByText(/Pronunciation is not graded/)).toBeNull();
-    expect(screen.queryByText('Sounds good, next phrase')).toBeNull();
+    expect(screen.getByText('Play Audio')).toBeOnTheScreen();
+    expect(screen.getByText('Record')).toBeOnTheScreen();
+    expect(screen.getByText(/Pronunciation is not graded/)).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
   });
 });

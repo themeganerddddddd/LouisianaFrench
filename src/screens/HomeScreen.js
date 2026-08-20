@@ -1,11 +1,10 @@
-import { useFocusEffect, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
-  Animated,
   Image,
   LayoutAnimation,
   Platform,
@@ -19,11 +18,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
+import { getHomeProjection } from '../utils/homeProjection';
 import {
   getDefaultLanguage,
+  getLastWorkedUnit,
   setDefaultLanguage
 } from '../utils/storage';
-import { getHomeProjection } from '../utils/homeProjection';
 
 function getLessonButtonText(done, locked = false) {
   if (done) return 'Done';
@@ -37,45 +37,6 @@ function getUnitNumber(unitCode) {
   if (!match) return 'Unit';
 
   return `Unit ${Number(match[1])}`;
-}
-
-function AccordionChevron({ expanded, reduceMotion, color = '#FFFFFF' }) {
-  const rotation = useRef(new Animated.Value(expanded ? 1 : 0)).current;
-  const prevExpanded = useRef(expanded);
-  const prevReduceMotion = useRef(reduceMotion);
-
-  useEffect(() => {
-    if (prevExpanded.current === expanded && prevReduceMotion.current === reduceMotion) return;
-    prevExpanded.current = expanded;
-    prevReduceMotion.current = reduceMotion;
-
-    const toValue = expanded ? 1 : 0;
-
-    if (reduceMotion) {
-      rotation.stopAnimation();
-      rotation.setValue(toValue);
-      return;
-    }
-
-    const anim = Animated.timing(rotation, {
-      toValue,
-      duration: 150,
-      useNativeDriver: true
-    });
-    anim.start();
-    return () => anim.stop();
-  }, [expanded, reduceMotion, rotation]);
-
-  const rotateInterpolation = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg']
-  });
-
-  return (
-    <Animated.View style={{ transform: [{ rotate: rotateInterpolation }], marginLeft: 8 }}>
-      <Feather name="chevron-down" size={20} color={color} />
-    </Animated.View>
-  );
 }
 
 function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
@@ -269,6 +230,9 @@ function CurrentUnit({ currentUnit, catalogComplete, hasLessons, firstDay, first
   );
 }
 
+
+
+
 function DashboardControl({
   controlId,
   iconId,
@@ -322,7 +286,7 @@ export default function HomeScreen() {
   const [language, setLanguage] = useState(route.params?.language || 'cajun');
   const [projection, setProjection] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [expandedUnits, setExpandedUnits] = useState(new Set());
+  const [expandedUnit, setExpandedUnit] = useState(null);
   const initialExpansionLanguage = useRef(null);
 
   useEffect(() => {
@@ -346,14 +310,21 @@ export default function HomeScreen() {
     let cancelled = false;
     async function loadHome() {
       const needsInitialExpansion = initialExpansionLanguage.current !== language;
-      const loadedProjection = await getHomeProjection(language);
+      const [loadedProjection, lastWorkedUnit] = await Promise.all([
+        getHomeProjection(language),
+        needsInitialExpansion ? getLastWorkedUnit(language) : Promise.resolve(null)
+      ]);
 
       if (cancelled) return;
 
       setProjection(loadedProjection);
       if (needsInitialExpansion) {
         initialExpansionLanguage.current = language;
-        setExpandedUnits(new Set());
+        setExpandedUnit(
+          loadedProjection.units.some((unit) => unit.unitCode === lastWorkedUnit)
+            ? lastWorkedUnit
+            : null
+        );
       }
     }
 
@@ -365,7 +336,6 @@ export default function HomeScreen() {
     const preference = AccessibilityInfo.isReduceMotionEnabled?.();
     preference?.then(setReduceMotion);
   }, []);
-
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -373,27 +343,27 @@ export default function HomeScreen() {
   }, []);
 
   async function switchLanguage(nextLanguage) {
-    setExpandedUnits(new Set());
     setLanguage(nextLanguage);
     await setDefaultLanguage(nextLanguage);
   }
 
   function toggleUnit(unitCode) {
-    if (!reduceMotion) {
-      LayoutAnimation.configureNext({
-        duration: 150,
-        update: { type: LayoutAnimation.Types.easeInEaseOut }
-      });
-    }
-    setExpandedUnits((prev) => {
-      const next = new Set(prev);
-      if (next.has(unitCode)) {
-        next.delete(unitCode);
-      } else {
-        next.add(unitCode);
+    LayoutAnimation.configureNext({
+      duration: 220,
+      create: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.scaleY
+      },
+      update: {
+        type: LayoutAnimation.Types.easeInEaseOut
+      },
+      delete: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.scaleY
       }
-      return next;
     });
+
+    setExpandedUnit((currentUnit) => (currentUnit === unitCode ? null : unitCode));
   }
 
   const theme =
@@ -402,7 +372,6 @@ export default function HomeScreen() {
           topBarGrad: ['#498BDC', '#2771CB'],
           headerGrad: ['#498BDC', '#2771CB'],
           start: '#2771CB',
-          done: '#3B82F6',
           doneSoft: '#3B82F6',
           progressFill: '#7DD3FC',
           subtitle: '#DCEBFF',
@@ -415,7 +384,6 @@ export default function HomeScreen() {
           topBarGrad: ['#0AA35F', '#066B3F'],
           headerGrad: ['#0AA35F', '#066B3F'],
           start: '#08834C',
-          done: '#10B981',
           doneSoft: '#34D399',
           progressFill: '#6EE7B7',
           subtitle: '#E7F5EE',
@@ -435,7 +403,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <View testID="home-container" style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style={isFocused ? 'light' : 'dark'} testID="home-status-bar" />
       <LinearGradient
         colors={theme.topBarGrad}
@@ -568,23 +536,24 @@ export default function HomeScreen() {
             })}
           />
         ) : null}
-        {units.length > 0 ? (
-          <View testID="home-all-units-eyebrow" style={styles.allUnitsEyebrow}>
-            <Feather name="arrow-right" size={14} color="#64748B" />
-            <Text style={styles.allUnitsEyebrowText}>ALL UNITS</Text>
-          </View>
-        ) : null}
+
+        <Image
+          source={require('../../assets/images/mainscreen.png')}
+          style={styles.bottomImage}
+          resizeMode="contain"
+        />
+
         {units.map((unitObj) => {
           return (
-            <View key={unitObj.unitCode} testID={`unit-card-${unitObj.unitCode}`} style={[styles.unitCard, styles.accordionCard]}>
+            <View key={unitObj.unitCode} style={styles.unitCard}>
               <TouchableOpacity
                 testID={`unit-toggle-${unitObj.unitCode}`}
                 onPress={() => toggleUnit(unitObj.unitCode)}
                 accessibilityRole="button"
                 accessibilityLabel={`Toggle ${unitObj.title}`}
-                accessibilityState={{ expanded: expandedUnits.has(unitObj.unitCode) }}
+                accessibilityState={{ expanded: expandedUnit === unitObj.unitCode }}
               >
-                <LinearGradient colors={theme.headerGrad} style={styles.unitHeaderAccordion}>
+                <LinearGradient colors={theme.headerGrad} style={styles.unitHeader}>
                   <View style={styles.unitNumberPill}>
                     <Text style={[styles.unitNumberText, { color: theme.accent }]}>
                       {getUnitNumber(unitObj.unitCode)}
@@ -595,24 +564,23 @@ export default function HomeScreen() {
                     <Text style={styles.unitTitle}>{unitObj.title}</Text>
 
                     <Text style={styles.unitMeta}>
-                      {unitObj.masteredWords} / {unitObj.totalWords} words ·{' '}
-                      {unitObj.completedLessons} / {unitObj.totalLessons} lessons
+                      {unitObj.masteredWords} / {unitObj.totalWords} words mastered ·{' '}
+                      {unitObj.completedLessons} / {unitObj.totalLessons} lessons done
                     </Text>
                   </View>
 
-                  <AccordionChevron
-                    expanded={expandedUnits.has(unitObj.unitCode)}
-                    reduceMotion={reduceMotion}
-                    key={`${language}-${unitObj.unitCode}`}
-                  />
+                  <View style={styles.unitToggleIcon}>
+                    <Text style={styles.unitToggleIconText}>
+                      {expandedUnit === unitObj.unitCode ? '-' : '+'}
+                    </Text>
+                  </View>
                 </LinearGradient>
               </TouchableOpacity>
 
-              <View testID={`unit-progress-${unitObj.unitCode}`} style={[styles.progressBarBg, styles.progressBarBgAccordion]}>
+              <View style={styles.progressBarBg}>
                 <View
                   style={[
                     styles.progressBarFill,
-                    styles.progressBarFillAccordion,
                     {
                       width: `${unitObj.masteryPercent}%`,
                       backgroundColor: theme.progressFill
@@ -621,7 +589,7 @@ export default function HomeScreen() {
                 />
               </View>
 
-              {expandedUnits.has(unitObj.unitCode)
+              {expandedUnit === unitObj.unitCode
                 ? unitObj.lessons.map((lesson) => {
                     const done = lesson.complete;
                     const buttonText = getLessonButtonText(done);
@@ -631,10 +599,9 @@ export default function HomeScreen() {
                         key={lesson.id}
                         style={[
                           styles.lessonRow,
-                          styles.lessonRowAccordion,
                           done && {
-                            backgroundColor: theme.done,
-                            borderTopColor: theme.done
+                            backgroundColor: theme.doneSoft,
+                            borderTopColor: theme.doneSoft
                           }
                         ]}
                         onPress={() =>
@@ -692,8 +659,7 @@ export default function HomeScreen() {
         })}
 
         <Image
-          testID="home-secondline"
-          source={require('../../assets/images/secondline.png')}
+          source={require('../../assets/images/secondline2.png')}
           style={styles.bottomImage}
           resizeMode="contain"
         />
@@ -714,10 +680,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F7FB',
-    maxWidth: 480,
-    alignSelf: 'center',
-    width: '100%'
+    backgroundColor: '#F4F7FB'
   },
 
   topBar: {
@@ -993,8 +956,7 @@ const styles = StyleSheet.create({
   },
 
   currentUnitContinue: {
-    paddingHorizontal: 14,
-    paddingVertical: 8
+    paddingHorizontal: 14
   },
 
   currentUnitContinueText: {
@@ -1026,21 +988,27 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0'
   },
 
-  accordionCard: {
-    marginBottom: 10
-  },
-
   unitHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16
   },
 
-  unitHeaderAccordion: {
-    flexDirection: 'row',
+  unitToggleIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16
+    justifyContent: 'center',
+    marginLeft: 10
+  },
+
+  unitToggleIconText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 22
   },
 
   unitNumberPill: {
@@ -1057,13 +1025,13 @@ const styles = StyleSheet.create({
   },
 
   unitTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
     color: '#FFFFFF'
   },
 
   unitMeta: {
-    fontSize: 12,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.88)',
     marginTop: 5,
     fontWeight: '600'
@@ -1078,15 +1046,6 @@ const styles = StyleSheet.create({
     height: 10
   },
 
-  progressBarFillAccordion: {
-    height: 8
-  },
-
-  progressBarBgAccordion: {
-    height: 8,
-    backgroundColor: '#E2E8F0'
-  },
-
   lessonRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1095,13 +1054,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#F1F5F9'
   },
 
-  lessonRowAccordion: {
-    paddingVertical: 12,
-    paddingHorizontal: 14
-  },
-
   lessonTitle: {
-    fontSize: 14.5,
+    fontSize: 16,
     fontWeight: '800',
     color: '#102A43'
   },
@@ -1122,7 +1076,7 @@ const styles = StyleSheet.create({
 
   badge: {
     borderRadius: 999,
-    paddingVertical: 7,
+    paddingVertical: 8,
     paddingHorizontal: 12
   },
 
@@ -1134,8 +1088,7 @@ const styles = StyleSheet.create({
 
   badgeText: {
     color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 12.5
+    fontWeight: '800'
   },
 
   badgeTextDone: {
@@ -1144,25 +1097,9 @@ const styles = StyleSheet.create({
 
   bottomImage: {
     width: '100%',
-    height: 110,
+    height: 120,
     marginTop: 8,
     marginBottom: 6,
     alignSelf: 'center'
-  },
-
-  allUnitsEyebrow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 2,
-    marginTop: 14,
-    marginBottom: 8
-  },
-
-  allUnitsEyebrowText: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.48,
-    marginLeft: 6
   }
 });
