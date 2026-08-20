@@ -21,7 +21,7 @@ const languages = [
     anchorLesson: {
       id: 'cajun_u01_l01',
       unit: 'u01',
-      lessonTitle: 'Part 1 — Hello! Hi!, How’s it going?, Are things OK? Are you OK?'
+      lessonTitle: 'Part 1 — Hello!, How’s it going?, Are things okay?'
     },
     audioWord: {
       rowId: 'u01_w0002',
@@ -34,11 +34,11 @@ const languages = [
     anchorLesson: {
       id: 'kreole_u01_l01',
       unit: 'u01',
-      lessonTitle: 'Part 1 — Hello, Good day, How is it going?, How goes it?'
+      lessonTitle: 'Part 1 — Hello, How is it going?, How goes it?'
     },
     audioWord: {
       rowId: 'u01_w0004',
-      target: "Ç'ap kouri",
+      target: "Ç'apé kouri",
       audioKey: 'u01_w0004_kreole'
     }
   }
