@@ -1,8 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import {
+  render,
+  screen,
+  userEvent,
+  waitFor
+} from '@testing-library/react-native';
+
 import ActivityRenderer from '../ActivityRenderer';
 import { fixtureActivities } from '../../test/fixtures/catalog/activities';
+
 import {
   chooseAndCheck,
   expectFinalWrong,
@@ -14,12 +21,17 @@ import {
 } from '../../test/activityInteractions';
 
 jest.mock('../../data/audioManifest', () => ({
-  getAudioSource: jest.fn(() => ({ uri: 'fixture-audio' }))
+  getAudioSource: jest.fn(() => ({
+    uri: 'fixture-audio'
+  }))
 }));
 
 function renderActivity(activity, handlers = {}) {
-  const onCorrect = handlers.onCorrect || jest.fn();
-  const onWrong = handlers.onWrong || jest.fn();
+  const onCorrect =
+    handlers.onCorrect || jest.fn();
+
+  const onWrong =
+    handlers.onWrong || jest.fn();
 
   const rendered = render(
     <ActivityRenderer
@@ -31,15 +43,28 @@ function renderActivity(activity, handlers = {}) {
     />
   );
 
-  return { ...rendered, onCorrect, onWrong };
+  return {
+    ...rendered,
+    onCorrect,
+    onWrong
+  };
 }
 
 async function expectAudioPlayedAfter(callsBeforePress) {
   await waitFor(() => {
-    expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(callsBeforePress + 1);
+    expect(
+      Audio.Sound.createAsync
+    ).toHaveBeenCalledTimes(
+      callsBeforePress + 1
+    );
   });
-  const { sound } = await Audio.Sound.createAsync.mock.results.at(-1).value;
-  expect(sound.playAsync).toHaveBeenCalledTimes(1);
+
+  const { sound } =
+    await Audio.Sound.createAsync.mock.results.at(-1).value;
+
+  expect(
+    sound.playAsync
+  ).toHaveBeenCalledTimes(1);
 }
 
 describe('ActivityRenderer', () => {
@@ -50,25 +75,63 @@ describe('ActivityRenderer', () => {
   describe('intro_card', () => {
     it('shows the Word and continues without checking an answer', async () => {
       const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.intro);
 
-      expect(screen.getByText('New word')).toBeOnTheScreen();
-      expect(screen.getByText('Listen and learn')).toBeOnTheScreen();
-      expect(screen.getByText('Bonjour')).toBeOnTheScreen();
-      expect(screen.getByText('Hello')).toBeOnTheScreen();
-      expect(screen.getByText('Tap the word to hear it again')).toBeOnTheScreen();
+      const { onCorrect } =
+        renderActivity(
+          fixtureActivities.intro
+        );
 
-      await press(user, 'Continue');
-      expect(onCorrect).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByText('New word')
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText('Listen and learn')
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText('Bonjour')
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText('Hello')
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Tap the word to hear it again'
+        )
+      ).toBeOnTheScreen();
+
+      await press(
+        user,
+        'Continue'
+      );
+
+      expect(
+        onCorrect
+      ).toHaveBeenCalledTimes(1);
     });
 
     it('plays Audio when the Word card is tapped', async () => {
-      const user = userEvent.setup();
-      renderActivity(fixtureActivities.intro);
-      const callsBeforePress = Audio.Sound.createAsync.mock.calls.length;
+      const user =
+        userEvent.setup();
 
-      await press(user, 'Bonjour');
-      await expectAudioPlayedAfter(callsBeforePress);
+      renderActivity(
+        fixtureActivities.intro
+      );
+
+      const callsBeforePress =
+        Audio.Sound.createAsync.mock.calls.length;
+
+      await press(
+        user,
+        'Bonjour'
+      );
+
+      await expectAudioPlayedAfter(
+        callsBeforePress
+      );
     });
 
     it('renders one display-only T-Boy callout for long extra details', () => {
@@ -80,294 +143,774 @@ describe('ActivityRenderer', () => {
         extraDetails: longText
       });
 
-      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
-      expect(screen.getByTestId('tboy-text')).toHaveTextContent(longText);
-      expect(screen.getByTestId('tboy-text').props.numberOfLines).toBeUndefined();
-      expect(screen.getByLabelText('T-Boy')).toBeOnTheScreen();
-      expect(screen.queryByLabelText('T-Boy: open Unit note')).toBeNull();
+      expect(
+        screen.getByTestId(
+          'tboy-callout'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByTestId(
+          'tboy-text'
+        )
+      ).toHaveTextContent(
+        longText
+      );
+
+      expect(
+        screen.getByTestId(
+          'tboy-text'
+        ).props.numberOfLines
+      ).toBeUndefined();
+
+      expect(
+        screen.getByLabelText(
+          'T-Boy'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.queryByLabelText(
+          'T-Boy: open Unit note'
+        )
+      ).toBeNull();
     });
 
     it('does not render a T-Boy callout when the Activity has no extra details', () => {
-      renderActivity(fixtureActivities.intro);
+      renderActivity(
+        fixtureActivities.intro
+      );
 
-      expect(screen.queryByTestId('tboy-callout')).toBeNull();
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
     });
 
     it('opens the Unit note when T-Boy has a preface action', async () => {
-      const user = userEvent.setup();
-      const onOpenPreface = jest.fn();
+      const user =
+        userEvent.setup();
+
+      const onOpenPreface =
+        jest.fn();
 
       renderActivity(
-        { ...fixtureActivities.intro, extraDetails: 'Helpful context' },
-        { onOpenPreface }
+        {
+          ...fixtureActivities.intro,
+          extraDetails:
+            'Helpful context'
+        },
+        {
+          onOpenPreface
+        }
       );
 
-      const action = screen.getByLabelText('T-Boy: open Unit note');
+      const action =
+        screen.getByLabelText(
+          'T-Boy: open Unit note'
+        );
 
-      expect(screen.getByText("T-Boy's Advice")).toBeOnTheScreen();
-      expect(screen.UNSAFE_getByType(Ionicons).props.name).toBe('chevron-forward');
+      expect(
+        screen.getByText(
+          "T-Boy's Advice"
+        )
+      ).toBeOnTheScreen();
 
-      await user.press(action);
+      expect(
+        screen.UNSAFE_getByType(
+          Ionicons
+        ).props.name
+      ).toBe(
+        'chevron-forward'
+      );
 
-      expect(onOpenPreface).toHaveBeenCalledTimes(1);
-      expect(screen.getByLabelText('T-Boy: open Unit note').props.accessibilityHint).toBe(
+      await user.press(
+        action
+      );
+
+      expect(
+        onOpenPreface
+      ).toHaveBeenCalledTimes(
+        1
+      );
+
+      expect(
+        screen.getByLabelText(
+          'T-Boy: open Unit note'
+        ).props.accessibilityHint
+      ).toBe(
         'Opens the full Unit note'
       );
     });
 
-    it('uses the English phrase, then the target phrase, as its heading fallback', () => {
-      const { unmount } = renderActivity({
-        ...fixtureActivities.intro,
-        english: 'Regional phrase',
-        target: 'Bonjour!',
-        extraDetails: 'Helpful context'
-      });
-
-      expect(screen.getByTestId('tboy-heading')).toHaveTextContent('Regional phrase');
-
-      unmount();
+    it('shows only the extra-details body and no heading', () => {
       renderActivity({
         ...fixtureActivities.intro,
-        english: '',
-        target: 'Bonjour!',
-        extraDetails: 'Helpful context'
+        english:
+          'Regional phrase',
+        target:
+          'Bonjour!',
+        extraDetails:
+          'Helpful context'
       });
 
-      expect(screen.getByTestId('tboy-heading')).toHaveTextContent('Bonjour!');
-    });
+      expect(
+        screen.getByTestId(
+          'tboy-callout'
+        )
+      ).toBeOnTheScreen();
 
-    it('falls back to Context when both phrase headings are missing', () => {
-      renderActivity({
-        ...fixtureActivities.intro,
-        english: '',
-        target: '',
-        extraDetails: 'Helpful context'
-      });
+      expect(
+        screen.getByTestId(
+          'tboy-text'
+        )
+      ).toHaveTextContent(
+        'Helpful context'
+      );
 
-      expect(screen.getByTestId('tboy-heading')).toHaveTextContent('Context');
+      expect(
+        screen.queryByTestId(
+          'tboy-heading'
+        )
+      ).toBeNull();
     });
   });
 
   describe('multiple_choice', () => {
-    it('reveals T-Boy context after a correct answer', async () => {
-      const user = userEvent.setup();
+    it('does not show T-Boy context after a correct answer', async () => {
+      const user =
+        userEvent.setup();
 
       renderActivity({
         ...fixtureActivities.multipleChoice,
-        extraDetails: 'Helpful context'
+        extraDetails:
+          'Helpful context'
       });
 
-      expect(screen.queryByTestId('tboy-callout')).toBeNull();
-      await chooseAndCheck(user, 'Ça va?');
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
 
-      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
+      await chooseAndCheck(
+        user,
+        'Ça va?'
+      );
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
     });
 
-    it('reveals T-Boy context only after a final wrong answer', async () => {
-      const user = userEvent.setup();
+    it('does not show T-Boy context after a final wrong answer', async () => {
+      const user =
+        userEvent.setup();
 
       renderActivity({
         ...fixtureActivities.multipleChoice,
-        extraDetails: 'Helpful context'
+        extraDetails:
+          'Helpful context'
       });
 
-      await chooseAndCheck(user, 'Bonjour');
-      expect(screen.queryByTestId('tboy-callout')).toBeNull();
+      await chooseAndCheck(
+        user,
+        'Bonjour'
+      );
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
 
       await retry(user);
-      await chooseAndCheck(user, 'Bonjour');
-      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
+
+      await chooseAndCheck(
+        user,
+        'Bonjour'
+      );
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
     });
 
-    it('reveals T-Boy context after a skip', async () => {
-      const user = userEvent.setup();
+    it('does not show T-Boy context after a skip', async () => {
+      const user =
+        userEvent.setup();
 
       renderActivity({
         ...fixtureActivities.multipleChoice,
-        extraDetails: 'Helpful context'
+        extraDetails:
+          'Helpful context'
       });
 
-      await press(user, 'Skip');
-      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
+      await press(
+        user,
+        'Skip'
+      );
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
     });
 
     it('keeps Check disabled until an option is selected', () => {
-      renderActivity(fixtureActivities.multipleChoice);
+      renderActivity(
+        fixtureActivities.multipleChoice
+      );
 
-      expect(screen.getByText('Practice')).toBeOnTheScreen();
-      expect(screen.getByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
-      expect(screen.getByText('Check')).toBeDisabled();
+      expect(
+        screen.getByText(
+          'Practice'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          "Choose the match for 'How’s it going?'"
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Check'
+        )
+      ).toBeDisabled();
     });
 
     it('accepts the correct answer and continues', async () => {
-      const user = userEvent.setup();
-      const { onCorrect } = renderActivity(fixtureActivities.multipleChoice);
+      const user =
+        userEvent.setup();
 
-      await chooseAndCheck(user, 'Ça va?');
-      await finishCorrect(user, onCorrect);
+      const { onCorrect } =
+        renderActivity(
+          fixtureActivities.multipleChoice
+        );
+
+      await chooseAndCheck(
+        user,
+        'Ça va?'
+      );
+
+      await finishCorrect(
+        user,
+        onCorrect
+      );
     });
 
     it('offers a first-wrong retry with a hint, then shows the answer on final wrong', async () => {
-      const user = userEvent.setup();
-      const { onWrong } = renderActivity(fixtureActivities.multipleChoice);
+      const user =
+        userEvent.setup();
 
-      await chooseAndCheck(user, 'Bonjour');
-      expectFirstWrong('Hint: think about "How’s it going?"');
+      const { onWrong } =
+        renderActivity(
+          fixtureActivities.multipleChoice
+        );
+
+      await chooseAndCheck(
+        user,
+        'Bonjour'
+      );
+
+      expectFirstWrong(
+        'Hint: think about "How’s it going?"'
+      );
+
       await retry(user);
-      await chooseAndCheck(user, 'Bonjour');
-      expectFinalWrong('Ça va?');
-      await finishWrong(user, onWrong, 'Bonjour');
+
+      await chooseAndCheck(
+        user,
+        'Bonjour'
+      );
+
+      expectFinalWrong(
+        'Ça va?'
+      );
+
+      await finishWrong(
+        user,
+        onWrong,
+        'Bonjour'
+      );
     });
   });
 
   describe('listening_target_choice', () => {
     it('starts unanswered and replays the target Audio', async () => {
-      const user = userEvent.setup();
-      renderActivity(fixtureActivities.listening);
+      const user =
+        userEvent.setup();
 
-      expect(screen.getByText('Listening')).toBeOnTheScreen();
-      expect(screen.getByText('Listen and choose the word')).toBeOnTheScreen();
-      expect(screen.getByText('Check')).toBeDisabled();
-      const callsBeforePress = Audio.Sound.createAsync.mock.calls.length;
+      renderActivity(
+        fixtureActivities.listening
+      );
 
-      await user.press(screen.UNSAFE_getByType(Ionicons).parent);
-      await expectAudioPlayedAfter(callsBeforePress);
+      expect(
+        screen.getByText(
+          'Listening'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Listen and choose the word'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Check'
+        )
+      ).toBeDisabled();
+
+      const callsBeforePress =
+        Audio.Sound.createAsync.mock.calls.length;
+
+      await user.press(
+        screen.UNSAFE_getByType(
+          Ionicons
+        ).parent
+      );
+
+      await expectAudioPlayedAfter(
+        callsBeforePress
+      );
     });
 
-    it('accepts the correct answer and continues', async () => {
-      const user = userEvent.setup();
-      const { onCorrect } = renderActivity({
-        ...fixtureActivities.listening,
-        extraDetails: 'Helpful context'
-      });
+    it('accepts the correct answer and continues without T-Boy context', async () => {
+      const user =
+        userEvent.setup();
 
-      await chooseAndCheck(user, 'Bonjour');
-      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
-      await finishCorrect(user, onCorrect);
+      const { onCorrect } =
+        renderActivity({
+          ...fixtureActivities.listening,
+          extraDetails:
+            'Helpful context'
+        });
+
+      await chooseAndCheck(
+        user,
+        'Bonjour'
+      );
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
+
+      await finishCorrect(
+        user,
+        onCorrect
+      );
     });
 
     it('offers a first-wrong hint, then continues after final wrong', async () => {
-      const user = userEvent.setup();
-      const { onWrong } = renderActivity(fixtureActivities.listening);
+      const user =
+        userEvent.setup();
 
-      await chooseAndCheck(user, 'Ça va?');
-      expectFirstWrong('Hint: think about "Hello"');
+      const { onWrong } =
+        renderActivity(
+          fixtureActivities.listening
+        );
+
+      await chooseAndCheck(
+        user,
+        'Ça va?'
+      );
+
+      expectFirstWrong(
+        'Hint: think about "Hello"'
+      );
+
       await retry(user);
-      await chooseAndCheck(user, 'Ça va?');
-      expectFinalWrong('Bonjour');
-      await finishWrong(user, onWrong, 'Ça va?');
+
+      await chooseAndCheck(
+        user,
+        'Ça va?'
+      );
+
+      expectFinalWrong(
+        'Bonjour'
+      );
+
+      await finishWrong(
+        user,
+        onWrong,
+        'Ça va?'
+      );
     });
   });
 
   describe('typing', () => {
-    it('accepts a typed answer and exposes progressive hints', async () => {
-      const user = userEvent.setup();
-      const { onCorrect } = renderActivity({
-        ...fixtureActivities.typing,
-        extraDetails: 'Helpful context'
-      });
+    it('accepts a typed answer and exposes progressive hints without T-Boy context', async () => {
+      const user =
+        userEvent.setup();
 
-      expect(screen.getByText('Typing')).toBeOnTheScreen();
-      expect(screen.getByText('Check')).toBeDisabled();
+      const { onCorrect } =
+        renderActivity({
+          ...fixtureActivities.typing,
+          extraDetails:
+            'Helpful context'
+        });
 
-      await press(user, 'Hints');
-      expect(screen.getByText('Starts with: Ça …')).toBeOnTheScreen();
-
-      await press(user, 'More hints');
       expect(
-        screen.getByText('Tap words to help build the answer')
+        screen.getByText(
+          'Typing'
+        )
       ).toBeOnTheScreen();
-      expect(screen.getByText('Ça')).toBeOnTheScreen();
-      expect(screen.getByText('va?')).toBeOnTheScreen();
 
-      await user.type(screen.getByPlaceholderText('Type your answer'), 'Ça va?');
-      await press(user, 'Check');
-      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
-      await finishCorrect(user, onCorrect);
+      expect(
+        screen.getByText(
+          'Check'
+        )
+      ).toBeDisabled();
+
+      await press(
+        user,
+        'Hints'
+      );
+
+      expect(
+        screen.getByText(
+          'Starts with: Ça …'
+        )
+      ).toBeOnTheScreen();
+
+      await press(
+        user,
+        'More hints'
+      );
+
+      expect(
+        screen.getByText(
+          'Tap words to help build the answer'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Ça'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'va?'
+        )
+      ).toBeOnTheScreen();
+
+      await user.type(
+        screen.getByPlaceholderText(
+          'Type your answer'
+        ),
+        'Ça va?'
+      );
+
+      await press(
+        user,
+        'Check'
+      );
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
+
+      await finishCorrect(
+        user,
+        onCorrect
+      );
     });
 
     it('records final wrong after a retry', async () => {
-      const user = userEvent.setup();
-      const { onWrong } = renderActivity(fixtureActivities.typing);
+      const user =
+        userEvent.setup();
 
-      await user.type(screen.getByPlaceholderText('Type your answer'), 'Bonjour');
-      await press(user, 'Check');
-      expectFirstWrong('Starts with: Ça …');
+      const { onWrong } =
+        renderActivity(
+          fixtureActivities.typing
+        );
+
+      await user.type(
+        screen.getByPlaceholderText(
+          'Type your answer'
+        ),
+        'Bonjour'
+      );
+
+      await press(
+        user,
+        'Check'
+      );
+
+      expectFirstWrong(
+        'Starts with: Ça …'
+      );
+
       await retry(user);
-      await press(user, 'Check');
-      expectFinalWrong('Ça va?');
-      await finishWrong(user, onWrong, 'Bonjour');
+
+      await press(
+        user,
+        'Check'
+      );
+
+      expectFinalWrong(
+        'Ça va?'
+      );
+
+      await finishWrong(
+        user,
+        onWrong,
+        'Bonjour'
+      );
     });
   });
 
   describe('sentence_build', () => {
-    it('builds the correct token order and continues', async () => {
-      const user = userEvent.setup();
-      const { onCorrect } = renderActivity({
-        ...fixtureActivities.sentenceBuild,
-        extraDetails: 'Helpful context'
-      });
+    it('builds the correct token order and continues without T-Boy context', async () => {
+      const user =
+        userEvent.setup();
 
-      expect(screen.getByText('Build')).toBeOnTheScreen();
-      expect(screen.getByText("Build: 'It's ready'")).toBeOnTheScreen();
-      expect(screen.getByText('Tap words below')).toBeOnTheScreen();
-      expect(screen.getByText('Check')).toBeDisabled();
+      const { onCorrect } =
+        renderActivity({
+          ...fixtureActivities.sentenceBuild,
+          extraDetails:
+            'Helpful context'
+        });
 
-      await press(user, "C'est");
-      await chooseAndCheck(user, 'paré');
-      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
-      await finishCorrect(user, onCorrect);
+      expect(
+        screen.getByText(
+          'Build'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          "Build: 'It's ready'"
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Tap words below'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Check'
+        )
+      ).toBeDisabled();
+
+      await press(
+        user,
+        "C'est"
+      );
+
+      await chooseAndCheck(
+        user,
+        'paré'
+      );
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
+
+      await finishCorrect(
+        user,
+        onCorrect
+      );
     });
 
     it('shows answer feedback after a second wrong build', async () => {
-      const user = userEvent.setup();
-      const { onWrong } = renderActivity(fixtureActivities.sentenceBuild);
+      const user =
+        userEvent.setup();
 
-      await chooseAndCheck(user, 'paré');
-      expectFirstWrong("Starts with: C'e…");
+      const { onWrong } =
+        renderActivity(
+          fixtureActivities.sentenceBuild
+        );
+
+      await chooseAndCheck(
+        user,
+        'paré'
+      );
+
+      expectFirstWrong(
+        "Starts with: C'e…"
+      );
+
       await retry(user);
-      await press(user, 'Check');
-      expectFinalWrong("C'est paré");
-      await finishWrong(user, onWrong, 'paré');
+
+      await press(
+        user,
+        'Check'
+      );
+
+      expectFinalWrong(
+        "C'est paré"
+      );
+
+      await finishWrong(
+        user,
+        onWrong,
+        'paré'
+      );
     });
   });
 
   describe('match_pairs', () => {
-    it('matches every pair correctly', async () => {
-      const user = userEvent.setup();
-      const { onCorrect } = renderActivity({
-        ...fixtureActivities.matchPairs,
-        extraDetails: 'Helpful context'
-      });
+    it('matches every pair correctly without showing T-Boy context', async () => {
+      const user =
+        userEvent.setup();
 
-      expect(screen.getByText('Match')).toBeOnTheScreen();
-      expect(screen.getByText('Match the words')).toBeOnTheScreen();
-      expect(screen.getByText('Check')).toBeDisabled();
+      const { onCorrect } =
+        renderActivity({
+          ...fixtureActivities.matchPairs,
+          extraDetails:
+            'Helpful context'
+        });
 
-      await press(user, 'Hello');
-      await chooseAndCheck(user, 'Bonjour');
-      await press(user, 'How’s it going?');
-      await chooseAndCheck(user, 'Ça va?');
-      expect(screen.getByTestId('tboy-callout')).toBeOnTheScreen();
-      await finishCorrect(user, onCorrect);
+      expect(
+        screen.getByText(
+          'Match'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Match the words'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Check'
+        )
+      ).toBeDisabled();
+
+      await press(
+        user,
+        'Hello'
+      );
+
+      await chooseAndCheck(
+        user,
+        'Bonjour'
+      );
+
+      await press(
+        user,
+        'How’s it going?'
+      );
+
+      await chooseAndCheck(
+        user,
+        'Ça va?'
+      );
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
+
+      await finishCorrect(
+        user,
+        onCorrect
+      );
     });
 
-    it('allows retry after a wrong pair, then continues after final wrong', async () => {
-      const user = userEvent.setup();
-      const { onWrong } = renderActivity(fixtureActivities.matchPairs);
+    it('allows retry after a wrong pair, then shows the correct pairs after final wrong', async () => {
+      const user =
+        userEvent.setup();
 
-      await press(user, 'Hello');
-      await chooseAndCheck(user, 'Ça va?');
+      const { onWrong } =
+        renderActivity(
+          fixtureActivities.matchPairs
+        );
+
+      await press(
+        user,
+        'Hello'
+      );
+
+      await chooseAndCheck(
+        user,
+        'Ça va?'
+      );
+
       expectFirstWrong();
+
       await retry(user);
-      await chooseAndCheck(user, 'Ça va?');
-      expectFinalWrong();
-      await finishWrong(user, onWrong, 'Hello ↔ Ça va?');
+
+      await chooseAndCheck(
+        user,
+        'Ça va?'
+      );
+
+      expect(
+        screen.getByText(
+          'Wrong pair'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByTestId(
+          'correct-match-pairs'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.getByText(
+          'Correct pairs'
+        )
+      ).toBeOnTheScreen();
+
+      expect(
+        screen.queryByText(
+          'Answer: All matched'
+        )
+      ).toBeNull();
+
+      expect(
+        screen.queryByTestId(
+          'tboy-callout'
+        )
+      ).toBeNull();
+
+      await finishWrong(
+        user,
+        onWrong,
+        'Hello ↔ Ça va?'
+      );
     });
   });
 
   it('reports unknown Activity types without crashing', () => {
-    renderActivity({ type: 'unknown_future_type', prompt: 'x' });
-    expect(screen.getByText('Unknown activity type: unknown_future_type')).toBeOnTheScreen();
+    renderActivity({
+      type:
+        'unknown_future_type',
+      prompt:
+        'x'
+    });
+
+    expect(
+      screen.getByText(
+        'Unknown activity type: unknown_future_type'
+      )
+    ).toBeOnTheScreen();
   });
 });
