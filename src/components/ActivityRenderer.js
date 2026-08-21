@@ -374,7 +374,6 @@ function ContextBadge({ activity, language }) {
 
 function TBoyCallout({ activity, language, visible, onOpenPreface }) {
   const theme = getTheme(language);
-  const heading = activity?.english || activity?.target || 'Context';
   const canOpenPreface = typeof onOpenPreface === 'function';
 
   if (!visible || !activity?.extraDetails) return null;
@@ -383,11 +382,9 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
     <View style={styles.tBoyWrap} testID="tboy-callout">
       <View style={styles.tBoyStage}>
         <TBoySpeechBubble
-          heading={heading}
           body={activity.extraDetails}
           accentColor={theme.accent}
           testID="tboy-speech-bubble"
-          headingTestID="tboy-heading"
           bodyTestID="tboy-text"
         />
 
@@ -411,8 +408,11 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
                 accessible={false}
               />
             </View>
+
             <View style={styles.tBoyActionLabel}>
-              <Text style={[styles.tBoyActionText, { color: theme.accent }]}>T-Boy&apos;s Advice</Text>
+              <Text style={[styles.tBoyActionText, { color: theme.accent }]}>
+                T-Boy&apos;s Advice
+              </Text>
               <Ionicons name="chevron-forward" size={14} color={theme.accent} />
             </View>
           </TouchableOpacity>
@@ -453,7 +453,9 @@ function FeedbackFooter({
   onTryAgain,
   onNext,
   onIncorrect,
-  altContent
+  altContent,
+  wrongTitle = 'Let’s move on',
+  answerContent
 }) {
   if (state === 'correct') {
     return (
@@ -474,9 +476,10 @@ function FeedbackFooter({
       <View style={[styles.footer, styles.footerRed]}>
         <Text style={styles.footerTitle}>Skipped</Text>
 
-        {answerDisplay ? (
-          <Text style={styles.footerSub}>Answer: {answerDisplay}</Text>
-        ) : null}
+        {answerContent ||
+          (answerDisplay ? (
+            <Text style={styles.footerSub}>Answer: {answerDisplay}</Text>
+          ) : null)}
 
         {altContent}
 
@@ -509,13 +512,14 @@ function FeedbackFooter({
   if (state === 'wrong' && !firstWrong) {
     return (
       <View style={[styles.footer, styles.footerRed]}>
-        <Text style={styles.footerTitle}>Let’s move on</Text>
+        <Text style={styles.footerTitle}>{wrongTitle}</Text>
 
-        {answerDisplay ? (
-          <Text style={styles.footerSub}>Answer: {answerDisplay}</Text>
-        ) : hintText ? (
-          <Text style={styles.footerSub}>{hintText}</Text>
-        ) : null}
+        {answerContent ||
+          (answerDisplay ? (
+            <Text style={styles.footerSub}>Answer: {answerDisplay}</Text>
+          ) : hintText ? (
+            <Text style={styles.footerSub}>{hintText}</Text>
+          ) : null)}
 
         {altContent}
 
@@ -560,7 +564,6 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
-          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -573,7 +576,6 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
-          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -586,7 +588,6 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
-          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -599,7 +600,6 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
-          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -612,21 +612,29 @@ export default function ActivityRenderer({
           onWrong={onWrong}
           theme={theme}
           allowSkip={allowSkip}
-          onOpenPreface={onOpenPreface}
         />
       );
 
     default:
       return (
         <View style={styles.card}>
-          <Text style={styles.prompt}>Unknown activity type: {activity.type}</Text>
+          <Text style={styles.prompt}>
+            Unknown activity type: {activity.type}
+          </Text>
         </View>
       );
   }
 }
 
-function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
+function IntroCard({
+  activity,
+  language,
+  onCorrect,
+  theme,
+  onOpenPreface
+}) {
   const { playAudioKey } = useAudio(language);
+
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
@@ -635,7 +643,9 @@ function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (activity.audioKey) playAudioKey(activity.audioKey);
+      if (activity.audioKey) {
+        playAudioKey(activity.audioKey);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
@@ -643,10 +653,18 @@ function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
 
   return (
     <QuestionScrollView>
-      <Text style={[styles.kicker, { color: theme.text }]}>New word</Text>
-      <ContextBadge activity={activity} language={language} />
+      <Text style={[styles.kicker, { color: theme.text }]}>
+        New word
+      </Text>
 
-      <Text style={styles.prompt}>{activity.prompt}</Text>
+      <ContextBadge
+        activity={activity}
+        language={language}
+      />
+
+      <Text style={styles.prompt}>
+        {activity.prompt}
+      </Text>
 
       <AltToggleButtons
         activity={activity}
@@ -659,13 +677,22 @@ function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
       />
 
       <TouchableOpacity
-        style={[styles.introWordCard, { backgroundColor: theme.light }]}
+        style={[
+          styles.introWordCard,
+          { backgroundColor: theme.light }
+        ]}
         onPress={() => playAudioKey(activity.audioKey)}
         accessibilityRole="button"
         accessibilityLabel={`Play audio: ${activity.target}`}
       >
-        <Text style={styles.introWord}>{targetText}</Text>
-        <Text style={styles.introTranslation}>{englishText}</Text>
+        <Text style={styles.introWord}>
+          {targetText}
+        </Text>
+
+        <Text style={styles.introTranslation}>
+          {englishText}
+        </Text>
+
         <Text style={[styles.tapToHear, { color: theme.text }]}>
           Tap the word to hear it again
         </Text>
@@ -679,16 +706,28 @@ function IntroCard({ activity, language, onCorrect, theme, onOpenPreface }) {
       />
 
       <TouchableOpacity
-        style={[styles.primaryBtn, { backgroundColor: theme.accent }]}
+        style={[
+          styles.primaryBtn,
+          { backgroundColor: theme.accent }
+        ]}
         onPress={onCorrect}
       >
-        <Text style={styles.primaryBtnText}>Continue</Text>
+        <Text style={styles.primaryBtnText}>
+          Continue
+        </Text>
       </TouchableOpacity>
     </QuestionScrollView>
   );
 }
 
-function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
+function MultipleChoice({
+  activity,
+  language,
+  onCorrect,
+  onWrong,
+  theme,
+  allowSkip
+}) {
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -738,9 +777,15 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
       <Text style={[styles.kicker, { color: theme.text }]}>
         {activity.isReview ? 'Review' : 'Practice'}
       </Text>
-      <ContextBadge activity={activity} language={language} />
 
-      <Text style={styles.prompt}>{promptText}</Text>
+      <ContextBadge
+        activity={activity}
+        language={language}
+      />
+
+      <Text style={styles.prompt}>
+        {promptText}
+      </Text>
 
       <AltToggleButtons
         activity={activity}
@@ -771,7 +816,9 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
           accessibilityRole="button"
           accessibilityLabel={opt}
         >
-          <Text style={styles.optionText}>{opt}</Text>
+          <Text style={styles.optionText}>
+            {opt}
+          </Text>
         </TouchableOpacity>
       ))}
 
@@ -787,20 +834,18 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
           accessibilityRole="button"
           accessibilityLabel="Check answer"
         >
-          <Text style={styles.primaryBtnText}>Check</Text>
+          <Text style={styles.primaryBtnText}>
+            Check
+          </Text>
         </TouchableOpacity>
       ) : null}
 
       {allowSkip && state === 'idle' ? (
-        <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
+        <SkipQuestionButton
+          onSkip={skipQuestion}
+          disabled={false}
+        />
       ) : null}
-
-      <TBoyCallout
-        activity={activity}
-        language={language}
-        visible={revealAddOns}
-        onOpenPreface={onOpenPreface}
-      />
 
       <FeedbackFooter
         state={state}
@@ -809,8 +854,20 @@ function MultipleChoice({ activity, language, onCorrect, onWrong, theme, allowSk
         answerDisplay={targetText}
         onTryAgain={resetWrong}
         onNext={onCorrect}
-        onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : selected)}
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        onIncorrect={() =>
+          onWrong(
+            state === 'skipped'
+              ? '__skipped__'
+              : selected
+          )
+        }
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
@@ -822,8 +879,7 @@ function ListeningTargetChoice({
   onCorrect,
   onWrong,
   theme,
-  allowSkip,
-  onOpenPreface
+  allowSkip
 }) {
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
@@ -838,7 +894,9 @@ function ListeningTargetChoice({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (activity.audioKey) playAudioKey(activity.audioKey);
+      if (activity.audioKey) {
+        playAudioKey(activity.audioKey);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
@@ -878,20 +936,35 @@ function ListeningTargetChoice({
   return (
     <QuestionScrollView state={state}>
       <View style={styles.promptRow}>
-        <Text style={[styles.kicker, { color: theme.text }]}>Listening</Text>
+        <Text style={[styles.kicker, { color: theme.text }]}>
+          Listening
+        </Text>
+
         <TouchableOpacity
-          style={[styles.speakerBtn, { backgroundColor: theme.light }]}
+          style={[
+            styles.speakerBtn,
+            { backgroundColor: theme.light }
+          ]}
           onPress={() => playAudioKey(activity.audioKey)}
           accessibilityRole="button"
           accessibilityLabel="Play audio"
         >
-          <Ionicons name="volume-high" size={20} color={theme.accent} />
+          <Ionicons
+            name="volume-high"
+            size={20}
+            color={theme.accent}
+          />
         </TouchableOpacity>
       </View>
 
-      <ContextBadge activity={activity} language={language} />
+      <ContextBadge
+        activity={activity}
+        language={language}
+      />
 
-      <Text style={styles.prompt}>{activity.prompt}</Text>
+      <Text style={styles.prompt}>
+        {activity.prompt}
+      </Text>
 
       <AltToggleButtons
         activity={activity}
@@ -922,7 +995,9 @@ function ListeningTargetChoice({
           accessibilityRole="button"
           accessibilityLabel={opt}
         >
-          <Text style={styles.optionText}>{opt}</Text>
+          <Text style={styles.optionText}>
+            {opt}
+          </Text>
         </TouchableOpacity>
       ))}
 
@@ -938,20 +1013,18 @@ function ListeningTargetChoice({
           accessibilityRole="button"
           accessibilityLabel="Check answer"
         >
-          <Text style={styles.primaryBtnText}>Check</Text>
+          <Text style={styles.primaryBtnText}>
+            Check
+          </Text>
         </TouchableOpacity>
       ) : null}
 
       {allowSkip && state === 'idle' ? (
-        <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
+        <SkipQuestionButton
+          onSkip={skipQuestion}
+          disabled={false}
+        />
       ) : null}
-
-      <TBoyCallout
-        activity={activity}
-        language={language}
-        visible={revealAddOns}
-        onOpenPreface={onOpenPreface}
-      />
 
       <FeedbackFooter
         state={state}
@@ -960,14 +1033,33 @@ function ListeningTargetChoice({
         answerDisplay={targetText}
         onTryAgain={resetWrong}
         onNext={onCorrect}
-        onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : selected)}
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        onIncorrect={() =>
+          onWrong(
+            state === 'skipped'
+              ? '__skipped__'
+              : selected
+          )
+        }
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
 }
 
-function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
+function Typing({
+  activity,
+  language,
+  onCorrect,
+  onWrong,
+  theme,
+  allowSkip
+}) {
   const [value, setValue] = useState('');
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -976,7 +1068,11 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const { playAudioKey, playFeedback } = useAudio(language);
-  const wordBank = useMemo(() => makeWordBank(activity.answer), [activity.answer]);
+
+  const wordBank = useMemo(
+    () => makeWordBank(activity.answer),
+    [activity.answer]
+  );
 
   const englishText = getEnglishDisplay(activity, showEnglishAlt);
   const targetText = getTargetDisplay(activity, showVariantAlt);
@@ -984,7 +1080,11 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
 
   function addWord(word) {
-    setValue((prev) => (prev.trim() ? `${prev.trim()} ${word}` : word));
+    setValue((prev) =>
+      prev.trim()
+        ? `${prev.trim()} ${word}`
+        : word
+    );
 
     if (activity.audioKey) {
       playAudioKey(activity.audioKey);
@@ -1014,14 +1114,27 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
   }
 
   const answer = String(activity.answer || '');
-  const firstHint = `Starts with: ${answer.slice(0, Math.min(3, answer.length))}…`;
+
+  const firstHint =
+    `Starts with: ${answer.slice(
+      0,
+      Math.min(3, answer.length)
+    )}…`;
 
   return (
     <QuestionScrollView state={state}>
-      <Text style={[styles.kicker, { color: theme.text }]}>Typing</Text>
-      <ContextBadge activity={activity} language={language} />
+      <Text style={[styles.kicker, { color: theme.text }]}>
+        Typing
+      </Text>
 
-      <Text style={styles.prompt}>{promptText}</Text>
+      <ContextBadge
+        activity={activity}
+        language={language}
+      />
+
+      <Text style={styles.prompt}>
+        {promptText}
+      </Text>
 
       <AltToggleButtons
         activity={activity}
@@ -1035,13 +1148,24 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
 
       {activity.audioKey ? (
         <TouchableOpacity
-          style={[styles.targetTapCard, { backgroundColor: theme.light }]}
+          style={[
+            styles.targetTapCard,
+            { backgroundColor: theme.light }
+          ]}
           onPress={() => playAudioKey(activity.audioKey)}
         >
-          <Text style={[styles.targetTapText, { color: theme.text }]}>
+          <Text
+            style={[
+              styles.targetTapText,
+              { color: theme.text }
+            ]}
+          >
             Tap to hear the word
           </Text>
-          <Text style={styles.targetTapSub}>{englishText}</Text>
+
+          <Text style={styles.targetTapSub}>
+            {englishText}
+          </Text>
         </TouchableOpacity>
       ) : null}
 
@@ -1056,10 +1180,18 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
 
       {hintLevel === 0 && state === 'idle' ? (
         <TouchableOpacity
-          style={[styles.secondarySmallBtn, { backgroundColor: theme.light }]}
+          style={[
+            styles.secondarySmallBtn,
+            { backgroundColor: theme.light }
+          ]}
           onPress={() => setHintLevel(1)}
         >
-          <Text style={[styles.secondarySmallBtnText, { color: theme.text }]}>
+          <Text
+            style={[
+              styles.secondarySmallBtnText,
+              { color: theme.text }
+            ]}
+          >
             Hints
           </Text>
         </TouchableOpacity>
@@ -1067,14 +1199,24 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
 
       {hintLevel >= 1 ? (
         <>
-          <Text style={styles.hintText}>{firstHint}</Text>
+          <Text style={styles.hintText}>
+            {firstHint}
+          </Text>
 
           {hintLevel === 1 && state === 'idle' ? (
             <TouchableOpacity
-              style={[styles.secondarySmallBtn, { backgroundColor: theme.light }]}
+              style={[
+                styles.secondarySmallBtn,
+                { backgroundColor: theme.light }
+              ]}
               onPress={() => setHintLevel(2)}
             >
-              <Text style={[styles.secondarySmallBtnText, { color: theme.text }]}>
+              <Text
+                style={[
+                  styles.secondarySmallBtnText,
+                  { color: theme.text }
+                ]}
+              >
                 More hints
               </Text>
             </TouchableOpacity>
@@ -1100,7 +1242,9 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
                 ]}
                 onPress={() => addWord(word)}
               >
-                <Text style={styles.wordChipText}>{word}</Text>
+                <Text style={styles.wordChipText}>
+                  {word}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1119,20 +1263,18 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
           accessibilityRole="button"
           accessibilityLabel="Check answer"
         >
-          <Text style={styles.primaryBtnText}>Check</Text>
+          <Text style={styles.primaryBtnText}>
+            Check
+          </Text>
         </TouchableOpacity>
       ) : null}
 
       {allowSkip && state === 'idle' ? (
-        <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
+        <SkipQuestionButton
+          onSkip={skipQuestion}
+          disabled={false}
+        />
       ) : null}
-
-      <TBoyCallout
-        activity={activity}
-        language={language}
-        visible={revealAddOns}
-        onOpenPreface={onOpenPreface}
-      />
 
       <FeedbackFooter
         state={state}
@@ -1141,16 +1283,37 @@ function Typing({ activity, language, onCorrect, onWrong, theme, allowSkip, onOp
         answerDisplay={targetText}
         onTryAgain={resetWrong}
         onNext={onCorrect}
-        onIncorrect={() => onWrong(state === 'skipped' ? '__skipped__' : value)}
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        onIncorrect={() =>
+          onWrong(
+            state === 'skipped'
+              ? '__skipped__'
+              : value
+          )
+        }
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
 }
 
-function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
+function SentenceBuild({
+  activity,
+  language,
+  onCorrect,
+  onWrong,
+  theme,
+  allowSkip
+}) {
   const [selected, setSelected] = useState([]);
-  const [pool, setPool] = useState(() => shuffle(activity.words || []));
+  const [pool, setPool] = useState(
+    () => shuffle(activity.words || [])
+  );
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
@@ -1189,8 +1352,10 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
 
   function checkAnswer() {
     const selectedText = selected.join(' ');
+
     const ok =
-      JSON.stringify(selected) === JSON.stringify(activity.answerTokens || []) ||
+      JSON.stringify(selected) ===
+        JSON.stringify(activity.answerTokens || []) ||
       isTextAnswerCorrect(selectedText, activity);
 
     if (ok) {
@@ -1214,10 +1379,18 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
 
   return (
     <QuestionScrollView state={state}>
-      <Text style={[styles.kicker, { color: theme.text }]}>Build</Text>
-      <ContextBadge activity={activity} language={language} />
+      <Text style={[styles.kicker, { color: theme.text }]}>
+        Build
+      </Text>
 
-      <Text style={styles.prompt}>{promptText}</Text>
+      <ContextBadge
+        activity={activity}
+        language={language}
+      />
+
+      <Text style={styles.prompt}>
+        {promptText}
+      </Text>
 
       <AltToggleButtons
         activity={activity}
@@ -1231,7 +1404,9 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
 
       <View style={styles.selectedBox}>
         {selected.length === 0 ? (
-          <Text style={styles.placeholder}>Tap words below</Text>
+          <Text style={styles.placeholder}>
+            Tap words below
+          </Text>
         ) : null}
 
         <View style={styles.wordWrap}>
@@ -1246,7 +1421,9 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
               ]}
               onPress={() => removeWord(word, idx)}
             >
-              <Text style={styles.wordChipText}>{word}</Text>
+              <Text style={styles.wordChipText}>
+                {word}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -1264,7 +1441,9 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
             ]}
             onPress={() => pick(word, idx)}
           >
-            <Text style={styles.wordChipText}>{word}</Text>
+            <Text style={styles.wordChipText}>
+              {word}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -1274,27 +1453,26 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
           style={[
             styles.primaryBtn,
             { backgroundColor: theme.accent },
-            selected.length === 0 && styles.primaryBtnDisabled
+            selected.length === 0 &&
+              styles.primaryBtnDisabled
           ]}
           disabled={selected.length === 0}
           onPress={checkAnswer}
           accessibilityRole="button"
           accessibilityLabel="Check answer"
         >
-          <Text style={styles.primaryBtnText}>Check</Text>
+          <Text style={styles.primaryBtnText}>
+            Check
+          </Text>
         </TouchableOpacity>
       ) : null}
 
       {allowSkip && state === 'idle' ? (
-        <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
+        <SkipQuestionButton
+          onSkip={skipQuestion}
+          disabled={false}
+        />
       ) : null}
-
-      <TBoyCallout
-        activity={activity}
-        language={language}
-        visible={revealAddOns}
-        onOpenPreface={onOpenPreface}
-      />
 
       <FeedbackFooter
         state={state}
@@ -1304,15 +1482,112 @@ function SentenceBuild({ activity, language, onCorrect, onWrong, theme, allowSki
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() =>
-          onWrong(state === 'skipped' ? '__skipped__' : selected.join(' '))
+          onWrong(
+            state === 'skipped'
+              ? '__skipped__'
+              : selected.join(' ')
+          )
         }
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
 }
 
-function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, onOpenPreface }) {
+const MATCH_ANSWER_COLORS = [
+  {
+    backgroundColor: '#DBEAFE',
+    borderColor: '#60A5FA'
+  },
+  {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#4ADE80'
+  },
+  {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FBBF24'
+  },
+  {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#C084FC'
+  },
+  {
+    backgroundColor: '#FFE4E6',
+    borderColor: '#FB7185'
+  },
+  {
+    backgroundColor: '#CFFAFE',
+    borderColor: '#22D3EE'
+  }
+];
+
+function CorrectMatchPairs({ pairs = [] }) {
+  return (
+    <View
+      style={styles.correctPairAnswer}
+      testID="correct-match-pairs"
+    >
+      <Text style={styles.correctPairLabel}>
+        Correct pairs
+      </Text>
+
+      {pairs.map((pair, index) => {
+        const pairColor =
+          MATCH_ANSWER_COLORS[
+            index % MATCH_ANSWER_COLORS.length
+          ];
+
+        return (
+          <View
+            style={styles.correctPairRow}
+            key={`${pair.left}-${pair.right}`}
+          >
+            <View
+              style={[
+                styles.correctPairChip,
+                pairColor
+              ]}
+            >
+              <Text style={styles.correctPairText}>
+                {pair.left}
+              </Text>
+            </View>
+
+            <Text style={styles.correctPairArrow}>
+              ↔
+            </Text>
+
+            <View
+              style={[
+                styles.correctPairChip,
+                pairColor
+              ]}
+            >
+              <Text style={styles.correctPairText}>
+                {pair.right}
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function MatchPairs({
+  activity,
+  language,
+  onCorrect,
+  onWrong,
+  theme,
+  allowSkip
+}) {
   const { left, right } = useMemo(
     () => makeMatchColumns(activity.pairs || []),
     [activity]
@@ -1327,34 +1602,67 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const { playAudioKey, playFeedback } = useAudio(language);
-  const revealAddOns = shouldRevealAfterAnswer(state, attempts);
+
+  const revealAddOns =
+    shouldRevealAfterAnswer(
+      state,
+      attempts
+    );
 
   function isMatchedLeft(item) {
-    return matches.some((m) => m.left === item);
+    return matches.some(
+      (m) => m.left === item
+    );
   }
 
   function isMatchedRight(item) {
-    return matches.some((m) => m.right === item);
+    return matches.some(
+      (m) => m.right === item
+    );
   }
 
   function rightAudioKey(item) {
-    return activity.pairs?.find((p) => p.right === item)?.audioKey;
+    return activity.pairs
+      ?.find(
+        (p) => p.right === item
+      )
+      ?.audioKey;
   }
 
   function checkPair() {
-    if (!selectedLeft || !selectedRight) return;
+    if (
+      !selectedLeft ||
+      !selectedRight
+    ) {
+      return;
+    }
 
-    const pair = activity.pairs?.find((p) => p.left === selectedLeft);
+    const pair =
+      activity.pairs?.find(
+        (p) =>
+          p.left === selectedLeft
+      );
 
-    if (pair?.right === selectedRight) {
-      const nextMatches = [...matches, { left: selectedLeft, right: selectedRight }];
+    if (
+      pair?.right === selectedRight
+    ) {
+      const nextMatches = [
+        ...matches,
+        {
+          left: selectedLeft,
+          right: selectedRight
+        }
+      ];
 
       setMatches(nextMatches);
       setSelectedLeft(null);
       setSelectedRight(null);
       setState('idle');
 
-      if (nextMatches.length === activity.pairs.length) {
+      if (
+        nextMatches.length ===
+        activity.pairs.length
+      ) {
         playFeedback('correct');
         setState('correct');
       }
@@ -1377,10 +1685,18 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
 
   return (
     <QuestionScrollView state={state}>
-      <Text style={[styles.kicker, { color: theme.text }]}>Match</Text>
-      <ContextBadge activity={activity} language={language} />
+      <Text style={[styles.kicker, { color: theme.text }]}>
+        Match
+      </Text>
 
-      <Text style={styles.prompt}>{activity.prompt}</Text>
+      <ContextBadge
+        activity={activity}
+        language={language}
+      />
+
+      <Text style={styles.prompt}>
+        {activity.prompt}
+      </Text>
 
       <AltToggleButtons
         activity={activity}
@@ -1393,96 +1709,135 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
       />
 
       <View style={styles.matchGrid}>
-        <View style={styles.matchColumn}>
-          {left.map((item) => {
-            const matched = isMatchedLeft(item);
-            const active = selectedLeft === item;
+        {left.map((leftItem, rowIndex) => {
+          const rightItem =
+            right[rowIndex];
 
-            return (
+          const leftMatched =
+            isMatchedLeft(leftItem);
+
+          const rightMatched =
+            isMatchedRight(rightItem);
+
+          const leftActive =
+            selectedLeft === leftItem;
+
+          const rightActive =
+            selectedRight === rightItem;
+
+          return (
+            <View
+              style={styles.matchRow}
+              key={`${leftItem}-${rightItem}-${rowIndex}`}
+            >
               <TouchableOpacity
-                key={item}
-                disabled={matched || isLocked(state)}
+                disabled={
+                  leftMatched ||
+                  isLocked(state)
+                }
                 style={[
                   styles.matchItem,
-                  active && {
+                  leftActive && {
                     borderColor: theme.accent,
                     backgroundColor: theme.light
                   },
-                  matched && styles.matchedItem,
-                  isLocked(state) && !matched && styles.optionLocked
+                  leftMatched &&
+                    styles.matchedItem,
+                  isLocked(state) &&
+                    !leftMatched &&
+                    styles.optionLocked
                 ]}
-                onPress={() => setSelectedLeft(item)}
+                onPress={() =>
+                  setSelectedLeft(leftItem)
+                }
               >
-                <Text style={styles.matchText}>{item}</Text>
+                <Text style={styles.matchText}>
+                  {leftItem}
+                </Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
 
-        <View style={styles.matchColumn}>
-          {right.map((item) => {
-            const matched = isMatchedRight(item);
-            const active = selectedRight === item;
-
-            return (
               <TouchableOpacity
-                key={item}
-                disabled={matched || isLocked(state)}
+                disabled={
+                  rightMatched ||
+                  isLocked(state)
+                }
                 style={[
                   styles.matchItem,
-                  active && {
+                  rightActive && {
                     borderColor: theme.accent,
                     backgroundColor: theme.light
                   },
-                  matched && styles.matchedItem,
-                  isLocked(state) && !matched && styles.optionLocked
+                  rightMatched &&
+                    styles.matchedItem,
+                  isLocked(state) &&
+                    !rightMatched &&
+                    styles.optionLocked
                 ]}
                 onPress={() => {
-                  setSelectedRight(item);
+                  setSelectedRight(rightItem);
 
-                  const key = rightAudioKey(item);
-                  if (key) playAudioKey(key);
+                  const key =
+                    rightAudioKey(rightItem);
+
+                  if (key) {
+                    playAudioKey(key);
+                  }
                 }}
               >
-                <Text style={styles.matchText}>{item}</Text>
+                <Text style={styles.matchText}>
+                  {rightItem}
+                </Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
+            </View>
+          );
+        })}
       </View>
 
       {state === 'idle' ? (
         <TouchableOpacity
           style={[
             styles.primaryBtn,
-            { backgroundColor: theme.accent },
-            (!selectedLeft || !selectedRight) && styles.primaryBtnDisabled
+            {
+              backgroundColor: theme.accent
+            },
+            (
+              !selectedLeft ||
+              !selectedRight
+            ) &&
+              styles.primaryBtnDisabled
           ]}
-          disabled={!selectedLeft || !selectedRight}
+          disabled={
+            !selectedLeft ||
+            !selectedRight
+          }
           onPress={checkPair}
           accessibilityRole="button"
           accessibilityLabel="Check matches"
         >
-          <Text style={styles.primaryBtnText}>Check</Text>
+          <Text style={styles.primaryBtnText}>
+            Check
+          </Text>
         </TouchableOpacity>
       ) : null}
 
       {allowSkip && state === 'idle' ? (
-        <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
+        <SkipQuestionButton
+          onSkip={skipQuestion}
+          disabled={false}
+        />
       ) : null}
-
-      <TBoyCallout
-        activity={activity}
-        language={language}
-        visible={revealAddOns}
-        onOpenPreface={onOpenPreface}
-      />
 
       <FeedbackFooter
         state={state}
         firstWrong={attempts === 1}
         hintText={getHintText(activity)}
-        answerDisplay={activity.answerDisplay || 'Match the correct pairs'}
+        answerDisplay={null}
+        wrongTitle="Wrong pair"
+        answerContent={
+          <CorrectMatchPairs
+            pairs={activity.pairs || []}
+          />
+        }
         onTryAgain={resetWrong}
         onNext={onCorrect}
         onIncorrect={() =>
@@ -1492,7 +1847,13 @@ function MatchPairs({ activity, language, onCorrect, onWrong, theme, allowSkip, 
               : `${selectedLeft || ''} ↔ ${selectedRight || ''}`
           )
         }
-        altContent={<AnswerAltButtons activity={activity} visible={revealAddOns} theme={theme} />}
+        altContent={
+          <AnswerAltButtons
+            activity={activity}
+            visible={revealAddOns}
+            theme={theme}
+          />
+        }
       />
     </QuestionScrollView>
   );
@@ -1526,6 +1887,7 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: 120
   },
+
   cardCorrect: {
     backgroundColor: '#ECFDF5',
     borderColor: '#86EFAC'
@@ -1755,22 +2117,26 @@ const styles = StyleSheet.create({
   },
 
   matchGrid: {
-    flexDirection: 'row',
-    gap: 10
+    width: '100%'
   },
 
-  matchColumn: {
-    flex: 1
+  matchRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 10,
+    marginBottom: 10
   },
 
   matchItem: {
+    flex: 1,
+    minHeight: 58,
     borderWidth: 2,
     borderColor: '#E2E8F0',
     borderRadius: 16,
     paddingVertical: 13,
     paddingHorizontal: 10,
-    marginBottom: 10,
-    backgroundColor: '#FFFFFF'
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center'
   },
 
   matchedItem: {
@@ -1783,6 +2149,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#102A43',
     fontWeight: '800'
+  },
+
+  correctPairAnswer: {
+    marginBottom: 14
+  },
+
+  correctPairLabel: {
+    color: '#334155',
+    fontSize: 14,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 10
+  },
+
+  correctPairRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8
+  },
+
+  correctPairChip: {
+    flex: 1,
+    borderWidth: 2,
+    borderRadius: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 8
+  },
+
+  correctPairText: {
+    color: '#102A43',
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center'
+  },
+
+  correctPairArrow: {
+    color: '#64748B',
+    fontSize: 18,
+    fontWeight: '900'
   },
 
   tBoyWrap: {
@@ -1799,6 +2205,7 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     position: 'relative'
   },
+
   tBoyImage: {
     width: 106,
     height: 106,
