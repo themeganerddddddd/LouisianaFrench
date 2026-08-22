@@ -15,6 +15,7 @@ Learners can select a Language, work through Units and Lessons, practice Words w
 - Expo Go for testing on a physical phone, or an installed iOS or Android simulator
 - Xcode for the iOS simulator on macOS
 - Android Studio and an Android emulator or connected device for Android development
+- ffmpeg, when normalizing bundled Word Audio
 
 ### Install Dependencies
 
@@ -134,6 +135,14 @@ python scripts/generate_audio_manifest.py
 ```
 
 This reads the root `cajun.csv` and `kreole.csv` files and replaces the committed Audio manifest. Review the generated manifest and Audio paths before committing it.
+
+Word Audio files are recorded in different sessions, so their loudness can vary. After adding or replacing MP3 files, normalize them with ffmpeg (EBU R128, -16 LUFS):
+
+```bash
+python scripts/normalize_audio.py
+```
+
+Use `--dry-run` to measure first. The script leaves files already within 1 LU of -16 LUFS unchanged. Very short clips can be too brief for LUFS measurement; those are peak-normalized instead. A few peaky recordings cannot reach -16 LUFS without clipping and may stay a little quieter.
 
 ## Further Documentation
 
