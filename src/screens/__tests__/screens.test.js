@@ -1863,7 +1863,7 @@ describe('DictionaryScreen', () => {
 
     expect(screen.getByText('Hello')).toBeOnTheScreen();
     expect(screen.getByText('Bonjour')).toBeOnTheScreen();
-    expect(screen.getByText('Mastered')).toBeOnTheScreen();
+    expect(await screen.findByText('Mastered')).toBeOnTheScreen();
     expect(screen.getByText('Learning')).toBeOnTheScreen();
     expect(screen.getByText('Play audio')).toBeOnTheScreen();
 
