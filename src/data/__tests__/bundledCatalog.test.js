@@ -153,6 +153,41 @@ describe('bundled Catalog', () => {
   );
 
   it.each(languages)(
+    'ships match quizzes with unique English and target glosses for $language',
+    ({ language }) => {
+      const matchActivities =
+        getAllActivities(language).filter(
+          (activity) =>
+            activity.type === 'match_pairs'
+        );
+
+      expect(
+        matchActivities.length
+      ).toBeGreaterThan(0);
+
+      for (const activity of matchActivities) {
+        const pairs = activity.pairs || [];
+        const lefts = pairs.map(
+          (pair) =>
+            String(pair.left || '')
+              .trim()
+              .toLowerCase()
+        );
+        const rights = pairs.map(
+          (pair) =>
+            String(pair.right || '')
+              .trim()
+              .toLowerCase()
+        );
+
+        expect(pairs).toHaveLength(4);
+        expect(new Set(lefts).size).toBe(lefts.length);
+        expect(new Set(rights).size).toBe(rights.length);
+      }
+    }
+  );
+
+  it.each(languages)(
     'ships every supported Activity type for $language',
     ({ language }) => {
       const activities = getAllActivities(language);

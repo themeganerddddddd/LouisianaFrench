@@ -19,6 +19,7 @@ AUDIO_DIRS = {
 DEFAULT_LESSON_CHUNK_SIZE = 5
 KREOLE_LESSON_CHUNK_SIZE = 6
 MAX_ACTIVITIES_PER_LESSON = 15
+MATCH_PAIR_COUNT = 4
 RANDOM_SEED = 42
 
 # After a word is introduced, it must be quizzed within this many
@@ -560,128 +561,78 @@ def make_sentence_build(
     )
 
 
-def make_match_pairs(
-    language,
-    rows
+def select_unique_gloss_rows(
+    preferred_rows,
+    fill_rows=(),
+    count=MATCH_PAIR_COUNT
 ):
-    vocab_cards = []
+    selected = []
+    used_ids = set()
+    used_english = set()
+    used_targets = set()
 
-    metadata_source_row = None
+    for row in list(preferred_rows or ()) + list(fill_rows or ()):
+        if len(selected) >= count:
+            break
 
-    for row in rows:
-        row_id = clean(
-            row.get("id")
-        )
+        row_id = clean(row.get("id"))
+        english = clean(row.get("english"))
+        target = clean(row.get("variant_text"))
 
-        english = clean(
-            row.get("english")
-        )
-
-        target = clean(
-            row.get("variant_text")
-        )
-
-        audio_key = clean(
-            row.get("audioKey")
-        )
-
-        if not english or not target:
+        if not row_id or not english or not target:
             continue
 
+        english_key = english.casefold()
+        target_key = target.casefold()
+
         if (
-            metadata_source_row is None
-            and (
-                clean(
-                    row.get(
-                        "extra_details"
-                    )
-                )
-                or clean(
-                    row.get(
-                        "context_badge"
-                    )
-                )
-                or clean(
-                    row.get(
-                        "english_alt_response"
-                    )
-                )
-                or clean(
-                    row.get(
-                        "variant_alt_response"
-                    )
-                )
-            )
+            row_id in used_ids
+            or english_key in used_english
+            or target_key in used_targets
         ):
-            metadata_source_row = row
+            continue
 
-        vocab_card = {
-            "rowId": row_id,
-            "english": english,
-            "target": target,
-            "audioKey": (
-                audio_key or None
-            )
-        }
+        selected.append(row)
+        used_ids.add(row_id)
+        used_english.add(english_key)
+        used_targets.add(target_key)
 
-        extra_details = clean(
-            row.get(
-                "extra_details",
-                ""
-            )
-        )
-
-        context_badge = clean(
-            row.get(
-                "context_badge",
-                ""
-            )
-        )
-
-        english_alt_response = clean(
-            row.get(
-                "english_alt_response",
-                ""
-            )
-        )
-
-        variant_alt_response = clean(
-            row.get(
-                "variant_alt_response",
-                ""
-            )
-        )
-
-        if extra_details:
-            vocab_card[
-                "extraDetails"
-            ] = extra_details
-
-        if context_badge:
-            vocab_card[
-                "contextBadge"
-            ] = context_badge
-
-        if english_alt_response:
-            vocab_card[
-                "englishAltResponse"
-            ] = english_alt_response
-
-        if variant_alt_response:
-            vocab_card[
-                "variantAltResponse"
-            ] = variant_alt_response
-
-        vocab_cards.append(
-            vocab_card
-        )
-
-    if len(vocab_cards) < 4:
+    if len(selected) < count:
         return None
+
+    return selected
+
+
+def row_has_display_metadata(row):
+    return bool(
+        clean(row.get("extra_details"))
+        or clean(row.get("context_badge"))
+        or clean(row.get("english_alt_response"))
+        or clean(row.get("variant_alt_response"))
+    )
+
+
+def make_match_pairs(
+    language,
+    preferred_rows,
+    fill_rows=()
+):
+    selected_rows = select_unique_gloss_rows(
+        preferred_rows,
+        fill_rows
+    )
+
+    if selected_rows is None:
+        return None
+
+    vocab_cards = [
+        row_to_vocab_card(row)
+        for row in selected_rows
+    ]
 
     pair_cards = random.sample(
         vocab_cards,
-        4
+        MATCH_PAIR_COUNT
     )
 
     activity = {
@@ -703,6 +654,15 @@ def make_match_pairs(
         "answer": "All matched",
         "answerDisplay": "All matched"
     }
+
+    metadata_source_row = next(
+        (
+            row
+            for row in selected_rows
+            if row_has_display_metadata(row)
+        ),
+        None
+    )
 
     if metadata_source_row is not None:
         activity = attach_row_metadata(
@@ -789,7 +749,8 @@ def schedule_core_activities(
     chunk_rows,
     prior_rows_in_unit,
     unit_rows,
-    is_first_chunk
+    is_first_chunk,
+    prior_rows_from_earlier_units=()
 ):
     """
     Build a lesson flow that:
@@ -1152,7 +1113,7 @@ def schedule_core_activities(
         if (
             len(
                 seen_in_this_lesson
-            ) >= 4
+            ) >= MATCH_PAIR_COUNT
             and len(
                 activities
             ) < MAX_ACTIVITIES_PER_LESSON
@@ -1165,14 +1126,23 @@ def schedule_core_activities(
             ):
                 match_rows = (
                     seen_in_this_lesson[
-                        -4:
+                        -MATCH_PAIR_COUNT:
                     ]
                 )
 
                 match_activity = (
                     make_match_pairs(
                         language,
-                        match_rows
+                        match_rows,
+                        fill_rows=(
+                            seen_in_this_lesson[
+                                :-MATCH_PAIR_COUNT
+                            ]
+                            + prior_pool
+                            + list(
+                                prior_rows_from_earlier_units
+                            )
+                        )
                     )
                 )
 
@@ -1221,7 +1191,7 @@ def schedule_core_activities(
         if (
             len(activities)
             < MAX_ACTIVITIES_PER_LESSON
-            and len(mixed_pool) >= 4
+            and len(mixed_pool) >= MATCH_PAIR_COUNT
         ):
             if (
                 not any(
@@ -1237,7 +1207,7 @@ def schedule_core_activities(
                     random.sample(
                         mixed_pool,
                         min(
-                            4,
+                            MATCH_PAIR_COUNT,
                             len(
                                 mixed_pool
                             )
@@ -1248,7 +1218,13 @@ def schedule_core_activities(
                 match_activity = (
                     make_match_pairs(
                         language,
-                        match_rows
+                        match_rows,
+                        fill_rows=(
+                            mixed_pool
+                            + list(
+                                prior_rows_from_earlier_units
+                            )
+                        )
                     )
                 )
 
@@ -1267,7 +1243,8 @@ def schedule_core_activities(
 
 def make_review_activities(
     language,
-    unit_rows
+    unit_rows,
+    prior_rows_from_earlier_units=()
 ):
     unit_ctx = build_unit_lookups(
         unit_rows
@@ -1349,7 +1326,7 @@ def make_review_activities(
             last_row_id = row_id
 
     if (
-        len(candidate_rows) >= 4
+        len(candidate_rows) >= MATCH_PAIR_COUNT
         and not any(
             a.get("type")
             == "match_pairs"
@@ -1360,7 +1337,15 @@ def make_review_activities(
         match_activity = (
             make_match_pairs(
                 language,
-                candidate_rows[:4]
+                candidate_rows[:MATCH_PAIR_COUNT],
+                fill_rows=(
+                    candidate_rows[
+                        MATCH_PAIR_COUNT:
+                    ]
+                    + list(
+                        prior_rows_from_earlier_units
+                    )
+                )
             )
         )
 
@@ -1528,6 +1513,8 @@ def build_lessons(
         )
     )
 
+    prior_rows_from_earlier_units = []
+
     for unit in ordered_units:
         unit_rows = sort_rows_by_id(
             grouped[unit]
@@ -1576,6 +1563,9 @@ def build_lessons(
                 unit_rows=unit_rows,
                 is_first_chunk=(
                     is_first_chunk
+                ),
+                prior_rows_from_earlier_units=(
+                    prior_rows_from_earlier_units
                 )
             )
 
@@ -1643,7 +1633,10 @@ def build_lessons(
         review_activities = (
             make_review_activities(
                 language,
-                unit_rows
+                unit_rows,
+                prior_rows_from_earlier_units=(
+                    prior_rows_from_earlier_units
+                )
             )
         )
 
@@ -1686,6 +1679,10 @@ def build_lessons(
                     review_activities,
                 "baseXp": 50
             }
+        )
+
+        prior_rows_from_earlier_units.extend(
+            unit_rows
         )
 
     with open(
