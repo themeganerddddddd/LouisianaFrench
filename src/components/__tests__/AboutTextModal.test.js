@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import AboutTextModal from '../AboutTextModal';
-import { aboutTextFixture } from '../../test/fixtures/about/aboutFixtures';
+import { aboutSectionsFixture, aboutTextFixture } from '../../test/fixtures/about/aboutFixtures';
 
 describe('AboutTextModal', () => {
   it('renders a titled scrollable body and closes from its button', () => {
@@ -17,7 +17,7 @@ describe('AboutTextModal', () => {
       />
     );
 
-    expect(screen.getByText('Security/Privacy')).toBeOnTheScreen();
+    expect(screen.getByText('Privacy')).toBeOnTheScreen();
     expect(screen.getByTestId('about-text-scroll')).toBeOnTheScreen();
     expect(screen.getByText(aboutTextFixture.paragraphs[0])).toBeOnTheScreen();
     expect(screen.getByTestId('about-text-modal')).toHaveStyle({ maxWidth: 460 });
@@ -43,5 +43,26 @@ describe('AboutTextModal', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
+  });
+
+  it('renders section headings with names and paragraphs', () => {
+    render(
+      <AboutTextModal
+        visible
+        content={aboutSectionsFixture}
+        accentColor="#2771CB"
+        reduceMotion
+        onClose={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('Acknowledgements')).toBeOnTheScreen();
+    expect(screen.getByText('Core team')).toBeOnTheScreen();
+    expect(screen.getByText('Ada Core')).toBeOnTheScreen();
+    expect(screen.getByText('Bea Core')).toBeOnTheScreen();
+    expect(screen.getByText('Audio Contributors')).toBeOnTheScreen();
+    expect(screen.getByText('Cy Voice')).toBeOnTheScreen();
+    expect(screen.getByText('Which languages can I learn?')).toBeOnTheScreen();
+    expect(screen.getByText('Louisiana French and Kouri-Vini are available.')).toBeOnTheScreen();
   });
 });

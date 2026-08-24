@@ -366,10 +366,12 @@ describe('HomeScreen', () => {
     await openLeaves();
     const leaves = screen.getByTestId('about-menu-leaves');
     expect(within(leaves).getAllByRole('button').map((button) => button.props.accessibilityLabel))
-      .toEqual(['The team', 'Security/Privacy', 'FAQ', 'Support']);
+      .toEqual(['Acknowledgements', 'Privacy', 'FAQ', 'Support']);
     expect(screen.queryByText('Account settings')).toBeNull();
     expect(screen.queryByText('Why make this app')).toBeNull();
     expect(screen.queryByText('Remerciements')).toBeNull();
+    expect(screen.queryByText('The team')).toBeNull();
+    expect(screen.queryByText('Security/Privacy')).toBeNull();
 
     await user.press(screen.getByRole('button', { name: 'About Us' }));
     expect(screen.queryByTestId('about-menu-leaves')).toBeNull();
@@ -377,20 +379,28 @@ describe('HomeScreen', () => {
       .toEqual({ expanded: false });
     await user.press(screen.getByRole('button', { name: 'About Us' }));
 
-    await user.press(screen.getByRole('button', { name: 'The team' }));
+    await user.press(screen.getByRole('button', { name: 'Acknowledgements' }));
     expect(screen.queryByTestId('home-about-menu')).toBeNull();
-    expect(await screen.findByTestId('about-team-modal')).toBeOnTheScreen();
-    expect(screen.getByText('Voice contributor 1')).toBeOnTheScreen();
-    await user.press(screen.getByTestId('about-team-close'));
+    expect(await screen.findByText('Core team')).toBeOnTheScreen();
+    expect(screen.getByText('Westley Sturham')).toBeOnTheScreen();
+    expect(screen.getByText('Audio Contributors')).toBeOnTheScreen();
+    expect(screen.getByText('Megan Constantin')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('about-text-close'));
 
     for (const [kind, title] of [
-      ['securityPrivacy', 'Security/Privacy'],
+      ['privacy', 'Privacy'],
       ['faq', 'FAQ'],
       ['support', 'Support']
     ]) {
       await openLeaves();
       await user.press(screen.getByTestId(`about-menu-leaf-${kind}`));
       expect(await screen.findByText(title)).toBeOnTheScreen();
+      if (kind === 'privacy') {
+        expect(screen.getByText('Progress on this device')).toBeOnTheScreen();
+      }
+      if (kind === 'faq') {
+        expect(screen.getByText('Which languages can I learn?')).toBeOnTheScreen();
+      }
       if (kind === 'support') {
         expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
       }

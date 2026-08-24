@@ -2,8 +2,8 @@ import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const LEAVES = [
-  ['team', 'The team'],
-  ['securityPrivacy', 'Security/Privacy'],
+  ['acknowledgements', 'Acknowledgements'],
+  ['privacy', 'Privacy'],
   ['faq', 'FAQ'],
   ['support', 'Support']
 ];

@@ -70,9 +70,23 @@ export default function AboutTextModal({
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
           >
-            {content.paragraphs.map((paragraph) => (
-              <Text key={paragraph} style={styles.paragraph}>{paragraph}</Text>
-            ))}
+            {content.sections
+              ? content.sections.map((section) => (
+                <View key={section.heading} style={styles.section}>
+                  <Text accessibilityRole="header" style={styles.sectionHeading}>
+                    {section.heading}
+                  </Text>
+                  {section.names?.map((name) => (
+                    <Text key={name} style={styles.name}>{name}</Text>
+                  ))}
+                  {section.paragraphs?.map((paragraph) => (
+                    <Text key={paragraph} style={styles.paragraph}>{paragraph}</Text>
+                  ))}
+                </View>
+              ))
+              : content.paragraphs.map((paragraph) => (
+                <Text key={paragraph} style={styles.paragraph}>{paragraph}</Text>
+              ))}
           </ScrollView>
         </View>
       </View>
@@ -132,6 +146,22 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 28
+  },
+  section: {
+    marginBottom: 20
+  },
+  sectionHeading: {
+    color: '#102A43',
+    fontSize: 16,
+    fontWeight: '900',
+    marginBottom: 8
+  },
+  name: {
+    color: '#486581',
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    marginBottom: 4
   },
   paragraph: {
     color: '#486581',

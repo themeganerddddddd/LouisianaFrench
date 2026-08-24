@@ -22,8 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
 import AboutTextModal from '../components/AboutTextModal';
 import HomeAboutMenu from '../components/HomeAboutMenu';
-import PersonCarouselModal from '../components/PersonCarouselModal';
-import { ABOUT_PEOPLE, ABOUT_TEXT } from '../data/aboutContent';
+import { ABOUT_TEXT } from '../data/aboutContent';
 import {
   getDefaultLanguage,
   setDefaultLanguage
@@ -419,9 +418,7 @@ export default function HomeScreen() {
   function selectAbout(kind) {
     setAboutMenuVisible(false);
     setAboutExpanded(false);
-    setAboutModal(kind === 'team'
-      ? { type: 'team' }
-      : { type: 'text', content: ABOUT_TEXT[kind] });
+    setAboutModal({ type: 'text', content: ABOUT_TEXT[kind] });
   }
 
   const theme =
@@ -759,16 +756,6 @@ export default function HomeScreen() {
           setAboutExpanded(false);
         }}
       />
-
-      {aboutModal?.type === 'team' ? (
-        <PersonCarouselModal
-          visible
-          people={ABOUT_PEOPLE}
-          accentColor={theme.accent}
-          reduceMotion={reduceMotion}
-          onClose={() => setAboutModal(null)}
-        />
-      ) : null}
 
       {aboutModal?.type === 'text' ? (
         <AboutTextModal
