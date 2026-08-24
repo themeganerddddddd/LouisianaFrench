@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
+  BackHandler,
   Image,
   LayoutAnimation,
   Platform,
@@ -17,8 +18,11 @@ import {
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AboutTextModal from '../components/AboutTextModal';
 import BugReportButton from '../components/BugReportButton';
 import DebugCatalogModal from '../components/DebugCatalogModal';
+import HomeAboutMenu from '../components/HomeAboutMenu';
+import { ABOUT_TEXT } from '../data/aboutContent';
 import { getHomeProjection } from '../utils/homeProjection';
 import { registerTBoyTap } from '../utils/debugCatalogUnlock';
 import {
@@ -290,6 +294,9 @@ export default function HomeScreen() {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [expandedUnit, setExpandedUnit] = useState(null);
   const [debugCatalogVisible, setDebugCatalogVisible] = useState(false);
+  const [aboutMenuVisible, setAboutMenuVisible] = useState(false);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
+  const [aboutModal, setAboutModal] = useState(null);
   const initialExpansionLanguage = useRef(null);
   const tboyTapRef = useRef({ count: 0, lastTapAt: 0 });
 
@@ -341,6 +348,18 @@ export default function HomeScreen() {
     preference?.then(setReduceMotion);
   }, []);
   useEffect(() => {
+    if (!aboutMenuVisible) return undefined;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setAboutMenuVisible(false);
+      setAboutExpanded(false);
+      return true;
+    });
+
+    return () => subscription.remove();
+  }, [aboutMenuVisible]);
+
+  useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
@@ -386,6 +405,12 @@ export default function HomeScreen() {
       startActivityIndex,
       debugJump: true
     });
+  }
+
+  function selectAbout(kind) {
+    setAboutMenuVisible(false);
+    setAboutExpanded(false);
+    setAboutModal({ type: 'text', content: ABOUT_TEXT[kind] });
   }
 
   const theme =
@@ -434,11 +459,21 @@ export default function HomeScreen() {
       >
         <View style={styles.identityRow}>
           <View style={styles.identityDetails}>
-            <Image
+            <Pressable
               testID="home-pelican"
-              source={require('../../assets/images/pelicanicon.png')}
+              accessibilityRole="button"
+              accessibilityLabel="About menu"
+              accessibilityState={{ expanded: aboutMenuVisible }}
+              hitSlop={6}
+              onPress={() => setAboutMenuVisible((visible) => !visible)}
               style={styles.pelican}
-            />
+            >
+              <Image
+                testID="home-pelican-image"
+                source={require('../../assets/images/pelicanicon.png')}
+                style={styles.pelicanImage}
+              />
+            </Pressable>
             <View style={styles.identityText}>
               <Text style={styles.topTitle}>
                 {language === 'cajun' ? 'Louisiana French' : 'Kouri-Vini'}
@@ -704,6 +739,30 @@ export default function HomeScreen() {
         <View style={{ height: 30 }} />
       </ScrollView>
 
+      <HomeAboutMenu
+        visible={aboutMenuVisible}
+        anchorTop={insets.top + 68}
+        anchorLeft={20}
+        accentColor={theme.accent}
+        expanded={aboutExpanded}
+        onToggle={() => setAboutExpanded((expanded) => !expanded)}
+        onSelect={selectAbout}
+        onDismiss={() => {
+          setAboutMenuVisible(false);
+          setAboutExpanded(false);
+        }}
+      />
+
+      {aboutModal?.type === 'text' ? (
+        <AboutTextModal
+          visible
+          content={aboutModal.content}
+          accentColor={theme.accent}
+          reduceMotion={reduceMotion}
+          onClose={() => setAboutModal(null)}
+        />
+      ) : null}
+
       <DebugCatalogModal
         visible={debugCatalogVisible}
         language={language}
@@ -748,8 +807,17 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     marginRight: 10
+  },
+
+  pelicanImage: {
+    width: 42,
+    height: 42,
+    borderRadius: 12
   },
 
   topTitle: {
