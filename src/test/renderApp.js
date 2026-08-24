@@ -11,7 +11,6 @@ import {
 import AdvancedScreen from '../screens/AdvancedScreen';
 import DailyReviewScreen from '../screens/DailyReviewScreen';
 import DictionaryScreen from '../screens/DictionaryScreen';
-import DictionarySpeechPracticeScreen from '../screens/DictionarySpeechPracticeScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LanguageSelectScreen from '../screens/LanguageSelectScreen';
 import LessonCompleteScreen from '../screens/LessonCompleteScreen';
@@ -30,8 +29,7 @@ const SCREENS = Object.freeze({
   LessonComplete: LessonCompleteScreen,
   DailyReview: DailyReviewScreen,
   Advanced: AdvancedScreen,
-  Dictionary: DictionaryScreen,
-  DictionarySpeechPractice: DictionarySpeechPracticeScreen
+  Dictionary: DictionaryScreen
 });
 
 export const REGISTERED_ROUTES = Object.freeze(Object.keys(SCREENS));

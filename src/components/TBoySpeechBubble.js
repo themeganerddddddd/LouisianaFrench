@@ -14,7 +14,9 @@ export default function TBoySpeechBubble({
     <View
       style={[
         styles.bubble,
-        layout === 'row' ? styles.rowBubble : styles.columnBubble,
+        layout === 'row'
+          ? styles.rowBubble
+          : styles.columnBubble,
         { borderColor: accentColor }
       ]}
       testID={testID}
@@ -22,17 +24,32 @@ export default function TBoySpeechBubble({
       <View
         style={[
           styles.tail,
-          tailPosition === 'left' ? styles.leftTail : styles.bottomTail,
+          tailPosition === 'left'
+            ? styles.leftTail
+            : styles.bottomTail,
           {
             backgroundColor: '#F8FBFF',
             borderColor: accentColor
           }
         ]}
       />
-      <Text testID={headingTestID} style={[styles.heading, { color: accentColor }]}>
-        {heading}
-      </Text>
-      <Text testID={bodyTestID} style={styles.body}>
+
+      {heading ? (
+        <Text
+          testID={headingTestID}
+          style={[
+            styles.heading,
+            { color: accentColor }
+          ]}
+        >
+          {heading}
+        </Text>
+      ) : null}
+
+      <Text
+        testID={bodyTestID}
+        style={styles.body}
+      >
         {body}
       </Text>
     </View>
@@ -48,19 +65,25 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     position: 'relative'
   },
+
   columnBubble: {
     width: '100%'
   },
+
   rowBubble: {
     flex: 1,
     minWidth: 0
   },
+
   tail: {
     position: 'absolute',
     width: 16,
     height: 16,
-    transform: [{ rotate: '45deg' }]
+    transform: [
+      { rotate: '45deg' }
+    ]
   },
+
   bottomTail: {
     bottom: -9,
     left: '50%',
@@ -68,18 +91,21 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderBottomWidth: 1
   },
+
   leftTail: {
     left: -9,
     bottom: 24,
     borderLeftWidth: 1,
     borderBottomWidth: 1
   },
+
   heading: {
     fontSize: 14,
     lineHeight: 19,
     fontWeight: '800',
     marginBottom: 4
   },
+
   body: {
     color: '#334E68',
     fontSize: 15,

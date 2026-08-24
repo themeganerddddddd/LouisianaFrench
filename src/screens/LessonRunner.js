@@ -1,263 +1,682 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
+
+import {
+  Animated,
+  StyleSheet,
+  View
+} from 'react-native';
+
 import ActivityRenderer from '../components/ActivityRenderer';
 import LessonPrefaceModal from '../components/LessonPrefaceModal';
 import ProgressHeader from '../components/ProgressHeader';
 import SafeScreenView from '../components/SafeScreenView';
-import { getLessonById, getUnitPreface } from '../data/lessonLoader';
+
+import {
+  getLessonById,
+  getUnitPreface
+} from '../data/lessonLoader';
+
 import {
   getDueReviewItems,
   updateCardReview
 } from '../utils/spacedRepetition';
+
 import {
   isPrefaceRead,
   markLessonComplete,
   markPrefaceRead,
   recordStudyAndXp,
   setLastWorkedUnit,
-  upsertPendingMistake,
-  updateWordProgress
+  updateWordProgress,
+  upsertPendingMistake
 } from '../utils/storage';
 
-export default function LessonRunner({ route, navigation }) {
-  const { language, lessonId } = route.params;
-  const lesson = useMemo(() => getLessonById(language, lessonId), [language, lessonId]);
+export default function LessonRunner({
+  route,
+  navigation
+}) {
+  const {
+    language,
+    lessonId,
+    startActivityIndex,
+    debugJump
+  } = route.params;
 
-  const [activities, setActivities] = useState([]);
-  const [index, setIndex] = useState(0);
-  const [lessonXp, setLessonXp] = useState(0);
-  const [mistakes, setMistakes] = useState([]);
-  const [scoreEarned, setScoreEarned] = useState(0);
-
-  const [prefaceVisible, setPrefaceVisible] = useState(false);
-  const [prefaceMode, setPrefaceMode] = useState('start');
-  const unitPreface = useMemo(
-    () => getUnitPreface(language, lesson?.unit),
-    [language, lesson?.unit]
+  const lesson = useMemo(
+    () =>
+      getLessonById(
+        language,
+        lessonId
+      ),
+    [
+      language,
+      lessonId
+    ]
   );
 
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [
+    activities,
+    setActivities
+  ] = useState([]);
+
+  const [
+    index,
+    setIndex
+  ] = useState(0);
+
+  const [
+    lessonXp,
+    setLessonXp
+  ] = useState(0);
+
+  const [
+    mistakes,
+    setMistakes
+  ] = useState([]);
+
+  const [
+    scoreEarned,
+    setScoreEarned
+  ] = useState(0);
+
+  const [
+    prefaceVisible,
+    setPrefaceVisible
+  ] = useState(false);
+
+  const [
+    prefaceMode,
+    setPrefaceMode
+  ] = useState('start');
+
+  const appliedStartIndex =
+    useRef(
+      false
+    );
+
+  const unitPreface =
+    useMemo(
+      () =>
+        getUnitPreface(
+          language,
+          lesson?.unit
+        ),
+      [
+        language,
+        lesson?.unit
+      ]
+    );
+
+  const fadeAnim =
+    useRef(
+      new Animated.Value(1)
+    ).current;
+
+  const slideAnim =
+    useRef(
+      new Animated.Value(0)
+    ).current;
 
   useEffect(() => {
     if (!lesson) {
-      navigation.replace('Home', { language });
+      navigation.replace(
+        'Home',
+        { language }
+      );
+
       return;
     }
 
     async function init() {
-      await setLastWorkedUnit(language, lesson.unit);
-      const due = await getDueReviewItems(lesson.activities || []);
-      const dueIds = new Set(due.map((d) => d.cardId));
+      await setLastWorkedUnit(
+        language,
+        lesson.unit
+      );
 
-      const merged = (lesson.activities || []).map((a) => ({
-        ...a,
-        isReview: dueIds.has(a.cardId)
-      }));
+      const due =
+        await getDueReviewItems(
+          lesson.activities || []
+        );
 
-      setActivities(merged);
+      const dueIds =
+        new Set(
+          due.map(
+            (d) => d.cardId
+          )
+        );
+
+      const merged =
+        (
+          lesson.activities ||
+          []
+        ).map(
+          (a) => ({
+            ...a,
+            isReview:
+              dueIds.has(
+                a.cardId
+              )
+          })
+        );
+
+      setActivities(
+        merged
+      );
+
+      if (
+        !appliedStartIndex.current &&
+        typeof startActivityIndex ===
+          'number' &&
+        startActivityIndex >= 0 &&
+        merged.length > 0
+      ) {
+        setIndex(
+          Math.min(
+            startActivityIndex,
+            merged.length - 1
+          )
+        );
+        appliedStartIndex.current =
+          true;
+      }
     }
 
     init();
-  }, [lesson, language, navigation]);
+  }, [
+    lesson,
+    language,
+    navigation,
+    startActivityIndex
+  ]);
 
   useEffect(() => {
-    if (!lesson || !unitPreface) return;
-    if (lesson.lessonNumberInUnit !== 1) return;
+    if (
+      !lesson ||
+      !unitPreface ||
+      debugJump
+    ) {
+      return;
+    }
+
+    if (
+      lesson.lessonNumberInUnit !==
+      1
+    ) {
+      return;
+    }
 
     async function checkPreface() {
-      const alreadyRead = await isPrefaceRead(unitPreface.id);
+      const alreadyRead =
+        await isPrefaceRead(
+          unitPreface.id
+        );
+
       if (!alreadyRead) {
-        setPrefaceVisible(true);
-        setPrefaceMode('start');
+        setPrefaceVisible(
+          true
+        );
+
+        setPrefaceMode(
+          'start'
+        );
       }
     }
 
     checkPreface();
-  }, [lesson, unitPreface]);
+  }, [
+    lesson,
+    unitPreface,
+    debugJump
+  ]);
 
-  // fadeAnim and slideAnim are useRef().current values — stable across renders
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 220,
-        useNativeDriver: true
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 220,
-        useNativeDriver: true
-      })
+      Animated.timing(
+        fadeAnim,
+        {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true
+        }
+      ),
+
+      Animated.timing(
+        slideAnim,
+        {
+          toValue: 0,
+          duration: 220,
+          useNativeDriver: true
+        }
+      )
     ]).start();
-  }, [index, fadeAnim, slideAnim]);
+  }, [
+    index,
+    fadeAnim,
+    slideAnim
+  ]);
 
   function animateToNext(cb) {
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 160,
-        useNativeDriver: true
-      }),
-      Animated.timing(slideAnim, {
-        toValue: -12,
-        duration: 160,
-        useNativeDriver: true
-      })
+      Animated.timing(
+        fadeAnim,
+        {
+          toValue: 0,
+          duration: 160,
+          useNativeDriver: true
+        }
+      ),
+
+      Animated.timing(
+        slideAnim,
+        {
+          toValue: -12,
+          duration: 160,
+          useNativeDriver: true
+        }
+      )
     ]).start(() => {
       cb();
-      slideAnim.setValue(12);
-      fadeAnim.setValue(0);
+
+      slideAnim.setValue(
+        12
+      );
+
+      fadeAnim.setValue(
+        0
+      );
     });
   }
 
-  const handlePrefaceContinue = useCallback(async () => {
-    if (unitPreface) {
-      await markPrefaceRead(unitPreface.id);
-    }
-    setPrefaceVisible(false);
-  }, [unitPreface]);
+  const handlePrefaceContinue =
+    useCallback(
+      async () => {
+        if (unitPreface) {
+          await markPrefaceRead(
+            unitPreface.id
+          );
+        }
 
-  const handlePrefaceClose = useCallback(() => {
-    setPrefaceVisible(false);
-  }, []);
+        setPrefaceVisible(
+          false
+        );
+      },
+      [unitPreface]
+    );
 
-  const handleOpenPreface = useCallback(() => {
-    setPrefaceMode('reference');
-    setPrefaceVisible(true);
-  }, []);
+  const handlePrefaceClose =
+    useCallback(
+      () => {
+        setPrefaceVisible(
+          false
+        );
+      },
+      []
+    );
 
-  const accentColor = language === 'kreole' ? '#6D28D9' : '#2771CB';
-  const displayProgress = prefaceVisible ? 0 : index + 1;
+  const handleOpenPreface =
+    useCallback(
+      () => {
+        setPrefaceMode(
+          'reference'
+        );
 
-  if (!lesson || activities.length === 0) return null;
+        setPrefaceVisible(
+          true
+        );
+      },
+      []
+    );
 
-  const current = activities[index];
+  const accentColor =
+    language === 'kreole'
+      ? '#6D28D9'
+      : '#2771CB';
+
+  const displayProgress =
+    prefaceVisible
+      ? 0
+      : index + 1;
+
+  if (
+    !lesson ||
+    activities.length === 0
+  ) {
+    return null;
+  }
+
+  const current =
+    activities[index];
+
   const scoredPossible =
     lesson.type === 'review'
       ? 0
-      : activities.filter((a) => a.type !== 'intro_card').length;
+      : activities.filter(
+          (a) =>
+            a.type !==
+            'intro_card'
+        ).length;
 
   async function handleCorrect() {
-    await updateCardReview(current.cardId, current.isReview ? 5 : 4);
+    await updateCardReview(
+      current.cardId,
+      current.isReview
+        ? 5
+        : 4
+    );
 
     if (current.rowId) {
-      await updateWordProgress(language, current.rowId, true);
-    }
-
-    if (lesson.type !== 'review' && current.type !== 'intro_card') {
-      setScoreEarned((v) => v + 1);
-    }
-
-    const gained = current.isReview ? 6 : 10;
-    const nextXp = lessonXp + gained;
-    setLessonXp(nextXp);
-
-    if (index < activities.length - 1) {
-      animateToNext(() => setIndex((i) => i + 1));
-    } else if (mistakes.length > 0) {
-      navigation.replace('MistakeReview', {
+      await updateWordProgress(
         language,
-        lessonId,
-        lessonTitle: `${lesson.unitTitle} — ${lesson.lessonTitle}`,
-        mistakes,
-        lessonXp: nextXp
-      });
+        current.rowId,
+        true
+      );
+    }
+
+    if (
+      lesson.type !==
+        'review' &&
+      current.type !==
+        'intro_card'
+    ) {
+      setScoreEarned(
+        (v) => v + 1
+      );
+    }
+
+    const gained =
+      current.isReview
+        ? 6
+        : 10;
+
+    const nextXp =
+      lessonXp + gained;
+
+    setLessonXp(
+      nextXp
+    );
+
+    if (
+      index <
+      activities.length - 1
+    ) {
+      animateToNext(
+        () =>
+          setIndex(
+            (i) => i + 1
+          )
+      );
+    } else if (
+      mistakes.length > 0
+    ) {
+      navigation.replace(
+        'MistakeReview',
+        {
+          language,
+          lessonId,
+          lessonTitle:
+            `${lesson.unitTitle} — ${lesson.lessonTitle}`,
+          mistakes,
+          lessonXp:
+            nextXp
+        }
+      );
     } else {
-      await finishLesson(nextXp, scoreEarned + (lesson.type !== 'review' && current.type !== 'intro_card' ? 1 : 0));
+      await finishLesson(
+        nextXp,
+        scoreEarned +
+          (
+            lesson.type !==
+              'review' &&
+            current.type !==
+              'intro_card'
+              ? 1
+              : 0
+          )
+      );
     }
   }
 
-  async function handleWrong(userAnswer) {
-    await updateCardReview(current.cardId, 2);
+  async function handleWrong(
+    userAnswer
+  ) {
+    await updateCardReview(
+      current.cardId,
+      2
+    );
 
     if (current.rowId) {
-      await updateWordProgress(language, current.rowId, false);
+      await updateWordProgress(
+        language,
+        current.rowId,
+        false
+      );
     }
 
-    await upsertPendingMistake(language, current.cardId, {
-      answer: userAnswer,
-      source: 'lesson',
-      sourceId: lesson.id
-    });
+    await upsertPendingMistake(
+      language,
+      current.cardId,
+      {
+        answer:
+          userAnswer,
+        source:
+          'lesson',
+        sourceId:
+          lesson.id
+      }
+    );
 
-    const nextMistake = { ...current, userAnswer };
-    setMistakes((prev) => [...prev, nextMistake]);
+    const nextMistake = {
+      ...current,
+      userAnswer
+    };
 
-    if (index < activities.length - 1) {
-      animateToNext(() => setIndex((i) => i + 1));
+    setMistakes(
+      (prev) => [
+        ...prev,
+        nextMistake
+      ]
+    );
+
+    if (
+      index <
+      activities.length - 1
+    ) {
+      animateToNext(
+        () =>
+          setIndex(
+            (i) => i + 1
+          )
+      );
     } else {
-      navigation.replace('MistakeReview', {
-        language,
-        lessonId,
-        lessonTitle: `${lesson.unitTitle} — ${lesson.lessonTitle}`,
-        mistakes: [...mistakes, nextMistake],
-        lessonXp,
-      });
+      navigation.replace(
+        'MistakeReview',
+        {
+          language,
+          lessonId,
+          lessonTitle:
+            `${lesson.unitTitle} — ${lesson.lessonTitle}`,
+          mistakes: [
+            ...mistakes,
+            nextMistake
+          ],
+          lessonXp
+        }
+      );
     }
   }
 
-  async function finishLesson(totalLessonXp, finalScoreEarned = scoreEarned) {
-    const profile = await recordStudyAndXp(totalLessonXp);
-    await markLessonComplete(language, lesson.id);
+  async function finishLesson(
+    totalLessonXp,
+    finalScoreEarned =
+      scoreEarned
+  ) {
+    const profile =
+      await recordStudyAndXp(
+        totalLessonXp
+      );
 
-    navigation.replace('LessonComplete', {
-      lessonTitle: `${lesson.unitTitle} — ${lesson.lessonTitle}`,
-      xpEarned: totalLessonXp,
-      mistakesCount: mistakes.length,
-      streak: profile.streak,
-      scoreEarned: lesson.type === 'review' ? null : finalScoreEarned,
-      scorePossible: lesson.type === 'review' ? null : scoredPossible,
-      language
-    });
+    await markLessonComplete(
+      language,
+      lesson.id
+    );
+
+    navigation.replace(
+      'LessonComplete',
+      {
+        lessonTitle:
+          `${lesson.unitTitle} — ${lesson.lessonTitle}`,
+
+        xpEarned:
+          totalLessonXp,
+
+        mistakesCount:
+          mistakes.length,
+
+        streak:
+          profile.streak,
+
+        scoreEarned:
+          lesson.type ===
+            'review'
+            ? null
+            : finalScoreEarned,
+
+        scorePossible:
+          lesson.type ===
+            'review'
+            ? null
+            : scoredPossible,
+
+        language
+      }
+    );
   }
 
   return (
-    <SafeScreenView style={styles.container}>
-      <View style={styles.inner}>
+    <SafeScreenView
+      style={
+        styles.container
+      }
+    >
+      <View
+        style={
+          styles.inner
+        }
+      >
         <ProgressHeader
-        current={displayProgress}
-        total={activities.length}
-        xp={lessonXp}
-        title={lesson.unitTitle}
-        modeLabel={prefaceVisible ? 'Before you begin' : lesson.lessonTitle}
-        language={language}
-        unitPreface={prefaceVisible ? undefined : unitPreface}
-        onOpenPreface={handleOpenPreface}
+          current={
+            displayProgress
+          }
+          total={
+            activities.length
+          }
+          xp={
+            lessonXp
+          }
+          title={
+            lesson.unitTitle
+          }
+          modeLabel={
+            prefaceVisible
+              ? 'Before you begin'
+              : lesson.lessonTitle
+          }
+          language={
+            language
+          }
+          unitPreface={
+            prefaceVisible
+              ? undefined
+              : unitPreface
+          }
+          onOpenPreface={
+            handleOpenPreface
+          }
         />
 
-        {!prefaceVisible && (
+        {!prefaceVisible ? (
           <Animated.View
             style={{
-              opacity: fadeAnim,
-              transform: [{ translateX: slideAnim }]
+              opacity:
+                fadeAnim,
+
+              transform: [
+                {
+                  translateX:
+                    slideAnim
+                }
+              ]
             }}
           >
             <ActivityRenderer
-              key={current?.cardId}
-              activity={current}
-              language={language}
-              onCorrect={handleCorrect}
-              onWrong={handleWrong}
-              onOpenPreface={unitPreface ? handleOpenPreface : undefined}
+              key={
+                current?.cardId
+              }
+              activity={
+                current
+              }
+              language={
+                language
+              }
+              onCorrect={
+                handleCorrect
+              }
+              onWrong={
+                handleWrong
+              }
+              onOpenPreface={
+                unitPreface
+                  ? handleOpenPreface
+                  : undefined
+              }
             />
           </Animated.View>
-        )}
+        ) : null}
       </View>
 
       <LessonPrefaceModal
-        preface={unitPreface}
-        visible={prefaceVisible}
-        mode={prefaceMode}
-        onContinue={handlePrefaceContinue}
-        onClose={handlePrefaceClose}
-        accentColor={accentColor}
+        preface={
+          unitPreface
+        }
+        visible={
+          prefaceVisible
+        }
+        mode={
+          prefaceMode
+        }
+        onContinue={
+          handlePrefaceContinue
+        }
+        onClose={
+          handlePrefaceClose
+        }
+        accentColor={
+          accentColor
+        }
       />
     </SafeScreenView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7FAFC' },
-  inner: { flex: 1, paddingHorizontal: 18, paddingBottom: 18 }
-});
+const styles =
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor:
+        '#F7FAFC'
+    },
+
+    inner: {
+      flex: 1,
+      paddingHorizontal:
+        18,
+      paddingBottom:
+        18
+    }
+  });
