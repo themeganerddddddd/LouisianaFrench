@@ -18,7 +18,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
+import DebugCatalogModal from '../components/DebugCatalogModal';
 import { getHomeProjection } from '../utils/homeProjection';
+import { registerTBoyTap } from '../utils/debugCatalogUnlock';
 import {
   getDefaultLanguage,
   getLastWorkedUnit,
@@ -287,7 +289,9 @@ export default function HomeScreen() {
   const [projection, setProjection] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [expandedUnit, setExpandedUnit] = useState(null);
+  const [debugCatalogVisible, setDebugCatalogVisible] = useState(false);
   const initialExpansionLanguage = useRef(null);
+  const tboyTapRef = useRef({ count: 0, lastTapAt: 0 });
 
   useEffect(() => {
     async function bootstrapLanguage() {
@@ -364,6 +368,24 @@ export default function HomeScreen() {
     });
 
     setExpandedUnit((currentUnit) => (currentUnit === unitCode ? null : unitCode));
+  }
+
+  function handleTBoyPress() {
+    const result = registerTBoyTap(tboyTapRef.current);
+    tboyTapRef.current = result.state;
+    if (result.unlocked) {
+      setDebugCatalogVisible(true);
+    }
+  }
+
+  function handleDebugCatalogJump({ lessonId, startActivityIndex }) {
+    setDebugCatalogVisible(false);
+    navigation.navigate('Lesson', {
+      language,
+      lessonId,
+      startActivityIndex,
+      debugJump: true
+    });
   }
 
   const theme =
@@ -537,11 +559,19 @@ export default function HomeScreen() {
           />
         ) : null}
 
-        <Image
-          source={require('../../assets/images/mainscreen.png')}
-          style={styles.bottomImage}
-          resizeMode="contain"
-        />
+        <Pressable
+          testID="home-tboy"
+          onPress={handleTBoyPress}
+          accessibilityRole="button"
+          accessibilityLabel="T-Boy"
+          style={styles.bottomImagePressable}
+        >
+          <Image
+            source={require('../../assets/images/mainscreen.png')}
+            style={styles.bottomImage}
+            resizeMode="contain"
+          />
+        </Pressable>
 
         {units.map((unitObj) => {
           return (
@@ -673,6 +703,14 @@ export default function HomeScreen() {
 
         <View style={{ height: 30 }} />
       </ScrollView>
+
+      <DebugCatalogModal
+        visible={debugCatalogVisible}
+        language={language}
+        accentColor={theme.accent}
+        onClose={() => setDebugCatalogVisible(false)}
+        onJump={handleDebugCatalogJump}
+      />
     </View>
   );
 }
@@ -1093,6 +1131,11 @@ const styles = StyleSheet.create({
 
   badgeTextDone: {
     color: '#FFFFFF'
+  },
+
+  bottomImagePressable: {
+    alignSelf: 'center',
+    width: '100%'
   },
 
   bottomImage: {
