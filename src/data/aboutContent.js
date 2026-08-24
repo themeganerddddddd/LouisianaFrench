@@ -12,18 +12,32 @@ export const ABOUT_TEXT = {
         ]
       },
       {
-        heading: 'Audio Contributors',
+        heading: 'Louisiana French',
         names: [
+          'Maggie Justus',
+          'Logan Delafosse',
+          'Marlene Breaux Toups',
+          'Burnell Lemoine',
+          'Daniel Blanchard',
+          'Megan Constantin',
+          'Zachary Fusilier',
+          'Sam Craft',
+          'Blake Miller',
+          'Ryan Langley',
+          'Clélie Ancelet',
+          'Valerie Broussard Boston'
+        ]
+      },
+      {
+        heading: 'Kouri-Vini',
+        names: [
+          'Taalib Pierre-Auguste',
           'Alexandre “Hibou” Leblanc',
           'Kaël “Chaoui” Leblanc',
           'Lauren Richard',
           'Daniele Simpson',
           'Aliza Ariza',
-          'Jermaine Butler',
-          'Marlene Breaux Toups',
-          'Burnell Lemoine',
-          'Daniel Blanchard',
-          'Megan Constantin'
+          'Jermaine Butler'
         ]
       }
     ]
@@ -53,12 +67,6 @@ export const ABOUT_TEXT = {
         heading: 'Bug reports',
         paragraphs: [
           'Report a bug is optional. If you use it, your mail app sends us a name, email, what went wrong, and basic device details. We use that only to fix the problem. Parents and teachers should send reports for younger learners.'
-        ]
-      },
-      {
-        heading: 'Families and schools',
-        paragraphs: [
-          'A child’s progress does not follow them to a new device. Each device keeps its own history.'
         ]
       },
       {

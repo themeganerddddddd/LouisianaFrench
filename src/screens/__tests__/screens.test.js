@@ -383,8 +383,9 @@ describe('HomeScreen', () => {
     expect(screen.queryByTestId('home-about-menu')).toBeNull();
     expect(await screen.findByText('Core team')).toBeOnTheScreen();
     expect(screen.getByText('Westley Sturham')).toBeOnTheScreen();
-    expect(screen.getByText('Audio Contributors')).toBeOnTheScreen();
-    expect(screen.getByText('Megan Constantin')).toBeOnTheScreen();
+    expect(screen.getByText('Kouri-Vini')).toBeOnTheScreen();
+    expect(screen.getByText('Zachary Fusilier')).toBeOnTheScreen();
+    expect(screen.getByText('Jermaine Butler')).toBeOnTheScreen();
     await user.press(screen.getByTestId('about-text-close'));
 
     for (const [kind, title] of [
@@ -585,6 +586,9 @@ describe('HomeScreen', () => {
       width: 42,
       height: 42,
       borderRadius: 12,
+      borderWidth: 2,
+      borderColor: '#FFFFFF',
+      overflow: 'hidden',
       backgroundColor: '#FFFFFF'
     });
     expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 25% mastered');
