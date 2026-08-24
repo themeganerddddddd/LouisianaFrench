@@ -2636,14 +2636,14 @@
         "activityIndex": 11
       },
       {
-        "cardId": "cajun:match:u02_w0003:step12",
+        "cardId": "cajun:match:u02_w0004:step12",
         "type": "match_pairs",
         "prompt": "Match the words",
         "pairs": [
           {
-            "left": "My name is…",
-            "right": "Je m’appelle…",
-            "audioKey": "u02_w0003_lf"
+            "left": "What’s your name?",
+            "right": "Quoi c’est ton nom?",
+            "audioKey": "u02_w0004_lf"
           },
           {
             "left": "My name is…",
@@ -2651,19 +2651,20 @@
             "audioKey": "u02_w0002_lf"
           },
           {
+            "left": "Hello!",
+            "right": "Bonjour!",
+            "audioKey": "u01_w0001_cajun"
+          },
+          {
             "left": "Who’s that?",
             "right": "Qui c’est ça?",
             "audioKey": "u02_w0007_lf"
-          },
-          {
-            "left": "What’s your name?",
-            "right": "Quoi c’est ton nom?",
-            "audioKey": "u02_w0004_lf"
           }
         ],
         "answer": "All matched",
         "answerDisplay": "All matched",
-        "baseCardId": "cajun:match:u02_w0003",
+        "englishAltResponse": "\"Hi!\"",
+        "baseCardId": "cajun:match:u02_w0004",
         "activityIndex": 12
       },
       {
@@ -10946,19 +10947,19 @@
             "audioKey": "u06_w0001_lf"
           },
           {
-            "left": "they are",
-            "right": "eux-autres est",
-            "audioKey": "u06_w0002_lf"
-          },
-          {
             "left": "They are cousins.",
             "right": "Ils sont cousins.",
             "audioKey": "u06_w0004_lf"
           },
           {
-            "left": "they are",
-            "right": "eusse est",
-            "audioKey": "u06_w0003_lf"
+            "left": "How’s it going?",
+            "right": "Comment ça va?",
+            "audioKey": "u01_w00002_cajun"
+          },
+          {
+            "left": "Hello!",
+            "right": "Bonjour!",
+            "audioKey": "u01_w0001_cajun"
           }
         ],
         "answer": "All matched",
@@ -11316,14 +11317,14 @@
         "activityIndex": 12
       },
       {
-        "cardId": "cajun:match:u06_w0009:step13",
+        "cardId": "cajun:match:u06_w0001:step13",
         "type": "match_pairs",
         "prompt": "Match the words",
         "pairs": [
           {
-            "left": "they have",
-            "right": "eux-autres a",
-            "audioKey": "u06_w0009_lf"
+            "left": "they are",
+            "right": "ils sont",
+            "audioKey": "u06_w0001_lf"
           },
           {
             "left": "They aren’t ready.",
@@ -11344,7 +11345,7 @@
         "answer": "All matched",
         "answerDisplay": "All matched",
         "variantAltResponse": "“Eux-autres est pas parés.” “Eusse est pas parés.”",
-        "baseCardId": "cajun:match:u06_w0009",
+        "baseCardId": "cajun:match:u06_w0001",
         "activityIndex": 13
       },
       {
@@ -12044,14 +12045,14 @@
         "activityIndex": 12
       },
       {
-        "cardId": "cajun:match:u06_w0018:step13",
+        "cardId": "cajun:match:u06_w0019:step13",
         "type": "match_pairs",
         "prompt": "Match the words",
         "pairs": [
           {
-            "left": "They want to play.",
-            "right": "Ils voulont jouer.",
-            "audioKey": "u06_w0018_lf"
+            "left": "They want some money.",
+            "right": "Eusse veut de l’argent.",
+            "audioKey": "u06_w0019_lf"
           },
           {
             "left": "they want",
@@ -12059,20 +12060,20 @@
             "audioKey": "u06_w0016_lf"
           },
           {
-            "left": "they want",
-            "right": "ça veut",
-            "audioKey": "u06_w0017_lf"
+            "left": "They want to play.",
+            "right": "Ils voulont jouer.",
+            "audioKey": "u06_w0018_lf"
           },
           {
-            "left": "They want some money.",
-            "right": "Eusse veut de l’argent.",
-            "audioKey": "u06_w0019_lf"
+            "left": "they are",
+            "right": "ils sont",
+            "audioKey": "u06_w0001_lf"
           }
         ],
         "answer": "All matched",
         "answerDisplay": "All matched",
         "variantAltResponse": "“ils veulent” “ils voulont” “eusse veut” “ça veut”",
-        "baseCardId": "cajun:match:u06_w0018",
+        "baseCardId": "cajun:match:u06_w0019",
         "activityIndex": 13
       },
       {
