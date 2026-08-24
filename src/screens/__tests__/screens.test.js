@@ -376,6 +376,50 @@ describe('HomeScreen', () => {
 
   });
 
+  it('opens the catalog navigator after ten T-Boy taps', async () => {
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    const tboy = screen.getByTestId('home-tboy');
+
+    for (let tap = 0; tap < 9; tap += 1) {
+      fireEvent.press(tboy);
+      expect(screen.queryByTestId('debug-catalog-modal')).toBeNull();
+    }
+
+    fireEvent.press(tboy);
+    expect(await screen.findByTestId('debug-catalog-modal')).toBeOnTheScreen();
+    expect(screen.getByText('Catalog navigator')).toBeOnTheScreen();
+  });
+
+  it('jumps to a chosen Activity from the catalog navigator', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    const tboy = screen.getByTestId('home-tboy');
+
+    for (let tap = 0; tap < 10; tap += 1) {
+      fireEvent.press(tboy);
+    }
+
+    expect(await screen.findByTestId('debug-catalog-modal')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('debug-catalog-unit-u01'));
+    await user.press(screen.getByTestId('debug-catalog-lesson-fixture_cajun_u01_l01'));
+    await user.press(screen.getByTestId('debug-catalog-activity-fixture:cajun:greeting:choice'));
+
+    expect(await screen.findByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+    expect(screen.getByText('3 / 4')).toBeOnTheScreen();
+    expect(screen.queryByTestId('debug-catalog-modal')).toBeNull();
+  });
+
   it('renders Catalog and Learner Progress values from one Home projection snapshot', async () => {
     const getProjection = jest
       .spyOn(homeProjection, 'getHomeProjection')
@@ -1522,6 +1566,22 @@ describe('LessonRunner', () => {
       expect(await screen.findByText('New word')).toBeOnTheScreen();
       expect(screen.queryByText('A note before you begin')).toBeNull();
       expect(screen.queryByLabelText('T-Boy: open Unit note')).toBeNull();
+    });
+
+    it('starts at the requested Activity and skips the preface on a debug jump', async () => {
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: {
+          language: 'cajun',
+          lessonId: 'fixture_cajun_u03_l01',
+          startActivityIndex: 0,
+          debugJump: true
+        }
+      });
+
+      expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
+      expect(screen.queryByText('A note before you begin')).toBeNull();
+      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
     });
 
     it('does not show the preface when it was previously read', async () => {

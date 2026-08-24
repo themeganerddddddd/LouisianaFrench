@@ -43,7 +43,9 @@ export default function LessonRunner({
 }) {
   const {
     language,
-    lessonId
+    lessonId,
+    startActivityIndex,
+    debugJump
   } = route.params;
 
   const lesson = useMemo(
@@ -92,6 +94,11 @@ export default function LessonRunner({
     prefaceMode,
     setPrefaceMode
   ] = useState('start');
+
+  const appliedStartIndex =
+    useRef(
+      false
+    );
 
   const unitPreface =
     useMemo(
@@ -161,19 +168,38 @@ export default function LessonRunner({
       setActivities(
         merged
       );
+
+      if (
+        !appliedStartIndex.current &&
+        typeof startActivityIndex ===
+          'number' &&
+        startActivityIndex >= 0 &&
+        merged.length > 0
+      ) {
+        setIndex(
+          Math.min(
+            startActivityIndex,
+            merged.length - 1
+          )
+        );
+        appliedStartIndex.current =
+          true;
+      }
     }
 
     init();
   }, [
     lesson,
     language,
-    navigation
+    navigation,
+    startActivityIndex
   ]);
 
   useEffect(() => {
     if (
       !lesson ||
-      !unitPreface
+      !unitPreface ||
+      debugJump
     ) {
       return;
     }
@@ -205,7 +231,8 @@ export default function LessonRunner({
     checkPreface();
   }, [
     lesson,
-    unitPreface
+    unitPreface,
+    debugJump
   ]);
 
   useEffect(() => {
