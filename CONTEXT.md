@@ -40,7 +40,7 @@ The in-Lesson mascot that surfaces Extra details.
 _Avoid_: Pelican Buddy, helpful pelican
 
 **Extra details**:
-An optional Catalog note attached to a Word or Activity and shown by T-Boy after the Activity's normal reveal point.
+An optional Catalog note attached to a Word or Activity and shown by T-Boy after the Activity's normal reveal point. Catalog notes may include Markdown, which T-Boy renders in the speech bubble.
 _Avoid_: Tooltip, hint when referring to Catalog content
 
 **Word**:
