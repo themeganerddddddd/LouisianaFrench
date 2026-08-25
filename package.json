@@ -17,6 +17,7 @@
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/native": "^7.1.18",
     "@react-navigation/stack": "^7.4.10",
+    "@ronradtke/react-native-markdown-display": "^9.0.3",
     "expo": "~54.0.0",
     "expo-audio": "~1.1.1",
     "expo-av": "~16.0.7",
@@ -47,6 +48,9 @@
     "preset": "jest-expo",
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
+    ],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|@ronradtke/react-native-markdown-display|react-native-fit-image))"
     ]
   }
 }

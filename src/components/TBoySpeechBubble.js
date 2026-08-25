@@ -1,4 +1,69 @@
+import Markdown, { createMarkdownIt } from '@ronradtke/react-native-markdown-display';
 import { StyleSheet, Text, View } from 'react-native';
+
+const markdownIt = createMarkdownIt({ typographer: false });
+markdownIt.set({ html: false, linkify: false });
+
+const bubbleHeading = {
+  fontSize: 15,
+  lineHeight: 22,
+  fontWeight: '800'
+};
+
+const markdownStyles = StyleSheet.create({
+  body: {
+    color: '#334E68',
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600'
+  },
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 0
+  },
+  heading1: bubbleHeading,
+  heading2: bubbleHeading,
+  heading3: bubbleHeading,
+  heading4: bubbleHeading,
+  heading5: bubbleHeading,
+  heading6: bubbleHeading,
+  bullet_list: {
+    marginTop: 4,
+    marginBottom: 0
+  },
+  ordered_list: {
+    marginTop: 4,
+    marginBottom: 0
+  },
+  code_inline: {
+    borderWidth: 0,
+    backgroundColor: '#E8EEF5',
+    padding: 2,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    fontSize: 14,
+    fontWeight: '600'
+  },
+  link: {
+    color: '#334E68',
+    textDecorationLine: 'none',
+    fontWeight: '600'
+  }
+});
+
+const markdownRules = {
+  link: (node, children, _parent, styles) => (
+    <Text key={node.key} style={styles.link}>
+      {children}
+    </Text>
+  ),
+  blocklink: (node, children) => children,
+  image: () => null
+};
+
+function ignoreLinkPress() {
+  return false;
+}
 
 export default function TBoySpeechBubble({
   heading,
@@ -46,12 +111,18 @@ export default function TBoySpeechBubble({
         </Text>
       ) : null}
 
-      <Text
-        testID={bodyTestID}
-        style={styles.body}
-      >
-        {body}
-      </Text>
+      <View testID={bodyTestID}>
+        <Markdown
+          markdownit={markdownIt}
+          style={markdownStyles}
+          rules={markdownRules}
+          onLinkPress={ignoreLinkPress}
+          allowedImageHandlers={[]}
+          defaultImageHandler={null}
+        >
+          {body}
+        </Markdown>
+      </View>
     </View>
   );
 }
@@ -104,12 +175,5 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontWeight: '800',
     marginBottom: 4
-  },
-
-  body: {
-    color: '#334E68',
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '600'
   }
 });
