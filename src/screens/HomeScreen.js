@@ -23,8 +23,8 @@ import BugReportButton from '../components/BugReportButton';
 import DebugCatalogModal from '../components/DebugCatalogModal';
 import HomeAboutMenu from '../components/HomeAboutMenu';
 import { ABOUT_TEXT } from '../data/aboutContent';
-import { getHomeProjection } from '../utils/homeProjection';
 import { registerTBoyTap } from '../utils/debugCatalogUnlock';
+import { getHomeProjection } from '../utils/homeProjection';
 import {
   getDefaultLanguage,
   getLastWorkedUnit,
@@ -49,7 +49,7 @@ function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
   const activeIndex = plan.steps.findIndex((step) => !step.complete);
   const activeActionLabel = plan.activeAction?.kind === 'lesson' && !firstDay
     ? 'Continue to lesson'
-    : plan.activeAction?.kind === 'lesson' && plan.activeAction.label !== 'Start your first lesson'
+    : plan.activeAction?.kind === 'lesson' && plan.activeAction.label !== 'Start your new lesson'
       ? 'Continue to lesson'
       : plan.activeAction?.label;
 
@@ -61,7 +61,7 @@ function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
       <View style={styles.planHeader}>
         <Text testID="home-plan-title" style={styles.planTitle}>{"Today's plan"}</Text>
         <Text testID="home-plan-status" style={[styles.planStatus, { color: theme.planSoft }]}>
-          {firstDay ? 'Day 1' : `${plan.completedCount} of 3 done`}
+          
         </Text>
       </View>
 
@@ -214,7 +214,7 @@ function CurrentUnit({ currentUnit, catalogComplete, hasLessons, firstDay, first
             <Text style={[styles.lessonTitle, styles.currentLessonTitle]}>{nextLesson.title}</Text>
             <Text style={styles.lessonDesc}>
               {firstLesson
-                ? `First lesson · ${nextLesson.wordCount} words`
+                ? `New lesson · ${nextLesson.wordCount} words`
                 : `Next up · ${nextLesson.wordCount} words · ${nextLesson.typeLabel}`}
             </Text>
           </View>
@@ -485,7 +485,7 @@ export default function HomeScreen() {
               >
                 {projection
                   ? projection.firstDay
-                    ? "Welcome! Let's learn your first words."
+                    ? "Welcome! Let's learn new words."
                     : `⚡ ${projection.dashboard.xp} · 🔥 ${projection.dashboard.streak} · ${projection.dashboard.masteryPercent}% mastered`
                   : null}
               </Text>
@@ -840,8 +840,8 @@ const styles = StyleSheet.create({
   },
 
   flagImage: {
-    width: 44,
-    height: 28,
+    width: 60,
+    height: 38,
     borderRadius: 4,
     borderWidth: 2,
     borderColor: '#FFFFFF'

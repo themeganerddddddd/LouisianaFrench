@@ -6,7 +6,7 @@ import {
   getAllWords
 } from '../lessonLoader';
 
-const supportedActivityTypes = [
+const baseActivityTypes = [
   'intro_card',
   'listening_target_choice',
   'match_pairs',
@@ -18,6 +18,10 @@ const supportedActivityTypes = [
 const languages = [
   {
     language: 'cajun',
+    activityTypes: [
+      ...baseActivityTypes,
+      'select_multiple'
+    ].sort(),
     anchorLesson: {
       id: 'cajun_u01_l01',
       unit: 'u01'
@@ -29,6 +33,7 @@ const languages = [
   },
   {
     language: 'kreole',
+    activityTypes: baseActivityTypes,
     anchorLesson: {
       id: 'kreole_u01_l01',
       unit: 'u01'
@@ -189,7 +194,7 @@ describe('bundled Catalog', () => {
 
   it.each(languages)(
     'ships every supported Activity type for $language',
-    ({ language }) => {
+    ({ language, activityTypes: supportedActivityTypes }) => {
       const activities = getAllActivities(language);
 
       const activityTypes = [

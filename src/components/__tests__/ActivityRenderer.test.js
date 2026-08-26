@@ -36,7 +36,7 @@ function renderActivity(activity, handlers = {}) {
   const rendered = render(
     <ActivityRenderer
       activity={activity}
-      language="cajun"
+      language={handlers.language || 'cajun'}
       onCorrect={onCorrect}
       onWrong={onWrong}
       onOpenPreface={handlers.onOpenPreface}
@@ -175,6 +175,33 @@ describe('ActivityRenderer', () => {
           'T-Boy: open Unit note'
         )
       ).toBeNull();
+    });
+
+    it('labels Louisiana French variant spellings as Louisiana French Alternative', () => {
+      renderActivity({
+        ...fixtureActivities.intro,
+        variantAltResponse: 'Alternate Louisiana French form'
+      });
+
+      expect(
+        screen.getByText('Louisiana French Alternative')
+      ).toBeOnTheScreen();
+      expect(screen.queryByText('Alternative')).toBeNull();
+    });
+
+    it('labels Kouri-Vini variant spellings as Creole Alternative', () => {
+      renderActivity(
+        {
+          ...fixtureActivities.intro,
+          variantAltResponse: 'Alternate Creole form'
+        },
+        { language: 'kreole' }
+      );
+
+      expect(
+        screen.getByText('Creole Alternative')
+      ).toBeOnTheScreen();
+      expect(screen.queryByText('Alternative')).toBeNull();
     });
 
     it('does not render a T-Boy callout when the Activity has no extra details', () => {
@@ -476,6 +503,54 @@ describe('ActivityRenderer', () => {
         onWrong,
         'Bonjour'
       );
+    });
+  });
+
+  describe('select_multiple', () => {
+    const activity = {
+      cardId: 'fixture:cajun:they-are:select-all',
+      type: 'select_multiple',
+      prompt: 'Select all options that mean ‘they are’.',
+      english: 'they are',
+      options: [
+        'ils sont',
+        'eux-autres est',
+        'eusse est',
+        'ils ont'
+      ],
+      answers: [
+        'ils sont',
+        'eux-autres est',
+        'eusse est'
+      ],
+      answerDisplay: 'ils sont, eux-autres est, eusse est',
+      optionAudioMap: {}
+    };
+
+    it('requires every correct option and no distractors', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity(activity);
+
+      await press(user, 'ils sont');
+      await press(user, 'eux-autres est');
+      await press(user, 'eusse est');
+      await press(user, 'Check');
+
+      await finishCorrect(user, onCorrect);
+    });
+
+    it('allows retry when only some correct options are selected', async () => {
+      const user = userEvent.setup();
+      renderActivity(activity);
+
+      await press(user, 'ils sont');
+      await press(user, 'Check');
+
+      expectFirstWrong(
+        'Select every French form that means “they are”.'
+      );
+
+      await retry(user);
     });
   });
 
