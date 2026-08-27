@@ -1319,7 +1319,7 @@ function SentenceBuild({
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
-  const { playAudioKey, playFeedback } = useAudio(language);
+  const { playFeedback } = useAudio(language);
 
   const englishText = getEnglishDisplay(activity, showEnglishAlt);
   const targetText = getTargetDisplay(activity, showVariantAlt);
@@ -1334,10 +1334,6 @@ function SentenceBuild({
 
     setPool(nextPool);
     setSelected([...selected, word]);
-
-    if (activity.audioKey) {
-      playAudioKey(activity.audioKey);
-    }
   }
 
   function removeWord(word, index) {

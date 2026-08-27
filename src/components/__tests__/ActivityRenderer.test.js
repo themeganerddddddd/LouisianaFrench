@@ -764,6 +764,45 @@ describe('ActivityRenderer', () => {
       );
     });
 
+    it('stays silent while words are clicked until the sentence is filled', async () => {
+      const user =
+        userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.sentenceBuild,
+        audioKey: 'fixture:cajun:ready:audio'
+      });
+
+      const callsBeforePress =
+        Audio.Sound.createAsync.mock.calls.length;
+
+      await press(
+        user,
+        "C'est"
+      );
+
+      await press(
+        user,
+        'paré'
+      );
+
+      await waitFor(() => {
+        expect(
+          Audio.Sound.createAsync
+        ).toHaveBeenCalledTimes(
+          callsBeforePress
+        );
+      });
+
+      expect(
+        Audio.Sound.createAsync
+      ).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          uri: 'fixture-audio'
+        })
+      );
+    });
+
     it('shows answer feedback after a second wrong build', async () => {
       const user =
         userEvent.setup();
