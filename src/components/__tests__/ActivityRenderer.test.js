@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import {
+  act,
   render,
   screen,
   userEvent,
@@ -705,6 +706,153 @@ describe('ActivityRenderer', () => {
         onWrong,
         'Bonjour'
       );
+    });
+
+    it('accepts a curly-quoted Catalog alt', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.typing,
+        answer: "C’est des menteurs!",
+        answerDisplay: "C’est des menteurs!",
+        variantAltResponse:
+          '“Ils sont des menteurs!” “Eux-autres est des menteurs!” “Eusse est des menteurs!”'
+      });
+
+      await user.type(
+        screen.getByPlaceholderText('Type your answer'),
+        'Eusse est des menteurs!'
+      );
+      await press(user, 'Check');
+      await finishCorrect(user, onCorrect);
+    });
+
+    it('accepts a straight-quoted Catalog alt', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.typing,
+        answer: 'Il y a une bonne fraîche.',
+        answerDisplay: 'Il y a une bonne fraîche.',
+        variantAltResponse:
+          '"Il y a une bonne brise." "Y a une bonne brise."'
+      });
+
+      await user.type(
+        screen.getByPlaceholderText('Type your answer'),
+        'Y a une bonne brise.'
+      );
+      await press(user, 'Check');
+      await finishCorrect(user, onCorrect);
+    });
+
+    it.each(['poukwa', 'pouki', 'kwafé'])(
+      'accepts comma-list Catalog alt %s',
+      async (alt) => {
+        const user = userEvent.setup();
+        const { onCorrect } = renderActivity({
+          ...fixtureActivities.typing,
+          answer: 'aou',
+          answerDisplay: 'aou',
+          variantAltResponse: 'poukwa, pouki, kwafé'
+        });
+
+        await user.type(
+          screen.getByPlaceholderText('Type your answer'),
+          alt
+        );
+        await press(user, 'Check');
+        await finishCorrect(user, onCorrect);
+      }
+    );
+
+    it('accepts a quoted phrase that contains an internal comma', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.typing,
+        answer: 'Salut',
+        answerDisplay: 'Salut',
+        variantAltResponse: '"Bonjour, M. Boudreaux!"'
+      });
+
+      await user.type(
+        screen.getByPlaceholderText('Type your answer'),
+        'Bonjour, M. Boudreaux!'
+      );
+      await press(user, 'Check');
+      await finishCorrect(user, onCorrect);
+    });
+
+    it('does not accept only the first clause of a quoted phrase', async () => {
+      const user = userEvent.setup();
+      const { onWrong } = renderActivity({
+        ...fixtureActivities.typing,
+        answer: 'Salut',
+        answerDisplay: 'Salut',
+        variantAltResponse: '"Bonjour, M. Boudreaux!"'
+      });
+
+      await user.type(
+        screen.getByPlaceholderText('Type your answer'),
+        'Bonjour'
+      );
+      await press(user, 'Check');
+      expectFirstWrong('Starts with: Sal…');
+      await retry(user);
+      await press(user, 'Check');
+      expectFinalWrong('Salut');
+      await finishWrong(user, onWrong, 'Bonjour');
+    });
+
+    it('still accepts the canonical answer when Catalog alts exist', async () => {
+      const user = userEvent.setup();
+      const { onCorrect } = renderActivity({
+        ...fixtureActivities.typing,
+        answer: "C’est des menteurs!",
+        answerDisplay: "C’est des menteurs!",
+        variantAltResponse:
+          '“Ils sont des menteurs!” “Eux-autres est des menteurs!” “Eusse est des menteurs!”'
+      });
+
+      await user.type(
+        screen.getByPlaceholderText('Type your answer'),
+        "C’est des menteurs!"
+      );
+      await press(user, 'Check');
+      await finishCorrect(user, onCorrect);
+    });
+
+    it('plays Catalog Audio after 500ms when audioKey is present', async () => {
+      jest.useFakeTimers();
+
+      try {
+        renderActivity({
+          ...fixtureActivities.typing,
+          audioKey: 'fixture_typing_audio'
+        });
+
+        expect(screen.getByText('Tap to hear the word')).toBeOnTheScreen();
+        expect(Audio.Sound.createAsync).not.toHaveBeenCalled();
+
+        await act(async () => {
+          jest.advanceTimersByTime(500);
+        });
+
+        await expectAudioPlayedAfter(0);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('does not autoplay Audio when audioKey is missing', () => {
+      jest.useFakeTimers();
+
+      try {
+        renderActivity(fixtureActivities.typing);
+        expect(screen.queryByText('Tap to hear the word')).toBeNull();
+        jest.advanceTimersByTime(1000);
+        expect(Audio.Sound.createAsync).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 
