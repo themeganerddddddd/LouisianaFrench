@@ -232,14 +232,41 @@ function getPromptDisplay(activity, englishText) {
   return activity.prompt;
 }
 
+function parseVariantAlts(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return [];
+
+  const quoted = [];
+  const quotePattern = /[“"]([^”"]+)[”"]/g;
+  let match = quotePattern.exec(text);
+
+  while (match) {
+    const form = match[1].trim();
+    if (form) quoted.push(form);
+    match = quotePattern.exec(text);
+  }
+
+  if (quoted.length > 0) {
+    return quoted;
+  }
+
+  if (text.includes(',')) {
+    return text.split(',').map((item) => item.trim()).filter(Boolean);
+  }
+
+  return [text];
+}
+
 function isTextAnswerCorrect(value, activity) {
   const normalizedValue = normalizeText(value);
   const normalizedMain = normalizeText(activity?.answer);
-  const normalizedAlt = normalizeText(activity?.variantAltResponse);
 
-  return (
-    normalizedValue === normalizedMain ||
-    (!!normalizedAlt && normalizedValue === normalizedAlt)
+  if (normalizedValue === normalizedMain) {
+    return true;
+  }
+
+  return parseVariantAlts(activity?.variantAltResponse).some(
+    (alt) => normalizeText(alt) === normalizedValue
   );
 }
 
@@ -1068,6 +1095,16 @@ function Typing({
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const { playAudioKey, playFeedback } = useAudio(language);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (activity.audioKey) {
+        playAudioKey(activity.audioKey);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [activity.audioKey, playAudioKey]);
 
   const wordBank = useMemo(
     () => makeWordBank(activity.answer),
