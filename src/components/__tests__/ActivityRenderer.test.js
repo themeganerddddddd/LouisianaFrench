@@ -764,7 +764,7 @@ describe('ActivityRenderer', () => {
       );
     });
 
-    it('plays the sentence Audio when the last word is dropped in the correct order', async () => {
+    it('plays the sentence Audio when the answer is checked and correct', async () => {
       const user =
         userEvent.setup();
 
@@ -773,23 +773,19 @@ describe('ActivityRenderer', () => {
         audioKey: 'fixture:cajun:ready:audio'
       });
 
-      const callsBeforePress =
-        Audio.Sound.createAsync.mock.calls.length;
-
       await press(
         user,
         "C'est"
       );
 
-      expect(
-        Audio.Sound.createAsync
-      ).toHaveBeenCalledTimes(
-        callsBeforePress
+      await press(
+        user,
+        'paré'
       );
 
       await press(
         user,
-        'paré'
+        'Check'
       );
 
       await waitFor(() => {
@@ -803,7 +799,7 @@ describe('ActivityRenderer', () => {
       });
     });
 
-    it('stays silent when the last word is dropped in the wrong order', async () => {
+    it('stays silent while words are clicked', async () => {
       const user =
         userEvent.setup();
 
@@ -814,11 +810,6 @@ describe('ActivityRenderer', () => {
 
       const callsBeforePress =
         Audio.Sound.createAsync.mock.calls.length;
-
-      await press(
-        user,
-        'paré'
-      );
 
       await press(
         user,
@@ -833,16 +824,21 @@ describe('ActivityRenderer', () => {
         );
       });
 
-      expect(
-        Audio.Sound.createAsync
-      ).not.toHaveBeenCalledWith(
-        expect.objectContaining({
-          uri: 'fixture-audio'
-        })
+      await press(
+        user,
+        'paré'
       );
+
+      await waitFor(() => {
+        expect(
+          Audio.Sound.createAsync
+        ).toHaveBeenCalledTimes(
+          callsBeforePress
+        );
+      });
     });
 
-    it('plays the success tone when the completed sentence is checked', async () => {
+    it('does not play the sentence Audio when the answer is checked and wrong', async () => {
       const user =
         userEvent.setup();
 
@@ -853,36 +849,26 @@ describe('ActivityRenderer', () => {
 
       await press(
         user,
-        "C'est"
+        'paré'
       );
 
       await press(
         user,
-        'paré'
+        "C'est"
       );
-
-      const callsBeforePress =
-        Audio.Sound.createAsync.mock.calls.length;
 
       await press(
         user,
         'Check'
       );
 
-      await waitFor(() => {
-        expect(
-          Audio.Sound.createAsync
-        ).toHaveBeenCalledTimes(
-          callsBeforePress + 1
-        );
-      });
-
-      const { sound } =
-        await Audio.Sound.createAsync.mock.results.at(-1).value;
-
       expect(
-        sound.playAsync
-      ).toHaveBeenCalled();
+        Audio.Sound.createAsync
+      ).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          uri: 'fixture-audio'
+        })
+      );
     });
 
     it('shows answer feedback after a second wrong build', async () => {

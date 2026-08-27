@@ -243,13 +243,6 @@ function isTextAnswerCorrect(value, activity) {
   );
 }
 
-function isSentenceOrderCorrect(tokens, activity) {
-  return (
-    JSON.stringify(tokens) === JSON.stringify(activity.answerTokens || []) ||
-    isTextAnswerCorrect(tokens.join(' '), activity)
-  );
-}
-
 function QuestionScrollView({ state, children }) {
   return (
     <ScrollView
@@ -1339,18 +1332,8 @@ function SentenceBuild({
     const nextPool = [...pool];
     nextPool.splice(index, 1);
 
-    const nextSelected = [...selected, word];
-
     setPool(nextPool);
-    setSelected(nextSelected);
-
-    if (
-      nextPool.length === 0 &&
-      isSentenceOrderCorrect(nextSelected, activity) &&
-      activity.audioKey
-    ) {
-      playAudioKey(activity.audioKey);
-    }
+    setSelected([...selected, word]);
   }
 
   function removeWord(word, index) {
@@ -1364,8 +1347,16 @@ function SentenceBuild({
   }
 
   function checkAnswer() {
-    if (isSentenceOrderCorrect(selected, activity)) {
+    const selectedText = selected.join(' ');
+    const ok =
+      JSON.stringify(selected) === JSON.stringify(activity.answerTokens || []) ||
+      isTextAnswerCorrect(selectedText, activity);
+
+    if (ok) {
       playFeedback('correct');
+      if (activity.audioKey) {
+        playAudioKey(activity.audioKey);
+      }
       setState('correct');
     } else {
       playFeedback('wrong');
