@@ -11,6 +11,8 @@ import {
   View
 } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
+import { resolveAlternativeAudioKey } from '../utils/alternativeAudio';
+import { splitAlternativeResponses } from '../utils/splitAlternativeResponses';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
 const tBoyImage = require('../../assets/images/mainscreen.png');
@@ -198,24 +200,18 @@ function getHintText(activity) {
   return '';
 }
 
-function getEnglishDisplay(activity, showEnglishAlt) {
-  if (showEnglishAlt && activity?.englishAltResponse) {
-    return activity.englishAltResponse;
-  }
-
+function getPrimaryEnglish(activity) {
   return activity?.english || '';
 }
 
-function getTargetDisplay(activity, showVariantAlt) {
-  if (showVariantAlt && activity?.variantAltResponse) {
-    return activity.variantAltResponse;
-  }
-
+function getPrimaryTarget(activity) {
   return activity?.answerDisplay || activity?.target || activity?.answer || '';
 }
 
-function getPromptDisplay(activity, englishText) {
+function getPromptDisplay(activity) {
   if (!activity) return '';
+
+  const englishText = getPrimaryEnglish(activity);
 
   if (activity.type === 'multiple_choice') {
     return `Choose the match for '${englishText}'`;
@@ -288,6 +284,61 @@ function QuestionScrollView({ state, children }) {
   );
 }
 
+function AlternativeList({
+  text,
+  textStyle,
+  containerStyle,
+  language,
+  activity,
+  onPlayAudioKey,
+  playableColor
+}) {
+  const items = splitAlternativeResponses(text);
+
+  if (items.length === 0) return null;
+
+  return (
+    <View style={containerStyle}>
+      {items.map((item, index) => {
+        const audioKey =
+          language && activity && onPlayAudioKey
+            ? resolveAlternativeAudioKey(language, item, activity)
+            : null;
+
+        if (audioKey) {
+          return (
+            <TouchableOpacity
+              key={`${index}-${item}`}
+              onPress={() => onPlayAudioKey(audioKey)}
+              accessibilityRole="button"
+              accessibilityLabel={`Play audio: ${item}`}
+            >
+              <Text
+                style={[
+                  textStyle,
+                  styles.alternativeListItem,
+                  playableColor ? { color: playableColor } : null
+                ]}
+              >
+                {item}
+              </Text>
+            </TouchableOpacity>
+          );
+        }
+
+        return (
+          <Text
+            key={`${index}-${item}`}
+            style={[textStyle, styles.alternativeListItem]}
+          >
+            {item}
+          </Text>
+        );
+      })}
+    </View>
+  );
+}
+
 function AltToggleButtons({
   activity,
   showEnglishAlt,
@@ -329,7 +380,13 @@ function AltToggleButtons({
   );
 }
 
-function AnswerAltButtons({ activity, visible, theme }) {
+function AnswerAltButtons({
+  activity,
+  visible,
+  theme,
+  language,
+  onPlayAudioKey
+}) {
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
@@ -352,7 +409,11 @@ function AnswerAltButtons({ activity, visible, theme }) {
           </TouchableOpacity>
 
           {showEnglishAlt ? (
-            <Text style={styles.answerAltText}>{activity.englishAltResponse}</Text>
+            <AlternativeList
+              text={activity.englishAltResponse}
+              textStyle={styles.answerAltText}
+              containerStyle={styles.answerAltList}
+            />
           ) : null}
         </View>
       ) : null}
@@ -369,7 +430,15 @@ function AnswerAltButtons({ activity, visible, theme }) {
           </TouchableOpacity>
 
           {showVariantAlt ? (
-            <Text style={styles.answerAltText}>{activity.variantAltResponse}</Text>
+            <AlternativeList
+              text={activity.variantAltResponse}
+              textStyle={styles.answerAltText}
+              containerStyle={styles.answerAltList}
+              language={language}
+              activity={activity}
+              onPlayAudioKey={onPlayAudioKey}
+              playableColor={theme.text}
+            />
           ) : null}
         </View>
       ) : null}
@@ -665,8 +734,7 @@ function IntroCard({
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
-  const englishText = getEnglishDisplay(activity, showEnglishAlt);
-  const targetText = getTargetDisplay(activity, showVariantAlt);
+  const showAddOns = shouldShowIntroAddOns(activity);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -700,35 +768,67 @@ function IntroCard({
         showVariantAlt={showVariantAlt}
         setShowVariantAlt={setShowVariantAlt}
         theme={theme}
-        visible={shouldShowIntroAddOns(activity)}
+        visible={showAddOns}
       />
 
-      <TouchableOpacity
+      <View
         style={[
           styles.introWordCard,
           { backgroundColor: theme.light }
         ]}
-        onPress={() => playAudioKey(activity.audioKey)}
-        accessibilityRole="button"
-        accessibilityLabel={`Play audio: ${activity.target}`}
       >
-        <Text style={styles.introWord}>
-          {targetText}
-        </Text>
+        {showVariantAlt && activity.variantAltResponse ? (
+          <>
+            <Text style={styles.tapToHearAlternative}>
+              Tap to hear the alternative
+            </Text>
 
-        <Text style={styles.introTranslation}>
-          {englishText}
-        </Text>
+            <AlternativeList
+              text={activity.variantAltResponse}
+              textStyle={styles.introWord}
+              containerStyle={styles.introAltList}
+              language={language}
+              activity={activity}
+              onPlayAudioKey={playAudioKey}
+              playableColor={theme.text}
+            />
+          </>
+        ) : (
+          <TouchableOpacity
+            onPress={() => playAudioKey(activity.audioKey)}
+            disabled={!activity.audioKey}
+            accessibilityRole="button"
+            accessibilityLabel={`Play audio: ${activity.target}`}
+          >
+            <Text style={styles.introWord}>
+              {getPrimaryTarget(activity)}
+            </Text>
+          </TouchableOpacity>
+        )}
 
-        <Text style={[styles.tapToHear, { color: theme.text }]}>
-          Tap the word to hear it again
-        </Text>
-      </TouchableOpacity>
+        {showEnglishAlt && activity.englishAltResponse ? (
+          <AlternativeList
+            text={activity.englishAltResponse}
+            textStyle={styles.introTranslation}
+            containerStyle={styles.introAltListTranslation}
+          />
+        ) : (
+          <Text style={styles.introTranslation}>
+            {getPrimaryEnglish(activity)}
+          </Text>
+        )}
+
+        {!showVariantAlt && !showEnglishAlt ? (
+          <Text style={[styles.tapToHear, { color: theme.text }]}>
+            Tap the word to hear it again
+          </Text>
+        ) : null}
+      </View>
 
       <TBoyCallout
         activity={activity}
         language={language}
-        visible={shouldShowIntroAddOns(activity)}
+        visible={showAddOns}
         onOpenPreface={onOpenPreface}
       />
 
@@ -758,14 +858,11 @@ function MultipleChoice({
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
-  const [showEnglishAlt, setShowEnglishAlt] = useState(false);
-  const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const { playAudioKey, playFeedback } = useAudio(language);
 
-  const englishText = getEnglishDisplay(activity, showEnglishAlt);
-  const targetText = getTargetDisplay(activity, showVariantAlt);
-  const promptText = getPromptDisplay(activity, englishText);
+  const targetText = getPrimaryTarget(activity);
+  const promptText = getPromptDisplay(activity);
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
 
   function playOption(opt) {
@@ -813,16 +910,6 @@ function MultipleChoice({
       <Text style={styles.prompt}>
         {promptText}
       </Text>
-
-      <AltToggleButtons
-        activity={activity}
-        showEnglishAlt={showEnglishAlt}
-        setShowEnglishAlt={setShowEnglishAlt}
-        showVariantAlt={showVariantAlt}
-        setShowVariantAlt={setShowVariantAlt}
-        theme={theme}
-        visible={false}
-      />
 
       {activity.options.map((opt) => (
         <TouchableOpacity
@@ -893,6 +980,8 @@ function MultipleChoice({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -911,12 +1000,10 @@ function ListeningTargetChoice({
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
-  const [showEnglishAlt, setShowEnglishAlt] = useState(false);
-  const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const { playAudioKey, playFeedback } = useAudio(language);
 
-  const targetText = getTargetDisplay(activity, showVariantAlt);
+  const targetText = getPrimaryTarget(activity);
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
 
   useEffect(() => {
@@ -993,16 +1080,6 @@ function ListeningTargetChoice({
         {activity.prompt}
       </Text>
 
-      <AltToggleButtons
-        activity={activity}
-        showEnglishAlt={showEnglishAlt}
-        setShowEnglishAlt={setShowEnglishAlt}
-        showVariantAlt={showVariantAlt}
-        setShowVariantAlt={setShowVariantAlt}
-        theme={theme}
-        visible={false}
-      />
-
       {activity.options.map((opt) => (
         <TouchableOpacity
           key={opt}
@@ -1072,6 +1149,8 @@ function ListeningTargetChoice({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -1091,8 +1170,6 @@ function Typing({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
   const [hintLevel, setHintLevel] = useState(0);
-  const [showEnglishAlt, setShowEnglishAlt] = useState(false);
-  const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const { playAudioKey, playFeedback } = useAudio(language);
 
@@ -1111,9 +1188,9 @@ function Typing({
     [activity.answer]
   );
 
-  const englishText = getEnglishDisplay(activity, showEnglishAlt);
-  const targetText = getTargetDisplay(activity, showVariantAlt);
-  const promptText = getPromptDisplay(activity, englishText);
+  const englishText = getPrimaryEnglish(activity);
+  const targetText = getPrimaryTarget(activity);
+  const promptText = getPromptDisplay(activity);
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
 
   function addWord(word) {
@@ -1172,16 +1249,6 @@ function Typing({
       <Text style={styles.prompt}>
         {promptText}
       </Text>
-
-      <AltToggleButtons
-        activity={activity}
-        showEnglishAlt={showEnglishAlt}
-        setShowEnglishAlt={setShowEnglishAlt}
-        showVariantAlt={showVariantAlt}
-        setShowVariantAlt={setShowVariantAlt}
-        theme={theme}
-        visible={false}
-      />
 
       {activity.audioKey ? (
         <TouchableOpacity
@@ -1332,6 +1399,8 @@ function Typing({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -1353,14 +1422,11 @@ function SentenceBuild({
   );
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
-  const [showEnglishAlt, setShowEnglishAlt] = useState(false);
-  const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const { playAudioKey, playFeedback } = useAudio(language);
 
-  const englishText = getEnglishDisplay(activity, showEnglishAlt);
-  const targetText = getTargetDisplay(activity, showVariantAlt);
-  const promptText = getPromptDisplay(activity, englishText);
+  const targetText = getPrimaryTarget(activity);
+  const promptText = getPromptDisplay(activity);
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
 
   function pick(word, index) {
@@ -1425,16 +1491,6 @@ function SentenceBuild({
       <Text style={styles.prompt}>
         {promptText}
       </Text>
-
-      <AltToggleButtons
-        activity={activity}
-        showEnglishAlt={showEnglishAlt}
-        setShowEnglishAlt={setShowEnglishAlt}
-        showVariantAlt={showVariantAlt}
-        setShowVariantAlt={setShowVariantAlt}
-        theme={theme}
-        visible={false}
-      />
 
       <View style={styles.selectedBox}>
         {selected.length === 0 ? (
@@ -1527,6 +1583,8 @@ function SentenceBuild({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -1632,8 +1690,6 @@ function MatchPairs({
   const [matches, setMatches] = useState([]);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
-  const [showEnglishAlt, setShowEnglishAlt] = useState(false);
-  const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const { playAudioKey, playFeedback } = useAudio(language);
 
@@ -1731,16 +1787,6 @@ function MatchPairs({
       <Text style={styles.prompt}>
         {activity.prompt}
       </Text>
-
-      <AltToggleButtons
-        activity={activity}
-        showEnglishAlt={showEnglishAlt}
-        setShowEnglishAlt={setShowEnglishAlt}
-        showVariantAlt={showVariantAlt}
-        setShowVariantAlt={setShowVariantAlt}
-        theme={theme}
-        visible={false}
-      />
 
       <View style={styles.matchGrid}>
         {left.map((leftItem, rowIndex) => {
@@ -1886,6 +1932,8 @@ function MatchPairs({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -2004,10 +2052,31 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
 
+  introAltList: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: 4
+  },
+
+  introAltListTranslation: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: 4,
+    marginTop: 10
+  },
+
   tapToHear: {
     marginTop: 12,
     fontSize: 13,
     fontWeight: '800'
+  },
+
+  tapToHearAlternative: {
+    color: '#000000',
+    fontSize: 11,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8
   },
 
   option: {
@@ -2318,11 +2387,20 @@ const styles = StyleSheet.create({
     width: '100%'
   },
 
-  answerAltText: {
+  answerAltList: {
+    alignItems: 'center',
+    alignSelf: 'center',
     marginTop: 8,
+    gap: 4
+  },
+
+  answerAltText: {
     color: '#334155',
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '800'
+  },
+
+  alternativeListItem: {
     textAlign: 'center'
   },
 

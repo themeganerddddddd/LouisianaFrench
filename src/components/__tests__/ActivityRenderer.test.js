@@ -1211,6 +1211,144 @@ describe('ActivityRenderer', () => {
     });
   });
 
+  describe('alternative pills', () => {
+    const quotedAltResponse =
+      '"Eux-autres a un tas d’argent." "Ils ont un tas d’argent." "Ça a un tas d’argent."';
+
+    it('lists quoted variants as bullets in practice feedback', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        variantAltResponse: quotedAltResponse
+      });
+
+      await chooseAndCheck(user, 'Ça va?');
+
+      expect(screen.getByText('Correct!')).toBeOnTheScreen();
+      expect(screen.getByText('Alternative')).toBeOnTheScreen();
+      expect(
+        screen.queryByText('Eux-autres a un tas d’argent.')
+      ).toBeNull();
+
+      await press(user, 'Alternative');
+
+      expect(
+        screen.getByText('Eux-autres a un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.getByText('Ils ont un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.getByText('Ça a un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.queryByText(quotedAltResponse)
+      ).toBeNull();
+    });
+
+    it('lists comma-separated variants as bullets in practice feedback', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        variantAltResponse: 'poukwa, pouki, kwafé'
+      });
+
+      await chooseAndCheck(user, 'Ça va?');
+      await press(user, 'Alternative');
+
+      expect(screen.getByText('poukwa')).toBeOnTheScreen();
+      expect(screen.getByText('pouki')).toBeOnTheScreen();
+      expect(screen.getByText('kwafé')).toBeOnTheScreen();
+    });
+
+    it('shows split alternatives in the intro Word card with original styling', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.intro,
+        variantAltResponse: quotedAltResponse
+      });
+
+      expect(screen.getByText('Bonjour')).toBeOnTheScreen();
+      expect(screen.getByText('Hello')).toBeOnTheScreen();
+      expect(screen.getByText('Alternative')).toBeOnTheScreen();
+
+      await press(user, 'Alternative');
+
+      expect(screen.queryByText('Bonjour')).toBeNull();
+      expect(screen.getByText('Hello')).toBeOnTheScreen();
+      expect(
+        screen.getByText('Eux-autres a un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.getByText('Ils ont un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.queryByText(quotedAltResponse)
+      ).toBeNull();
+    });
+
+    it('shows a tap hint when intro alternatives are open', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.intro,
+        variantAltResponse: quotedAltResponse
+      });
+
+      expect(
+        screen.queryByText('Tap to hear the alternative')
+      ).toBeNull();
+
+      await press(user, 'Alternative');
+
+      expect(
+        screen.getByText('Tap to hear the alternative')
+      ).toBeOnTheScreen();
+    });
+
+    it('plays audio when a playable intro alternative is tapped', async () => {
+      const user = userEvent.setup();
+      const callsBeforePress = Audio.Sound.createAsync.mock.calls.length;
+
+      renderActivity({
+        ...fixtureActivities.intro,
+        variantAltResponse: '"Bonjour"'
+      });
+
+      await press(user, 'Alternative');
+      await press(user, 'Bonjour');
+
+      await expectAudioPlayedAfter(callsBeforePress);
+    });
+
+    it('plays audio when a playable feedback alternative is tapped', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        variantAltResponse: '"Au revoir!"'
+      });
+
+      await chooseAndCheck(user, 'Ça va?');
+      await press(user, 'Alternative');
+
+      const callsBeforePress = Audio.Sound.createAsync.mock.calls.length;
+
+      await user.press(
+        screen.getByLabelText('Play audio: Au revoir!')
+      );
+
+      await waitFor(() => {
+        expect(
+          Audio.Sound.createAsync
+        ).toHaveBeenCalledTimes(callsBeforePress + 1);
+      });
+    });
+  });
+
   it('reports unknown Activity types without crashing', () => {
     renderActivity({
       type:
