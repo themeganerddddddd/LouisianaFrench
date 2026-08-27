@@ -1,7 +1,7 @@
 ---
 description: Implement one bounded repository slice test-first with its tests.
 mode: subagent
-model: openai/gpt-5.6-luna-fast
+model: opencode-go/big-pickle
 variant: xhigh
 permission:
   task: deny

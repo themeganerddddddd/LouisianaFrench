@@ -1334,10 +1334,6 @@ function SentenceBuild({
 
     setPool(nextPool);
     setSelected([...selected, word]);
-
-    if (activity.audioKey) {
-      playAudioKey(activity.audioKey);
-    }
   }
 
   function removeWord(word, index) {
@@ -1352,14 +1348,15 @@ function SentenceBuild({
 
   function checkAnswer() {
     const selectedText = selected.join(' ');
-
     const ok =
-      JSON.stringify(selected) ===
-        JSON.stringify(activity.answerTokens || []) ||
+      JSON.stringify(selected) === JSON.stringify(activity.answerTokens || []) ||
       isTextAnswerCorrect(selectedText, activity);
 
     if (ok) {
       playFeedback('correct');
+      if (activity.audioKey) {
+        playAudioKey(activity.audioKey);
+      }
       setState('correct');
     } else {
       playFeedback('wrong');

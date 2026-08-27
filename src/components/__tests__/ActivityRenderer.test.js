@@ -764,6 +764,113 @@ describe('ActivityRenderer', () => {
       );
     });
 
+    it('plays the sentence Audio when the answer is checked and correct', async () => {
+      const user =
+        userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.sentenceBuild,
+        audioKey: 'fixture:cajun:ready:audio'
+      });
+
+      await press(
+        user,
+        "C'est"
+      );
+
+      await press(
+        user,
+        'paré'
+      );
+
+      await press(
+        user,
+        'Check'
+      );
+
+      await waitFor(() => {
+        expect(
+          Audio.Sound.createAsync
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({
+            uri: 'fixture-audio'
+          })
+        );
+      });
+    });
+
+    it('stays silent while words are clicked', async () => {
+      const user =
+        userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.sentenceBuild,
+        audioKey: 'fixture:cajun:ready:audio'
+      });
+
+      const callsBeforePress =
+        Audio.Sound.createAsync.mock.calls.length;
+
+      await press(
+        user,
+        "C'est"
+      );
+
+      await waitFor(() => {
+        expect(
+          Audio.Sound.createAsync
+        ).toHaveBeenCalledTimes(
+          callsBeforePress
+        );
+      });
+
+      await press(
+        user,
+        'paré'
+      );
+
+      await waitFor(() => {
+        expect(
+          Audio.Sound.createAsync
+        ).toHaveBeenCalledTimes(
+          callsBeforePress
+        );
+      });
+    });
+
+    it('does not play the sentence Audio when the answer is checked and wrong', async () => {
+      const user =
+        userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.sentenceBuild,
+        audioKey: 'fixture:cajun:ready:audio'
+      });
+
+      await press(
+        user,
+        'paré'
+      );
+
+      await press(
+        user,
+        "C'est"
+      );
+
+      await press(
+        user,
+        'Check'
+      );
+
+      expect(
+        Audio.Sound.createAsync
+      ).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          uri: 'fixture-audio'
+        })
+      );
+    });
+
     it('shows answer feedback after a second wrong build', async () => {
       const user =
         userEvent.setup();

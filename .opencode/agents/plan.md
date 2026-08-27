@@ -1,7 +1,7 @@
 ---
 description: Map a bounded repository change from primary authority to a testable tracer bullet.
 mode: primary
-model: opencode-go/grok-4.5
+model: opencode-go/deepseek-v4-pro
 permission:
   edit: deny
   task: deny
