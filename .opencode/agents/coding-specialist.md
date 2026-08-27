@@ -1,7 +1,7 @@
 ---
 description: Implement one bounded repository slice test-first with its tests.
 mode: subagent
-model: opencode-go/big-pickle
+model: opencode/big-pickle
 variant: xhigh
 permission:
   task: deny
