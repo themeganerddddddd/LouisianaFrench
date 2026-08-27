@@ -1,7 +1,7 @@
 ---
 description: Coordinate large repository projects by delegating all investigation, implementation, operations, and review work.
 mode: primary
-model: opencode-go/grok-4.5
+model: opencode-go/deepseek-v4-pro
 steps: 100
 permission:
   read: deny

@@ -1,7 +1,7 @@
 ---
 description: Validate a plan, spec, or delegated output against authority. Use when the coordinator needs independent evidence-backed validation of a proposed plan or delivered work.
 mode: subagent
-model: opencode-go/deepseek-v4-pro
+model: opencode-go/deepseek-v4-flash
 permission:
   edit: deny
   task: deny
