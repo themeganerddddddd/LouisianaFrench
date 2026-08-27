@@ -1067,7 +1067,7 @@ describe('ActivityRenderer', () => {
     const quotedAltResponse =
       '"Eux-autres a un tas d’argent." "Ils ont un tas d’argent." "Ça a un tas d’argent."';
 
-    it('lists quoted variants as bullets in a practice feedback modal', async () => {
+    it('lists quoted variants as bullets in practice feedback', async () => {
       const user = userEvent.setup();
 
       renderActivity({
@@ -1080,14 +1080,11 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('Correct!')).toBeOnTheScreen();
       expect(screen.getByText('Alternative')).toBeOnTheScreen();
       expect(
-        screen.queryByTestId('alternative-responses-modal')
+        screen.queryByText(/• Eux-autres a un tas d’argent\./)
       ).toBeNull();
 
       await press(user, 'Alternative');
 
-      expect(
-        screen.getByTestId('alternative-responses-modal')
-      ).toBeOnTheScreen();
       expect(
         screen.getByText('• Eux-autres a un tas d’argent.')
       ).toBeOnTheScreen();
@@ -1102,7 +1099,7 @@ describe('ActivityRenderer', () => {
       ).toBeNull();
     });
 
-    it('lists comma-separated variants as bullets in a practice feedback modal', async () => {
+    it('lists comma-separated variants as bullets in practice feedback', async () => {
       const user = userEvent.setup();
 
       renderActivity({
@@ -1113,15 +1110,12 @@ describe('ActivityRenderer', () => {
       await chooseAndCheck(user, 'Ça va?');
       await press(user, 'Alternative');
 
-      expect(
-        screen.getByTestId('alternative-responses-modal')
-      ).toBeOnTheScreen();
       expect(screen.getByText('• poukwa')).toBeOnTheScreen();
       expect(screen.getByText('• pouki')).toBeOnTheScreen();
       expect(screen.getByText('• kwafé')).toBeOnTheScreen();
     });
 
-    it('keeps the intro Word and lists alternatives in a modal above the card', async () => {
+    it('shows split alternatives in the intro Word card with original styling', async () => {
       const user = userEvent.setup();
 
       renderActivity({
@@ -1135,11 +1129,8 @@ describe('ActivityRenderer', () => {
 
       await press(user, 'Alternative');
 
-      expect(screen.getByText('Bonjour')).toBeOnTheScreen();
+      expect(screen.queryByText('Bonjour')).toBeNull();
       expect(screen.getByText('Hello')).toBeOnTheScreen();
-      expect(
-        screen.getByTestId('alternative-responses-modal')
-      ).toBeOnTheScreen();
       expect(
         screen.getByText('• Eux-autres a un tas d’argent.')
       ).toBeOnTheScreen();
