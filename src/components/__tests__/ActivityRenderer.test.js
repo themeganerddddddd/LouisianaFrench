@@ -764,7 +764,7 @@ describe('ActivityRenderer', () => {
       );
     });
 
-    it('stays silent while words are clicked and plays feedback when the sentence is complete', async () => {
+    it('stays silent while words are clicked and plays the sentence Audio on a correct build', async () => {
       const user =
         userEvent.setup();
 
@@ -799,17 +799,15 @@ describe('ActivityRenderer', () => {
         'Check'
       );
 
-      await expectAudioPlayedAfter(
-        callsBeforePress
-      );
-
-      expect(
-        Audio.Sound.createAsync
-      ).not.toHaveBeenCalledWith(
-        expect.objectContaining({
-          uri: 'fixture-audio'
-        })
-      );
+      await waitFor(() => {
+        expect(
+          Audio.Sound.createAsync
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({
+            uri: 'fixture-audio'
+          })
+        );
+      });
     });
 
     it('shows answer feedback after a second wrong build', async () => {
