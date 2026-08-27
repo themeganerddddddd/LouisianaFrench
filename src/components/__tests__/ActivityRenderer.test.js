@@ -764,7 +764,7 @@ describe('ActivityRenderer', () => {
       );
     });
 
-    it('stays silent while words are clicked until the sentence is filled', async () => {
+    it('stays silent while words are clicked and plays feedback when the sentence is complete', async () => {
       const user =
         userEvent.setup();
 
@@ -793,6 +793,15 @@ describe('ActivityRenderer', () => {
           callsBeforePress
         );
       });
+
+      await press(
+        user,
+        'Check'
+      );
+
+      await expectAudioPlayedAfter(
+        callsBeforePress
+      );
 
       expect(
         Audio.Sound.createAsync
