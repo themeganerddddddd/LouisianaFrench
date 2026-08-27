@@ -243,6 +243,13 @@ function isTextAnswerCorrect(value, activity) {
   );
 }
 
+function isSentenceOrderCorrect(tokens, activity) {
+  return (
+    JSON.stringify(tokens) === JSON.stringify(activity.answerTokens || []) ||
+    isTextAnswerCorrect(tokens.join(' '), activity)
+  );
+}
+
 function QuestionScrollView({ state, children }) {
   return (
     <ScrollView
@@ -1319,7 +1326,7 @@ function SentenceBuild({
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
-  const { playFeedback } = useAudio(language);
+  const { playAudioKey, playFeedback } = useAudio(language);
 
   const englishText = getEnglishDisplay(activity, showEnglishAlt);
   const targetText = getTargetDisplay(activity, showVariantAlt);
@@ -1332,8 +1339,18 @@ function SentenceBuild({
     const nextPool = [...pool];
     nextPool.splice(index, 1);
 
+    const nextSelected = [...selected, word];
+
     setPool(nextPool);
-    setSelected([...selected, word]);
+    setSelected(nextSelected);
+
+    if (
+      nextPool.length === 0 &&
+      isSentenceOrderCorrect(nextSelected, activity) &&
+      activity.audioKey
+    ) {
+      playAudioKey(activity.audioKey);
+    }
   }
 
   function removeWord(word, index) {
@@ -1347,14 +1364,7 @@ function SentenceBuild({
   }
 
   function checkAnswer() {
-    const selectedText = selected.join(' ');
-
-    const ok =
-      JSON.stringify(selected) ===
-        JSON.stringify(activity.answerTokens || []) ||
-      isTextAnswerCorrect(selectedText, activity);
-
-    if (ok) {
+    if (isSentenceOrderCorrect(selected, activity)) {
       playFeedback('correct');
       setState('correct');
     } else {
