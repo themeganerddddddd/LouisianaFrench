@@ -3,6 +3,8 @@ import { Audio } from 'expo-av';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -256,7 +258,7 @@ function QuestionScrollView({ state, children }) {
   );
 }
 
-function AlternativeBullets({ text }) {
+function AlternativeBullets({ text, style }) {
   const items = splitAlternativeResponses(text);
 
   if (items.length === 0) return null;
@@ -264,7 +266,7 @@ function AlternativeBullets({ text }) {
   return (
     <View style={styles.answerAltList}>
       {items.map((item, index) => (
-        <Text key={`${index}-${item}`} style={styles.answerAltBullet}>
+        <Text key={`${index}-${item}`} style={[styles.answerAltBullet, style]}>
           {`\u2022 ${item}`}
         </Text>
       ))}
@@ -272,9 +274,64 @@ function AlternativeBullets({ text }) {
   );
 }
 
-function AnswerAltButtons({ activity, visible, theme }) {
-  const [showEnglishAlt, setShowEnglishAlt] = useState(false);
-  const [showVariantAlt, setShowVariantAlt] = useState(false);
+function AlternativeResponsesModal({
+  visible,
+  title,
+  text,
+  accentColor,
+  onClose
+}) {
+  const items = splitAlternativeResponses(text);
+
+  if (!visible || items.length === 0) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={styles.altModalOverlay}>
+        <Pressable
+          testID="alternative-responses-backdrop"
+          accessibilityLabel="Dismiss modal"
+          onPress={onClose}
+          style={StyleSheet.absoluteFill}
+        />
+
+        <View
+          testID="alternative-responses-modal"
+          accessibilityViewIsModal
+          style={styles.altModalCard}
+        >
+          <View style={styles.altModalHeader}>
+            <Text accessibilityRole="header" style={styles.altModalTitle}>
+              {title}
+            </Text>
+
+            <Pressable
+              testID="alternative-responses-close"
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+              onPress={onClose}
+              style={[styles.altModalClose, { backgroundColor: accentColor }]}
+            >
+              <Text style={styles.altModalCloseText}>×</Text>
+            </Pressable>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.altModalContent}>
+            <AlternativeBullets text={text} />
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function AnswerAltButtons({ activity, visible, theme, introLayout = false }) {
+  const [openAlt, setOpenAlt] = useState(null);
 
   const hasEnglishAlt = !!activity?.englishAltResponse;
   const hasVariantAlt = !!activity?.variantAltResponse;
@@ -282,41 +339,49 @@ function AnswerAltButtons({ activity, visible, theme }) {
   if (!visible || (!hasEnglishAlt && !hasVariantAlt)) return null;
 
   return (
-    <View style={styles.answerAltWrap}>
-      {hasEnglishAlt ? (
-        <View style={styles.answerAltBlock}>
-          <TouchableOpacity
-            style={[styles.altButton, { backgroundColor: theme.light }]}
-            onPress={() => setShowEnglishAlt((v) => !v)}
-          >
-            <Text style={[styles.altButtonText, { color: theme.text }]}>
-              Translation alternative
-            </Text>
-          </TouchableOpacity>
+    <>
+      <View style={introLayout ? styles.altButtonRowIntro : styles.answerAltWrap}>
+        <View style={styles.altButtonRow}>
+          {hasEnglishAlt ? (
+            <TouchableOpacity
+              style={[styles.altButton, { backgroundColor: theme.light }]}
+              onPress={() => setOpenAlt('english')}
+            >
+              <Text style={[styles.altButtonText, { color: theme.text }]}>
+                Translation alternative
+              </Text>
+            </TouchableOpacity>
+          ) : null}
 
-          {showEnglishAlt ? (
-            <AlternativeBullets text={activity.englishAltResponse} />
+          {hasVariantAlt ? (
+            <TouchableOpacity
+              style={[styles.altButton, { backgroundColor: theme.light }]}
+              onPress={() => setOpenAlt('variant')}
+            >
+              <Text style={[styles.altButtonText, { color: theme.text }]}>
+                Alternative
+              </Text>
+            </TouchableOpacity>
           ) : null}
         </View>
-      ) : null}
+      </View>
 
-      {hasVariantAlt ? (
-        <View style={styles.answerAltBlock}>
-          <TouchableOpacity
-            style={[styles.altButton, { backgroundColor: theme.light }]}
-            onPress={() => setShowVariantAlt((v) => !v)}
-          >
-            <Text style={[styles.altButtonText, { color: theme.text }]}>
-              Alternative
-            </Text>
-          </TouchableOpacity>
+      <AlternativeResponsesModal
+        visible={openAlt === 'english'}
+        title="Translation alternative"
+        text={activity.englishAltResponse}
+        accentColor={theme.accent}
+        onClose={() => setOpenAlt(null)}
+      />
 
-          {showVariantAlt ? (
-            <AlternativeBullets text={activity.variantAltResponse} />
-          ) : null}
-        </View>
-      ) : null}
-    </View>
+      <AlternativeResponsesModal
+        visible={openAlt === 'variant'}
+        title="Alternative"
+        text={activity.variantAltResponse}
+        accentColor={theme.accent}
+        onClose={() => setOpenAlt(null)}
+      />
+    </>
   );
 }
 
@@ -634,6 +699,13 @@ function IntroCard({
         {activity.prompt}
       </Text>
 
+      <AnswerAltButtons
+        activity={activity}
+        visible={showAddOns}
+        theme={theme}
+        introLayout
+      />
+
       <TouchableOpacity
         style={[
           styles.introWordCard,
@@ -655,12 +727,6 @@ function IntroCard({
           Tap the word to hear it again
         </Text>
       </TouchableOpacity>
-
-      <AnswerAltButtons
-        activity={activity}
-        visible={showAddOns}
-        theme={theme}
-      />
 
       <TBoyCallout
         activity={activity}
@@ -2148,6 +2214,18 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
 
+  altButtonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8
+  },
+
+  altButtonRowIntro: {
+    marginTop: -8,
+    marginBottom: 16
+  },
+
   altButton: {
     borderRadius: 999,
     paddingHorizontal: 13,
@@ -2164,20 +2242,13 @@ const styles = StyleSheet.create({
   },
 
   answerAltWrap: {
-    alignItems: 'stretch',
-    gap: 10,
+    alignItems: 'center',
     marginBottom: 14,
     width: '100%'
   },
 
-  answerAltBlock: {
-    alignItems: 'flex-start',
-    width: '100%'
-  },
-
   answerAltList: {
-    marginTop: 8,
-    gap: 4,
+    gap: 8,
     width: '100%'
   },
 
@@ -2187,6 +2258,62 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 18,
     textAlign: 'left'
+  },
+
+  altModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(16,42,67,0.48)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20
+  },
+
+  altModalCard: {
+    width: '100%',
+    maxWidth: 460,
+    maxHeight: '70%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0'
+  },
+
+  altModalHeader: {
+    minHeight: 64,
+    paddingLeft: 20,
+    paddingRight: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0'
+  },
+
+  altModalTitle: {
+    flex: 1,
+    color: '#102A43',
+    fontSize: 18,
+    fontWeight: '900'
+  },
+
+  altModalClose: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+
+  altModalCloseText: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    lineHeight: 30,
+    fontWeight: '700'
+  },
+
+  altModalContent: {
+    padding: 20,
+    paddingBottom: 28
   },
 
   skipButton: {
