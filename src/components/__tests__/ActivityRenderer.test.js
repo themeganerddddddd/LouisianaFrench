@@ -1063,6 +1063,86 @@ describe('ActivityRenderer', () => {
     });
   });
 
+  describe('alternative pills', () => {
+    const quotedAltResponse =
+      '"Eux-autres a un tas d’argent." "Ils ont un tas d’argent." "Ça a un tas d’argent."';
+
+    it('lists quoted variants as bullets in practice feedback', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        variantAltResponse: quotedAltResponse
+      });
+
+      await chooseAndCheck(user, 'Ça va?');
+
+      expect(screen.getByText('Correct!')).toBeOnTheScreen();
+      expect(screen.getByText('Alternative')).toBeOnTheScreen();
+      expect(
+        screen.queryByText(/• Eux-autres a un tas d’argent\./)
+      ).toBeNull();
+
+      await press(user, 'Alternative');
+
+      expect(
+        screen.getByText('• Eux-autres a un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.getByText('• Ils ont un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.getByText('• Ça a un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.queryByText(quotedAltResponse)
+      ).toBeNull();
+    });
+
+    it('lists comma-separated variants as bullets in practice feedback', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        variantAltResponse: 'poukwa, pouki, kwafé'
+      });
+
+      await chooseAndCheck(user, 'Ça va?');
+      await press(user, 'Alternative');
+
+      expect(screen.getByText('• poukwa')).toBeOnTheScreen();
+      expect(screen.getByText('• pouki')).toBeOnTheScreen();
+      expect(screen.getByText('• kwafé')).toBeOnTheScreen();
+    });
+
+    it('keeps the intro Word and lists alternatives under the pill', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.intro,
+        variantAltResponse: quotedAltResponse
+      });
+
+      expect(screen.getByText('Bonjour')).toBeOnTheScreen();
+      expect(screen.getByText('Hello')).toBeOnTheScreen();
+      expect(screen.getByText('Alternative')).toBeOnTheScreen();
+
+      await press(user, 'Alternative');
+
+      expect(screen.getByText('Bonjour')).toBeOnTheScreen();
+      expect(screen.getByText('Hello')).toBeOnTheScreen();
+      expect(
+        screen.getByText('• Eux-autres a un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.getByText('• Ils ont un tas d’argent.')
+      ).toBeOnTheScreen();
+      expect(
+        screen.queryByText(quotedAltResponse)
+      ).toBeNull();
+    });
+  });
+
   it('reports unknown Activity types without crashing', () => {
     renderActivity({
       type:
