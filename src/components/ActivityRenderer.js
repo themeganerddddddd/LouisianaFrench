@@ -1319,7 +1319,7 @@ function SentenceBuild({
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
-  const { playAudioKey, playFeedback } = useAudio(language);
+  const { playFeedback } = useAudio(language);
 
   const englishText = getEnglishDisplay(activity, showEnglishAlt);
   const targetText = getTargetDisplay(activity, showVariantAlt);
@@ -1356,11 +1356,6 @@ function SentenceBuild({
 
     if (ok) {
       playFeedback('correct');
-
-      if (activity.audioKey) {
-        playAudioKey(activity.audioKey);
-      }
-
       setState('correct');
     } else {
       playFeedback('wrong');
