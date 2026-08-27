@@ -1,6 +1,6 @@
-# Louisiana Language Learning
+# Louisiana Languages
 
-Louisiana Language Learning is a mobile and web application for studying Louisiana languages through structured lessons and practice activities. The application currently supports:
+Louisiana Languages is a mobile and web application for studying Louisiana languages through structured lessons and practice activities. The application currently supports:
 
 - Louisiana French
 - Kouri-Vini

@@ -1,5 +1,5 @@
 ---
-name: Louisiana Language Learning
+name: Louisiana Languages
 description: A compact bilingual learning system that turns real progress into a clear daily flight plan.
 colors:
   white: "#FFFFFF"
@@ -96,7 +96,7 @@ components:
     padding: "1px 6px"
 ---
 
-# Design System: Louisiana Language Learning
+# Design System: Louisiana Languages
 
 ## Overview
 

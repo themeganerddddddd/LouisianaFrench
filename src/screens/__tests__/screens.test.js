@@ -142,7 +142,7 @@ describe('LoadingScreen', () => {
     renderApp({ initialRouteName: 'Loading' });
 
     expect(screen.getByText('Learn')).toBeOnTheScreen();
-    expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
+    expect(screen.getByText('Louisiana Languages')).toBeOnTheScreen();
     expect(screen.queryByLabelText('Report a bug')).toBeNull();
 
     await act(async () => {

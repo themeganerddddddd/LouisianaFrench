@@ -35,7 +35,7 @@ export function validateBugReportForm({ name, email, description }) {
 
 export function buildMailtoUrl({ to, name, email, description, deviceInfo }) {
   const subjectBase = String(description || '').trim();
-  const subject = `[Louisiana French Bug] ${subjectBase.slice(0, 60)}`;
+  const subject = `[Louisiana Languages Bug] ${subjectBase.slice(0, 60)}`;
 
   const body = [
     `Name: ${name}`,
