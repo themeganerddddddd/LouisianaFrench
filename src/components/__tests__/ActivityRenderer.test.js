@@ -1080,19 +1080,19 @@ describe('ActivityRenderer', () => {
       expect(screen.getByText('Correct!')).toBeOnTheScreen();
       expect(screen.getByText('Alternative')).toBeOnTheScreen();
       expect(
-        screen.queryByText(/• Eux-autres a un tas d’argent\./)
+        screen.queryByText('Eux-autres a un tas d’argent.')
       ).toBeNull();
 
       await press(user, 'Alternative');
 
       expect(
-        screen.getByText('• Eux-autres a un tas d’argent.')
+        screen.getByText('Eux-autres a un tas d’argent.')
       ).toBeOnTheScreen();
       expect(
-        screen.getByText('• Ils ont un tas d’argent.')
+        screen.getByText('Ils ont un tas d’argent.')
       ).toBeOnTheScreen();
       expect(
-        screen.getByText('• Ça a un tas d’argent.')
+        screen.getByText('Ça a un tas d’argent.')
       ).toBeOnTheScreen();
       expect(
         screen.queryByText(quotedAltResponse)
@@ -1110,9 +1110,9 @@ describe('ActivityRenderer', () => {
       await chooseAndCheck(user, 'Ça va?');
       await press(user, 'Alternative');
 
-      expect(screen.getByText('• poukwa')).toBeOnTheScreen();
-      expect(screen.getByText('• pouki')).toBeOnTheScreen();
-      expect(screen.getByText('• kwafé')).toBeOnTheScreen();
+      expect(screen.getByText('poukwa')).toBeOnTheScreen();
+      expect(screen.getByText('pouki')).toBeOnTheScreen();
+      expect(screen.getByText('kwafé')).toBeOnTheScreen();
     });
 
     it('shows split alternatives in the intro Word card with original styling', async () => {
@@ -1132,10 +1132,10 @@ describe('ActivityRenderer', () => {
       expect(screen.queryByText('Bonjour')).toBeNull();
       expect(screen.getByText('Hello')).toBeOnTheScreen();
       expect(
-        screen.getByText('• Eux-autres a un tas d’argent.')
+        screen.getByText('Eux-autres a un tas d’argent.')
       ).toBeOnTheScreen();
       expect(
-        screen.getByText('• Ils ont un tas d’argent.')
+        screen.getByText('Ils ont un tas d’argent.')
       ).toBeOnTheScreen();
       expect(
         screen.queryByText(quotedAltResponse)

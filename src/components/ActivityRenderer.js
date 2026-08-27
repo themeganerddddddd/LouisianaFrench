@@ -264,8 +264,8 @@ function AlternativeBullets({ text, textStyle, containerStyle }) {
   return (
     <View style={containerStyle}>
       {items.map((item, index) => (
-        <Text key={`${index}-${item}`} style={textStyle}>
-          {items.length > 1 ? `\u2022 ${item}` : item}
+        <Text key={`${index}-${item}`} style={[textStyle, styles.alternativeListItem]}>
+          {item}
         </Text>
       ))}
     </View>
@@ -1940,16 +1940,16 @@ const styles = StyleSheet.create({
   },
 
   introAltList: {
-    alignItems: 'center',
-    gap: 4,
-    width: '100%'
+    alignItems: 'flex-start',
+    alignSelf: 'center',
+    gap: 4
   },
 
   introAltListTranslation: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    alignSelf: 'center',
     gap: 4,
-    marginTop: 10,
-    width: '100%'
+    marginTop: 10
   },
 
   tapToHear: {
@@ -2267,17 +2267,20 @@ const styles = StyleSheet.create({
   },
 
   answerAltList: {
+    alignItems: 'flex-start',
+    alignSelf: 'center',
     marginTop: 8,
-    gap: 4,
-    width: '100%',
-    alignItems: 'center'
+    gap: 4
   },
 
   answerAltText: {
     color: '#334155',
     fontSize: 15,
-    fontWeight: '800',
-    textAlign: 'center'
+    fontWeight: '800'
+  },
+
+  alternativeListItem: {
+    textAlign: 'left'
   },
 
   skipButton: {
