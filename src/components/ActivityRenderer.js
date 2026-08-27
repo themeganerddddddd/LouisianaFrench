@@ -11,6 +11,7 @@ import {
   View
 } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
+import { resolveAlternativeAudioKey } from '../utils/alternativeAudio';
 import { splitAlternativeResponses } from '../utils/splitAlternativeResponses';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
@@ -256,18 +257,57 @@ function QuestionScrollView({ state, children }) {
   );
 }
 
-function AlternativeBullets({ text, textStyle, containerStyle }) {
+function AlternativeList({
+  text,
+  textStyle,
+  containerStyle,
+  language,
+  activity,
+  onPlayAudioKey,
+  playableColor
+}) {
   const items = splitAlternativeResponses(text);
 
   if (items.length === 0) return null;
 
   return (
     <View style={containerStyle}>
-      {items.map((item, index) => (
-        <Text key={`${index}-${item}`} style={[textStyle, styles.alternativeListItem]}>
-          {item}
-        </Text>
-      ))}
+      {items.map((item, index) => {
+        const audioKey =
+          language && activity && onPlayAudioKey
+            ? resolveAlternativeAudioKey(language, item, activity)
+            : null;
+
+        if (audioKey) {
+          return (
+            <TouchableOpacity
+              key={`${index}-${item}`}
+              onPress={() => onPlayAudioKey(audioKey)}
+              accessibilityRole="button"
+              accessibilityLabel={`Play audio: ${item}`}
+            >
+              <Text
+                style={[
+                  textStyle,
+                  styles.alternativeListItem,
+                  playableColor ? { color: playableColor } : null
+                ]}
+              >
+                {item}
+              </Text>
+            </TouchableOpacity>
+          );
+        }
+
+        return (
+          <Text
+            key={`${index}-${item}`}
+            style={[textStyle, styles.alternativeListItem]}
+          >
+            {item}
+          </Text>
+        );
+      })}
     </View>
   );
 }
@@ -313,7 +353,13 @@ function AltToggleButtons({
   );
 }
 
-function AnswerAltButtons({ activity, visible, theme }) {
+function AnswerAltButtons({
+  activity,
+  visible,
+  theme,
+  language,
+  onPlayAudioKey
+}) {
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
@@ -336,7 +382,7 @@ function AnswerAltButtons({ activity, visible, theme }) {
           </TouchableOpacity>
 
           {showEnglishAlt ? (
-            <AlternativeBullets
+            <AlternativeList
               text={activity.englishAltResponse}
               textStyle={styles.answerAltText}
               containerStyle={styles.answerAltList}
@@ -357,10 +403,14 @@ function AnswerAltButtons({ activity, visible, theme }) {
           </TouchableOpacity>
 
           {showVariantAlt ? (
-            <AlternativeBullets
+            <AlternativeList
               text={activity.variantAltResponse}
               textStyle={styles.answerAltText}
               containerStyle={styles.answerAltList}
+              language={language}
+              activity={activity}
+              onPlayAudioKey={onPlayAudioKey}
+              playableColor={theme.text}
             />
           ) : null}
         </View>
@@ -694,29 +744,43 @@ function IntroCard({
         visible={showAddOns}
       />
 
-      <TouchableOpacity
+      <View
         style={[
           styles.introWordCard,
           { backgroundColor: theme.light }
         ]}
-        onPress={() => playAudioKey(activity.audioKey)}
-        accessibilityRole="button"
-        accessibilityLabel={`Play audio: ${activity.target}`}
       >
         {showVariantAlt && activity.variantAltResponse ? (
-          <AlternativeBullets
-            text={activity.variantAltResponse}
-            textStyle={styles.introWord}
-            containerStyle={styles.introAltList}
-          />
+          <>
+            <Text style={styles.tapToHearAlternative}>
+              Tap to hear the alternative
+            </Text>
+
+            <AlternativeList
+              text={activity.variantAltResponse}
+              textStyle={styles.introWord}
+              containerStyle={styles.introAltList}
+              language={language}
+              activity={activity}
+              onPlayAudioKey={playAudioKey}
+              playableColor={theme.text}
+            />
+          </>
         ) : (
-          <Text style={styles.introWord}>
-            {getPrimaryTarget(activity)}
-          </Text>
+          <TouchableOpacity
+            onPress={() => playAudioKey(activity.audioKey)}
+            disabled={!activity.audioKey}
+            accessibilityRole="button"
+            accessibilityLabel={`Play audio: ${activity.target}`}
+          >
+            <Text style={styles.introWord}>
+              {getPrimaryTarget(activity)}
+            </Text>
+          </TouchableOpacity>
         )}
 
         {showEnglishAlt && activity.englishAltResponse ? (
-          <AlternativeBullets
+          <AlternativeList
             text={activity.englishAltResponse}
             textStyle={styles.introTranslation}
             containerStyle={styles.introAltListTranslation}
@@ -727,10 +791,12 @@ function IntroCard({
           </Text>
         )}
 
-        <Text style={[styles.tapToHear, { color: theme.text }]}>
-          Tap the word to hear it again
-        </Text>
-      </TouchableOpacity>
+        {!showVariantAlt && !showEnglishAlt ? (
+          <Text style={[styles.tapToHear, { color: theme.text }]}>
+            Tap the word to hear it again
+          </Text>
+        ) : null}
+      </View>
 
       <TBoyCallout
         activity={activity}
@@ -887,6 +953,8 @@ function MultipleChoice({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -1054,6 +1122,8 @@ function ListeningTargetChoice({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -1292,6 +1362,8 @@ function Typing({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -1474,6 +1546,8 @@ function SentenceBuild({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -1821,6 +1895,8 @@ function MatchPairs({
             activity={activity}
             visible={revealAddOns}
             theme={theme}
+            language={language}
+            onPlayAudioKey={playAudioKey}
           />
         }
       />
@@ -1940,13 +2016,13 @@ const styles = StyleSheet.create({
   },
 
   introAltList: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     alignSelf: 'center',
     gap: 4
   },
 
   introAltListTranslation: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     alignSelf: 'center',
     gap: 4,
     marginTop: 10
@@ -1956,6 +2032,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 13,
     fontWeight: '800'
+  },
+
+  tapToHearAlternative: {
+    color: '#000000',
+    fontSize: 11,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8
   },
 
   option: {
@@ -2267,7 +2351,7 @@ const styles = StyleSheet.create({
   },
 
   answerAltList: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     alignSelf: 'center',
     marginTop: 8,
     gap: 4
@@ -2280,7 +2364,7 @@ const styles = StyleSheet.create({
   },
 
   alternativeListItem: {
-    textAlign: 'left'
+    textAlign: 'center'
   },
 
   skipButton: {

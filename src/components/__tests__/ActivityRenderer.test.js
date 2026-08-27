@@ -1141,6 +1141,64 @@ describe('ActivityRenderer', () => {
         screen.queryByText(quotedAltResponse)
       ).toBeNull();
     });
+
+    it('shows a tap hint when intro alternatives are open', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.intro,
+        variantAltResponse: quotedAltResponse
+      });
+
+      expect(
+        screen.queryByText('Tap to hear the alternative')
+      ).toBeNull();
+
+      await press(user, 'Alternative');
+
+      expect(
+        screen.getByText('Tap to hear the alternative')
+      ).toBeOnTheScreen();
+    });
+
+    it('plays audio when a playable intro alternative is tapped', async () => {
+      const user = userEvent.setup();
+      const callsBeforePress = Audio.Sound.createAsync.mock.calls.length;
+
+      renderActivity({
+        ...fixtureActivities.intro,
+        variantAltResponse: '"Bonjour"'
+      });
+
+      await press(user, 'Alternative');
+      await press(user, 'Bonjour');
+
+      await expectAudioPlayedAfter(callsBeforePress);
+    });
+
+    it('plays audio when a playable feedback alternative is tapped', async () => {
+      const user = userEvent.setup();
+
+      renderActivity({
+        ...fixtureActivities.multipleChoice,
+        variantAltResponse: '"Au revoir!"'
+      });
+
+      await chooseAndCheck(user, 'Ça va?');
+      await press(user, 'Alternative');
+
+      const callsBeforePress = Audio.Sound.createAsync.mock.calls.length;
+
+      await user.press(
+        screen.getByLabelText('Play audio: Au revoir!')
+      );
+
+      await waitFor(() => {
+        expect(
+          Audio.Sound.createAsync
+        ).toHaveBeenCalledTimes(callsBeforePress + 1);
+      });
+    });
   });
 
   it('reports unknown Activity types without crashing', () => {
