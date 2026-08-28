@@ -1,7 +1,7 @@
 ---
 description: Execute bounded repository work when no narrower specialist owns it.
 mode: all
-model: opencode-go/deepseek-v4-pro
+model: opencode-go/deepseek-v4-flash
 permission:
   task: deny
   skill: deny

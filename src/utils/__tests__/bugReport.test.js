@@ -186,7 +186,7 @@ describe('buildMailtoUrl', () => {
     const params = parseMailtoParams(url);
 
     expect(params.subject).toBe(
-      '[Louisiana French Bug] Dictionary audio fails on the third word'
+      '[Louisiana Languages Bug] Dictionary audio fails on the third word'
     );
 
     const body = params.body;
@@ -215,7 +215,7 @@ describe('buildMailtoUrl', () => {
       deviceInfo
     });
     const params = parseMailtoParams(url);
-    expect(params.subject).toBe(`[Louisiana French Bug] ${'x'.repeat(60)}`);
+    expect(params.subject).toBe(`[Louisiana Languages Bug] ${'x'.repeat(60)}`);
   });
 
   it('encodes spaces as %20 not + in subject and body', () => {

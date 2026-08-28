@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Louisiana French",
+    "name": "Louisiana Languages",
     "slug": "louisiana-french",
     "version": "1.0.2",
     "orientation": "portrait",
@@ -33,7 +33,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow Louisiana French to record pronunciation practice."
+          "microphonePermission": "Allow Louisiana Languages to record pronunciation practice."
         }
       ]
     ]

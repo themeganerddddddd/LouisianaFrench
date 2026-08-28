@@ -1,6 +1,10 @@
-# Louisiana Language Learning
+# Louisiana Languages
 
 The application teaches Louisiana languages through structured lessons, practice activities, and learner-specific review.
+
+**Louisiana Languages**:
+The application identity. Use this name where the product is named.
+_Avoid_: Louisiana French when referring to the application rather than the Language track
 
 ## Language
 

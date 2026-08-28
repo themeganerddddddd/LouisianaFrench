@@ -33,7 +33,7 @@ Learners switch between Languages, complete ordered Lessons, review due or weak 
 
 ## Brand Commitments
 
-- Use the product name Louisiana French where the application identity is named; use Louisiana French and Kouri-Vini for the Language tracks.
+- Use the product name Louisiana Languages where the application identity is named; use Louisiana French and Kouri-Vini for the Language tracks.
 - Preserve the distinct blue Louisiana French and green Kouri-Vini identities.
 - Preserve the bundled flags, pelican, and second-line artwork as recognizable product assets.
 - Use direct, encouraging language grounded in real learner state rather than invented progress or claims.

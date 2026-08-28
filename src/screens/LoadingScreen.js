@@ -34,7 +34,7 @@ export default function LoadingScreen({ navigation }) {
         resizeMode="contain"
       />
       <Text style={styles.header}>Learn</Text>
-      <Text style={styles.header}>Louisiana French</Text>
+      <Text style={styles.header}>Louisiana Languages</Text>
     </View>
   );
 }

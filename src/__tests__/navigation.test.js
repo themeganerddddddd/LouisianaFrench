@@ -23,7 +23,7 @@ describe('navigation graph', () => {
   it('starts the real App on Loading', () => {
     render(<App />);
     expect(screen.getByText('Learn')).toBeOnTheScreen();
-    expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
+    expect(screen.getByText('Louisiana Languages')).toBeOnTheScreen();
   });
 
   it('quarantines the unregistered Leaderboard contract pending Issue #27', () => {
