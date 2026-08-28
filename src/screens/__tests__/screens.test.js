@@ -319,7 +319,7 @@ describe('HomeScreen', () => {
 
     expect(await screen.findByText(languageName)).toBeOnTheScreen();
     expect(screen.getByTestId('home-stats')).toHaveTextContent(
-      "Welcome! Let's learn your first words."
+      "Welcome! Let's learn new words."
     );
     expect(screen.getByTestId('home-plan-status')).toHaveTextContent('Day 1');
     expect(screen.getAllByText('Lesson')).toHaveLength(2);
@@ -470,8 +470,8 @@ describe('HomeScreen', () => {
     });
     expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 25% mastered');
     expect(screen.getByTestId('home-language-flag-image')).toHaveStyle({
-      width: 44,
-      height: 28,
+      width: 60,
+      height: 38,
       borderRadius: 4,
       borderWidth: 2,
       borderColor: '#FFFFFF'
