@@ -94,11 +94,11 @@ describe('getHomeProjection', () => {
         completedCount: 0,
         activeAction: {
           kind: 'lesson',
-          label: 'Start your first lesson',
+          label: 'Start your new lesson'',
           destination: 'Lesson',
           params: { language: 'cajun', lessonId: 'fixture_cajun_u01_l01' }
         },
-        helperText: "Reviews unlock once you've learned your first words.",
+        helperText: "Reviews unlock once you've learned new words.",
         allDone: false
       },
       currentUnit: {
