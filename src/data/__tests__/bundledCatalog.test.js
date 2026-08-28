@@ -28,7 +28,7 @@ const languages = [
     },
     audioWord: {
       rowId: 'u01_w0002',
-      audioKey: 'u01_w00002_cajun'
+      audioKey: 'u01_w0002_lf'
     }
   },
   {
@@ -354,3 +354,4 @@ describe('bundled Catalog', () => {
     }
   );
 });
+

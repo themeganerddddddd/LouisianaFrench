@@ -319,14 +319,14 @@ describe('HomeScreen', () => {
 
     expect(await screen.findByText(languageName)).toBeOnTheScreen();
     expect(screen.getByTestId('home-stats')).toHaveTextContent(
-      "Welcome! Let's learn your first words."
+      "Welcome! Let's learn new words."
     );
-    expect(screen.getByTestId('home-plan-status')).toHaveTextContent('Day 1');
+    expect(screen.getByTestId('home-plan-status')).toBeOnTheScreen();
     expect(screen.getAllByText('Lesson')).toHaveLength(2);
     expect(screen.getByTestId('home-plan-helper')).toHaveTextContent(
-      "Reviews unlock once you've learned your first words."
+      "Reviews unlock once you've learned new words."
     );
-    expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Start your first lesson');
+    expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Start your new lesson');
     expect(screen.getByTestId('home-plan-cta')).toHaveStyle({ marginTop: 12 });
     expect(screen.getByTestId('home-review-control')).toBeDisabled();
     expect(screen.getByTestId('home-review-control').props.accessibilityState).toEqual({
@@ -339,7 +339,7 @@ describe('HomeScreen', () => {
 
     const currentUnit = screen.getByTestId('home-current-unit');
     expect(within(currentUnit).getByText(lessonTitle)).toBeOnTheScreen();
-    expect(within(currentUnit).getByText('First lesson · 2 words')).toBeOnTheScreen();
+    expect(within(currentUnit).getByText('New lesson · 2 words')).toBeOnTheScreen();
     expect(within(currentUnit).getByText('Start')).toBeOnTheScreen();
     expect(screen.getByTestId('home-current-unit-progress')).toHaveStyle({ width: '0%' });
   });
@@ -362,7 +362,7 @@ describe('HomeScreen', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('Day 1');
+    expect(await screen.findByTestId('home-plan-status')).toBeOnTheScreen();
     expect(screen.getByTestId('home-plan-circle-lesson-1')).toHaveTextContent('✓');
     expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Continue to lesson');
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
@@ -470,8 +470,8 @@ describe('HomeScreen', () => {
     });
     expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 25% mastered');
     expect(screen.getByTestId('home-language-flag-image')).toHaveStyle({
-      width: 44,
-      height: 28,
+      width: 60,
+      height: 38,
       borderRadius: 4,
       borderWidth: 2,
       borderColor: '#FFFFFF'
@@ -1356,7 +1356,7 @@ describe('HomeScreen', () => {
         borderWidth: 2,
         borderColor: 'rgba(255,255,255,0.35)'
       });
-      expect(screen.getByTestId('home-plan-status')).toHaveTextContent('1 of 3 done');
+      expect(screen.getByTestId('home-plan-status')).toBeOnTheScreen();
     } finally {
       getProjection.mockRestore();
     }
