@@ -1,4 +1,5 @@
 import { getAllWords, getUnits } from '../data/lessonLoader';
+import { getDailyReviewQueue } from './reviewQueue';
 import {
   getLanguageDailyReviewLog,
   getLessonProgress,
@@ -8,7 +9,6 @@ import {
   getTodayPractice,
   getWordProgress
 } from './storage';
-import { getDailyReviewQueue } from './reviewQueue';
 function unitLabel(unitCode) {
   const match = String(unitCode || '').match(/u(\d+)/i);
   return match ? `Unit ${Number(match[1])}` : 'Unit';
@@ -142,7 +142,7 @@ function firstDayActionFor(step, language, reviewMinutes, nextLesson, completedT
   return {
     kind: 'lesson',
     label: completedToday === 0
-      ? 'Start your first lesson'
+      ? 'Start your new lesson'
       : `Continue lesson · ${nextLesson.title}`,
     destination: 'Lesson',
     params: { language, lessonId: nextLesson.id }
@@ -213,7 +213,7 @@ export async function getHomeProjection(language) {
   const firstIncomplete = steps.findIndex((step) => !step.complete);
   const nextLesson = currentUnit?.nextLesson || null;
   const helperText = firstDay
-    ? "Reviews unlock once you've learned your first words."
+    ? "Reviews unlock once you've learned new words."
     : pendingCount === 0 && !practiceComplete
       ? 'No mistakes to fix — speech practice instead.'
       : null;

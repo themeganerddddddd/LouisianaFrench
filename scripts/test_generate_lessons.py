@@ -195,5 +195,151 @@ class MakeMatchPairsTests(unittest.TestCase):
         )
 
 
+class SameMeaningLessonTests(unittest.TestCase):
+    def setUp(self):
+        random.seed(0)
+
+    def test_isolates_configured_same_meaning_groups(self):
+        rows = [
+            word_row(f"u06_w{number:04d}", f"word {number}", f"mot {number}")
+            for number in range(1, 18)
+        ]
+
+        rows[0]["english"] = "they are"
+        rows[1]["english"] = "they are"
+        rows[2]["english"] = "they are"
+        rows[7]["english"] = "they have"
+        rows[8]["english"] = "they have"
+        rows[9]["english"] = "they have"
+        rows[14]["english"] = "they want"
+        rows[15]["english"] = "they want"
+        rows[16]["english"] = "they want"
+
+        chunks = gen.build_lesson_chunks(
+            "cajun",
+            "u06",
+            rows,
+            5
+        )
+
+        self.assertEqual(
+            [[row["id"] for row in chunk] for chunk in chunks],
+            [
+                ["u06_w0001", "u06_w0002", "u06_w0003"],
+                ["u06_w0004", "u06_w0005", "u06_w0006", "u06_w0007"],
+                ["u06_w0008", "u06_w0009", "u06_w0010"],
+                ["u06_w0011", "u06_w0012", "u06_w0013", "u06_w0014"],
+                ["u06_w0015", "u06_w0016", "u06_w0017"],
+            ]
+        )
+
+    def test_ambiguous_english_only_uses_listening_quizzes(self):
+        rows = [
+            word_row("u06_w0001", "they are", "ils sont"),
+            word_row("u06_w0002", "they are", "eux-autres est"),
+            word_row("u06_w0003", "they are", "eusse est"),
+        ]
+        unit_ctx = gen.build_unit_lookups(rows)
+
+        self.assertEqual(
+            gen.available_quiz_types_for_row(
+                rows[0],
+                False,
+                unit_ctx
+            ),
+            ["listening_target"]
+        )
+
+    def test_select_multiple_accepts_all_same_meaning_forms(self):
+        rows = [
+            word_row("u06_w0001", "they are", "ils sont"),
+            word_row("u06_w0002", "they are", "eux-autres est"),
+            word_row("u06_w0003", "they are", "eusse est"),
+            word_row("u06_w0004", "They are cousins.", "Ils sont cousins."),
+        ]
+        unit_ctx = gen.build_unit_lookups(rows)
+
+        activity = gen.make_select_multiple(
+            "cajun",
+            rows[:3],
+            unit_ctx
+        )
+
+        self.assertEqual(activity["type"], "select_multiple")
+        self.assertEqual(
+            set(activity["answers"]),
+            {"ils sont", "eux-autres est", "eusse est"}
+        )
+        self.assertIn("Ils sont cousins.", activity["options"])
+
+
+class SentenceBuilderEligibilityTests(unittest.TestCase):
+    def test_does_not_build_sentences_shorter_than_four_words(self):
+        row = word_row(
+            "u01_w0001",
+            "How are things?",
+            "Comment les affaires?"
+        )
+
+        self.assertIsNone(
+            gen.make_sentence_build(
+                "cajun",
+                row
+            )
+        )
+
+    def test_allows_four_word_sentence_builder(self):
+        row = word_row(
+            "u01_w0002",
+            "We are good friends.",
+            "On est bons amis."
+        )
+
+        activity = gen.make_sentence_build(
+            "cajun",
+            row
+        )
+
+        self.assertIsNotNone(activity)
+        self.assertEqual(
+            activity["type"],
+            "sentence_build"
+        )
+
+
+class LongSentenceTests(unittest.TestCase):
+    def test_counts_hyphenated_terms_as_one_word(self):
+        self.assertEqual(
+            gen.count_phrase_words(
+                "On veut parler avec nos grands-parents."
+            ),
+            6
+        )
+
+    def test_guarantees_sentence_builder_for_six_word_sentence(self):
+        row = word_row(
+            "u05_w0024",
+            "We want to speak with our grandparents.",
+            "On veut parler avec nos grands-parents."
+        )
+        activities = [
+            gen.make_intro_card("cajun", row)
+        ]
+
+        result = gen.ensure_long_sentence_builders(
+            "cajun",
+            activities,
+            [row]
+        )
+
+        self.assertTrue(
+            any(
+                activity["type"] == "sentence_build"
+                and activity["rowId"] == "u05_w0024"
+                for activity in result
+            )
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

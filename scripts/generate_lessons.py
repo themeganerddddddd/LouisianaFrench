@@ -21,6 +21,37 @@ KREOLE_LESSON_CHUNK_SIZE = 6
 MAX_ACTIVITIES_PER_LESSON = 15
 MATCH_PAIR_COUNT = 4
 RANDOM_SEED = 42
+SENTENCE_BUILD_MIN_WORDS = 4
+LONG_SENTENCE_MIN_WORDS = 6
+
+SPECIAL_SAME_MEANING_GROUPS = {
+    ("cajun", "u06"): [
+        {
+            "english": "they are",
+            "row_ids": [
+                "u06_w0001",
+                "u06_w0002",
+                "u06_w0003",
+            ],
+        },
+        {
+            "english": "they have",
+            "row_ids": [
+                "u06_w0008",
+                "u06_w0009",
+                "u06_w0010",
+            ],
+        },
+        {
+            "english": "they want",
+            "row_ids": [
+                "u06_w0015",
+                "u06_w0016",
+                "u06_w0017",
+            ],
+        },
+    ]
+}
 
 # After a word is introduced, it must be quizzed within this many
 # subsequent activities.
@@ -91,6 +122,25 @@ def tokenize_phrase(text):
     )
 
 
+def count_phrase_words(text):
+    return len(
+        re.findall(
+            r"\b\w+(?:[-’']\w+)*\b",
+            clean(text),
+            flags=re.UNICODE
+        )
+    )
+
+
+def is_long_sentence_row(row):
+    return (
+        count_phrase_words(
+            row.get("variant_text")
+        )
+        >= LONG_SENTENCE_MIN_WORDS
+    )
+
+
 def sort_rows_by_id(rows):
     def key_fn(row):
         row_id = clean(row.get("id"))
@@ -112,6 +162,112 @@ def chunk_list(items, size):
         items[i:i + size]
         for i in range(0, len(items), size)
     ]
+
+
+def get_special_same_meaning_groups(
+    language,
+    unit
+):
+    return SPECIAL_SAME_MEANING_GROUPS.get(
+        (language, unit),
+        []
+    )
+
+
+def build_lesson_chunks(
+    language,
+    unit,
+    unit_rows,
+    chunk_size
+):
+    groups = get_special_same_meaning_groups(
+        language,
+        unit
+    )
+
+    if not groups:
+        return chunk_list(
+            unit_rows,
+            chunk_size
+        )
+
+    row_by_id = {
+        clean(row.get("id")): row
+        for row in unit_rows
+    }
+
+    group_by_first_id = {
+        group["row_ids"][0]: group
+        for group in groups
+    }
+
+    grouped_ids = {
+        row_id
+        for group in groups
+        for row_id in group["row_ids"]
+    }
+
+    chunks = []
+    regular_rows = []
+
+    def flush_regular_rows():
+        nonlocal regular_rows
+
+        if regular_rows:
+            chunks.extend(
+                chunk_list(
+                    regular_rows,
+                    chunk_size
+                )
+            )
+            regular_rows = []
+
+    for row in unit_rows:
+        row_id = clean(row.get("id"))
+
+        if row_id in group_by_first_id:
+            flush_regular_rows()
+
+            group = group_by_first_id[row_id]
+            group_rows = [
+                row_by_id[group_row_id]
+                for group_row_id in group["row_ids"]
+                if group_row_id in row_by_id
+            ]
+
+            if group_rows:
+                chunks.append(group_rows)
+
+            continue
+
+        if row_id in grouped_ids:
+            continue
+
+        regular_rows.append(row)
+
+    flush_regular_rows()
+
+    return chunks
+
+
+def get_special_group_for_chunk(
+    language,
+    unit,
+    chunk_rows
+):
+    chunk_ids = [
+        clean(row.get("id"))
+        for row in chunk_rows
+    ]
+
+    for group in get_special_same_meaning_groups(
+        language,
+        unit
+    ):
+        if chunk_ids == group["row_ids"]:
+            return group
+
+    return None
 
 
 def build_card_id(language, row_id, suffix):
@@ -173,8 +329,15 @@ def finalize_lesson_activity_ids(
 
 def lesson_part_name(
     chunk_rows,
-    index
+    index,
+    special_group=None
 ):
+    if special_group:
+        return (
+            f"Part {index} — Three ways to say "
+            f"‘{special_group['english']}’"
+        )
+
     english_terms = [
         clean(r.get("english"))
         for r in chunk_rows
@@ -334,12 +497,49 @@ def build_unit_lookups(unit_rows):
         if clean(r.get("id"))
     }
 
+    english_to_targets = defaultdict(set)
+
+    for row in unit_rows:
+        english = clean(
+            row.get("english")
+        ).casefold()
+        target = clean(
+            row.get("variant_text")
+        ).casefold()
+
+        if english and target:
+            english_to_targets[english].add(
+                target
+            )
+
     return {
         "target_pool": target_pool,
         "english_pool": english_pool,
         "target_to_audio": target_to_audio,
         "id_to_row": id_to_row,
+        "english_to_targets": english_to_targets,
     }
+
+
+def row_has_ambiguous_english(
+    row,
+    unit_ctx
+):
+    english = clean(
+        row.get("english")
+    ).casefold()
+
+    return (
+        len(
+            unit_ctx[
+                "english_to_targets"
+            ].get(
+                english,
+                set()
+            )
+        )
+        > 1
+    )
 
 
 def make_multiple_choice(
@@ -532,7 +732,7 @@ def make_sentence_build(
 
     tokens = tokenize_phrase(target)
 
-    if len(tokens) <= 1:
+    if count_phrase_words(target) < SENTENCE_BUILD_MIN_WORDS:
         return None
 
     return attach_row_metadata(
@@ -560,6 +760,92 @@ def make_sentence_build(
         row
     )
 
+
+def make_select_multiple(
+    language,
+    group_rows,
+    unit_ctx,
+    distractor_targets=()
+):
+    rows = [
+        row
+        for row in group_rows
+        if (
+            clean(row.get("english"))
+            and clean(row.get("variant_text"))
+        )
+    ]
+
+    if len(rows) < 2:
+        return None
+
+    english = clean(rows[0].get("english"))
+    answers = [
+        clean(row.get("variant_text"))
+        for row in rows
+    ]
+    answer_set = {
+        answer.casefold()
+        for answer in answers
+    }
+
+    preferred_distractors = []
+    fallback_distractors = []
+
+    for target in distractor_targets:
+        if target.casefold() in answer_set:
+            continue
+
+        if target not in preferred_distractors:
+            preferred_distractors.append(target)
+
+    for target in unit_ctx["target_pool"]:
+        if target.casefold() in answer_set:
+            continue
+
+        if (
+            target in preferred_distractors
+            or target in fallback_distractors
+        ):
+            continue
+
+        fallback_distractors.append(target)
+
+    random.shuffle(preferred_distractors)
+    random.shuffle(fallback_distractors)
+
+    distractors = (
+        preferred_distractors
+        + fallback_distractors
+    )
+
+    options = answers + distractors[:3]
+    random.shuffle(options)
+
+    return {
+        "cardId": build_card_id(
+            language,
+            clean(rows[0].get("id")),
+            "select_all"
+        ),
+        "type": "select_multiple",
+        "prompt": (
+            f"Select all options that mean "
+            f"‘{english}’."
+        ),
+        "options": options,
+        "answers": answers,
+        "answer": " | ".join(answers),
+        "answerDisplay": ", ".join(answers),
+        "english": english,
+        "optionAudioMap": {
+            opt:
+            unit_ctx[
+                "target_to_audio"
+            ].get(opt)
+            for opt in options
+        }
+    }
 
 def select_unique_gloss_rows(
     preferred_rows,
@@ -675,7 +961,8 @@ def make_match_pairs(
 
 def available_quiz_types_for_row(
     row,
-    is_first_chunk
+    is_first_chunk,
+    unit_ctx
 ):
     target = clean(
         row.get("variant_text")
@@ -685,23 +972,36 @@ def available_quiz_types_for_row(
         row.get("audioKey")
     )
 
-    tokens = tokenize_phrase(target)
+    quiz_types = []
 
-    quiz_types = [
-        "multiple_choice"
-    ]
+    if not row_has_ambiguous_english(
+        row,
+        unit_ctx
+    ):
+        quiz_types.append(
+            "multiple_choice"
+        )
 
     if audio_key:
         quiz_types.append(
             "listening_target"
         )
 
-    if not is_first_chunk:
+    if (
+        not is_first_chunk
+        and not row_has_ambiguous_english(
+            row,
+            unit_ctx
+        )
+    ):
         quiz_types.append(
             "typing"
         )
 
-        if len(tokens) > 1:
+        if (
+            count_phrase_words(target)
+            >= SENTENCE_BUILD_MIN_WORDS
+        ):
             quiz_types.append(
                 "sentence_build"
             )
@@ -742,6 +1042,50 @@ def make_activity_from_type(
         )
 
     return None
+
+
+def schedule_same_meaning_group_activities(
+    language,
+    chunk_rows
+):
+    group_ctx = build_unit_lookups(
+        chunk_rows
+    )
+
+    activities = []
+    vocab_cards = []
+
+    for row in chunk_rows:
+        vocab_cards.append(
+            row_to_vocab_card(row)
+        )
+        activities.append(
+            make_intro_card(
+                language,
+                row
+            )
+        )
+
+        listening = make_listening_target(
+            language,
+            row,
+            group_ctx
+        )
+
+        if listening:
+            activities.append(listening)
+
+    for row in chunk_rows:
+        listening = make_listening_target(
+            language,
+            row,
+            group_ctx
+        )
+
+        if listening:
+            activities.append(listening)
+
+    return activities, vocab_cards
 
 
 def schedule_core_activities(
@@ -900,7 +1244,8 @@ def schedule_core_activities(
         available_types = (
             available_quiz_types_for_row(
                 chosen_row,
-                first_chunk_mode
+                first_chunk_mode,
+                unit_ctx
             )
         )
 
@@ -1241,6 +1586,172 @@ def schedule_core_activities(
     )
 
 
+def ensure_long_sentence_builders(
+    language,
+    activities,
+    chunk_rows
+):
+    ensured = list(activities)
+
+    for row in chunk_rows:
+        if not is_long_sentence_row(row):
+            continue
+
+        row_id = clean(row.get("id"))
+
+        if any(
+            activity_type(activity)
+            == "sentence_build"
+            and activity_row_id(activity)
+            == row_id
+            for activity in ensured
+        ):
+            continue
+
+        sentence_build = make_sentence_build(
+            language,
+            row
+        )
+
+        if not sentence_build:
+            continue
+
+        if len(ensured) < MAX_ACTIVITIES_PER_LESSON:
+            ensured.append(sentence_build)
+            continue
+
+        replacement_index = None
+
+        for index in range(
+            len(ensured) - 1,
+            -1,
+            -1
+        ):
+            candidate = ensured[index]
+
+            if activity_type(candidate) in {
+                "multiple_choice",
+                "listening_target_choice",
+                "typing",
+            }:
+                replacement_index = index
+                break
+
+        if replacement_index is not None:
+            ensured[replacement_index] = (
+                sentence_build
+            )
+
+    return ensured[:MAX_ACTIVITIES_PER_LESSON]
+
+
+def move_activity_type_to_end(
+    activities,
+    target_type
+):
+    moved = list(activities)
+
+    for index in range(
+        len(moved) - 1,
+        -1,
+        -1
+    ):
+        if activity_type(
+            moved[index]
+        ) == target_type:
+            activity = moved.pop(index)
+            moved.append(activity)
+            break
+
+    return moved
+
+
+def finish_core_lesson_activities(
+    language,
+    unit,
+    activities,
+    chunk_rows,
+    unit_rows,
+    special_group=None
+):
+    finished = ensure_long_sentence_builders(
+        language,
+        activities,
+        chunk_rows
+    )
+
+    if special_group:
+        unit_ctx = build_unit_lookups(
+            unit_rows
+        )
+        select_multiple = make_select_multiple(
+            language,
+            chunk_rows,
+            unit_ctx,
+            distractor_targets=[
+                clean(
+                    unit_ctx[
+                        "id_to_row"
+                    ][row_id].get(
+                        "variant_text"
+                    )
+                )
+                for group in (
+                    get_special_same_meaning_groups(
+                        language,
+                        unit
+                    )
+                )
+                for row_id in group["row_ids"]
+                if (
+                    row_id
+                    not in special_group["row_ids"]
+                    and row_id
+                    in unit_ctx["id_to_row"]
+                )
+            ]
+        )
+
+        if select_multiple:
+            if len(finished) >= MAX_ACTIVITIES_PER_LESSON:
+                for index in range(
+                    len(finished) - 1,
+                    -1,
+                    -1
+                ):
+                    if activity_type(
+                        finished[index]
+                    ) != "intro_card":
+                        finished.pop(index)
+                        break
+
+            finished.append(select_multiple)
+
+        return finished[:MAX_ACTIVITIES_PER_LESSON]
+
+    if any(
+        activity_type(activity)
+        == "match_pairs"
+        for activity in finished
+    ):
+        return move_activity_type_to_end(
+            finished,
+            "match_pairs"
+        )
+
+    if any(
+        activity_type(activity)
+        == "sentence_build"
+        for activity in finished
+    ):
+        return move_activity_type_to_end(
+            finished,
+            "sentence_build"
+        )
+
+    return finished[:MAX_ACTIVITIES_PER_LESSON]
+
+
 def make_review_activities(
     language,
     unit_rows,
@@ -1294,16 +1805,16 @@ def make_review_activities(
         ):
             continue
 
-        quiz_types = [
-            "multiple_choice"
-        ]
-
-        if clean(
-            row.get("audioKey")
-        ):
-            quiz_types.append(
-                "listening_target"
+        quiz_types = (
+            available_quiz_types_for_row(
+                row,
+                False,
+                unit_ctx
             )
+        )
+
+        if not quiz_types:
+            continue
 
         quiz_type = random.choice(
             quiz_types
@@ -1325,15 +1836,7 @@ def make_review_activities(
 
             last_row_id = row_id
 
-    if (
-        len(candidate_rows) >= MATCH_PAIR_COUNT
-        and not any(
-            a.get("type")
-            == "match_pairs"
-
-            for a in review_activities
-        )
-    ):
+    if len(candidate_rows) >= MATCH_PAIR_COUNT:
         match_activity = (
             make_match_pairs(
                 language,
@@ -1349,13 +1852,13 @@ def make_review_activities(
             )
         )
 
-        if (
-            match_activity
-            and len(
-                review_activities
-            )
-            < MAX_ACTIVITIES_PER_LESSON
-        ):
+        if match_activity:
+            if (
+                len(review_activities)
+                >= MAX_ACTIVITIES_PER_LESSON
+            ):
+                review_activities.pop()
+
             review_activities.append(
                 match_activity
             )
@@ -1530,7 +2033,9 @@ def build_lessons(
             f"Unit {unit.replace('u', '')}"
         )
 
-        unit_chunks = chunk_list(
+        unit_chunks = build_lesson_chunks(
+            language,
+            unit,
             unit_rows,
             lesson_chunk_size
         )
@@ -1551,21 +2056,53 @@ def build_lessons(
                 chunk_index == 1
             )
 
-            (
-                activities,
-                vocab_cards
-            ) = schedule_core_activities(
-                language=language,
-                chunk_rows=chunk_rows,
-                prior_rows_in_unit=(
-                    prior_rows_in_unit
-                ),
-                unit_rows=unit_rows,
-                is_first_chunk=(
-                    is_first_chunk
-                ),
-                prior_rows_from_earlier_units=(
-                    prior_rows_from_earlier_units
+            special_group = (
+                get_special_group_for_chunk(
+                    language,
+                    unit,
+                    chunk_rows
+                )
+            )
+
+            if special_group:
+                (
+                    activities,
+                    vocab_cards
+                ) = (
+                    schedule_same_meaning_group_activities(
+                        language,
+                        chunk_rows
+                    )
+                )
+            else:
+                (
+                    activities,
+                    vocab_cards
+                ) = schedule_core_activities(
+                    language=language,
+                    chunk_rows=chunk_rows,
+                    prior_rows_in_unit=(
+                        prior_rows_in_unit
+                    ),
+                    unit_rows=unit_rows,
+                    is_first_chunk=(
+                        is_first_chunk
+                    ),
+                    prior_rows_from_earlier_units=(
+                        prior_rows_from_earlier_units
+                    )
+                )
+
+            activities = (
+                finish_core_lesson_activities(
+                    language=language,
+                    unit=unit,
+                    activities=activities,
+                    chunk_rows=chunk_rows,
+                    unit_rows=unit_rows,
+                    special_group=(
+                        special_group
+                    )
                 )
             )
 
@@ -1591,7 +2128,10 @@ def build_lessons(
             lesson_title = (
                 lesson_part_name(
                     chunk_rows,
-                    chunk_index
+                    chunk_index,
+                    special_group=(
+                        special_group
+                    )
                 )
             )
 

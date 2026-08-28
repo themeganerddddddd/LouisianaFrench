@@ -284,6 +284,12 @@ function QuestionScrollView({ state, children }) {
   );
 }
 
+function getVariantAlternativeLabel(language) {
+  return language === 'kreole'
+    ? 'Creole Alternative'
+    : 'Louisiana French Alternative';
+}
+
 function AlternativeList({
   text,
   textStyle,
@@ -341,6 +347,7 @@ function AlternativeList({
 
 function AltToggleButtons({
   activity,
+  language,
   showEnglishAlt,
   setShowEnglishAlt,
   showVariantAlt,
@@ -372,7 +379,7 @@ function AltToggleButtons({
           onPress={() => setShowVariantAlt((v) => !v)}
         >
           <Text style={[styles.altButtonText, { color: theme.text }]}>
-            Alternative
+            {getVariantAlternativeLabel(language)}
           </Text>
         </TouchableOpacity>
       ) : null}
@@ -425,7 +432,7 @@ function AnswerAltButtons({
             onPress={() => setShowVariantAlt((v) => !v)}
           >
             <Text style={[styles.altButtonText, { color: theme.text }]}>
-              Alternative
+              {getVariantAlternativeLabel(language)}
             </Text>
           </TouchableOpacity>
 
@@ -663,6 +670,18 @@ export default function ActivityRenderer({
         />
       );
 
+    case 'select_multiple':
+      return (
+        <SelectMultiple
+          activity={activity}
+          language={language}
+          onCorrect={onCorrect}
+          onWrong={onWrong}
+          theme={theme}
+          allowSkip={allowSkip}
+        />
+      );
+
     case 'listening_target_choice':
       return (
         <ListeningTargetChoice
@@ -763,6 +782,7 @@ function IntroCard({
 
       <AltToggleButtons
         activity={activity}
+        language={language}
         showEnglishAlt={showEnglishAlt}
         setShowEnglishAlt={setShowEnglishAlt}
         showVariantAlt={showVariantAlt}
@@ -978,11 +998,165 @@ function MultipleChoice({
         altContent={
           <AnswerAltButtons
             activity={activity}
+            language={language}
             visible={revealAddOns}
             theme={theme}
-            language={language}
             onPlayAudioKey={playAudioKey}
           />
+        }
+      />
+    </QuestionScrollView>
+  );
+}
+
+function SelectMultiple({
+  activity,
+  language,
+  onCorrect,
+  onWrong,
+  theme,
+  allowSkip
+}) {
+  const [selected, setSelected] = useState([]);
+  const [state, setState] = useState('idle');
+  const [attempts, setAttempts] = useState(0);
+
+  const { playAudioKey, playFeedback } = useAudio(language);
+
+  const answers = Array.isArray(activity.answers)
+    ? activity.answers
+    : [];
+
+  const answerDisplay =
+    activity.answerDisplay || answers.join(', ');
+
+  function playOption(opt) {
+    const key = activity.optionAudioMap?.[opt];
+
+    if (key) {
+      playAudioKey(key);
+    }
+  }
+
+  function toggleOption(opt) {
+    if (isLocked(state)) return;
+
+    setSelected((current) => {
+      if (current.includes(opt)) {
+        return current.filter((item) => item !== opt);
+      }
+
+      return [...current, opt];
+    });
+
+    playOption(opt);
+  }
+
+  function checkAnswer() {
+    if (selected.length === 0) return;
+
+    const selectedSet = new Set(selected);
+    const answerSet = new Set(answers);
+
+    const correct =
+      selectedSet.size === answerSet.size &&
+      [...answerSet].every((answer) => selectedSet.has(answer));
+
+    if (correct) {
+      playFeedback('correct');
+      setState('correct');
+    } else {
+      playFeedback('wrong');
+      setAttempts((value) => value + 1);
+      setState('wrong');
+    }
+  }
+
+  function resetWrong() {
+    setState('idle');
+  }
+
+  function skipQuestion() {
+    playFeedback('wrong');
+    setState('skipped');
+  }
+
+  return (
+    <QuestionScrollView state={state}>
+      <Text style={[styles.kicker, { color: theme.text }]}>Select all</Text>
+
+      <ContextBadge activity={activity} language={language} />
+
+      <Text style={styles.prompt}>{activity.prompt}</Text>
+
+      {activity.options.map((opt) => {
+        const isSelected = selected.includes(opt);
+
+        return (
+          <TouchableOpacity
+            key={opt}
+            disabled={isLocked(state)}
+            style={[
+              styles.option,
+              isSelected && {
+                borderColor: theme.accent,
+                backgroundColor: theme.light
+              },
+              isLocked(state) && styles.optionLocked
+            ]}
+            onPress={() => toggleOption(opt)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isSelected }}
+            accessibilityLabel={opt}
+          >
+            <View style={styles.promptRow}>
+              <Text style={styles.optionText}>{opt}</Text>
+
+              {isSelected ? (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color={theme.accent}
+                />
+              ) : null}
+            </View>
+          </TouchableOpacity>
+        );
+      })}
+
+      {state === 'idle' ? (
+        <TouchableOpacity
+          style={[
+            styles.primaryBtn,
+            { backgroundColor: theme.accent },
+            selected.length === 0 && styles.primaryBtnDisabled
+          ]}
+          disabled={selected.length === 0}
+          onPress={checkAnswer}
+          accessibilityRole="button"
+          accessibilityLabel="Check answer"
+        >
+          <Text style={styles.primaryBtnText}>Check</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      {allowSkip && state === 'idle' ? (
+        <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
+      ) : null}
+
+      <FeedbackFooter
+        state={state}
+        firstWrong={attempts === 1}
+        hintText={`Select every French form that means “${activity.english || ''}”.`}
+        answerDisplay={answerDisplay}
+        onTryAgain={resetWrong}
+        onNext={onCorrect}
+        onIncorrect={() =>
+          onWrong(
+            state === 'skipped'
+              ? '__skipped__'
+              : selected.join(' | ')
+          )
         }
       />
     </QuestionScrollView>
@@ -1147,9 +1321,9 @@ function ListeningTargetChoice({
         altContent={
           <AnswerAltButtons
             activity={activity}
+            language={language}
             visible={revealAddOns}
             theme={theme}
-            language={language}
             onPlayAudioKey={playAudioKey}
           />
         }
@@ -1397,9 +1571,9 @@ function Typing({
         altContent={
           <AnswerAltButtons
             activity={activity}
+            language={language}
             visible={revealAddOns}
             theme={theme}
-            language={language}
             onPlayAudioKey={playAudioKey}
           />
         }
@@ -1581,9 +1755,9 @@ function SentenceBuild({
         altContent={
           <AnswerAltButtons
             activity={activity}
+            language={language}
             visible={revealAddOns}
             theme={theme}
-            language={language}
             onPlayAudioKey={playAudioKey}
           />
         }
@@ -1930,9 +2104,9 @@ function MatchPairs({
         altContent={
           <AnswerAltButtons
             activity={activity}
+            language={language}
             visible={revealAddOns}
             theme={theme}
-            language={language}
             onPlayAudioKey={playAudioKey}
           />
         }
