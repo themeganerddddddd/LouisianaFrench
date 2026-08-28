@@ -193,6 +193,41 @@ describe('bundled Catalog', () => {
   );
 
   it.each(languages)(
+    'ships sentence_build chips as words, not punctuation, for $language',
+    ({ language }) => {
+      const sentenceBuilds =
+        getAllActivities(language).filter(
+          (activity) =>
+            activity.type === 'sentence_build'
+        );
+
+      expect(
+        sentenceBuilds.length
+      ).toBeGreaterThan(0);
+
+      const punctuationOnly = /^[.,!?…]+$/;
+
+      for (const activity of sentenceBuilds) {
+        const chips = [
+          ...(activity.words || []),
+          ...(activity.answerTokens || [])
+        ];
+
+        expect(chips.length).toBeGreaterThan(0);
+
+        expect(
+          chips.every(
+            (chip) =>
+              typeof chip === 'string' &&
+              chip.length > 0 &&
+              !punctuationOnly.test(chip)
+          )
+        ).toBe(true);
+      }
+    }
+  );
+
+  it.each(languages)(
     'ships every supported Activity type for $language',
     ({ language, activityTypes: supportedActivityTypes }) => {
       const activities = getAllActivities(language);

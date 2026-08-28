@@ -1618,15 +1618,13 @@
           "Ça",
           "va",
           "beaucoup",
-          "bien",
-          "!"
+          "bien"
         ],
         "answerTokens": [
           "Ça",
           "va",
           "beaucoup",
-          "bien",
-          "!"
+          "bien"
         ],
         "answer": "Ça va beaucoup bien!",
         "answerDisplay": "Ça va beaucoup bien!",
@@ -2598,15 +2596,13 @@
           "Ça",
           "va",
           "beaucoup",
-          "bien",
-          "!"
+          "bien"
         ],
         "answerTokens": [
           "Ça",
           "va",
           "beaucoup",
-          "bien",
-          "!"
+          "bien"
         ],
         "answer": "Ça va beaucoup bien!",
         "answerDisplay": "Ça va beaucoup bien!",
@@ -3236,21 +3232,15 @@
         "prompt": "Build: 'That’s my cousin.'",
         "words": [
           "Ça",
-          "c",
-          "'",
-          "est",
+          "c'est",
           "mon",
-          "cousin",
-          "."
+          "cousin"
         ],
         "answerTokens": [
           "Ça",
-          "c",
-          "'",
-          "est",
+          "c'est",
           "mon",
-          "cousin",
-          "."
+          "cousin"
         ],
         "answer": "Ça c'est mon cousin.",
         "answerDisplay": "Ça c'est mon cousin.",
@@ -3373,23 +3363,15 @@
         "prompt": "Build: 'My nickname is…'",
         "words": [
           "Mon",
-          "'",
-          "tit",
+          "'tit",
           "nom",
-          "c",
-          "’",
-          "est",
-          "…"
+          "c’est"
         ],
         "answerTokens": [
           "Mon",
-          "'",
-          "tit",
+          "'tit",
           "nom",
-          "c",
-          "’",
-          "est",
-          "…"
+          "c’est"
         ],
         "answer": "Mon 'tit nom c’est…",
         "answerDisplay": "Mon 'tit nom c’est…",
@@ -3450,15 +3432,13 @@
           "Je",
           "reste",
           "à",
-          "Eunice",
-          "."
+          "Eunice"
         ],
         "answerTokens": [
           "Je",
           "reste",
           "à",
-          "Eunice",
-          "."
+          "Eunice"
         ],
         "answer": "Je reste à Eunice.",
         "answerDisplay": "Je reste à Eunice.",
@@ -3649,15 +3629,13 @@
           "Je",
           "reste",
           "à",
-          "Lafayette",
-          "."
+          "Lafayette"
         ],
         "answerTokens": [
           "Je",
           "reste",
           "à",
-          "Lafayette",
-          "."
+          "Lafayette"
         ],
         "answer": "Je reste à Lafayette.",
         "answerDisplay": "Je reste à Lafayette.",
@@ -4001,21 +3979,15 @@
         "prompt": "Build: 'What’s your name?'",
         "words": [
           "Quoi",
-          "c",
-          "’",
-          "est",
+          "c’est",
           "ton",
-          "nom",
-          "?"
+          "nom"
         ],
         "answerTokens": [
           "Quoi",
-          "c",
-          "’",
-          "est",
+          "c’est",
           "ton",
-          "nom",
-          "?"
+          "nom"
         ],
         "answer": "Quoi c’est ton nom?",
         "answerDisplay": "Quoi c’est ton nom?",
@@ -4076,8 +4048,7 @@
           "parle",
           "français",
           "et",
-          "anglais",
-          "."
+          "anglais"
         ],
         "answerTokens": [
           "Ma",
@@ -4085,8 +4056,7 @@
           "parle",
           "français",
           "et",
-          "anglais",
-          "."
+          "anglais"
         ],
         "answer": "Ma famille parle français et anglais.",
         "answerDisplay": "Ma famille parle français et anglais.",
@@ -4582,16 +4552,14 @@
           "mère",
           "parle",
           "pas",
-          "français",
-          "."
+          "français"
         ],
         "answerTokens": [
           "Ma",
           "mère",
           "parle",
           "pas",
-          "français",
-          "."
+          "français"
         ],
         "answer": "Ma mère parle pas français.",
         "answerDisplay": "Ma mère parle pas français.",
@@ -4661,21 +4629,15 @@
         "prompt": "Build: 'What’s your name?'",
         "words": [
           "Quoi",
-          "c",
-          "’",
-          "est",
+          "c’est",
           "ton",
-          "nom",
-          "?"
+          "nom"
         ],
         "answerTokens": [
           "Quoi",
-          "c",
-          "’",
-          "est",
+          "c’est",
           "ton",
-          "nom",
-          "?"
+          "nom"
         ],
         "answer": "Quoi c’est ton nom?",
         "answerDisplay": "Quoi c’est ton nom?",
@@ -5848,21 +5810,15 @@
           "Il",
           "est",
           "content",
-          "d",
-          "’",
-          "être",
-          "ici",
-          "."
+          "d’être",
+          "ici"
         ],
         "answerTokens": [
           "Il",
           "est",
           "content",
-          "d",
-          "’",
-          "être",
-          "ici",
-          "."
+          "d’être",
+          "ici"
         ],
         "answer": "Il est content d’être ici.",
         "answerDisplay": "Il est content d’être ici.",
@@ -6324,24 +6280,18 @@
         "type": "sentence_build",
         "prompt": "Build: 'Are y’all brother and sister?'",
         "words": [
-          "Vous",
-          "-",
-          "autres",
+          "Vous-autres",
           "est",
           "frère",
           "et",
-          "sœur",
-          "?"
+          "sœur"
         ],
         "answerTokens": [
-          "Vous",
-          "-",
-          "autres",
+          "Vous-autres",
           "est",
           "frère",
           "et",
-          "sœur",
-          "?"
+          "sœur"
         ],
         "answer": "Vous-autres est frère et sœur?",
         "answerDisplay": "Vous-autres est frère et sœur?",
@@ -6424,21 +6374,15 @@
           "Il",
           "est",
           "content",
-          "d",
-          "’",
-          "être",
-          "ici",
-          "."
+          "d’être",
+          "ici"
         ],
         "answerTokens": [
           "Il",
           "est",
           "content",
-          "d",
-          "’",
-          "être",
-          "ici",
-          "."
+          "d’être",
+          "ici"
         ],
         "answer": "Il est content d’être ici.",
         "answerDisplay": "Il est content d’être ici.",
@@ -7219,21 +7163,15 @@
           "Il",
           "est",
           "content",
-          "d",
-          "’",
-          "être",
-          "ici",
-          "."
+          "d’être",
+          "ici"
         ],
         "answerTokens": [
           "Il",
           "est",
           "content",
-          "d",
-          "’",
-          "être",
-          "ici",
-          "."
+          "d’être",
+          "ici"
         ],
         "answer": "Il est content d’être ici.",
         "answerDisplay": "Il est content d’être ici.",
@@ -8044,28 +7982,18 @@
         "type": "sentence_build",
         "prompt": "Build: 'Y’all have a lot of money!'",
         "words": [
-          "Vous",
-          "-",
-          "autres",
+          "Vous-autres",
           "a",
           "un",
           "tas",
-          "d",
-          "’",
-          "argent",
-          "!"
+          "d’argent"
         ],
         "answerTokens": [
-          "Vous",
-          "-",
-          "autres",
+          "Vous-autres",
           "a",
           "un",
           "tas",
-          "d",
-          "’",
-          "argent",
-          "!"
+          "d’argent"
         ],
         "answer": "Vous-autres a un tas d’argent!",
         "answerDisplay": "Vous-autres a un tas d’argent!",
@@ -8086,8 +8014,7 @@
           "un",
           "tas",
           "de",
-          "cousins",
-          "!"
+          "cousins"
         ],
         "answerTokens": [
           "On",
@@ -8095,8 +8022,7 @@
           "un",
           "tas",
           "de",
-          "cousins",
-          "!"
+          "cousins"
         ],
         "answer": "On a un tas de cousins!",
         "answerDisplay": "On a un tas de cousins!",
@@ -8133,8 +8059,7 @@
           "frère",
           "et",
           "deux",
-          "sœurs",
-          "."
+          "sœurs"
         ],
         "answerTokens": [
           "Il",
@@ -8143,8 +8068,7 @@
           "frère",
           "et",
           "deux",
-          "sœurs",
-          "."
+          "sœurs"
         ],
         "answer": "Il a un frère et deux sœurs.",
         "answerDisplay": "Il a un frère et deux sœurs.",
@@ -8602,24 +8526,18 @@
         "type": "sentence_build",
         "prompt": "Build: 'I’m always hungry.'",
         "words": [
-          "J",
-          "’",
-          "ai",
+          "J’ai",
           "tout",
           "le",
           "temps",
-          "faim",
-          "."
+          "faim"
         ],
         "answerTokens": [
-          "J",
-          "’",
-          "ai",
+          "J’ai",
           "tout",
           "le",
           "temps",
-          "faim",
-          "."
+          "faim"
         ],
         "answer": "J’ai tout le temps faim.",
         "answerDisplay": "J’ai tout le temps faim.",
@@ -8682,8 +8600,7 @@
           "tout",
           "le",
           "temps",
-          "froid",
-          "."
+          "froid"
         ],
         "answerTokens": [
           "Elle",
@@ -8691,8 +8608,7 @@
           "tout",
           "le",
           "temps",
-          "froid",
-          "."
+          "froid"
         ],
         "answer": "Elle a tout le temps froid.",
         "answerDisplay": "Elle a tout le temps froid.",
@@ -8822,8 +8738,7 @@
           "café",
           "dans",
           "la",
-          "grègue",
-          "."
+          "grègue"
         ],
         "answerTokens": [
           "Y",
@@ -8832,8 +8747,7 @@
           "café",
           "dans",
           "la",
-          "grègue",
-          "."
+          "grègue"
         ],
         "answer": "Y a du café dans la grègue.",
         "answerDisplay": "Y a du café dans la grègue.",
@@ -9183,8 +9097,7 @@
           "enfants",
           "à",
           "la",
-          "porte",
-          "."
+          "porte"
         ],
         "answerTokens": [
           "Y",
@@ -9193,8 +9106,7 @@
           "enfants",
           "à",
           "la",
-          "porte",
-          "."
+          "porte"
         ],
         "answer": "Y a des enfants à la porte.",
         "answerDisplay": "Y a des enfants à la porte.",
@@ -9399,15 +9311,13 @@
           "Mon",
           "chien",
           "a",
-          "soif",
-          "."
+          "soif"
         ],
         "answerTokens": [
           "Mon",
           "chien",
           "a",
-          "soif",
-          "."
+          "soif"
         ],
         "answer": "Mon chien a soif.",
         "answerDisplay": "Mon chien a soif.",
@@ -9666,24 +9576,18 @@
         "type": "sentence_build",
         "prompt": "Build: 'I’m always hungry.'",
         "words": [
-          "J",
-          "’",
-          "ai",
+          "J’ai",
           "tout",
           "le",
           "temps",
-          "faim",
-          "."
+          "faim"
         ],
         "answerTokens": [
-          "J",
-          "’",
-          "ai",
+          "J’ai",
           "tout",
           "le",
           "temps",
-          "faim",
-          "."
+          "faim"
         ],
         "answer": "J’ai tout le temps faim.",
         "answerDisplay": "J’ai tout le temps faim.",
@@ -10077,8 +9981,7 @@
           "bien",
           "avec",
           "les",
-          "autres",
-          "."
+          "autres"
         ],
         "answerTokens": [
           "Ton",
@@ -10087,8 +9990,7 @@
           "bien",
           "avec",
           "les",
-          "autres",
-          "."
+          "autres"
         ],
         "answer": "Ton enfant joue bien avec les autres.",
         "answerDisplay": "Ton enfant joue bien avec les autres.",
@@ -10340,8 +10242,7 @@
           "bien",
           "avec",
           "les",
-          "autres",
-          "."
+          "autres"
         ],
         "answerTokens": [
           "Ton",
@@ -10350,8 +10251,7 @@
           "bien",
           "avec",
           "les",
-          "autres",
-          "."
+          "autres"
         ],
         "answer": "Ton enfant joue bien avec les autres.",
         "answerDisplay": "Ton enfant joue bien avec les autres.",
@@ -10436,16 +10336,14 @@
           "aime",
           "jouer",
           "aux",
-          "cartes",
-          "."
+          "cartes"
         ],
         "answerTokens": [
           "On",
           "aime",
           "jouer",
           "aux",
-          "cartes",
-          "."
+          "cartes"
         ],
         "answer": "On aime jouer aux cartes.",
         "answerDisplay": "On aime jouer aux cartes.",
@@ -10791,22 +10689,16 @@
           "chien",
           "aime",
           "pas",
-          "d",
-          "'",
-          "être",
-          "seul",
-          "."
+          "d'être",
+          "seul"
         ],
         "answerTokens": [
           "Mon",
           "chien",
           "aime",
           "pas",
-          "d",
-          "'",
-          "être",
-          "seul",
-          "."
+          "d'être",
+          "seul"
         ],
         "answer": "Mon chien aime pas d'être seul.",
         "answerDisplay": "Mon chien aime pas d'être seul.",
@@ -10949,8 +10841,7 @@
           "bien",
           "avec",
           "les",
-          "autres",
-          "."
+          "autres"
         ],
         "answerTokens": [
           "Ton",
@@ -10959,8 +10850,7 @@
           "bien",
           "avec",
           "les",
-          "autres",
-          "."
+          "autres"
         ],
         "answer": "Ton enfant joue bien avec les autres.",
         "answerDisplay": "Ton enfant joue bien avec les autres.",
@@ -11070,20 +10960,14 @@
           "veux",
           "un",
           "tas",
-          "d",
-          "’",
-          "argent",
-          "!"
+          "d’argent"
         ],
         "answerTokens": [
           "Je",
           "veux",
           "un",
           "tas",
-          "d",
-          "’",
-          "argent",
-          "!"
+          "d’argent"
         ],
         "answer": "Je veux un tas d’argent!",
         "answerDisplay": "Je veux un tas d’argent!",
@@ -11427,16 +11311,14 @@
           "parles",
           "bien",
           "le",
-          "français",
-          "!"
+          "français"
         ],
         "answerTokens": [
           "Tu",
           "parles",
           "bien",
           "le",
-          "français",
-          "!"
+          "français"
         ],
         "answer": "Tu parles bien le français!",
         "answerDisplay": "Tu parles bien le français!",
@@ -11471,10 +11353,7 @@
           "parler",
           "avec",
           "nos",
-          "grands",
-          "-",
-          "parents",
-          "."
+          "grands-parents"
         ],
         "answerTokens": [
           "On",
@@ -11482,10 +11361,7 @@
           "parler",
           "avec",
           "nos",
-          "grands",
-          "-",
-          "parents",
-          "."
+          "grands-parents"
         ],
         "answer": "On veut parler avec nos grands-parents.",
         "answerDisplay": "On veut parler avec nos grands-parents.",
@@ -11772,24 +11648,18 @@
         "type": "sentence_build",
         "prompt": "Build: 'I like walking with my dog.'",
         "words": [
-          "J",
-          "’",
-          "aime",
+          "J’aime",
           "marcher",
           "avec",
           "mon",
-          "chien",
-          "."
+          "chien"
         ],
         "answerTokens": [
-          "J",
-          "’",
-          "aime",
+          "J’aime",
           "marcher",
           "avec",
           "mon",
-          "chien",
-          "."
+          "chien"
         ],
         "answer": "J’aime marcher avec mon chien.",
         "answerDisplay": "J’aime marcher avec mon chien.",
@@ -11873,24 +11743,20 @@
           "chante",
           "pas",
           "bien",
-          ",",
           "mais",
           "il",
           "aime",
-          "chanter",
-          "."
+          "chanter"
         ],
         "answerTokens": [
           "Il",
           "chante",
           "pas",
           "bien",
-          ",",
           "mais",
           "il",
           "aime",
-          "chanter",
-          "."
+          "chanter"
         ],
         "answer": "Il chante pas bien, mais il aime chanter.",
         "answerDisplay": "Il chante pas bien, mais il aime chanter.",
@@ -12324,28 +12190,18 @@
         "type": "sentence_build",
         "prompt": "Build: 'You don’t like asking for help.'",
         "words": [
-          "T",
-          "’",
-          "aimes",
+          "T’aimes",
           "pas",
           "demander",
           "de",
-          "l",
-          "’",
-          "aide",
-          "."
+          "l’aide"
         ],
         "answerTokens": [
-          "T",
-          "’",
-          "aimes",
+          "T’aimes",
           "pas",
           "demander",
           "de",
-          "l",
-          "’",
-          "aide",
-          "."
+          "l’aide"
         ],
         "answer": "T’aimes pas demander de l’aide.",
         "answerDisplay": "T’aimes pas demander de l’aide.",
@@ -13672,8 +13528,7 @@
           "pas",
           "besoin",
           "de",
-          "travailler",
-          "."
+          "travailler"
         ],
         "answerTokens": [
           "Ils",
@@ -13681,8 +13536,7 @@
           "pas",
           "besoin",
           "de",
-          "travailler",
-          "."
+          "travailler"
         ],
         "answer": "Ils ont pas besoin de travailler.",
         "answerDisplay": "Ils ont pas besoin de travailler.",
@@ -14790,15 +14644,13 @@
           "Ils",
           "sont",
           "contents",
-          "asteur",
-          "."
+          "asteur"
         ],
         "answerTokens": [
           "Ils",
           "sont",
           "contents",
-          "asteur",
-          "."
+          "asteur"
         ],
         "answer": "Ils sont contents asteur.",
         "answerDisplay": "Ils sont contents asteur.",
@@ -14845,15 +14697,13 @@
           "Ils",
           "pouvont",
           "pas",
-          "danser",
-          "."
+          "danser"
         ],
         "answerTokens": [
           "Ils",
           "pouvont",
           "pas",
-          "danser",
-          "."
+          "danser"
         ],
         "answer": "Ils pouvont pas danser.",
         "answerDisplay": "Ils pouvont pas danser.",
@@ -15893,8 +15743,7 @@
           "son",
           "lit",
           "chaque",
-          "matin",
-          "."
+          "matin"
         ],
         "answerTokens": [
           "Elle",
@@ -15902,8 +15751,7 @@
           "son",
           "lit",
           "chaque",
-          "matin",
-          "."
+          "matin"
         ],
         "answer": "Elle fait son lit chaque matin.",
         "answerDisplay": "Elle fait son lit chaque matin.",
@@ -16234,8 +16082,7 @@
           "le",
           "souper",
           "ce",
-          "soir",
-          "?"
+          "soir"
         ],
         "answerTokens": [
           "Tu",
@@ -16244,8 +16091,7 @@
           "le",
           "souper",
           "ce",
-          "soir",
-          "?"
+          "soir"
         ],
         "answer": "Tu peux faire le souper ce soir?",
         "answerDisplay": "Tu peux faire le souper ce soir?",
@@ -16406,15 +16252,13 @@
           "Arrête",
           "de",
           "faire",
-          "ça",
-          "!"
+          "ça"
         ],
         "answerTokens": [
           "Arrête",
           "de",
           "faire",
-          "ça",
-          "!"
+          "ça"
         ],
         "answer": "Arrête de faire ça!",
         "answerDisplay": "Arrête de faire ça!",
@@ -16546,24 +16390,20 @@
         "words": [
           "Au",
           "printemps",
-          ",",
           "mon",
           "père",
           "fait",
           "le",
-          "jardin",
-          "."
+          "jardin"
         ],
         "answerTokens": [
           "Au",
           "printemps",
-          ",",
           "mon",
           "père",
           "fait",
           "le",
-          "jardin",
-          "."
+          "jardin"
         ],
         "answer": "Au printemps, mon père fait le jardin.",
         "answerDisplay": "Au printemps, mon père fait le jardin.",
@@ -16597,10 +16437,7 @@
           "la",
           "fête",
           "tout",
-          "l",
-          "’",
-          "été",
-          "."
+          "l’été"
         ],
         "answerTokens": [
           "Ils",
@@ -16608,10 +16445,7 @@
           "la",
           "fête",
           "tout",
-          "l",
-          "’",
-          "été",
-          "."
+          "l’été"
         ],
         "answer": "Ils font la fête tout l’été.",
         "answerDisplay": "Ils font la fête tout l’été.",
@@ -16750,15 +16584,13 @@
           "Arrête",
           "de",
           "faire",
-          "ça",
-          "!"
+          "ça"
         ],
         "answerTokens": [
           "Arrête",
           "de",
           "faire",
-          "ça",
-          "!"
+          "ça"
         ],
         "answer": "Arrête de faire ça!",
         "answerDisplay": "Arrête de faire ça!",
@@ -16818,24 +16650,20 @@
         "words": [
           "Au",
           "printemps",
-          ",",
           "mon",
           "père",
           "fait",
           "le",
-          "jardin",
-          "."
+          "jardin"
         ],
         "answerTokens": [
           "Au",
           "printemps",
-          ",",
           "mon",
           "père",
           "fait",
           "le",
-          "jardin",
-          "."
+          "jardin"
         ],
         "answer": "Au printemps, mon père fait le jardin.",
         "answerDisplay": "Au printemps, mon père fait le jardin.",
@@ -17178,16 +17006,14 @@
           "a",
           "une",
           "bonne",
-          "fraîche",
-          "."
+          "fraîche"
         ],
         "answerTokens": [
           "Y",
           "a",
           "une",
           "bonne",
-          "fraîche",
-          "."
+          "fraîche"
         ],
         "answer": "Y a une bonne fraîche.",
         "answerDisplay": "Y a une bonne fraîche.",
@@ -17381,8 +17207,7 @@
           "ouragan",
           "dans",
           "le",
-          "Golfe",
-          "."
+          "Golfe"
         ],
         "answerTokens": [
           "Y",
@@ -17391,8 +17216,7 @@
           "ouragan",
           "dans",
           "le",
-          "Golfe",
-          "."
+          "Golfe"
         ],
         "answer": "Y a un ouragan dans le Golfe.",
         "answerDisplay": "Y a un ouragan dans le Golfe.",

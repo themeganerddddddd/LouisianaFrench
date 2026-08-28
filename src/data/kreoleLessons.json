@@ -6073,14 +6073,12 @@
         "prompt": "Build: 'Yes, I like school'",
         "words": [
           "Wé",
-          ",",
           "mo",
           "linm",
           "lékòl"
         ],
         "answerTokens": [
           "Wé",
-          ",",
           "mo",
           "linm",
           "lékòl"
@@ -6381,14 +6379,12 @@
         "prompt": "Build: 'Yes, I like school'",
         "words": [
           "Wé",
-          ",",
           "mo",
           "linm",
           "lékòl"
         ],
         "answerTokens": [
           "Wé",
-          ",",
           "mo",
           "linm",
           "lékòl"
@@ -10322,8 +10318,7 @@
           "ka",
           "sèrvi",
           "tô",
-          "kòmòd",
-          "?"
+          "kòmòd"
         ],
         "answerTokens": [
           "Eske",
@@ -10331,8 +10326,7 @@
           "ka",
           "sèrvi",
           "tô",
-          "kòmòd",
-          "?"
+          "kòmòd"
         ],
         "answer": "Eske mo ka sèrvi tô kòmòd?",
         "answerDisplay": "Eske mo ka sèrvi tô kòmòd?",
@@ -10557,14 +10551,12 @@
         "words": [
           "Sô",
           "lamézon",
-          ",",
           "li",
           "nouvo"
         ],
         "answerTokens": [
           "Sô",
           "lamézon",
-          ",",
           "li",
           "nouvo"
         ],
@@ -10659,20 +10651,14 @@
         "prompt": "Build: 'Y'all's'",
         "words": [
           "Vô",
-          ",",
           "vou",
-          ",",
           "vouzòt",
-          ",",
           "zòt"
         ],
         "answerTokens": [
           "Vô",
-          ",",
           "vou",
-          ",",
           "vouzòt",
-          ",",
           "zòt"
         ],
         "answer": "Vô, vou, vouzòt, zòt",
@@ -11514,15 +11500,13 @@
           "Komen",
           "yé",
           "pèl",
-          "twa",
-          "?"
+          "twa"
         ],
         "answerTokens": [
           "Komen",
           "yé",
           "pèl",
-          "twa",
-          "?"
+          "twa"
         ],
         "answer": "Komen yé pèl twa?",
         "answerDisplay": "Komen yé pèl twa?",
@@ -13116,25 +13100,17 @@
         "prompt": "Build: 'Your grandmother did not want us to go'",
         "words": [
           "Tô",
-          "gran",
-          "-",
-          "moman",
+          "gran-moman",
           "té",
-          "p",
-          "'",
-          "olé",
+          "p'olé",
           "nou",
           "kouri"
         ],
         "answerTokens": [
           "Tô",
-          "gran",
-          "-",
-          "moman",
+          "gran-moman",
           "té",
-          "p",
-          "'",
-          "olé",
+          "p'olé",
           "nou",
           "kouri"
         ],
@@ -13231,18 +13207,14 @@
         "type": "sentence_build",
         "prompt": "Build: 'The man should not do that'",
         "words": [
-          "Nonm",
-          "-",
-          "la",
+          "Nonm-la",
           "sé",
           "pa",
           "fé",
           "ça"
         ],
         "answerTokens": [
-          "Nonm",
-          "-",
-          "la",
+          "Nonm-la",
           "sé",
           "pa",
           "fé",
@@ -13456,9 +13428,7 @@
         "type": "sentence_build",
         "prompt": "Build: 'I will never tell you a lie'",
         "words": [
-          "M",
-          "'",
-          "a",
+          "M'a",
           "jamé",
           "di",
           "twa",
@@ -13466,9 +13436,7 @@
           "menti"
         ],
         "answerTokens": [
-          "M",
-          "'",
-          "a",
+          "M'a",
           "jamé",
           "di",
           "twa",
@@ -14364,7 +14332,6 @@
         "prompt": "Build: 'No, it's not hot for me'",
         "words": [
           "Non",
-          ",",
           "çé",
           "pa",
           "sho",
@@ -14373,7 +14340,6 @@
         ],
         "answerTokens": [
           "Non",
-          ",",
           "çé",
           "pa",
           "sho",
@@ -15041,17 +15007,13 @@
         "type": "sentence_build",
         "prompt": "Build: 'The man doesn't have money'",
         "words": [
-          "Nonm",
-          "-",
-          "la",
+          "Nonm-la",
           "pa",
           "gin",
           "larjen"
         ],
         "answerTokens": [
-          "Nonm",
-          "-",
-          "la",
+          "Nonm-la",
           "pa",
           "gin",
           "larjen"
