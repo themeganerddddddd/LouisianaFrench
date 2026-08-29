@@ -114,12 +114,19 @@ def get_lesson_chunk_size(language):
     return DEFAULT_LESSON_CHUNK_SIZE
 
 
+_SENTENCE_PUNCTUATION = ".,!?…"
+
+
 def tokenize_phrase(text):
-    return re.findall(
-        r"\w+|[^\w\s]",
-        clean(text),
-        flags=re.UNICODE
-    )
+    tokens = []
+
+    for part in clean(text).split():
+        token = part.strip(_SENTENCE_PUNCTUATION)
+
+        if token:
+            tokens.append(token)
+
+    return tokens
 
 
 def count_phrase_words(text):

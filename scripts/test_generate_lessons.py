@@ -273,6 +273,73 @@ class SameMeaningLessonTests(unittest.TestCase):
         self.assertIn("Ils sont cousins.", activity["options"])
 
 
+class SentenceBuilderTokenTests(unittest.TestCase):
+    def test_keeps_contraction_as_one_word_and_drops_period(self):
+        self.assertEqual(
+            gen.tokenize_phrase("Ça c'est mon cousin."),
+            ["Ça", "c'est", "mon", "cousin"]
+        )
+
+    def test_drops_comma_chip(self):
+        self.assertEqual(
+            gen.tokenize_phrase("Sô lamézon, li nouvo"),
+            ["Sô", "lamézon", "li", "nouvo"]
+        )
+
+    def test_drops_exclamation_question_and_ellipsis(self):
+        self.assertEqual(
+            gen.tokenize_phrase("Ça va beaucoup bien!"),
+            ["Ça", "va", "beaucoup", "bien"]
+        )
+        self.assertEqual(
+            gen.tokenize_phrase(
+                "Vous-autres est frère et sœur?"
+            ),
+            [
+                "Vous-autres",
+                "est",
+                "frère",
+                "et",
+                "sœur"
+            ]
+        )
+        self.assertEqual(
+            gen.tokenize_phrase("Mon 'tit nom c’est…"),
+            ["Mon", "'tit", "nom", "c’est"]
+        )
+
+    def test_keeps_hyphenated_form_as_one_chip(self):
+        self.assertEqual(
+            gen.tokenize_phrase("Vous-autres est frère"),
+            ["Vous-autres", "est", "frère"]
+        )
+
+    def test_sentence_build_uses_space_split_tokens(self):
+        row = word_row(
+            "u02_w0009",
+            "That’s my cousin.",
+            "Ça c'est mon cousin."
+        )
+
+        activity = gen.make_sentence_build(
+            "cajun",
+            row
+        )
+
+        self.assertEqual(
+            activity["words"],
+            ["Ça", "c'est", "mon", "cousin"]
+        )
+        self.assertEqual(
+            activity["answerTokens"],
+            ["Ça", "c'est", "mon", "cousin"]
+        )
+        self.assertEqual(
+            activity["answer"],
+            "Ça c'est mon cousin."
+        )
+
+
 class SentenceBuilderEligibilityTests(unittest.TestCase):
     def test_does_not_build_sentences_shorter_than_four_words(self):
         row = word_row(
