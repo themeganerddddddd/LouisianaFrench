@@ -400,6 +400,8 @@ def attach_row_metadata(
 
     variant_alt_response = clean(
         row.get("variant_alt_response", "")
+        or row.get("alt_variant_text", "")
+        or row.get("alt_variant", "")
     )
 
     if extra_details:
@@ -895,6 +897,8 @@ def row_has_display_metadata(row):
         or clean(row.get("context_badge"))
         or clean(row.get("english_alt_response"))
         or clean(row.get("variant_alt_response"))
+        or clean(row.get("alt_variant_text"))
+        or clean(row.get("alt_variant"))
     )
 
 
@@ -1911,6 +1915,14 @@ def row_to_vocab_card(row):
     variant_alt_response = clean(
         row.get(
             "variant_alt_response",
+            ""
+        )
+        or row.get(
+            "alt_variant_text",
+            ""
+        )
+        or row.get(
+            "alt_variant",
             ""
         )
     )

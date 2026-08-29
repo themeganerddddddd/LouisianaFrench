@@ -1,9 +1,9 @@
-import { createCatalog } from '../catalog';
 import {
   compactCatalogLessons,
   compactCatalogPrefaces,
   compactCatalogSource
 } from '../../test/fixtures/catalog/compactCatalog';
+import { createCatalog } from '../catalog';
 
 function createSource(lessonsByLanguage) {
   return {
@@ -35,7 +35,7 @@ describe('createCatalog', () => {
   it.each([
     [
       'cajun',
-      'Greetings & Check-ins',
+      'Greetings & Politeness',
       ['fixture_cajun_u01_l01', 'fixture_cajun_u01_review']
     ],
     [
@@ -72,7 +72,7 @@ describe('createCatalog', () => {
         lessonId: 'fixture_cajun_u01_l01',
         lessonTitle: 'First greetings',
         unit: 'u01',
-        unitTitle: 'Greetings & Check-ins'
+        unitTitle: 'Greetings & Politeness'
       })
     );
     expect(catalog.getAllActivities('kreole').map((activity) => activity.lessonId)).toEqual([
@@ -86,7 +86,7 @@ describe('createCatalog', () => {
     [
       'cajun',
       ['fixture_cajun_w01', 'fixture_cajun_w02', 'fixture_cajun_w03', 'fixture_cajun_w04'],
-      'Greetings & Check-ins'
+      'Greetings & Politeness'
     ],
     [
       'kreole',

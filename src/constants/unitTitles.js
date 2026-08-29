@@ -1,10 +1,12 @@
 export const UNIT_TITLES = {
   cajun: {
-    u01: 'Greetings & Check-ins',
+    u01: 'Greetings & Politeness',
     u02: 'Names & Introductions',
-    u03: 'To Be & To Have',
-    u04: 'Wanting & Being Able',
-    u05: 'Doing & Everyday Actions'
+    u03: 'To Be & Adjectives',
+    u04: 'To Have & Expressions',
+    u05: 'ER verbs & Preferences',
+    u06: 'Pronoun “They” & To Be Able To',
+    u07: 'To Do/Make & Expressions'
   },
   kreole: {
     u01: "Greetings & Check-ins",
