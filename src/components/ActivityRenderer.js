@@ -80,6 +80,12 @@ function normalizeText(str) {
     .trim();
 }
 
+function canonicalizeTextAnswer(str) {
+  return normalizeText(str)
+    .replace(/\bje suis\b/g, 'jsus')
+    .replace(/\bje sus\b/g, 'jsus');
+}
+
 function makeWordBank(answer) {
   return shuffle(
     String(answer || '')
@@ -266,15 +272,15 @@ function getAcceptedVariantAlts(activity) {
 }
 
 function isTextAnswerCorrect(value, activity) {
-  const normalizedValue = normalizeText(value);
-  const normalizedMain = normalizeText(activity?.answer);
+  const normalizedValue = canonicalizeTextAnswer(value);
+  const normalizedMain = canonicalizeTextAnswer(activity?.answer);
 
   if (normalizedValue === normalizedMain) {
     return true;
   }
 
   return getAcceptedVariantAlts(activity).some(
-    (alt) => normalizeText(alt) === normalizedValue
+    (alt) => canonicalizeTextAnswer(alt) === normalizedValue
   );
 }
 
