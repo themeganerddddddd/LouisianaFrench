@@ -22,7 +22,7 @@ describe('alternativeAudio', () => {
 
     const lookup = getTargetAudioLookup('cajun');
 
-    expect(lookup.get('Bonjour!')).toBe('u01_w0001_cajun');
+    expect(lookup.get('Bonjour!')).toBe('u01_w0001_lf');
     expect(lookup.get('Ça va?')).toBe('u01_w0003_lf');
   });
 

@@ -1,9 +1,9 @@
 import {
-  getLessonsByLanguage,
-  getLessonById,
-  getUnits,
   getAllActivities,
-  getAllWords
+  getAllWords,
+  getLessonById,
+  getLessonsByLanguage,
+  getUnits
 } from '../lessonLoader';
 
 const baseActivityTypes = [
@@ -26,10 +26,10 @@ const languages = [
       id: 'cajun_u01_l01',
       unit: 'u01'
     },
-    audioWord: {
-      rowId: 'u01_w0002',
-      audioKey: 'u01_w00002_cajun'
-    }
+audioWord: {
+  rowId: 'u01_w0002',
+  audioKey: 'u01_w0002_lf'
+}
   },
   {
     language: 'kreole',

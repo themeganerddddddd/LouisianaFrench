@@ -246,11 +246,23 @@ function parseVariantAlts(raw) {
     return quoted;
   }
 
-  if (text.includes(',')) {
-    return text.split(',').map((item) => item.trim()).filter(Boolean);
-  }
+  return text
+    .split(/\s*(?:,|;|\||\/|\n)\s*/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
-  return [text];
+function getAcceptedVariantAlts(activity) {
+  return [
+    activity?.variantAltResponse,
+    activity?.altVariantText,
+    activity?.altVariant,
+    activity?.variant_alt_response,
+    activity?.alt_variant_text,
+    activity?.alt_variant
+  ]
+    .flatMap(parseVariantAlts)
+    .filter(Boolean);
 }
 
 function isTextAnswerCorrect(value, activity) {
@@ -261,7 +273,7 @@ function isTextAnswerCorrect(value, activity) {
     return true;
   }
 
-  return parseVariantAlts(activity?.variantAltResponse).some(
+  return getAcceptedVariantAlts(activity).some(
     (alt) => normalizeText(alt) === normalizedValue
   );
 }
@@ -1347,22 +1359,11 @@ function Typing({
 
   const { playAudioKey, playFeedback } = useAudio(language);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (activity.audioKey) {
-        playAudioKey(activity.audioKey);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [activity.audioKey, playAudioKey]);
-
   const wordBank = useMemo(
     () => makeWordBank(activity.answer),
     [activity.answer]
   );
 
-  const englishText = getPrimaryEnglish(activity);
   const targetText = getPrimaryTarget(activity);
   const promptText = getPromptDisplay(activity);
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
@@ -1373,10 +1374,6 @@ function Typing({
         ? `${prev.trim()} ${word}`
         : word
     );
-
-    if (activity.audioKey) {
-      playAudioKey(activity.audioKey);
-    }
   }
 
   function checkAnswer() {
@@ -1384,6 +1381,9 @@ function Typing({
 
     if (isTextAnswerCorrect(value, activity)) {
       playFeedback('correct');
+      if (activity.audioKey) {
+        playAudioKey(activity.audioKey);
+      }
       setState('correct');
     } else {
       playFeedback('wrong');
@@ -1423,29 +1423,6 @@ function Typing({
       <Text style={styles.prompt}>
         {promptText}
       </Text>
-
-      {activity.audioKey ? (
-        <TouchableOpacity
-          style={[
-            styles.targetTapCard,
-            { backgroundColor: theme.light }
-          ]}
-          onPress={() => playAudioKey(activity.audioKey)}
-        >
-          <Text
-            style={[
-              styles.targetTapText,
-              { color: theme.text }
-            ]}
-          >
-            Tap to hear the word
-          </Text>
-
-          <Text style={styles.targetTapSub}>
-            {englishText}
-          </Text>
-        </TouchableOpacity>
-      ) : null}
 
       <TextInput
         placeholder="Type your answer"
@@ -1893,40 +1870,29 @@ function MatchPairs({
       ?.audioKey;
   }
 
-  function checkPair() {
-    if (
-      !selectedLeft ||
-      !selectedRight
-    ) {
+  function evaluatePair(leftValue, rightValue) {
+    if (!leftValue || !rightValue || state !== 'idle') {
       return;
     }
 
-    const pair =
-      activity.pairs?.find(
-        (p) =>
-          p.left === selectedLeft
-      );
+    const pair = activity.pairs?.find(
+      (p) => p.left === leftValue
+    );
 
-    if (
-      pair?.right === selectedRight
-    ) {
+    if (pair?.right === rightValue) {
       const nextMatches = [
         ...matches,
         {
-          left: selectedLeft,
-          right: selectedRight
+          left: leftValue,
+          right: rightValue
         }
       ];
 
       setMatches(nextMatches);
       setSelectedLeft(null);
       setSelectedRight(null);
-      setState('idle');
 
-      if (
-        nextMatches.length ===
-        activity.pairs.length
-      ) {
+      if (nextMatches.length === activity.pairs.length) {
         playFeedback('correct');
         setState('correct');
       }
@@ -1937,8 +1903,34 @@ function MatchPairs({
     }
   }
 
+  function selectLeft(item) {
+    if (isMatchedLeft(item) || isLocked(state)) return;
+
+    setSelectedLeft(item);
+
+    if (selectedRight) {
+      evaluatePair(item, selectedRight);
+    }
+  }
+
+  function selectRight(item) {
+    if (isMatchedRight(item) || isLocked(state)) return;
+
+    setSelectedRight(item);
+
+    const key = rightAudioKey(item);
+    if (key) {
+      playAudioKey(key);
+    }
+
+    if (selectedLeft) {
+      evaluatePair(selectedLeft, item);
+    }
+  }
+
   function resetWrong() {
     setState('idle');
+    setSelectedLeft(null);
     setSelectedRight(null);
   }
 
@@ -1960,6 +1952,10 @@ function MatchPairs({
 
       <Text style={styles.prompt}>
         {activity.prompt}
+      </Text>
+
+      <Text style={styles.matchInstruction}>
+        Tap one item in each column. Each pair checks immediately.
       </Text>
 
       <View style={styles.matchGrid}>
@@ -2001,9 +1997,9 @@ function MatchPairs({
                     !leftMatched &&
                     styles.optionLocked
                 ]}
-                onPress={() =>
-                  setSelectedLeft(leftItem)
-                }
+                onPress={() => selectLeft(leftItem)}
+                accessibilityRole="button"
+                accessibilityLabel={leftItem}
               >
                 <Text style={styles.matchText}>
                   {leftItem}
@@ -2027,16 +2023,9 @@ function MatchPairs({
                     !rightMatched &&
                     styles.optionLocked
                 ]}
-                onPress={() => {
-                  setSelectedRight(rightItem);
-
-                  const key =
-                    rightAudioKey(rightItem);
-
-                  if (key) {
-                    playAudioKey(key);
-                  }
-                }}
+                onPress={() => selectRight(rightItem)}
+                accessibilityRole="button"
+                accessibilityLabel={rightItem}
               >
                 <Text style={styles.matchText}>
                   {rightItem}
@@ -2046,33 +2035,6 @@ function MatchPairs({
           );
         })}
       </View>
-
-      {state === 'idle' ? (
-        <TouchableOpacity
-          style={[
-            styles.primaryBtn,
-            {
-              backgroundColor: theme.accent
-            },
-            (
-              !selectedLeft ||
-              !selectedRight
-            ) &&
-              styles.primaryBtnDisabled
-          ]}
-          disabled={
-            !selectedLeft ||
-            !selectedRight
-          }
-          onPress={checkPair}
-          accessibilityRole="button"
-          accessibilityLabel="Check matches"
-        >
-          <Text style={styles.primaryBtnText}>
-            Check
-          </Text>
-        </TouchableOpacity>
-      ) : null}
 
       {allowSkip && state === 'idle' ? (
         <SkipQuestionButton
@@ -2391,6 +2353,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#94A3B8',
     fontWeight: '800'
+  },
+
+  matchInstruction: {
+    textAlign: 'center',
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: -2,
+    marginBottom: 14
   },
 
   matchGrid: {

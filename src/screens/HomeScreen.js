@@ -470,7 +470,11 @@ export default function HomeScreen() {
             >
               <Image
                 testID="home-pelican-image"
-                source={require('../../assets/images/pelicanicon.png')}
+                source={
+                  language === 'kreole'
+                    ? require('../../assets/images/kreolelogo.png')
+                    : require('../../assets/images/pelicanicon.png')
+                }
                 style={styles.pelicanImage}
               />
             </Pressable>
@@ -807,7 +811,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 12,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#FFFFFF',
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
@@ -843,7 +847,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 38,
     borderRadius: 4,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#FFFFFF'
   },
 

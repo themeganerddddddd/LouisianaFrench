@@ -30,7 +30,7 @@ function statusColor(status) {
   return '#64748B';
 }
 
-export default function DictionaryScreen({ route }) {
+export default function DictionaryScreen({ route, navigation }) {
   const { language } = route.params;
   const [query, setQuery] = useState('');
   const [allWords, setAllWords] = useState([]);
@@ -108,10 +108,31 @@ export default function DictionaryScreen({ route }) {
   return (
     <SafeScreenView style={styles.container} testID="dictionary-screen">
       <View style={styles.header}>
-        <Text style={styles.title}>
-          {language === 'cajun' ? 'French Dictionary' : 'Kouri-Vini Dictionary'}
-        </Text>
-        <Text style={styles.sub}>Browse every word introduced in the course</Text>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={[
+              styles.homeButton,
+              { backgroundColor: language === 'kreole' ? '#E7F5EE' : '#EAF3FF' }
+            ]}
+            onPress={() => navigation.replace('Home', { language })}
+            accessibilityRole="button"
+            accessibilityLabel="Back to Home"
+            testID="dictionary-home-button"
+          >
+            <Ionicons
+              name="home"
+              size={21}
+              color={language === 'kreole' ? '#066B3F' : '#2771CB'}
+            />
+          </TouchableOpacity>
+
+          <View style={styles.headerText}>
+            <Text style={styles.title}>
+              {language === 'cajun' ? 'French Dictionary' : 'Kouri-Vini Dictionary'}
+            </Text>
+            <Text style={styles.sub}>Browse every word introduced in the course</Text>
+          </View>
+        </View>
       </View>
 
       <View style={styles.searchWrap}>
@@ -200,6 +221,15 @@ export default function DictionaryScreen({ route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: { paddingTop: 20, paddingHorizontal: 18, paddingBottom: 10 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerText: { flex: 1 },
+  homeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   title: { fontSize: 28, fontWeight: '900', color: '#17324D' },
   sub: { color: '#64748B', marginTop: 6, fontWeight: '600' },
   searchWrap: { paddingHorizontal: 18, paddingBottom: 10 },
