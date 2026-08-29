@@ -6,8 +6,8 @@ import {
   activityByCardId,
   lessonById
 } from '../../test/fixtures/catalog/activities';
-import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBuilder';
 import { clock } from '../../test/fixtures/clock';
+import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBuilder';
 import {
   completedLessons,
   dailyReviewLogs,
@@ -23,14 +23,14 @@ import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as homeProjection from '../../utils/homeProjection';
 import {
-  getDefaultLanguage,
   getDailyReviewLog,
-  getPendingMistakes,
-  getProfile,
+  getDefaultLanguage,
   getLanguageDailyReviewLog,
   getLastWorkedUnit,
-  getTodayPractice,
+  getPendingMistakes,
+  getProfile,
   getTodayKey,
+  getTodayPractice,
   hasSelectedLanguage,
   markLanguageSelected,
   setDefaultLanguage
@@ -391,6 +391,7 @@ describe('HomeScreen', () => {
     expect(mistakes.props.accessibilityState).toEqual({ disabled: false });
     expect(screen.getByTestId('mistakes-count')).toHaveTextContent('1');
   });
+
   it('positions the top bar below the device safe area', async () => {
     renderApp({
       initialRouteName: 'Home',
@@ -463,7 +464,7 @@ describe('HomeScreen', () => {
       width: 42,
       height: 42,
       borderRadius: 12,
-      borderWidth: 2,
+      borderWidth: 1,
       borderColor: '#FFFFFF',
       overflow: 'hidden',
       backgroundColor: '#FFFFFF'
@@ -473,7 +474,7 @@ describe('HomeScreen', () => {
       width: 60,
       height: 38,
       borderRadius: 4,
-      borderWidth: 2,
+      borderWidth: 1,
       borderColor: '#FFFFFF'
     });
     expect(screen.queryAllByTestId('home-language-flag-image').length).toBe(1);
@@ -498,11 +499,10 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Dictionary')).toBeOnTheScreen();
     expect(screen.getByText('Hub')).toBeOnTheScreen();
     expect(
-      within(screen.getByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+      within(screen.getByTestId('unit-toggle-u01')).getByText('Greetings & Politeness')
     ).toBeOnTheScreen();
     expect(screen.getByText('First greetings')).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
-
   });
 
   it('opens the catalog navigator after ten T-Boy taps', async () => {
@@ -566,7 +566,7 @@ describe('HomeScreen', () => {
       expect(screen.getByTestId('review-count')).toHaveTextContent('4');
       expect(screen.getByTestId('mistakes-count')).toHaveTextContent('2');
       expect(screen.getByText('Projected lesson')).toBeOnTheScreen();
-      expect(screen.queryByText('Greetings & Check-ins')).toBeNull();
+      expect(screen.queryByText('Greetings & Politeness')).toBeNull();
       expect(getProjection).toHaveBeenCalledWith('cajun');
     } finally {
       getProjection.mockRestore();
@@ -605,7 +605,7 @@ describe('HomeScreen', () => {
       overflow: 'hidden'
     });
     expect(within(currentUnit).getByText('Unit 1')).toBeOnTheScreen();
-    expect(within(currentUnit).getByText('Greetings & Check-ins')).toBeOnTheScreen();
+    expect(within(currentUnit).getByText('Greetings & Politeness')).toBeOnTheScreen();
     expect(within(currentUnit).getByText('1 / 2 words · 1 / 2 lessons')).toBeOnTheScreen();
     expect(screen.getByTestId('home-current-unit-progress')).toHaveStyle({
       width: '50%',
@@ -964,7 +964,7 @@ describe('HomeScreen', () => {
     });
 
     expect(
-      within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+      within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Politeness')
     ).toBeOnTheScreen();
     expect(screen.getAllByText('First greetings')).toHaveLength(1);
     expect(screen.getByTestId('unit-toggle-u01').props.accessibilityState).toEqual({
@@ -1010,7 +1010,7 @@ describe('HomeScreen', () => {
       });
 
       expect(
-        within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Check-ins')
+        within(await screen.findByTestId('unit-toggle-u01')).getByText('Greetings & Politeness')
       ).toBeOnTheScreen();
       expect(configureNext).not.toHaveBeenCalled();
 
@@ -1497,7 +1497,7 @@ describe('HomeScreen', () => {
         ],
         activeAction: null,
         allDone: true
-    }));
+      }));
 
     try {
       const activeRender = renderApp({ initialRouteName: 'Home', initialParams: { language } });

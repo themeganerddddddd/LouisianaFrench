@@ -396,24 +396,26 @@ export default function MistakeReviewScreen({
           </View>
         </View>
 
-        <ActivityRenderer
-          key={`${current.cardId}-mistake-${queueRevision}`}
-          activity={
-            current
-          }
-          language={
-            language
-          }
-          onCorrect={
-            handleCorrect
-          }
-          onWrong={
-            handleWrong
-          }
-          allowSkip={
-            false
-          }
-        />
+        <View style={styles.questionShell}>
+          <ActivityRenderer
+            key={`${current.cardId}-mistake-${queueRevision}`}
+            activity={
+              current
+            }
+            language={
+              language
+            }
+            onCorrect={
+              handleCorrect
+            }
+            onWrong={
+              handleWrong
+            }
+            allowSkip={
+              false
+            }
+          />
+        </View>
       </View>
     </SafeScreenView>
   );
@@ -430,6 +432,15 @@ const styles =
     inner: {
       flex: 1,
       padding: 18
+    },
+
+    questionShell: {
+      flex: 1,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: '#FED7AA',
+      overflow: 'hidden'
     },
 
     reviewHeader: {

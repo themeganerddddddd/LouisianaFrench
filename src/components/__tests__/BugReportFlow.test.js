@@ -92,13 +92,14 @@ describe('BugReportButton', () => {
     expect(await screen.findByText(/Tell us what went wrong/)).toBeOnTheScreen();
   });
 
-  it('uses #6D28D9 accent for kreole language', () => {
+  it('uses a deep Kouri-Vini green accent for kreole language', () => {
     render(
       <BugReportButton screenName="Advanced" language="kreole" />
     );
 
     const button = screen.getByLabelText('Report a bug');
-    expect(button).toHaveStyle({ backgroundColor: '#6D28D9' });
+    expect(button).toHaveStyle({ backgroundColor: '#065F3B' });
+    expect(screen.getByTestId('bug-report-icon')).toBeOnTheScreen();
   });
 
   it('renders a text-only Home control without the exclamation icon', () => {

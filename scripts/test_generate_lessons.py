@@ -408,5 +408,16 @@ class LongSentenceTests(unittest.TestCase):
         )
 
 
+class VariantAlternativeMetadataTests(unittest.TestCase):
+    def test_alt_variant_text_alias_is_preserved_for_spelling_acceptance(self):
+        row = word_row("w1", "to go", "alé")
+        row.pop("variant_alt_response")
+        row["alt_variant_text"] = "ale"
+
+        activity = gen.make_typing("cajun", row)
+
+        self.assertEqual(activity["variantAltResponse"], "ale")
+
+
 if __name__ == "__main__":
     unittest.main()
