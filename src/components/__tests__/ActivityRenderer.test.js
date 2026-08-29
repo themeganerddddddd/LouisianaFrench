@@ -99,6 +99,64 @@ describe('ActivityRenderer requested interaction behavior', () => {
     expect(await screen.findByText('Correct!')).toBeOnTheScreen();
   });
 
+  it('accepts Je suis as a correct spelling of j’sus', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ActivityRenderer
+        language="cajun"
+        activity={{
+          cardId: 'test:typing-je-suis',
+          type: 'typing',
+          prompt: "Type: 'I am'",
+          english: 'I am',
+          answer: 'j’sus',
+          answerDisplay: 'j’sus'
+        }}
+        onCorrect={jest.fn()}
+        onWrong={jest.fn()}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText('Type your answer'),
+      'Je suis'
+    );
+
+    await user.press(screen.getByText('Check'));
+
+    expect(await screen.findByText('Correct!')).toBeOnTheScreen();
+  });
+
+  it('accepts Je suis inside a sentence whose answer uses j’sus', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ActivityRenderer
+        language="cajun"
+        activity={{
+          cardId: 'test:typing-je-suis-sentence',
+          type: 'typing',
+          prompt: "Type: 'I’m free Saturday.'",
+          english: 'I’m free Saturday.',
+          answer: 'J’sus libre samedi.',
+          answerDisplay: 'J’sus libre samedi.'
+        }}
+        onCorrect={jest.fn()}
+        onWrong={jest.fn()}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText('Type your answer'),
+      'Je suis libre samedi.'
+    );
+
+    await user.press(screen.getByText('Check'));
+
+    expect(await screen.findByText('Correct!')).toBeOnTheScreen();
+  });
+
   it('does not play typing audio while word-bank buttons are pressed and plays it only after a correct answer', async () => {
     const user = userEvent.setup();
 
