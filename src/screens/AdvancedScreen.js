@@ -1,10 +1,10 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import BugReportButton from '../components/BugReportButton';
 import SafeScreenView from '../components/SafeScreenView';
-import SpeechPracticePrototype from './prototypes/SpeechPracticePrototype';
+import SpeechPracticeScreen, { SPEECH_WORD_LIMIT } from './SpeechPracticeScreen';
 
-export default function AdvancedScreen({ route }) {
-  const { language } = route.params;
+export default function AdvancedScreen({ route, navigation }) {
+  const { language, scored } = route.params ?? {};
 
   return (
     <SafeScreenView style={styles.container}>
@@ -14,7 +14,12 @@ export default function AdvancedScreen({ route }) {
             {language === 'cajun' ? 'Advanced French Hub' : 'Advanced Kouri-Vini Hub'}
           </Text>
         </View>
-        <SpeechPracticePrototype language={language} />
+        <SpeechPracticeScreen
+          language={language}
+          scored={scored}
+          wordLimit={SPEECH_WORD_LIMIT}
+          onComplete={() => navigation.replace('Home', { language })}
+        />
       </ScrollView>
       <BugReportButton screenName="Advanced" language={language} />
     </SafeScreenView>

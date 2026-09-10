@@ -446,7 +446,8 @@ describe('getHomeProjection', () => {
       label: 'Practice Speech',
       destination: 'Advanced',
       params: {
-        language: 'cajun'
+        language: 'cajun',
+        scored: true
       }
     });
 
@@ -514,7 +515,8 @@ describe('getHomeProjection', () => {
       label: 'Practice Speech',
       destination: 'Advanced',
       params: {
-        language: 'kreole'
+        language: 'kreole',
+        scored: true
       }
     });
   });

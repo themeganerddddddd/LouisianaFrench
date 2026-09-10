@@ -128,7 +128,7 @@ function actionFor(index, language, reviewMinutes, nextLesson, pendingCount) {
       kind: 'speech',
       label: 'Practice Speech',
       destination: 'Advanced',
-      params: { language }
+      params: { language, scored: true }
     };
   }
 
