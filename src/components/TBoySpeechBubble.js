@@ -7,7 +7,8 @@ markdownIt.set({ html: false, linkify: false });
 const bubbleHeading = {
   fontSize: 15,
   lineHeight: 22,
-  fontWeight: '800'
+  fontWeight: '800',
+  justifyContent: 'center'
 };
 
 const markdownStyles = StyleSheet.create({
@@ -19,7 +20,8 @@ const markdownStyles = StyleSheet.create({
   },
   paragraph: {
     marginTop: 0,
-    marginBottom: 0
+    marginBottom: 0,
+    justifyContent: 'center'
   },
   heading1: bubbleHeading,
   heading2: bubbleHeading,
@@ -48,6 +50,9 @@ const markdownStyles = StyleSheet.create({
     color: '#334E68',
     textDecorationLine: 'none',
     fontWeight: '600'
+  },
+  textgroup: {
+    textAlign: 'center'
   }
 });
 
@@ -174,6 +179,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     fontWeight: '800',
-    marginBottom: 4
+    marginBottom: 4,
+    textAlign: 'center'
   }
 });
