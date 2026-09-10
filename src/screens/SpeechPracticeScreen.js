@@ -1,5 +1,3 @@
-// PROTOTYPE: self-reviewed speaking practice. This is deliberately isolated
-// from Lesson scoring and Learner Progress until its behavior is understood.
 import { Audio } from 'expo-av';
 import {
   RecordingPresets,
@@ -10,20 +8,27 @@ import {
 } from 'expo-audio';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { getAudioSource } from '../../data/audioManifest';
-import { getAllWords } from '../../data/lessonLoader';
-import { recordPracticeCompletion } from '../../utils/storage';
+import { getAudioSource } from '../data/audioManifest';
+import { getAllWords } from '../data/lessonLoader';
+import { recordPracticeCompletion, recordStudyAndXp } from '../utils/storage';
 
 const MIN_ATTEMPT_MS = 600;
+export const SPEECH_WORD_LIMIT = 5;
 const INITIAL_STATUS = 'Play the speaker, then record yourself saying the same phrase.';
 
-export default function SpeechPracticePrototype({ language }) {
-  const prototypeWords = useMemo(
+export default function SpeechPracticeScreen({
+  language,
+  scored = false,
+  wordLimit = SPEECH_WORD_LIMIT,
+  onComplete
+}) {
+  const practiceWords = useMemo(
     () => getAllWords(language).filter((word) => word.audioKey),
     [language]
   );
   const [wordIndex, setWordIndex] = useState(0);
-  const prototypeWord = prototypeWords[wordIndex % prototypeWords.length];
+  const [acceptedCount, setAcceptedCount] = useState(0);
+  const practiceWord = practiceWords[wordIndex % practiceWords.length];
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(recorder, 100);
   const isRecording = recorderState.isRecording;
@@ -40,7 +45,7 @@ export default function SpeechPracticePrototype({ language }) {
     setAttemptDurationMs(null);
     setHasReviewedAttempt(false);
     setStatus(INITIAL_STATUS);
-  }, [prototypeWord?.audioKey]);
+  }, [practiceWord?.audioKey]);
 
   useEffect(() => {
     return () => {
@@ -130,27 +135,40 @@ export default function SpeechPracticePrototype({ language }) {
 
   async function acceptAttempt() {
     setBusy(true);
-    await recordPracticeCompletion(language, 'speech');
+    if (scored) {
+      await recordStudyAndXp(1);
+      if (acceptedCount + 1 >= wordLimit) {
+        await recordPracticeCompletion(language, 'speech');
+        setBusy(false);
+        onComplete?.();
+        return;
+      }
+      setAcceptedCount(acceptedCount + 1);
+    } else {
+      await recordPracticeCompletion(language, 'speech');
+    }
     setLearnerUri(null);
     setAttemptDurationMs(null);
     setHasReviewedAttempt(false);
     setStatus(INITIAL_STATUS);
-    setWordIndex((index) => (index + 1) % prototypeWords.length);
+    setWordIndex((index) => (index + 1) % practiceWords.length);
     setBusy(false);
   }
 
   const accent = language === 'kreole' ? '#08834c' : '#2771CB';
 
-  if (!prototypeWord) {
-    return <Text style={styles.status}>No Word with Audio is available for this prototype.</Text>;
+  if (!practiceWord) {
+    return <Text style={styles.status}>No Word with Audio is available for this language.</Text>;
   }
 
   return (
     <View style={styles.card}>
-      <Text style={styles.phrase}>{prototypeWord.target}</Text>
-      <Text style={styles.translation}>{prototypeWord.english}</Text>
+      <Text style={styles.phrase}>{practiceWord.target}</Text>
+      <Text style={styles.translation}>{practiceWord.english}</Text>
       <Text style={styles.progress}>
-        Phrase {wordIndex + 1}/{prototypeWords.length}
+        {scored
+          ? `Attempt ${acceptedCount + 1}/${wordLimit}`
+          : `Phrase ${wordIndex + 1}/${practiceWords.length}`}
       </Text>
       <Text style={styles.explanation}>
         Pronunciation is not graded. Make an attempt, listen to it, and decide when you are
@@ -159,7 +177,7 @@ export default function SpeechPracticePrototype({ language }) {
 
       <TouchableOpacity
         style={[styles.secondaryButton, { borderColor: accent }]}
-        onPress={() => play(getAudioSource(language, prototypeWord.audioKey))}
+        onPress={() => play(getAudioSource(language, practiceWord.audioKey))}
         disabled={busy || isRecording}
       >
         <Text style={[styles.secondaryButtonText, { color: accent }]}>Play Audio</Text>
