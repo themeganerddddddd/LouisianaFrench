@@ -1,4 +1,4 @@
-import { Image, Linking } from 'react-native';
+import { Image, Linking, StyleSheet, Text, View } from 'react-native';
 import { render, screen } from '@testing-library/react-native';
 import TBoySpeechBubble from '../TBoySpeechBubble';
 
@@ -11,6 +11,20 @@ function renderBubble(props = {}) {
       {...props}
     />
   );
+}
+
+function getCenteredParagraphViews() {
+  return screen.UNSAFE_getAllByType(View).filter(v => {
+    const flat = StyleSheet.flatten(v.props.style);
+    return flat && flat.justifyContent === 'center' && flat.flexDirection === 'row';
+  });
+}
+
+function getCenteredTextGroups() {
+  return screen.UNSAFE_getAllByType(Text).filter(t => {
+    const flat = StyleSheet.flatten(t.props.style);
+    return flat && Object.keys(flat).length === 1 && flat.textAlign === 'center';
+  });
 }
 
 describe('TBoySpeechBubble', () => {
@@ -76,6 +90,39 @@ describe('TBoySpeechBubble', () => {
     expect(bubbleBody).toHaveTextContent('See this note.');
     expect(bubbleBody).not.toHaveTextContent('https://example.com/note');
     expect(Linking.openURL).not.toHaveBeenCalled();
+  });
+
+  it('renders the heading centered', () => {
+    renderBubble({
+      heading: 'Vocabulary tip',
+      headingTestID: 'tboy-heading'
+    });
+
+    expect(screen.getByTestId('tboy-heading')).toHaveStyle({
+      textAlign: 'center'
+    });
+  });
+
+  it('renders plain-text body centered via paragraph justifyContent', () => {
+    renderBubble({ body: 'Helpful context' });
+
+    const centered = getCenteredParagraphViews();
+    expect(centered.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders markdown inline content centered via paragraph justifyContent', () => {
+    renderBubble({ body: 'Use **bold** and `code`.' });
+
+    const centered = getCenteredParagraphViews();
+    expect(centered.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders list item paragraphs centered via justifyContent', () => {
+    renderBubble({ body: '- First note\n- Second note' });
+
+    // List items use textgroup Text nodes (column-flex parent stretches to full width)
+    const centered = getCenteredTextGroups();
+    expect(centered.length).toBe(2);
   });
 
   it('does not render Catalog images', () => {
