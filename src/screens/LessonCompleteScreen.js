@@ -42,21 +42,6 @@ export default function LessonCompleteScreen({ route, navigation }) {
           >
             <Text style={styles.primaryText}>Back to Home</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.secondaryBtn,
-              {
-                backgroundColor:
-                  language === 'kreole' ? '#DDF3E8' : '#EAF3FF'
-              }
-            ]}
-            onPress={() => navigation.navigate('Leaderboard')}
-          >
-            <Text style={[styles.secondaryText, { color: accent }]}>
-              Open Leaderboard (WIP)
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -161,21 +146,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '900',
     fontSize: 16
-  },
-
-  secondaryBtn: {
-    marginTop: 12,
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    width: '100%',
-    alignItems: 'center'
-  },
-
-  secondaryText: {
-    color: '#2771CB',
-    fontWeight: '900',
-    fontSize: 16,
-    textAlign: 'center'
   }
 });

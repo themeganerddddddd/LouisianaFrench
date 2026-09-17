@@ -1915,7 +1915,7 @@ describe('LessonCompleteScreen', () => {
     expect(screen.getByText('⚡ 30')).toBeOnTheScreen();
     expect(screen.getByText('📝 1')).toBeOnTheScreen();
     expect(screen.getByText('🔥 Streak: 2')).toBeOnTheScreen();
-    expect(screen.getByText('Open Leaderboard (WIP)')).toBeOnTheScreen();
+    expect(screen.queryByText('Open Leaderboard (WIP)')).toBeNull();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
 
     await user.press(screen.getByText('Back to Home'));
