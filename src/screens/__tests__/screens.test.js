@@ -2102,11 +2102,35 @@ describe('AdvancedScreen', () => {
     });
 
     expect(screen.getByText('Advanced Kouri-Vini Hub')).toHaveStyle({ textAlign: 'center' });
+    expect(screen.getByTestId('advanced-home-button')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Back to Home')).toBeOnTheScreen();
     expect(screen.queryByText('Experimental speaking drills')).toBeNull();
     expect(screen.queryByText('Self-reviewed speech practice prototype')).toBeNull();
     expect(screen.getByText('Play Audio')).toBeOnTheScreen();
     expect(screen.getByText('Record')).toBeOnTheScreen();
     expect(screen.getByText(/Pronunciation is not graded/)).toBeOnTheScreen();
     expect(screen.getByLabelText('Report a bug')).toBeOnTheScreen();
+  });
+
+  it('returns to Home for both Languages from the hub home control', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Advanced',
+      initialParams: { language: 'kreole' }
+    });
+
+    expect(screen.getByText('Advanced Kouri-Vini Hub')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('advanced-home-button'));
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+
+    renderApp({
+      initialRouteName: 'Advanced',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(screen.getByText('Advanced French Hub')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('advanced-home-button'));
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
   });
 });
