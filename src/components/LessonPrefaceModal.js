@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
 const tBoyImage = require('../../assets/images/mainscreen.png');
@@ -20,6 +21,7 @@ export default function LessonPrefaceModal({
   onClose,
   accentColor
 }) {
+  const insets = useSafeAreaInsets();
   const [showingDetails, setShowingDetails] = useState(false);
 
   const isStart = mode === 'start';
@@ -41,7 +43,10 @@ export default function LessonPrefaceModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={styles.overlay}>
+      <View
+        testID="preface-overlay"
+        style={[styles.overlay, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
+      >
         {!showingDetails ? (
           /* ---- Summary view (centered) ---- */
           <ScrollView

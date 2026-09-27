@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openBugReportEmail, validateBugReportForm } from '../utils/bugReport';
 import { collectDeviceInfo } from '../utils/deviceInfo';
 
@@ -25,6 +26,7 @@ const CONSENT_FIELDS = [
 ];
 
 export default function BugReportFlow({ visible, onClose, screenName, language, accentColor }) {
+  const insets = useSafeAreaInsets();
   const [stage, setStage] = useState('form');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -110,7 +112,7 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
   }
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <View style={styles.overlay}>
+      <View testID="bug-report-overlay" style={[styles.overlay, { paddingBottom: insets.bottom + 14 }]}>
         <View style={styles.sheet}>
           {stage === 'form' && (
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
