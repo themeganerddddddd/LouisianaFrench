@@ -35,6 +35,15 @@
         {
           "microphonePermission": "Allow Louisiana Languages to record pronunciation practice."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": false
+          }
+        }
       ]
     ]
   }
