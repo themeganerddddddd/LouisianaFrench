@@ -1,6 +1,12 @@
-import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AccessibilityInfo, BackHandler, LayoutAnimation, StyleSheet } from 'react-native';
+import {
+  AccessibilityInfo,
+  BackHandler,
+  DeviceEventEmitter,
+  LayoutAnimation,
+  StyleSheet
+} from 'react-native';
 
 import {
   activityByCardId,
@@ -408,24 +414,58 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-status-bar').props.style).toBe('light');
   });
 
-  it('keeps the scroll content and bug report sheet above the device bottom inset', async () => {
-    const user = setupUser();
-    renderApp({
-      initialRouteName: 'Home',
-      initialParams: { language: 'cajun' },
-      safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
+  describe.each([
+    ['a bottom inset', FULL_SCREEN_PHONE_METRICS],
+    ['no insets', { ...FULL_SCREEN_PHONE_METRICS, insets: { top: 0, right: 0, bottom: 0, left: 0 } }]
+  ])('on a phone with %s', (_label, safeAreaMetrics) => {
+    const { insets } = safeAreaMetrics;
+
+    async function openBugReport() {
+      const user = setupUser();
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' }, safeAreaMetrics });
+      await screen.findByText('Louisiana French');
+      await user.press(screen.getByLabelText('Report a bug'));
+      return screen.getByTestId('bug-report-overlay');
+    }
+
+    it('keeps the scroll content and bug report sheet above the bottom inset', async () => {
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' }, safeAreaMetrics });
+      await screen.findByText('Louisiana French');
+
+      expect(
+        StyleSheet.flatten(screen.getByTestId('home-scroll').props.contentContainerStyle)
+      ).toMatchObject({ paddingBottom: insets.bottom + 14 });
+      screen.unmount();
+
+      expect(await openBugReport()).toHaveStyle({ paddingBottom: insets.bottom + 14 });
     });
 
-    await screen.findByText('Louisiana French');
+    it('lifts the bug report sheet 14dp above the open keyboard', async () => {
+      const screenHeight = safeAreaMetrics.frame.height;
+      const keyboardTop = 615;
+      const overlay = await openBugReport();
 
-    expect(
-      StyleSheet.flatten(screen.getByTestId('home-scroll').props.contentContainerStyle)
-    ).toMatchObject({ paddingBottom: FULL_SCREEN_PHONE_METRICS.insets.bottom + 14 });
+      fireEvent(overlay, 'layout', {
+        persist: () => {},
+        nativeEvent: { layout: { x: 0, y: 0, width: 412, height: screenHeight } }
+      });
+      act(() => {
+        const endCoordinates = {
+          screenX: 0,
+          screenY: keyboardTop,
+          width: 412,
+          height: screenHeight - keyboardTop
+        };
+        DeviceEventEmitter.emit('keyboardWillShow', { endCoordinates });
+        DeviceEventEmitter.emit('keyboardDidShow', { endCoordinates });
+      });
 
-    await user.press(screen.getByLabelText('Report a bug'));
-
-    expect(screen.getByTestId('bug-report-overlay')).toHaveStyle({
-      paddingBottom: FULL_SCREEN_PHONE_METRICS.insets.bottom + 14
+      await waitFor(() => {
+        const { height, paddingBottom } = StyleSheet.flatten(
+          screen.getByTestId('bug-report-overlay').props.style
+        );
+        expect(height - paddingBottom).toBe(keyboardTop - 14);
+      });
     });
   });
 
@@ -1701,17 +1741,20 @@ describe('LessonRunner', () => {
       expect(screen.getByText('Before you begin')).toBeOnTheScreen();
     });
 
-    it('keeps the preface clear of the device top and bottom insets', async () => {
+    it.each([
+      ['device insets', FULL_SCREEN_PHONE_METRICS.insets],
+      ['no insets', { top: 0, right: 0, bottom: 0, left: 0 }]
+    ])('keeps the preface clear of the top and bottom insets with %s', async (_label, insets) => {
       renderApp({
         initialRouteName: 'Lesson',
         initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' },
-        safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
+        safeAreaMetrics: { ...FULL_SCREEN_PHONE_METRICS, insets }
       });
 
       expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
       expect(screen.getByTestId('preface-overlay')).toHaveStyle({
-        paddingTop: FULL_SCREEN_PHONE_METRICS.insets.top + 20,
-        paddingBottom: FULL_SCREEN_PHONE_METRICS.insets.bottom + 20
+        paddingTop: insets.top + 20,
+        paddingBottom: insets.bottom + 20
       });
     });
 
