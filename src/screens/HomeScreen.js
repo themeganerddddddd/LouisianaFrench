@@ -570,7 +570,10 @@ export default function HomeScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        testID="home-scroll"
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 14 }]}
+      >
         {plan ? (
           <TodaysPlan
             plan={plan}

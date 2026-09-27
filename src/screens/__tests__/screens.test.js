@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
+import { AccessibilityInfo, BackHandler, LayoutAnimation, StyleSheet } from 'react-native';
 
 import {
   activityByCardId,
@@ -406,6 +406,27 @@ describe('HomeScreen', () => {
       paddingBottom: 20
     });
     expect(screen.getByTestId('home-status-bar').props.style).toBe('light');
+  });
+
+  it('keeps the scroll content and bug report sheet above the device bottom inset', async () => {
+    const user = setupUser();
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
+    });
+
+    await screen.findByText('Louisiana French');
+
+    expect(
+      StyleSheet.flatten(screen.getByTestId('home-scroll').props.contentContainerStyle)
+    ).toMatchObject({ paddingBottom: FULL_SCREEN_PHONE_METRICS.insets.bottom + 14 });
+
+    await user.press(screen.getByLabelText('Report a bug'));
+
+    expect(screen.getByTestId('bug-report-overlay')).toHaveStyle({
+      paddingBottom: FULL_SCREEN_PHONE_METRICS.insets.bottom + 14
+    });
   });
 
   it('keeps the dashboard controls available at mobile and desktop render widths', async () => {
@@ -1678,6 +1699,20 @@ describe('LessonRunner', () => {
       expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
       expect(screen.getByText('0 / 1')).toBeOnTheScreen();
       expect(screen.getByText('Before you begin')).toBeOnTheScreen();
+    });
+
+    it('keeps the preface clear of the device top and bottom insets', async () => {
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' },
+        safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
+      });
+
+      expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
+      expect(screen.getByTestId('preface-overlay')).toHaveStyle({
+        paddingTop: FULL_SCREEN_PHONE_METRICS.insets.top + 20,
+        paddingBottom: FULL_SCREEN_PHONE_METRICS.insets.bottom + 20
+      });
     });
 
     it('dismisses the preface and renders the first Activity on "Start lesson"', async () => {
