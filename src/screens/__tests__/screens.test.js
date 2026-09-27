@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
+import { AccessibilityInfo, BackHandler, LayoutAnimation, StyleSheet } from 'react-native';
 
 import {
   activityByCardId,
@@ -63,6 +63,20 @@ const LANDSCAPE_PHONE_METRICS = {
   frame: { x: 0, y: 0, width: 915, height: 412 },
   insets: { top: 0, right: 24, bottom: 21, left: 38 }
 };
+
+// A ScrollView only scrolls when every ancestor up to the screen root bounds its height.
+function expectScrollBoundedByScreen(scroll, screenRoot) {
+  expect(scroll.type).toBe('RCTScrollView');
+  expect(scroll.props.scrollEnabled).not.toBe(false);
+
+  for (let node = scroll.parent; node !== screenRoot; node = node.parent) {
+    if (!node) throw new Error('The ScrollView is not inside the screen root.');
+    if (typeof node.type === 'string') {
+      expect(StyleSheet.flatten(node.props.style)).toMatchObject({ flex: 1 });
+    }
+  }
+  expect(StyleSheet.flatten(screenRoot.props.style)).toMatchObject({ flex: 1 });
+}
 
 function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 91 } = {}) {
   return {
@@ -195,14 +209,15 @@ describe('LanguageSelectScreen', () => {
     });
 
     const { insets } = LANDSCAPE_PHONE_METRICS;
-    expect(screen.getByTestId('language-select-safe-area')).toHaveStyle({
+    const safeArea = screen.getByTestId('language-select-safe-area');
+    expect(safeArea).toHaveStyle({
       paddingTop: insets.top,
       paddingRight: insets.right,
       paddingBottom: insets.bottom,
       paddingLeft: insets.left
     });
     const scroll = screen.getByTestId('language-select-scroll');
-    expect(scroll.type).toBe('RCTScrollView');
+    expectScrollBoundedByScreen(scroll, safeArea);
     expect(within(scroll).getByText('French')).toBeOnTheScreen();
     expect(within(scroll).getByText('Kouri-Vini')).toBeOnTheScreen();
 
@@ -1646,7 +1661,7 @@ describe('LessonRunner', () => {
     expect(screen.getByText('2 / 4')).toBeOnTheScreen();
   });
 
-  it('bounds the Activity to the Lesson area so its own scroll can reach Continue', async () => {
+  it('bounds the Activity scroll by the Lesson screen so it can reach Continue', async () => {
     renderApp({
       initialRouteName: 'Lesson',
       initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u01_l01' },
@@ -1654,7 +1669,10 @@ describe('LessonRunner', () => {
     });
 
     expect(await screen.findByText('New word')).toBeOnTheScreen();
-    expect(screen.getByTestId('lesson-activity')).toHaveStyle({ flex: 1 });
+    const lessonScreen = screen.getByTestId('lesson-screen');
+    const [activityScroll] = lessonScreen.findAll((node) => node.type === 'RCTScrollView');
+    expectScrollBoundedByScreen(activityScroll, lessonScreen);
+    expect(within(activityScroll).getByText('Continue')).toBeOnTheScreen();
   });
 
   it('reaches MistakeReview after two wrong answers and completes after correction', async () => {
@@ -1978,7 +1996,7 @@ describe('LessonCompleteScreen', () => {
     });
 
     const scroll = screen.getByTestId('lesson-complete-scroll');
-    expect(scroll.type).toBe('RCTScrollView');
+    expectScrollBoundedByScreen(scroll, screen.getByTestId('lesson-complete-screen'));
     await user.press(within(scroll).getByText('Back to Home'));
     expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
   });

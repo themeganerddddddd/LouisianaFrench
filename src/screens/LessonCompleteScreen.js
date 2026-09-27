@@ -8,7 +8,10 @@ export default function LessonCompleteScreen({ route, navigation }) {
   const softBackground = language === 'kreole' ? '#E7F5EE' : '#EFF6FF';
 
   return (
-    <SafeScreenView style={[styles.container, { backgroundColor: softBackground }]}>
+    <SafeScreenView
+      style={[styles.container, { backgroundColor: softBackground }]}
+      testID="lesson-complete-screen"
+    >
       <ScrollView contentContainerStyle={styles.content} testID="lesson-complete-scroll">
         <View style={styles.card}>
           <Image

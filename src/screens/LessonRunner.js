@@ -560,6 +560,7 @@ export default function LessonRunner({
 
   return (
     <SafeScreenView
+      testID="lesson-screen"
       style={
         styles.container
       }
@@ -602,7 +603,6 @@ export default function LessonRunner({
 
         {!prefaceVisible ? (
           <Animated.View
-            testID="lesson-activity"
             style={{
               flex: 1,
 

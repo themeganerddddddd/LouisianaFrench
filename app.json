@@ -39,6 +39,7 @@
       "bugReportEmail": "louisianafrenchsupport@gmail.com"
     },
     "plugins": [
+      "./plugins/withConfigChanges",
       [
         "expo-audio",
         {
