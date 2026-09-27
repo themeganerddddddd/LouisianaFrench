@@ -602,7 +602,10 @@ export default function LessonRunner({
 
         {!prefaceVisible ? (
           <Animated.View
+            testID="lesson-activity"
             style={{
+              flex: 1,
+
               opacity:
                 fadeAnim,
 

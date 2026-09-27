@@ -59,6 +59,11 @@ const FULL_SCREEN_PHONE_METRICS = {
   insets: { top: 38, right: 0, bottom: 24, left: 0 }
 };
 
+const LANDSCAPE_PHONE_METRICS = {
+  frame: { x: 0, y: 0, width: 915, height: 412 },
+  insets: { top: 0, right: 24, bottom: 21, left: 38 }
+};
+
 function projectionFixture({ language = 'cajun', title = 'Projected Unit', xp = 91 } = {}) {
   return {
     language,
@@ -180,6 +185,30 @@ describe('LanguageSelectScreen', () => {
     expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
     expect(await getDefaultLanguage()).toBe('cajun');
     expect(await hasSelectedLanguage()).toBe(true);
+  });
+
+  it('keeps both Languages scrollable inside the safe area in phone landscape', async () => {
+    const user = setupUser();
+    renderApp({
+      initialRouteName: 'LanguageSelect',
+      safeAreaMetrics: LANDSCAPE_PHONE_METRICS
+    });
+
+    const { insets } = LANDSCAPE_PHONE_METRICS;
+    expect(screen.getByTestId('language-select-safe-area')).toHaveStyle({
+      paddingTop: insets.top,
+      paddingRight: insets.right,
+      paddingBottom: insets.bottom,
+      paddingLeft: insets.left
+    });
+    const scroll = screen.getByTestId('language-select-scroll');
+    expect(scroll.type).toBe('RCTScrollView');
+    expect(within(scroll).getByText('French')).toBeOnTheScreen();
+    expect(within(scroll).getByText('Kouri-Vini')).toBeOnTheScreen();
+
+    await user.press(within(scroll).getByText('Kouri-Vini'));
+
+    expect(await getDefaultLanguage()).toBe('kreole');
   });
 });
 
@@ -1617,6 +1646,17 @@ describe('LessonRunner', () => {
     expect(screen.getByText('2 / 4')).toBeOnTheScreen();
   });
 
+  it('bounds the Activity to the Lesson area so its own scroll can reach Continue', async () => {
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u01_l01' },
+      safeAreaMetrics: LANDSCAPE_PHONE_METRICS
+    });
+
+    expect(await screen.findByText('New word')).toBeOnTheScreen();
+    expect(screen.getByTestId('lesson-activity')).toHaveStyle({ flex: 1 });
+  });
+
   it('reaches MistakeReview after two wrong answers and completes after correction', async () => {
     const user = setupUser();
     const lesson = lessonById('fixture_cajun_u02_l01');
@@ -1920,6 +1960,27 @@ describe('LessonCompleteScreen', () => {
 
     await user.press(screen.getByText('Back to Home'));
     expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+  });
+
+  it('keeps Back to Home scrollable in phone landscape', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'LessonComplete',
+      initialParams: {
+        lessonTitle: 'Greetings & Check-ins — First greetings',
+        xpEarned: 30,
+        mistakesCount: 1,
+        streak: 2,
+        language: 'kreole'
+      },
+      safeAreaMetrics: LANDSCAPE_PHONE_METRICS
+    });
+
+    const scroll = screen.getByTestId('lesson-complete-scroll');
+    expect(scroll.type).toBe('RCTScrollView');
+    await user.press(within(scroll).getByText('Back to Home'));
+    expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
   });
 });
 
