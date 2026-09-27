@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 const path = require('path');
-const { getConfig } = require('@expo/config');
+const { getConfig } = require('expo/config');
 
 describe('Expo app config', () => {
   const projectRoot = path.dirname(require.resolve('../../app.json'));
