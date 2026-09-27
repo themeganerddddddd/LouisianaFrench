@@ -4,7 +4,6 @@ import {
   Animated,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -112,28 +111,33 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
   }
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <View testID="bug-report-overlay" style={[styles.overlay, { paddingBottom: insets.bottom + 14 }]}>
+      {/* The Modal window is edge-to-edge, so Android does not resize it for the keyboard.
+          The offset stops the bottom inset from adding a gap above the keyboard. */}
+      <KeyboardAvoidingView
+        behavior="height"
+        keyboardVerticalOffset={-insets.bottom}
+        testID="bug-report-overlay"
+        style={[styles.overlay, { paddingBottom: insets.bottom + 14 }]}
+      >
         <View style={styles.sheet}>
           {stage === 'form' && (
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-                <Text style={styles.heading}>Report a bug</Text>
-                <Text style={styles.subtitle}>Tell us what went wrong.</Text>
-                <Text style={styles.label}>Name</Text>
-                <TextInput ref={nameInputRef} style={[styles.input, errors.name && styles.inputError]} placeholder="Your name" value={name} onChangeText={setName} accessibilityLabel="Bug report name" />
-                {errors.name && <Text style={styles.fieldError}>{errors.name}</Text>}
-                <Text style={styles.label}>Email</Text>
-                <TextInput ref={emailInputRef} style={[styles.input, errors.email && styles.inputError]} placeholder="you@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" accessibilityLabel="Bug report email" />
-                {errors.email && <Text style={styles.fieldError}>{errors.email}</Text>}
-                <Text style={styles.label}>What happened?</Text>
-                <TextInput ref={descInputRef} style={[styles.input, styles.textArea, errors.description && styles.inputError]} placeholder={'Describe the bug or issue\u2026'} value={description} onChangeText={setDescription} multiline accessibilityLabel="Bug report description" />
-                {errors.description && <Text style={styles.fieldError}>{errors.description}</Text>}
-                <View style={styles.actions}>
-                  <ActionButton label="Cancel" onPress={handleClose} accessibilityLabel="Cancel bug report" />
-                  <ActionButton label="Submit" primary onPress={handleSubmit} accessibilityLabel="Submit bug report" />
-                </View>
-              </ScrollView>
-            </KeyboardAvoidingView>
+            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+              <Text style={styles.heading}>Report a bug</Text>
+              <Text style={styles.subtitle}>Tell us what went wrong.</Text>
+              <Text style={styles.label}>Name</Text>
+              <TextInput ref={nameInputRef} style={[styles.input, errors.name && styles.inputError]} placeholder="Your name" value={name} onChangeText={setName} accessibilityLabel="Bug report name" />
+              {errors.name && <Text style={styles.fieldError}>{errors.name}</Text>}
+              <Text style={styles.label}>Email</Text>
+              <TextInput ref={emailInputRef} style={[styles.input, errors.email && styles.inputError]} placeholder="you@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" accessibilityLabel="Bug report email" />
+              {errors.email && <Text style={styles.fieldError}>{errors.email}</Text>}
+              <Text style={styles.label}>What happened?</Text>
+              <TextInput ref={descInputRef} style={[styles.input, styles.textArea, errors.description && styles.inputError]} placeholder={'Describe the bug or issue\u2026'} value={description} onChangeText={setDescription} multiline accessibilityLabel="Bug report description" />
+              {errors.description && <Text style={styles.fieldError}>{errors.description}</Text>}
+              <View style={styles.actions}>
+                <ActionButton label="Cancel" onPress={handleClose} accessibilityLabel="Cancel bug report" />
+                <ActionButton label="Submit" primary onPress={handleSubmit} accessibilityLabel="Submit bug report" />
+              </View>
+            </ScrollView>
           )}
           {stage === 'consent' && (
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
@@ -169,7 +173,7 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
             </View>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
