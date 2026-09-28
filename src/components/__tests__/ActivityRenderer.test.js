@@ -217,7 +217,7 @@ describe('ActivityRenderer requested interaction behavior', () => {
       renderTyping();
       await jest.advanceTimersByTimeAsync(500);
 
-      await user.press(screen.getByText('Tap to hear the word'));
+      await user.press(screen.getByRole('button', { name: 'Play the word' }));
 
       expect(wordAudioPlayers()).toHaveLength(2);
     });
@@ -240,6 +240,7 @@ describe('ActivityRenderer requested interaction behavior', () => {
       await jest.advanceTimersByTimeAsync(1000);
       expect(createAudioPlayer).toHaveBeenCalledTimes(2);
       expect(wordAudioPlayers()).toHaveLength(1);
+      expect(wordAudioPlayers()[0].remove).not.toHaveBeenCalled();
     });
 
     it('does not autoplay again after Try Again', async () => {
@@ -293,6 +294,37 @@ describe('ActivityRenderer requested interaction behavior', () => {
 
       expect(player.remove).toHaveBeenCalledTimes(1);
       expect(createAudioPlayer).toHaveBeenCalledTimes(1);
+    });
+
+    it('plays one sound when the learner taps Tap to hear the word while the autoplay is still loading', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const { unmount } = renderTyping();
+      await jest.advanceTimersByTimeAsync(500);
+
+      await user.press(screen.getByRole('button', { name: 'Play the word' }));
+      const [autoplay, tap] = wordAudioPlayers();
+
+      expect(autoplay.remove).toHaveBeenCalledTimes(1);
+      expect(autoplay.remove.mock.invocationCallOrder[0])
+        .toBeLessThan(tap.play.mock.invocationCallOrder[0]);
+      expect(tap.play).toHaveBeenCalledTimes(1);
+      expect(tap.remove).not.toHaveBeenCalled();
+
+      unmount();
+
+      expect(tap.remove).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not autoplay when the learner answers before 500ms', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      renderTyping();
+
+      await user.type(screen.getByPlaceholderText('Type your answer'), 'Bonjour ami');
+      await user.press(screen.getByText('Check'));
+      expect(await screen.findByText('Correct!')).toBeOnTheScreen();
+      await jest.advanceTimersByTimeAsync(1000);
+
+      expect(wordAudioPlayers()).toHaveLength(0);
     });
   });
 

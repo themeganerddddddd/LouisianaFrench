@@ -1361,11 +1361,18 @@ function Typing({
   const [hintLevel, setHintLevel] = useState(0);
 
   const { playAudioKey, playFeedback } = useAudio(language);
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     if (!activity.audioKey) return undefined;
 
-    const timer = setTimeout(() => playAudioKey(activity.audioKey), 500);
+    const timer = setTimeout(() => {
+      if (stateRef.current === 'idle') playAudioKey(activity.audioKey);
+    }, 500);
     return () => clearTimeout(timer);
   }, [activity.audioKey, playAudioKey]);
 
@@ -1439,6 +1446,8 @@ function Typing({
             { backgroundColor: theme.light }
           ]}
           onPress={() => playAudioKey(activity.audioKey)}
+          accessibilityRole="button"
+          accessibilityLabel="Play the word"
         >
           <Text
             style={[
