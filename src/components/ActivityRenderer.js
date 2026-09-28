@@ -30,15 +30,25 @@ function shuffle(arr, randomFn = Math.random) {
 function makeMatchColumns(pairs = []) {
   const safePairs = Array.isArray(pairs) ? pairs : [];
 
-  const leftItems = shuffle(safePairs.map((p) => p.left));
-  let rightItems = shuffle(safePairs.map((p) => p.right));
+  const leftItems = shuffle(
+    safePairs.map((pair, pairIndex) => ({
+      id: `left:${pairIndex}`,
+      value: pair.left,
+      pairIndex
+    }))
+  );
+  let rightItems = shuffle(
+    safePairs.map((pair, pairIndex) => ({
+      id: `right:${pairIndex}`,
+      value: pair.right,
+      pairIndex
+    }))
+  );
 
   function hasDirectMatch(leftList, rightList) {
-    return rightList.some((rightValue, index) => {
-      const leftValue = leftList[index];
-      const matchingPair = safePairs.find((p) => p.left === leftValue);
-      return matchingPair?.right === rightValue;
-    });
+    return rightList.some(
+      (rightItem, index) => leftList[index]?.pairIndex === rightItem.pairIndex
+    );
   }
 
   if (safePairs.length > 1) {
@@ -1866,28 +1876,20 @@ function MatchPairs({
   }
 
   function rightAudioKey(item) {
-    return activity.pairs
-      ?.find(
-        (p) => p.right === item
-      )
-      ?.audioKey;
+    return activity.pairs?.[item.pairIndex]?.audioKey;
   }
 
-  function evaluatePair(leftValue, rightValue) {
-    if (!leftValue || !rightValue || state !== 'idle') {
+  function evaluatePair(leftItem, rightItem) {
+    if (!leftItem || !rightItem || state !== 'idle') {
       return;
     }
 
-    const pair = activity.pairs?.find(
-      (p) => p.left === leftValue
-    );
-
-    if (pair?.right === rightValue) {
+    if (leftItem.pairIndex === rightItem.pairIndex) {
       const nextMatches = [
         ...matches,
         {
-          left: leftValue,
-          right: rightValue
+          left: leftItem,
+          right: rightItem
         }
       ];
 
@@ -1981,7 +1983,7 @@ function MatchPairs({
           return (
             <View
               style={styles.matchRow}
-              key={`${leftItem}-${rightItem}-${rowIndex}`}
+              key={`${leftItem.id}-${rightItem.id}`}
             >
               <TouchableOpacity
                 disabled={
@@ -2002,10 +2004,10 @@ function MatchPairs({
                 ]}
                 onPress={() => selectLeft(leftItem)}
                 accessibilityRole="button"
-                accessibilityLabel={leftItem}
+                accessibilityLabel={leftItem.value}
               >
                 <Text style={styles.matchText}>
-                  {leftItem}
+                  {leftItem.value}
                 </Text>
               </TouchableOpacity>
 
@@ -2028,10 +2030,10 @@ function MatchPairs({
                 ]}
                 onPress={() => selectRight(rightItem)}
                 accessibilityRole="button"
-                accessibilityLabel={rightItem}
+                accessibilityLabel={rightItem.value}
               >
                 <Text style={styles.matchText}>
-                  {rightItem}
+                  {rightItem.value}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -2063,7 +2065,7 @@ function MatchPairs({
           onWrong(
             state === 'skipped'
               ? '__skipped__'
-              : `${selectedLeft || ''} ↔ ${selectedRight || ''}`
+              : `${selectedLeft?.value || ''} ↔ ${selectedRight?.value || ''}`
           )
         }
         altContent={
