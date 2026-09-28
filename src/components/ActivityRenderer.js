@@ -1362,11 +1362,19 @@ function Typing({
 
   const { playAudioKey, playFeedback } = useAudio(language);
 
+  useEffect(() => {
+    if (!activity.audioKey) return undefined;
+
+    const timer = setTimeout(() => playAudioKey(activity.audioKey), 500);
+    return () => clearTimeout(timer);
+  }, [activity.audioKey, playAudioKey]);
+
   const wordBank = useMemo(
     () => makeWordBank(activity.answer),
     [activity.answer]
   );
 
+  const englishText = getPrimaryEnglish(activity);
   const targetText = getPrimaryTarget(activity);
   const promptText = getPromptDisplay(activity);
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
@@ -1426,6 +1434,29 @@ function Typing({
       <Text style={styles.prompt}>
         {promptText}
       </Text>
+
+      {activity.audioKey ? (
+        <TouchableOpacity
+          style={[
+            styles.targetTapCard,
+            { backgroundColor: theme.light }
+          ]}
+          onPress={() => playAudioKey(activity.audioKey)}
+        >
+          <Text
+            style={[
+              styles.targetTapText,
+              { color: theme.text }
+            ]}
+          >
+            Tap to hear the word
+          </Text>
+
+          <Text style={styles.targetTapSub}>
+            {englishText}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       <TextInput
         placeholder="Type your answer"
