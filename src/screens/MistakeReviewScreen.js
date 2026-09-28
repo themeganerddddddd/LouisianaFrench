@@ -18,6 +18,10 @@ import {
 import SafeScreenView from '../components/SafeScreenView';
 
 import {
+  updateCardReview
+} from '../utils/spacedRepetition';
+
+import {
   getPendingMistakes,
   recordPracticeCompletion,
   recordStudyAndXp,
@@ -216,6 +220,11 @@ export default function MistakeReviewScreen({
       : 0;
 
   async function handleCorrect() {
+    await updateCardReview(
+      current.cardId,
+      4
+    );
+
     await removePendingMistake(
       language,
       current.cardId
