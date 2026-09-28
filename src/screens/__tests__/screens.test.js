@@ -10,9 +10,11 @@ import { clock } from '../../test/fixtures/clock';
 import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBuilder';
 import {
   completedLessons,
+  dailyReviewLogs,
   homeProjectionProgress,
   lastWorkedUnits,
   pendingMistakes,
+  practiceLogs,
   profiles,
   reviewStates,
   wordMastery
@@ -452,6 +454,33 @@ describe('HomeScreen', () => {
     const reviewStep = await screen.findByTestId('home-plan-step-review');
     expect(within(reviewStep).getByText('Review')).toBeOnTheScreen();
     expect(reviewStep).toBeEnabled();
+  });
+
+  it.each([
+    ['nothing is due and the Lesson is done', {}, '1 of 2 done'],
+    [
+      'nothing is due and every planned step is done',
+      { practiceLog: { cajun: practiceLogs.todaySpeech } },
+      '2 of 2 done'
+    ],
+    [
+      'Review and every other step are done',
+      {
+        practiceLog: { cajun: practiceLogs.todaySpeech },
+        dailyReviewLogV2Cajun: dailyReviewLogs.today
+      },
+      '3 of 3 done'
+    ]
+  ])('shows the returning-day status when %s', async (_state, progress, status) => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.establishedLessonToday,
+      ...progress
+    });
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent(status);
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName(status);
   });
 
   it('enables first-day Mistakes only for an active-Language pending Card', async () => {

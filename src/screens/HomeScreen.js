@@ -62,7 +62,7 @@ function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
       <View style={styles.planHeader}>
         <Text testID="home-plan-title" style={styles.planTitle}>{"Today's plan"}</Text>
         <Text testID="home-plan-status" style={[styles.planStatus, { color: theme.planSoft }]}>
-          {firstDay ? 'Day 1' : `${plan.completedCount} of 3 done`}
+          {firstDay ? 'Day 1' : `${plan.completedCount} of ${plan.totalCount} done`}
         </Text>
       </View>
 
