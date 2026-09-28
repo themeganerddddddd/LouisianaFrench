@@ -65,11 +65,15 @@ export default function DailyReviewScreen({
 
   useEffect(() => {
     async function init() {
-      setQueue(
-        await getDailyReviewQueue(
-          language
-        )
-      );
+      try {
+        setQueue(
+          await getDailyReviewQueue(
+            language
+          )
+        );
+      } catch {
+        setQueue([]);
+      }
       setLoading(false);
     }
 

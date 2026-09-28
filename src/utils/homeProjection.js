@@ -187,6 +187,9 @@ export async function getHomeProjection(language) {
     (rowId) => (wordProgress[`${language}:${rowId}`]?.seen || 0) > 0
   ).length;
   const reviewMinutes = Math.max(1, Math.ceil(reviewQueue.length / 3));
+  const reviewStep = reviewComplete || reviewQueue.length
+    ? { id: 'review', label: 'Review', complete: reviewComplete }
+    : { id: 'review', label: 'Nothing to review today', complete: false, excluded: true };
   const steps = firstDay
     ? [
         {
@@ -199,10 +202,10 @@ export async function getHomeProjection(language) {
           label: 'Lesson',
           complete: catalogComplete || history.completedToday >= 2
         },
-        { id: 'review', label: 'Review', complete: reviewComplete }
+        reviewStep
       ]
     : [
-        { id: 'review', label: 'Review', complete: reviewComplete },
+        reviewStep,
         {
           id: 'lesson',
           label: 'Lesson',
@@ -210,7 +213,8 @@ export async function getHomeProjection(language) {
         },
         { id: 'practice', label: pendingCount ? 'Mistakes' : 'Speech', complete: practiceComplete }
       ];
-  const firstIncomplete = steps.findIndex((step) => !step.complete);
+  const plannedSteps = steps.filter((step) => !step.excluded);
+  const firstIncomplete = steps.findIndex((step) => !step.complete && !step.excluded);
   const nextLesson = currentUnit?.nextLesson || null;
   const helperText = firstDay
     ? "Reviews unlock once you've learned new words."
@@ -243,7 +247,8 @@ export async function getHomeProjection(language) {
     },
     plan: {
       steps,
-      completedCount: steps.filter((step) => step.complete).length,
+      completedCount: plannedSteps.filter((step) => step.complete).length,
+      totalCount: plannedSteps.length,
       activeAction,
       helperText,
       allDone: firstIncomplete < 0
