@@ -524,7 +524,10 @@ describe('getHomeProjection', () => {
   it('keeps Language data independent while returning the same sanitized structure', async () => {
     getUnits.mockImplementation(catalogLessons);
     getAllWords.mockImplementation(catalogWords);
-    getProfile.mockResolvedValue(profiles.fresh);
+    getProfile.mockImplementation(
+      async (language) =>
+        language === 'kreole' ? profiles.kouriVini : profiles.fresh
+    );
     getLessonProgress.mockResolvedValue({});
     getWordProgress.mockResolvedValue({});
     getPendingMistakes.mockImplementation(
@@ -550,8 +553,10 @@ describe('getHomeProjection', () => {
     expect(cajun.firstDay).toBe(true);
     expect(cajun.plan.steps[2].complete).toBe(true);
     expect(cajun.dashboard.pendingMistakeCount).toBe(0);
+    expect(cajun.dashboard).toEqual(expect.objectContaining({ xp: 0, streak: 0 }));
 
     expect(kreole.language).toBe('kreole');
+    expect(kreole.dashboard).toEqual(expect.objectContaining({ xp: 12, streak: 5 }));
     expect(kreole.firstDay).toBe(true);
     expect(kreole.plan.steps[2].complete).toBe(false);
     expect(kreole.dashboard.pendingMistakeCount).toBe(1);

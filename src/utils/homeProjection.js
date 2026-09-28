@@ -154,7 +154,7 @@ export async function getHomeProjection(language) {
     reviewQueue, pendingMistakes, todayPractice, today] = await Promise.all([
     getUnits(language),
     getAllWords(language),
-    getProfile(),
+    getProfile(language),
     getLessonProgress(),
     getWordProgress(),
     getLanguageDailyReviewLog(language),

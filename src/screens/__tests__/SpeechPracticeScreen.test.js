@@ -70,7 +70,7 @@ describe('speech practice screen', () => {
       for (let i = 0; i < 4; i += 1) {
         await completeOneAttempt();
         expect(recordStudyAndXp).toHaveBeenCalledTimes(i + 1);
-        expect(recordStudyAndXp).toHaveBeenLastCalledWith(1);
+        expect(recordStudyAndXp).toHaveBeenLastCalledWith('cajun', 1);
       }
 
       await completeOneAttempt({ expectReset: false });
