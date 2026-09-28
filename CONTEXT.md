@@ -28,7 +28,7 @@ An ordered learning session within a Unit, containing Activities and introducing
 _Avoid_: Level
 
 **Daily Review**:
-A learner session assembled from due Cards and weak Words across Units.
+A learner session assembled from the Cards due now across Units, with missed Cards first. The Home Review badge counts the same Cards.
 _Avoid_: Daily lesson
 
 **Mistake Review**:

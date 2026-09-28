@@ -122,6 +122,20 @@ describe('getDueReviewItems', () => {
       { cardId: 'dueNow' }
     ]);
   });
+
+  it('lists due Cards most overdue first, keeping item order for equal times', async () => {
+    jest.setSystemTime(clock.dueNow());
+    await saveReviewState({
+      recent: buildCardReviewState({ nextReviewAt: clock.pastDue().toISOString() }),
+      tied: buildCardReviewState({ nextReviewAt: clock.pastDue().toISOString() }),
+      oldest: buildCardReviewState({ nextReviewAt: clock.reviewStart().toISOString() })
+    });
+
+    const items = [{ cardId: 'recent' }, { cardId: 'tied' }, { cardId: 'oldest' }];
+    const due = await getDueReviewItems(items);
+
+    expect(due.map((i) => i.cardId)).toEqual(['oldest', 'recent', 'tied']);
+  });
 });
 
 describe('getWeakItems', () => {

@@ -113,6 +113,12 @@ export const reviewStates = frozen({
     'fixture:cajun:greeting:listen': reviewState(clock.futureDue(), 3),
     'fixture:cajun:greeting:typing': reviewState(clock.futureDue(), 2)
   }),
+  dueWithMissed: frozen({
+    'fixture:cajun:greeting:choice': reviewState(clock.pastDue()),
+    'fixture:cajun:greeting:listen': reviewState(clock.pastDue(), 1),
+    'fixture:cajun:greeting:typing': reviewState(clock.pastDue(), 2),
+    'fixture:cajun:ready:build': reviewState(clock.futureDue(), 3)
+  }),
   allFuture: frozen({
     'fixture:cajun:greeting:intro': reviewState(clock.futureDue()),
     'fixture:cajun:greeting:listen': reviewState(clock.futureDue()),

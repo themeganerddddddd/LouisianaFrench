@@ -43,12 +43,11 @@ export async function updateCardReview(cardId, quality) {
 export async function getDueReviewItems(items) {
   const reviewState = await getReviewState();
   const now = getNow();
+  const nextReviewTime = (item) => new Date(reviewState[item.cardId].nextReviewAt).getTime();
 
-  return items.filter((item) => {
-    const card = reviewState[item.cardId];
-    if (!card) return false;
-    return new Date(card.nextReviewAt) <= now;
-  });
+  return items
+    .filter((item) => reviewState[item.cardId] && nextReviewTime(item) <= now)
+    .sort((a, b) => nextReviewTime(a) - nextReviewTime(b));
 }
 
 export async function getWeakItems(items) {
