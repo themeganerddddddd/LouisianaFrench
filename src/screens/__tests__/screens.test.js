@@ -501,6 +501,16 @@ describe('HomeScreen', () => {
         );
       }
     );
+
+    it('keeps the bug report sheet above the inset for a floating Android keyboard', async () => {
+      jest.replaceProperty(Platform, 'OS', 'android');
+      const overlay = await openBugReport();
+
+      // A floating keyboard has no bottom IME inset, so RN reports 0 minus the navigation bar.
+      emitKeyboard(['keyboardDidShow', { screenY: keyboardTop, height: -Math.max(insets.bottom, 24) }]);
+
+      expect(overlay).toHaveStyle({ paddingBottom: insets.bottom + 14 });
+    });
   });
 
   it('keeps the dashboard controls available at mobile and desktop render widths', async () => {
