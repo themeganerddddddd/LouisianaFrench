@@ -16,6 +16,10 @@ jest.mock('../../data/lessonLoader', () => ({
 
 setupAppTests();
 
+function hoursAfter(base, hours) {
+  return new Date(base.getTime() + hours * 60 * 60 * 1000);
+}
+
 beforeEach(() => {
   jest.setSystemTime(clock.dueNow());
   getAllActivities.mockImplementation((language) => fixtureCatalog.getAllActivities(language));
@@ -45,17 +49,46 @@ describe('getDailyReviewQueue', () => {
     ]);
   });
 
-  it('brings a missed Card back only when it becomes due', async () => {
+  it('brings a missed Card back 24 hours after the miss, not 23', async () => {
     await updateCardReview(fixtureActivities.multipleChoice.cardId, 2);
 
     expect(await getDailyReviewQueue('cajun')).toEqual([]);
 
-    jest.setSystemTime(clock.futureDue());
+    jest.setSystemTime(hoursAfter(clock.dueNow(), 23));
+    expect(await getDailyReviewQueue('cajun')).toEqual([]);
+
+    jest.setSystemTime(hoursAfter(clock.dueNow(), 24));
     const queue = await getDailyReviewQueue('cajun');
 
     expect(queue.map((activity) => activity.cardId)).toEqual([
       fixtureActivities.multipleChoice.cardId
     ]);
+  });
+
+  it('picks the most overdue Cards within each group when more than fifteen are due', async () => {
+    const activities = Array.from({ length: 18 }, (_, index) => ({
+      ...fixtureActivities.multipleChoice,
+      cardId: `fixture:cajun:overdue:${index}`
+    }));
+    const reviewState = Object.fromEntries(
+      activities.map((activity, index) => [
+        activity.cardId,
+        buildCardReviewState({
+          nextReviewAt: hoursAfter(clock.pastDue(), -index).toISOString(),
+          lapses: index >= 14 ? 1 : 0
+        })
+      ])
+    );
+    getAllActivities.mockReturnValue(activities);
+    await seedAsyncStorage({ reviewState });
+
+    const queue = await getDailyReviewQueue('cajun');
+
+    expect(queue.map((activity) => activity.cardId)).toEqual(
+      [17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3].map(
+        (index) => `fixture:cajun:overdue:${index}`
+      )
+    );
   });
 
   it('keeps a due missed Card inside the fifteen-Card limit', async () => {

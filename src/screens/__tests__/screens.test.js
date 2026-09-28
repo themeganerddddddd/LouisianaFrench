@@ -21,6 +21,7 @@ import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncS
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as homeProjection from '../../utils/homeProjection';
+import { updateCardReview } from '../../utils/spacedRepetition';
 import {
   getDailyReviewLog,
   getDefaultLanguage,
@@ -879,7 +880,7 @@ describe('HomeScreen', () => {
     expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
     expect(screen.getByTestId('home-review-circle')).toBeTruthy();
-    expect(screen.queryByTestId('review-count') === null).toBe(true);
+    expect(screen.queryByTestId('review-count')).toBeNull();
     await user.press(screen.getByTestId('home-review-control'));
     expect(await screen.findByText('1 / 5')).toBeOnTheScreen();
   });
@@ -2053,7 +2054,7 @@ describe('DailyReviewScreen', () => {
     await user.press(await screen.findByText('Back to Home'));
 
     await waitFor(() => expect(screen.getByTestId('home-stats')).toHaveTextContent(/^⚡ 8 /));
-    expect(screen.queryByTestId('review-count') === null).toBe(true);
+    expect(screen.queryByTestId('review-count')).toBeNull();
   });
 
   it('does not count a Card missed in Daily Review until it is due again', async () => {
@@ -2084,7 +2085,32 @@ describe('DailyReviewScreen', () => {
     await user.press(await screen.findByText('Back to Home'));
 
     expect(await screen.findByTestId('mistakes-count')).toHaveTextContent('1');
-    expect(screen.queryByTestId('review-count') === null).toBe(true);
+    expect(screen.queryByTestId('review-count')).toBeNull();
+  });
+
+  it('shows the Review badge for a missed Card 24 hours after the miss, not 23', async () => {
+    const missedAt = clock.dueNow();
+    const hoursAfterMiss = (hours) => new Date(missedAt.getTime() + hours * 60 * 60 * 1000);
+    await seedAsyncStorage({ lessonProgress: homeProjectionProgress.priorLessonsByLanguage });
+    await updateCardReview('fixture:cajun:greeting:choice', 2);
+
+    jest.setSystemTime(hoursAfterMiss(23));
+    const { unmount } = renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await waitFor(() => expect(screen.getByTestId('home-stats')).toHaveTextContent(/^⚡/));
+    expect(screen.queryByTestId('review-count')).toBeNull();
+    unmount();
+
+    jest.setSystemTime(hoursAfterMiss(24));
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByTestId('review-count')).toHaveTextContent('1');
   });
 });
 
