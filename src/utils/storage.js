@@ -131,9 +131,23 @@ export async function markLessonComplete(language, lessonId) {
   await saveLessonProgress(progress);
 }
 
+function wordMasteryStatus({ seen, correct, wrong }) {
+  if (correct >= 4 && correct > wrong) return 'mastered';
+  if (correct >= 2 && correct > wrong) return 'strong';
+  if (seen >= 1) return 'learning';
+  return 'new';
+}
+
+// A saved status is not authoritative: it is recalculated from the answer counts on every read.
 export async function getWordProgress() {
   const raw = await AsyncStorage.getItem(KEYS.WORD_PROGRESS);
-  return raw ? JSON.parse(raw) : {};
+  const progress = raw ? JSON.parse(raw) : {};
+
+  for (const record of Object.values(progress)) {
+    record.status = wordMasteryStatus(record);
+  }
+
+  return progress;
 }
 
 export async function saveWordProgress(progress) {
@@ -166,21 +180,7 @@ export async function updateWordProgress(
     current.wrong += 1;
   }
 
-  if (
-    current.correct >= 4 &&
-    current.correct > current.wrong
-  ) {
-    current.status = 'mastered';
-  } else if (
-    current.correct >= 2 &&
-    current.correct > current.wrong
-  ) {
-    current.status = 'strong';
-  } else if (current.seen >= 1) {
-    current.status = 'learning';
-  } else {
-    current.status = 'new';
-  }
+  current.status = wordMasteryStatus(current);
 
   progress[key] = current;
 

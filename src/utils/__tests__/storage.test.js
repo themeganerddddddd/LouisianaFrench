@@ -169,6 +169,23 @@ describe('Word mastery status', () => {
     const record = (await getWordProgress())['cajun:u01_w0003'];
     expect(record).toEqual(wordMastery.learningWithEqualAnswers);
   });
+
+  it.each([
+    ['2 correct and 1 wrong', [true, false, true], wordMastery.strongAfterOneWrong],
+    ['3 correct and 2 wrong', [true, false, true, false, true], wordMastery.strongWithOneMoreCorrect]
+  ])('marks a Word strong with %s answers', async (_label, answers, expected) => {
+    for (const wasCorrect of answers) await updateWordProgress('cajun', 'u01_w0004', wasCorrect);
+
+    expect((await getWordProgress())['cajun:u01_w0004']).toEqual(expected);
+  });
+
+  it('reads a saved strong Word with equal correct and wrong answers as learning', async () => {
+    await seedAsyncStorage({
+      wordProgress: { 'cajun:u01_w0005': wordMastery.savedStrongWithEqualAnswers }
+    });
+
+    expect((await getWordProgress())['cajun:u01_w0005']).toEqual(wordMastery.learningWithEqualAnswers);
+  });
 });
 
 describe('Review state persistence', () => {
