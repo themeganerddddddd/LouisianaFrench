@@ -18,6 +18,15 @@ const duplicateLeftMatchPairsActivity = Object.freeze({
   ]
 });
 
+const sharedPartnerMatchPairsActivity = Object.freeze({
+  ...fixtureActivities.matchPairs,
+  pairs: [
+    { left: 'Hello', right: 'Bonjour' },
+    { left: 'Hello', right: 'Salut' },
+    { left: 'Hi', right: 'Bonjour' }
+  ]
+});
+
 const duplicateRightMatchPairsActivity = Object.freeze({
   ...fixtureActivities.matchPairs,
   pairs: [
@@ -66,17 +75,55 @@ describe('ActivityRenderer match_pairs with repeated labels', () => {
     await finishCorrect(user, onCorrect);
   });
 
-  it('reports a wrong pair with its labels', async () => {
+  it('accepts either same-text row for a pair the text allows', async () => {
     const user = userEvent.setup();
-    const { onWrong } = renderMatchPairs(duplicateLeftMatchPairsActivity);
+    const { onCorrect } = renderMatchPairs(duplicateLeftMatchPairsActivity);
 
     await user.press(screen.getAllByText('Hello')[0]);
     await press(user, 'Ça va?');
+    await user.press(screen.getAllByText('Hello')[1]);
+    await press(user, 'Bonjour');
+
+    await finishCorrect(user, onCorrect);
+  });
+
+  it('rejects a text pair once all its copies are matched and reports its labels', async () => {
+    const user = userEvent.setup();
+    const { onWrong } = renderMatchPairs(sharedPartnerMatchPairsActivity);
+
+    await user.press(screen.getAllByText('Hello')[0]);
+    await user.press(screen.getAllByText('Bonjour')[0]);
+    await user.press(screen.getAllByText('Hello')[1]);
+    await user.press(screen.getAllByText('Bonjour')[1]);
     await retry(user);
-    await user.press(screen.getAllByText('Hello')[0]);
-    await press(user, 'Ça va?');
+    await user.press(screen.getAllByText('Hello')[1]);
+    await user.press(screen.getAllByText('Bonjour')[1]);
 
-    await finishWrong(user, onWrong, 'Hello ↔ Ça va?');
+    await finishWrong(user, onWrong, 'Hello ↔ Bonjour');
+  });
+
+  it('gives every row a unique React key', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      renderMatchPairs(duplicateLeftMatchPairsActivity);
+      renderMatchPairs(duplicateRightMatchPairsActivity);
+
+      expect(consoleError.mock.calls.flat().join(' ')).not.toMatch(/same key/);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('highlights only the pressed row when labels repeat', async () => {
+    const user = userEvent.setup();
+    renderMatchPairs(duplicateLeftMatchPairsActivity);
+
+    await user.press(screen.getAllByText('Hello')[0]);
+
+    const helloRows = screen.getAllByRole('button', { name: 'Hello' });
+    expect(helloRows[0]).toBeSelected();
+    expect(helloRows[1]).not.toBeSelected();
   });
 
   it('plays right-side Audio from the pressed row’s own pair', async () => {

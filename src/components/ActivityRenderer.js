@@ -1881,7 +1881,7 @@ function MatchPairs({
 }) {
   const { left, right } = useMemo(
     () => makeMatchColumns(activity.pairs || []),
-    [activity]
+    [activity.pairs]
   );
 
   const [selectedLeft, setSelectedLeft] = useState(null);
@@ -1900,33 +1900,44 @@ function MatchPairs({
 
   function isMatchedLeft(item) {
     return matches.some(
-      (m) => m.left === item
+      (m) => m.leftId === item.id
     );
   }
 
   function isMatchedRight(item) {
     return matches.some(
-      (m) => m.right === item
+      (m) => m.rightId === item.id
     );
+  }
+
+  function valueForId(items, id) {
+    return items.find((item) => item.id === id)?.value;
   }
 
   function rightAudioKey(item) {
     return activity.pairs?.[item.pairIndex]?.audioKey;
   }
 
-  function evaluatePair(leftItem, rightItem) {
-    if (!leftItem || !rightItem || state !== 'idle') {
+  // Rows with the same text look identical, so a pairing is graded by
+  // text: it is correct while that text pair still has unmatched copies.
+  // Same-text rows share partners, so the Activity can always be finished.
+  function evaluatePair(leftId, rightId) {
+    if (!leftId || !rightId || state !== 'idle') {
       return;
     }
 
-    if (leftItem.pairIndex === rightItem.pairIndex) {
-      const nextMatches = [
-        ...matches,
-        {
-          left: leftItem,
-          right: rightItem
-        }
-      ];
+    const leftValue = valueForId(left, leftId);
+    const rightValue = valueForId(right, rightId);
+    const isSamePair = (l, r) => l === leftValue && r === rightValue;
+    const pairCount = (activity.pairs || []).filter(
+      (p) => isSamePair(p.left, p.right)
+    ).length;
+    const matchedCount = matches.filter((m) =>
+      isSamePair(valueForId(left, m.leftId), valueForId(right, m.rightId))
+    ).length;
+
+    if (matchedCount < pairCount) {
+      const nextMatches = [...matches, { leftId, rightId }];
 
       setMatches(nextMatches);
       setSelectedLeft(null);
@@ -1946,17 +1957,17 @@ function MatchPairs({
   function selectLeft(item) {
     if (isMatchedLeft(item) || isLocked(state)) return;
 
-    setSelectedLeft(item);
+    setSelectedLeft(item.id);
 
     if (selectedRight) {
-      evaluatePair(item, selectedRight);
+      evaluatePair(item.id, selectedRight);
     }
   }
 
   function selectRight(item) {
     if (isMatchedRight(item) || isLocked(state)) return;
 
-    setSelectedRight(item);
+    setSelectedRight(item.id);
 
     const key = rightAudioKey(item);
     if (key) {
@@ -1964,7 +1975,7 @@ function MatchPairs({
     }
 
     if (selectedLeft) {
-      evaluatePair(selectedLeft, item);
+      evaluatePair(selectedLeft, item.id);
     }
   }
 
@@ -2010,10 +2021,10 @@ function MatchPairs({
             isMatchedRight(rightItem);
 
           const leftActive =
-            selectedLeft === leftItem;
+            selectedLeft === leftItem.id;
 
           const rightActive =
-            selectedRight === rightItem;
+            selectedRight === rightItem.id;
 
           return (
             <View
@@ -2040,6 +2051,7 @@ function MatchPairs({
                 onPress={() => selectLeft(leftItem)}
                 accessibilityRole="button"
                 accessibilityLabel={leftItem.value}
+                accessibilityState={{ selected: leftActive }}
               >
                 <Text style={styles.matchText}>
                   {leftItem.value}
@@ -2066,6 +2078,7 @@ function MatchPairs({
                 onPress={() => selectRight(rightItem)}
                 accessibilityRole="button"
                 accessibilityLabel={rightItem.value}
+                accessibilityState={{ selected: rightActive }}
               >
                 <Text style={styles.matchText}>
                   {rightItem.value}
@@ -2100,7 +2113,7 @@ function MatchPairs({
           onWrong(
             state === 'skipped'
               ? '__skipped__'
-              : `${selectedLeft?.value || ''} ↔ ${selectedRight?.value || ''}`
+              : `${valueForId(left, selectedLeft) || ''} ↔ ${valueForId(right, selectedRight) || ''}`
           )
         }
         altContent={
