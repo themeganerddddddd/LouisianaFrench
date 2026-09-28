@@ -189,7 +189,7 @@ export async function getHomeProjection(language) {
   const reviewMinutes = Math.max(1, Math.ceil(reviewQueue.length / 3));
   const reviewStep = reviewComplete || reviewQueue.length
     ? { id: 'review', label: 'Review', complete: reviewComplete }
-    : { id: 'review', label: 'Nothing to review today', complete: false, excluded: true };
+    : { id: 'review', label: 'Nothing to review right now', complete: false, excluded: true };
   const steps = firstDay
     ? [
         {
