@@ -171,7 +171,10 @@ export async function updateWordProgress(
     current.correct > current.wrong
   ) {
     current.status = 'mastered';
-  } else if (current.correct >= 2) {
+  } else if (
+    current.correct >= 2 &&
+    current.correct > current.wrong
+  ) {
     current.status = 'strong';
   } else if (current.seen >= 1) {
     current.status = 'learning';

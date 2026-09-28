@@ -161,13 +161,13 @@ describe('Word mastery status', () => {
     expect(record).toEqual(wordMastery.learningAfterWrong);
   });
 
-  it('does not mark a Word mastered when wrong answers equal correct answers', async () => {
+  it('demotes a Word to learning when wrong answers equal correct answers', async () => {
     const rowId = 'u01_w0003';
     for (let i = 0; i < 4; i += 1) await updateWordProgress('cajun', rowId, true);
     for (let i = 0; i < 4; i += 1) await updateWordProgress('cajun', rowId, false);
 
     const record = (await getWordProgress())['cajun:u01_w0003'];
-    expect(record).toEqual(wordMastery.strongWithEqualAnswers);
+    expect(record).toEqual(wordMastery.learningWithEqualAnswers);
   });
 });
 
