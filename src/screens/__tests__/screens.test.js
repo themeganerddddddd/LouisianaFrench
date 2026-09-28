@@ -26,6 +26,7 @@ import {
   getDefaultLanguage,
   getLanguageDailyReviewLog,
   getLastWorkedUnit,
+  getLessonProgress,
   getPendingMistakes,
   getProfile,
   getTodayKey,
@@ -1659,6 +1660,69 @@ describe('LessonRunner', () => {
     expect(screen.getByText(/Everyday phrases/)).toBeOnTheScreen();
   });
 
+  it('completes the Lesson with its full XP after Mistake Review and shows it done on Home', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u01_l01' }
+    });
+
+    expect(await screen.findByText('New word')).toBeOnTheScreen();
+    await user.press(screen.getByText('Continue'));
+
+    expect(await screen.findByText('Listen and choose the word')).toBeOnTheScreen();
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    expect(await screen.findByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Try Again'));
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
+    await user.press(screen.getByText('Continue'));
+
+    expect(await screen.findByText("Type: 'How’s it going?'")).toBeOnTheScreen();
+    await user.type(screen.getByPlaceholderText('Type your answer'), 'Ça va?');
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    expect(await screen.findByText('Mistake Review')).toBeOnTheScreen();
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
+    expect(screen.getByText('⚡ 40')).toBeOnTheScreen();
+    expect((await getProfile()).xp).toBe(40);
+    expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01'].completed).toBe(true);
+
+    await user.press(screen.getByText('Back to Home'));
+    const currentUnit = await screen.findByTestId('home-current-unit');
+    expect(within(currentUnit).getByText(/1 \/ 2 lessons/)).toBeOnTheScreen();
+  });
+
+  it('marks an all-correct Lesson complete with its full XP', async () => {
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' }
+    });
+
+    expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
+    await user.press(screen.getByText('Start lesson'));
+    expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
+    await user.press(screen.getByText('Continue'));
+
+    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
+    expect((await getProfile()).xp).toBe(10);
+    expect((await getLessonProgress())['cajun:fixture_cajun_u03_l01'].completed).toBe(true);
+  });
+
   it('redirects to Home when the lesson is not found (KD-06)', async () => {
     renderApp({
       initialRouteName: 'Lesson',
@@ -1801,6 +1865,8 @@ describe('MistakeReviewScreen', () => {
 
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
+    expect((await getProfile()).xp).toBe(30);
+    expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01'].completed).toBe(true);
   });
 
   it('removes only the corrected Card while the next pending Card remains', async () => {
@@ -1888,6 +1954,7 @@ describe('MistakeReviewScreen', () => {
       pendingMistakes.kreole.pronounsChoice
     ]);
     expect((await getProfile()).xp).toBe(10);
+    expect(await getLessonProgress()).toEqual({});
     expect(await getTodayPractice('cajun')).toEqual({
       type: 'mistakeReview',
       completedAt: expect.any(String)
