@@ -111,10 +111,12 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
   }
 
   // The edge-to-edge Modal window is not resized for the keyboard. Android reports the keyboard
-  // height without the navigation bar; iOS includes the home indicator area.
-  const keyboardOffset = Platform.OS === 'ios'
-    ? Math.max(keyboardHeight - insets.bottom, 0)
-    : keyboardHeight;
+  // height without the navigation bar (negative for floating keyboards); iOS includes the home
+  // indicator area.
+  const keyboardOffset = Math.max(
+    Platform.OS === 'ios' ? keyboardHeight - insets.bottom : keyboardHeight,
+    0
+  );
   const swayRotation = swayAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['-2deg', '2.5deg', '-2deg'] });
   const swayTranslateY = swayAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -8, 0] });
   function ActionButton({ label, primary, onPress, disabled, accessibilityLabel }) {
