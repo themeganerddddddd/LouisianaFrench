@@ -46,7 +46,8 @@ function getUnitNumber(unitCode) {
 }
 
 function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
-  const activeIndex = plan.steps.findIndex((step) => !step.complete);
+  const activeIndex = plan.steps.findIndex((step) => !step.complete && !step.excluded);
+  const plannedSteps = plan.steps.filter((step) => !step.excluded);
   const activeActionLabel = plan.activeAction?.kind === 'lesson' && !firstDay
     ? 'Continue to lesson'
     : plan.activeAction?.kind === 'lesson' && plan.activeAction.label !== 'Start your new lesson'
@@ -65,7 +66,11 @@ function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
         </Text>
       </View>
 
-      <View style={styles.planStepper}>
+      <View
+        testID="home-plan-stepper"
+        accessibilityLabel={`${plan.completedCount} of ${plan.totalCount} done`}
+        style={styles.planStepper}
+      >
         {plan.steps.map((step, index) => {
           const active = index === activeIndex;
           const circleStyle = step.complete
@@ -79,7 +84,11 @@ function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
 
           return (
             <Fragment key={step.id}>
-              <View testID={`home-plan-step-${step.id}`} style={styles.planStep}>
+              <View
+                testID={`home-plan-step-${step.id}`}
+                accessibilityState={step.excluded ? { disabled: true } : undefined}
+                style={styles.planStep}
+              >
                 <View
                   testID={`home-plan-circle-${step.id}`}
                   style={circleStyle}
@@ -88,7 +97,7 @@ function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
                     ? [styles.planCircleTextActive, { color: theme.planBackground }]
                     : styles.planCircleTextPending}
                   >
-                    {step.complete ? '✓' : index + 1}
+                    {step.complete ? '✓' : step.excluded ? '–' : plannedSteps.indexOf(step) + 1}
                   </Text>
                 </View>
                 <Text style={labelStyle}>{step.label}</Text>

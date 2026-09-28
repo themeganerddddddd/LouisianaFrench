@@ -41,6 +41,13 @@ jest.mock('../storage', () => ({
 
 const catalogLessons = (language) => fixtureCatalog.getUnits(language);
 const catalogWords = (language) => fixtureCatalog.getAllWords(language);
+const dueQueue = [{ cardId: 'fixture:cajun:greeting:choice' }];
+const nothingToReview = {
+  id: 'review',
+  label: 'Nothing to review right now',
+  complete: false,
+  excluded: true
+};
 
 function useProgress({
   dailyReview = {},
@@ -89,9 +96,10 @@ describe('getHomeProjection', () => {
         steps: [
           { id: 'lesson-1', label: 'Lesson', complete: false },
           { id: 'lesson-2', label: 'Lesson', complete: false },
-          { id: 'review', label: 'Review', complete: false }
+          nothingToReview
         ],
         completedCount: 0,
+        totalCount: 2,
         activeAction: {
           kind: 'lesson',
           label: 'Start your new lesson',
@@ -211,6 +219,7 @@ describe('getHomeProjection', () => {
 
     useProgress({
       lessonProgress: homeProjectionProgress.lessonToday,
+      reviewQueue: dueQueue,
       wordProgress: learnedWord
     });
 
@@ -235,6 +244,7 @@ describe('getHomeProjection', () => {
 
     useProgress({
       lessonProgress: homeProjectionProgress.twoLessonsToday,
+      reviewQueue: dueQueue,
       wordProgress: learnedWord
     });
 
@@ -246,6 +256,7 @@ describe('getHomeProjection', () => {
       true,
       false
     ]);
+    expect(twoLessons.plan).toEqual(expect.objectContaining({ completedCount: 2, totalCount: 3 }));
     expect(twoLessons.plan.activeAction).toEqual({
       kind: 'review',
       label: 'Start Daily Review · ~1 min',
@@ -268,6 +279,7 @@ describe('getHomeProjection', () => {
     expect(reviewComplete.plan).toEqual(
       expect.objectContaining({
         completedCount: 3,
+        totalCount: 3,
         activeAction: null,
         allDone: true
       })
@@ -276,7 +288,8 @@ describe('getHomeProjection', () => {
 
   it('selects the returning plan after a Lesson completed before today', async () => {
     useProgress({
-      lessonProgress: homeProjectionProgress.lessonYesterday
+      lessonProgress: homeProjectionProgress.lessonYesterday,
+      reviewQueue: dueQueue
     });
 
     const projection = await getHomeProjection('cajun');
@@ -318,7 +331,8 @@ describe('getHomeProjection', () => {
 
     useProgress({
       lessonProgress: homeProjectionProgress.establishedLessonToday,
-      practice: practiceLogs.todaySpeech['2026-03-05']
+      practice: practiceLogs.todaySpeech['2026-03-05'],
+      reviewQueue: dueQueue
     });
 
     const outOfOrder = await getHomeProjection('cajun');
@@ -351,7 +365,7 @@ describe('getHomeProjection', () => {
     });
   });
 
-  it.each([0, 1, 3, 4, 8, 15])(
+  it.each([1, 3, 4, 8, 15])(
     'uses the shared bounded queue for the Review estimate at length %i',
     async (length) => {
       useProgress({
@@ -377,6 +391,51 @@ describe('getHomeProjection', () => {
       );
     }
   );
+
+  it('leaves an empty Review out of the Day 1 plan and completes the plan without it', async () => {
+    useProgress({ lessonProgress: homeProjectionProgress.twoLessonsToday });
+
+    const projection = await getHomeProjection('cajun');
+
+    expect(getDailyReviewQueue).toHaveBeenCalledWith('cajun');
+    expect(projection.plan).toEqual({
+      steps: [
+        { id: 'lesson-1', label: 'Lesson', complete: true },
+        { id: 'lesson-2', label: 'Lesson', complete: true },
+        nothingToReview
+      ],
+      completedCount: 2,
+      totalCount: 2,
+      activeAction: null,
+      helperText: "Reviews unlock once you've learned new words.",
+      allDone: true
+    });
+  });
+
+  it('skips an empty Review on a returning day and starts with the Lesson', async () => {
+    useProgress({ lessonProgress: homeProjectionProgress.lessonYesterday });
+
+    const projection = await getHomeProjection('cajun');
+
+    expect(projection.plan.steps[0]).toEqual(nothingToReview);
+    expect(projection.plan).toEqual(expect.objectContaining({ completedCount: 0, totalCount: 2 }));
+    expect(projection.plan.activeAction).toEqual(expect.objectContaining({
+      kind: 'lesson',
+      destination: 'Lesson'
+    }));
+  });
+
+  it('keeps a finished Review counted after the queue empties', async () => {
+    useProgress({
+      dailyReview: dailyReviewLogs.today,
+      lessonProgress: homeProjectionProgress.lessonYesterday
+    });
+
+    const projection = await getHomeProjection('cajun');
+
+    expect(projection.plan.steps[0]).toEqual({ id: 'review', label: 'Review', complete: true });
+    expect(projection.plan).toEqual(expect.objectContaining({ completedCount: 1, totalCount: 3 }));
+  });
 
   it('invalidates Practice with a new Card and selects the Mistake Review action', async () => {
     useProgress({
@@ -541,7 +600,7 @@ describe('getHomeProjection', () => {
     );
     getTodayPractice.mockResolvedValue(null);
     getTodayKey.mockReturnValue('2026-03-05');
-    getDailyReviewQueue.mockResolvedValue([]);
+    getDailyReviewQueue.mockResolvedValue(dueQueue);
 
     const cajun = await getHomeProjection('cajun');
     const kreole = await getHomeProjection('kreole');

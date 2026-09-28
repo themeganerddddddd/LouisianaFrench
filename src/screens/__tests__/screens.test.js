@@ -21,6 +21,7 @@ import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncS
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as homeProjection from '../../utils/homeProjection';
+import * as reviewQueue from '../../utils/reviewQueue';
 import {
   getDailyReviewLog,
   getDefaultLanguage,
@@ -129,6 +130,7 @@ function planProjectionFixture({
     plan: {
       steps,
       completedCount: steps.filter((step) => step.complete).length,
+      totalCount: steps.filter((step) => !step.excluded).length,
       activeAction: action,
       helperText,
       allDone
@@ -368,11 +370,88 @@ describe('HomeScreen', () => {
     expect(screen.getByText('START HERE')).toBeOnTheScreen();
     oneLessonRender.unmount();
 
-    await seedAsyncStorage({ lessonProgress: homeProjectionProgress.twoLessonsToday });
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.twoLessonsToday,
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          nextReviewAt: clock.pastDue().toISOString()
+        })
+      }
+    });
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
 
     expect(await screen.findByTestId('home-plan-circle-lesson-2')).toHaveTextContent('✓');
+    expect(within(screen.getByTestId('home-plan-step-review')).getByText('Review')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName('2 of 3 done');
     expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Start Daily Review · ~1 min');
+  });
+
+  it.each([
+    [
+      'on Day 1 after two Lessons',
+      { lessonProgress: homeProjectionProgress.twoLessonsToday },
+      clock.localCalendarLateEvening(),
+      '2 of 2 done',
+      'home-plan-completion'
+    ],
+    [
+      'on a returning day with every Card due later',
+      {
+        lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+        reviewState: reviewStates.allFuture
+      },
+      clock.dueNow(),
+      '0 of 2 done',
+      'home-plan-cta'
+    ]
+  ])('shows Nothing to review right now %s and leaves it out of the plan', async (
+    _day,
+    progress,
+    now,
+    count,
+    planControlId
+  ) => {
+    jest.setSystemTime(now);
+    await seedAsyncStorage(progress);
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    const reviewStep = await screen.findByTestId('home-plan-step-review');
+    expect(within(reviewStep).getByText('Nothing to review right now')).toBeOnTheScreen();
+    expect(reviewStep).toBeDisabled();
+    expect(reviewStep.props.onPress).toBeUndefined();
+    expect(screen.getByTestId('home-plan-circle-review')).toHaveTextContent('–');
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName(count);
+    expect(screen.getByTestId(planControlId)).not.toHaveTextContent(/Daily Review/);
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual({});
+  });
+
+  it('shows the Review step once a Card reviewed yesterday evening reaches its exact due time', async () => {
+    const reviewedAt = clock.sameStudyDay();
+    const interval = 1;
+    const dueAt = new Date(reviewedAt);
+    dueAt.setDate(dueAt.getDate() + interval);
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          interval,
+          nextReviewAt: dueAt.toISOString()
+        })
+      }
+    });
+
+    jest.setSystemTime(clock.consecutiveStudyDay());
+    const morning = renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+    expect(
+      within(await screen.findByTestId('home-plan-step-review')).getByText('Nothing to review right now')
+    ).toBeOnTheScreen();
+    morning.unmount();
+
+    jest.setSystemTime(clock.consecutiveStudyEvening());
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+    const reviewStep = await screen.findByTestId('home-plan-step-review');
+    expect(within(reviewStep).getByText('Review')).toBeOnTheScreen();
+    expect(reviewStep).toBeEnabled();
   });
 
   it('enables first-day Mistakes only for an active-Language pending Card', async () => {
@@ -864,7 +943,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
   });
 
-  it('does not show a Review badge for all-future Cards while Daily Review keeps its fallback', async () => {
+  it('does not show a Review badge for all-future Cards and Daily Review is empty', async () => {
     await seedAsyncStorage({
       lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       reviewState: reviewStates.allFuture
@@ -881,7 +960,8 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-review-circle')).toBeTruthy();
     expect(screen.queryByTestId('review-count') === null).toBe(true);
     await user.press(screen.getByTestId('home-review-control'));
-    expect(await screen.findByText('1 / 5')).toBeOnTheScreen();
+    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
+    expect(screen.queryByText('1 / 5')).toBeNull();
   });
 
   it('refreshes the Review badge on focus without remounting Home', async () => {
@@ -1924,22 +2004,87 @@ describe('LessonCompleteScreen', () => {
 });
 
 describe('DailyReviewScreen', () => {
-  it('builds a review queue from the Catalog fixture Activities', async () => {
-    renderApp({
+  it('shows an honest empty state at mobile and desktop sizes', async () => {
+    const user = setupUser();
+
+    const mobile = renderApp({
       initialRouteName: 'DailyReview',
-      initialParams: { language: 'cajun' }
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
     });
 
-    expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
-    expect(
-      screen.getByText('Due cards, weak words, and review practice.')
-    ).toBeOnTheScreen();
-    expect(screen.getByText('1 / 5')).toBeOnTheScreen();
-    expect(screen.getByText("Build: 'It's ready'")).toBeOnTheScreen();
-    expect(screen.queryByLabelText('Report a bug')).toBeNull();
+    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Back to Home' })).toBeOnTheScreen();
+    expect(screen.queryByText('1 / 5')).toBeNull();
+    mobile.unmount();
 
-    const check = await screen.findByText('Check');
-    expect(check).toBeDisabled();
+    renderApp({
+      initialRouteName: 'DailyReview',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 1440, height: 900 },
+        insets: { top: 0, right: 0, bottom: 0, left: 0 }
+      }
+    });
+
+    expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Back to Home' })).toHaveStyle({ minWidth: 180 });
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual({});
+    expect(await getDailyReviewLog()).toEqual({});
+
+    await user.press(screen.getByRole('button', { name: 'Back to Home' }));
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+  });
+
+  it('waits for the review queue before choosing the empty state or the Activity', async () => {
+    jest.setSystemTime(clock.pastDue());
+    await seedAsyncStorage({
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          nextReviewAt: clock.reviewStart().toISOString()
+        })
+      }
+    });
+    const dueQueue = await reviewQueue.getDailyReviewQueue('cajun');
+    let resolveQueue;
+    const queueLoad = jest.spyOn(reviewQueue, 'getDailyReviewQueue').mockReturnValue(
+      new Promise((resolve) => {
+        resolveQueue = resolve;
+      })
+    );
+
+    try {
+      renderApp({ initialRouteName: 'DailyReview', initialParams: { language: 'cajun' } });
+
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(queueLoad).toHaveBeenCalledWith('cajun');
+      expect(screen.queryByText('No review cards are due right now.')).toBeNull();
+
+      await act(async () => resolveQueue(dueQueue));
+      expect(await screen.findByText('1 / 1')).toBeOnTheScreen();
+      expect(screen.getByText('Ça va?')).toBeOnTheScreen();
+      expect(screen.queryByText('No review cards are due right now.')).toBeNull();
+    } finally {
+      queueLoad.mockRestore();
+    }
+  });
+
+  it('shows the empty state when the review queue fails to load', async () => {
+    const queueLoad = jest
+      .spyOn(reviewQueue, 'getDailyReviewQueue')
+      .mockRejectedValue(new Error('storage unavailable'));
+
+    try {
+      renderApp({ initialRouteName: 'DailyReview', initialParams: { language: 'cajun' } });
+
+      expect(await screen.findByText('No review cards are due right now.')).toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Back to Home' })).toBeOnTheScreen();
+      expect(await getDailyReviewLog()).toEqual({});
+    } finally {
+      queueLoad.mockRestore();
+    }
   });
 
   it('completes when the sole due Card is answered correctly', async () => {
