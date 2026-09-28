@@ -931,7 +931,7 @@ describe('HomeScreen', () => {
       profileMigrated: true,
       lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       reviewState: {
-        ...reviewStates.overlap,
+        ...reviewStates.dueWithMissed,
         'fixture:kreole:pronouns:choice': {
           ...reviewStates.languageIsolation.kreole['fixture:kreole:pronouns:choice']
         }
@@ -986,7 +986,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 0 · 🔥 0 · 0% mastered');
   });
 
-  it('shows only the real unique Review count and keeps Review enabled with no real queue', async () => {
+  it('counts only Cards due now in the Review badge', async () => {
     await seedAsyncStorage({
       lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       reviewState: reviewStates.overlap
@@ -997,7 +997,7 @@ describe('HomeScreen', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByTestId('review-count')).toHaveTextContent('3');
+    expect(await screen.findByTestId('review-count')).toHaveTextContent('1');
 
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
   });
@@ -1038,7 +1038,7 @@ describe('HomeScreen', () => {
       await user.press(screen.getByTestId('home-review-control'));
       expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
 
-      await seedAsyncStorage({ reviewState: reviewStates.overlap });
+      await seedAsyncStorage({ reviewState: reviewStates.dueWithMissed });
       const backListener = backHandler.mock.calls.find(
         ([eventName]) => eventName === 'hardwareBackPress'
       )[1];
@@ -2448,6 +2448,66 @@ describe('DailyReviewScreen', () => {
         sourceId: null
       })
     ]);
+  });
+
+  it('clears the Home Review badge after a missed Card is answered correctly', async () => {
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          nextReviewAt: clock.pastDue().toISOString(),
+          lapses: 1
+        })
+      }
+    });
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByTestId('review-count')).toHaveTextContent('1');
+    await user.press(screen.getByTestId('home-review-control'));
+    expect(await screen.findByText('1 / 1')).toBeOnTheScreen();
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+    await user.press(await screen.findByText('Back to Home'));
+
+    await waitFor(() => expect(screen.getByTestId('home-stats')).toHaveTextContent(/^⚡ 8 /));
+    expect(screen.queryByTestId('review-count') === null).toBe(true);
+  });
+
+  it('does not count a Card missed in Daily Review until it is due again', async () => {
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          nextReviewAt: clock.pastDue().toISOString()
+        })
+      }
+    });
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByTestId('review-count')).toHaveTextContent('1');
+    await user.press(screen.getByTestId('home-review-control'));
+    expect(await screen.findByText('1 / 1')).toBeOnTheScreen();
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Try Again'));
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Continue'));
+    await user.press(await screen.findByText('Back to Home'));
+
+    expect(await screen.findByTestId('mistakes-count')).toHaveTextContent('1');
+    expect(screen.queryByTestId('review-count') === null).toBe(true);
   });
 });
 
