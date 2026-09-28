@@ -75,7 +75,7 @@ describe('getDailyReviewQueue', () => {
         activity.cardId,
         buildCardReviewState({
           nextReviewAt: hoursAfter(clock.pastDue(), -index).toISOString(),
-          lapses: index >= 14 ? 1 : 0
+          lapses: index < 4 ? 1 : 0
         })
       ])
     );
@@ -85,10 +85,37 @@ describe('getDailyReviewQueue', () => {
     const queue = await getDailyReviewQueue('cajun');
 
     expect(queue.map((activity) => activity.cardId)).toEqual(
-      [17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3].map(
+      [3, 2, 1, 0, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7].map(
         (index) => `fixture:cajun:overdue:${index}`
       )
     );
+  });
+
+  it('puts Cards missed more often first, even when a less-missed Card is more overdue', async () => {
+    const activities = ['once', 'twice'].map((name) => ({
+      ...fixtureActivities.multipleChoice,
+      cardId: `fixture:cajun:missed:${name}`
+    }));
+    getAllActivities.mockReturnValue(activities);
+    await seedAsyncStorage({
+      reviewState: {
+        'fixture:cajun:missed:once': buildCardReviewState({
+          nextReviewAt: hoursAfter(clock.pastDue(), -1).toISOString(),
+          lapses: 1
+        }),
+        'fixture:cajun:missed:twice': buildCardReviewState({
+          nextReviewAt: clock.pastDue().toISOString(),
+          lapses: 2
+        })
+      }
+    });
+
+    const queue = await getDailyReviewQueue('cajun');
+
+    expect(queue.map((activity) => activity.cardId)).toEqual([
+      'fixture:cajun:missed:twice',
+      'fixture:cajun:missed:once'
+    ]);
   });
 
   it('keeps a due missed Card inside the fifteen-Card limit', async () => {
