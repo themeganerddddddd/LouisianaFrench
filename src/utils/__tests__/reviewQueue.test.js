@@ -1,12 +1,14 @@
 import { getAllActivities } from '../../data/lessonLoader';
 import { fixtureActivities, fixtureCatalog } from '../../test/fixtures/catalog/activities';
 import { clock } from '../../test/fixtures/clock';
+import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBuilder';
 import {
   reviewStates
 } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { setupAppTests } from '../../test/setupAppTest';
 import { getDailyReviewQueue } from '../reviewQueue';
+import { updateCardReview } from '../spacedRepetition';
 
 jest.mock('../../data/lessonLoader', () => ({
   getAllActivities: jest.fn()
@@ -20,30 +22,63 @@ beforeEach(() => {
 });
 
 describe('getDailyReviewQueue', () => {
-  it('filters intro Cards and keeps due Activities before weak Activities', async () => {
+  it('filters intro Cards and leaves out missed Cards that are not due yet', async () => {
     await seedAsyncStorage({ reviewState: reviewStates.dueAndWeak });
 
     const queue = await getDailyReviewQueue('cajun');
 
     expect(queue.map((activity) => activity.cardId)).toEqual([
-      fixtureActivities.multipleChoice.cardId,
-      fixtureActivities.listening.cardId,
-      fixtureActivities.typing.cardId
+      fixtureActivities.multipleChoice.cardId
     ]);
-    expect(queue.every((activity) => activity.type !== 'intro_card')).toBe(true);
     expect(queue.every((activity) => activity.isReview)).toBe(true);
   });
 
-  it('deduplicates an Activity present in both due and weak results', async () => {
-    await seedAsyncStorage({ reviewState: reviewStates.overlap });
+  it('lists each due Card once, with missed Cards first', async () => {
+    await seedAsyncStorage({ reviewState: reviewStates.dueWithMissed });
 
     const queue = await getDailyReviewQueue('cajun');
 
     expect(queue.map((activity) => activity.cardId)).toEqual([
-      fixtureActivities.multipleChoice.cardId,
+      fixtureActivities.typing.cardId,
       fixtureActivities.listening.cardId,
-      fixtureActivities.typing.cardId
+      fixtureActivities.multipleChoice.cardId
     ]);
+  });
+
+  it('brings a missed Card back only when it becomes due', async () => {
+    await updateCardReview(fixtureActivities.multipleChoice.cardId, 2);
+
+    expect(await getDailyReviewQueue('cajun')).toEqual([]);
+
+    jest.setSystemTime(clock.futureDue());
+    const queue = await getDailyReviewQueue('cajun');
+
+    expect(queue.map((activity) => activity.cardId)).toEqual([
+      fixtureActivities.multipleChoice.cardId
+    ]);
+  });
+
+  it('keeps a due missed Card inside the fifteen-Card limit', async () => {
+    const activities = Array.from({ length: 16 }, (_, index) => ({
+      ...fixtureActivities.multipleChoice,
+      cardId: `fixture:cajun:cap:${index}`
+    }));
+    const reviewState = Object.fromEntries(
+      activities.map((activity, index) => [
+        activity.cardId,
+        buildCardReviewState({
+          nextReviewAt: clock.pastDue().toISOString(),
+          lapses: index === 15 ? 1 : 0
+        })
+      ])
+    );
+    getAllActivities.mockReturnValue(activities);
+    await seedAsyncStorage({ reviewState });
+
+    const queue = await getDailyReviewQueue('cajun');
+
+    expect(queue).toHaveLength(15);
+    expect(queue[0].cardId).toBe('fixture:cajun:cap:15');
   });
 
   it('caps the real queue at fifteen Activities', async () => {
