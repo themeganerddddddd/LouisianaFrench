@@ -51,6 +51,10 @@ _Avoid_: Tooltip, hint when referring to Catalog content
 A catalog entry pairing a target-language expression with its English meaning and optional Audio.
 _Avoid_: Vocabulary item
 
+**Word mastery**:
+A learner's status for one Word, derived from their correct and wrong answers: new before any answer, learning after any answer while it is neither strong nor mastered, strong with at least 2 correct and more correct than wrong answers, and mastered with at least 4 correct and more correct than wrong answers.
+_Avoid_: Word level, proficiency
+
 **Card**:
 The stable review identity of an Activity used by spaced repetition.
 _Avoid_: Activity when discussing review state
