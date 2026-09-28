@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { createAudioPlayer } from 'expo-audio';
 import ActivityRenderer from '../ActivityRenderer';
 import { chooseAndCheck, retry } from '../../test/activityInteractions';
@@ -62,6 +62,21 @@ describe('ActivityRenderer submission', () => {
 
     expect(onWrong).toHaveBeenCalledTimes(1);
     expect(onWrong).toHaveBeenCalledWith('Bonjour');
+  });
+
+  it('ignores two presses on Next Question in the same frame', async () => {
+    const user = userEvent.setup();
+    const { onCorrect } = renderActivity(fixtureActivities.multipleChoice);
+
+    await chooseAndCheck(user, 'Ça va?');
+    const nextButton = screen.getByText('Next Question');
+
+    act(() => {
+      fireEvent.press(nextButton);
+      fireEvent.press(nextButton);
+    });
+
+    expect(onCorrect).toHaveBeenCalledTimes(1);
   });
 });
 
