@@ -29,6 +29,7 @@ import {
   getTodayKey,
   markLanguageDailyReviewDone,
   recordStudyAndXp,
+  removePendingMistake,
   updateWordProgress,
   upsertPendingMistake
 } from '../utils/storage';
@@ -118,6 +119,11 @@ export default function DailyReviewScreen({
         true
       );
     }
+
+    await removePendingMistake(
+      language,
+      current.cardId
+    );
 
     const nextXp =
       xp + 8;
