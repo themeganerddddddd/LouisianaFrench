@@ -53,6 +53,9 @@ function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
     : plan.activeAction?.kind === 'lesson' && plan.activeAction.label !== 'Start your new lesson'
       ? 'Continue to lesson'
       : plan.activeAction?.label;
+  const status = firstDay && !plan.allDone
+    ? 'Day 1'
+    : `${plan.completedCount} of ${plan.totalCount} done`;
 
   return (
     <View
@@ -62,13 +65,13 @@ function TodaysPlan({ plan, firstDay, theme, reduceMotion, onAction }) {
       <View style={styles.planHeader}>
         <Text testID="home-plan-title" style={styles.planTitle}>{"Today's plan"}</Text>
         <Text testID="home-plan-status" style={[styles.planStatus, { color: theme.planSoft }]}>
-          
+          {status}
         </Text>
       </View>
 
       <View
         testID="home-plan-stepper"
-        accessibilityLabel={`${plan.completedCount} of ${plan.totalCount} done`}
+        accessibilityLabel={status}
         style={styles.planStepper}
       >
         {plan.steps.map((step, index) => {

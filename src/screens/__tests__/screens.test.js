@@ -10,9 +10,11 @@ import { clock } from '../../test/fixtures/clock';
 import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBuilder';
 import {
   completedLessons,
+  dailyReviewLogs,
   homeProjectionProgress,
   lastWorkedUnits,
   pendingMistakes,
+  practiceLogs,
   profiles,
   reviewStates,
   wordMastery
@@ -322,7 +324,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-stats')).toHaveTextContent(
       "Welcome! Let's learn new words."
     );
-    expect(screen.getByTestId('home-plan-status')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-plan-status')).toHaveTextContent('Day 1');
     expect(screen.getAllByText('Lesson')).toHaveLength(2);
     expect(screen.getByTestId('home-plan-helper')).toHaveTextContent(
       "Reviews unlock once you've learned new words."
@@ -363,7 +365,8 @@ describe('HomeScreen', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByTestId('home-plan-status')).toBeOnTheScreen();
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('Day 1');
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName('Day 1');
     expect(screen.getByTestId('home-plan-circle-lesson-1')).toHaveTextContent('✓');
     expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Continue to lesson');
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
@@ -382,8 +385,55 @@ describe('HomeScreen', () => {
 
     expect(await screen.findByTestId('home-plan-circle-lesson-2')).toHaveTextContent('✓');
     expect(within(screen.getByTestId('home-plan-step-review')).getByText('Review')).toBeOnTheScreen();
-    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName('2 of 3 done');
+    expect(screen.getByTestId('home-plan-status')).toHaveTextContent('Day 1');
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName('Day 1');
     expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Start Daily Review · ~1 min');
+  });
+
+  it.each([
+    ['nothing is due', {}, '2 of 2 done'],
+    [
+      'Review is done',
+      {
+        reviewState: {
+          'fixture:cajun:greeting:choice': buildCardReviewState({
+            nextReviewAt: clock.pastDue().toISOString()
+          })
+        },
+        dailyReviewLogV2Cajun: dailyReviewLogs.today
+      },
+      '3 of 3 done'
+    ]
+  ])('shows the done count on Day 1 once every step is done and %s', async (_state, progress, status) => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({ lessonProgress: homeProjectionProgress.twoLessonsToday, ...progress });
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent(status);
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName(status);
+    expect(screen.getByTestId('home-plan-completion')).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['cajun', 'kreole'],
+    ['kreole', 'cajun']
+  ])('keeps a finished %s Day 1 out of the %s Day 1 status', async (studied, other) => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    const twoLessonsTodayByLanguage = {
+      cajun: homeProjectionProgress.twoLessonsToday,
+      kreole: {
+        ...homeProjectionProgress.kreoleLessonToday,
+        ...homeProjectionProgress.reviewLessonTodayByLanguage.kreole
+      }
+    };
+    await seedAsyncStorage({ lessonProgress: twoLessonsTodayByLanguage[studied] });
+    const studiedRender = renderApp({ initialRouteName: 'Home', initialParams: { language: studied } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('2 of 2 done');
+    studiedRender.unmount();
+    renderApp({ initialRouteName: 'Home', initialParams: { language: other } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('Day 1');
   });
 
   it.each([
@@ -452,6 +502,67 @@ describe('HomeScreen', () => {
     const reviewStep = await screen.findByTestId('home-plan-step-review');
     expect(within(reviewStep).getByText('Review')).toBeOnTheScreen();
     expect(reviewStep).toBeEnabled();
+  });
+
+  it.each([
+    ['nothing is due and the Lesson is done', {}, '1 of 2 done'],
+    [
+      'nothing is due and every planned step is done',
+      { practiceLog: { cajun: practiceLogs.todaySpeech } },
+      '2 of 2 done'
+    ],
+    [
+      'Review and every other step are done',
+      {
+        practiceLog: { cajun: practiceLogs.todaySpeech },
+        dailyReviewLogV2Cajun: dailyReviewLogs.today
+      },
+      '3 of 3 done'
+    ]
+  ])('shows the returning-day status when %s', async (_state, progress, status) => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.establishedLessonToday,
+      ...progress
+    });
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent(status);
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName(status);
+  });
+
+  it('shows Day 1 for Kouri-Vini after Louisiana French study on earlier days', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({ lessonProgress: homeProjectionProgress.lessonYesterday });
+    const cajunRender = renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('0 of 2 done');
+    cajunRender.unmount();
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'kreole' } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('Day 1');
+  });
+
+  it.each([
+    ['cajun', 'kreole'],
+    ['kreole', 'cajun']
+  ])('keeps %s progress out of the %s plan status', async (studied, other) => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({
+      lessonProgress: {
+        ...homeProjectionProgress.bothLanguagesLessonYesterday,
+        ...homeProjectionProgress.reviewLessonTodayByLanguage[studied]
+      },
+      practiceLog: { [studied]: practiceLogs.todaySpeech },
+      [studied === 'cajun' ? 'dailyReviewLogV2Cajun' : 'dailyReviewLogV2Kreole']: dailyReviewLogs.today
+    });
+    const studiedRender = renderApp({ initialRouteName: 'Home', initialParams: { language: studied } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('3 of 3 done');
+    studiedRender.unmount();
+    renderApp({ initialRouteName: 'Home', initialParams: { language: other } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('0 of 2 done');
   });
 
   it('enables first-day Mistakes only for an active-Language pending Card', async () => {
@@ -1435,7 +1546,7 @@ describe('HomeScreen', () => {
         borderWidth: 2,
         borderColor: 'rgba(255,255,255,0.35)'
       });
-      expect(screen.getByTestId('home-plan-status')).toBeOnTheScreen();
+      expect(screen.getByTestId('home-plan-status')).toHaveTextContent('1 of 3 done');
     } finally {
       getProjection.mockRestore();
     }
