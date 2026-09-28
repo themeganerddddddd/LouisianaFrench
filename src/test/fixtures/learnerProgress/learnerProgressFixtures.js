@@ -176,6 +176,30 @@ export const homeProjectionProgress = frozen({
       completedAt: new Date(2026, 2, 4, 23, 30, 0).toISOString()
     })
   }),
+  bothLanguagesLessonYesterday: frozen({
+    'cajun:fixture_cajun_u01_l01': frozen({
+      completed: true,
+      completedAt: new Date(2026, 2, 4, 23, 30, 0).toISOString()
+    }),
+    'kreole:fixture_kreole_u01_l01': frozen({
+      completed: true,
+      completedAt: new Date(2026, 2, 4, 23, 30, 0).toISOString()
+    })
+  }),
+  reviewLessonTodayByLanguage: frozen({
+    cajun: frozen({
+      'cajun:fixture_cajun_u01_review': frozen({
+        completed: true,
+        completedAt: clock.localCalendarLateEvening().toISOString()
+      })
+    }),
+    kreole: frozen({
+      'kreole:fixture_kreole_u01_review': frozen({
+        completed: true,
+        completedAt: clock.localCalendarLateEvening().toISOString()
+      })
+    })
+  }),
   establishedLessonToday: frozen({
     'cajun:fixture_cajun_u01_l01': frozen({
       completed: true,
