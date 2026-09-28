@@ -366,6 +366,7 @@ describe('HomeScreen', () => {
     });
 
     expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('Day 1');
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName('Day 1');
     expect(screen.getByTestId('home-plan-circle-lesson-1')).toHaveTextContent('✓');
     expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Continue to lesson');
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
@@ -384,8 +385,55 @@ describe('HomeScreen', () => {
 
     expect(await screen.findByTestId('home-plan-circle-lesson-2')).toHaveTextContent('✓');
     expect(within(screen.getByTestId('home-plan-step-review')).getByText('Review')).toBeOnTheScreen();
-    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName('2 of 3 done');
+    expect(screen.getByTestId('home-plan-status')).toHaveTextContent('Day 1');
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName('Day 1');
     expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Start Daily Review · ~1 min');
+  });
+
+  it.each([
+    ['nothing is due', {}, '2 of 2 done'],
+    [
+      'Review is done',
+      {
+        reviewState: {
+          'fixture:cajun:greeting:choice': buildCardReviewState({
+            nextReviewAt: clock.pastDue().toISOString()
+          })
+        },
+        dailyReviewLogV2Cajun: dailyReviewLogs.today
+      },
+      '3 of 3 done'
+    ]
+  ])('shows the done count on Day 1 once every step is done and %s', async (_state, progress, status) => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    await seedAsyncStorage({ lessonProgress: homeProjectionProgress.twoLessonsToday, ...progress });
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent(status);
+    expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName(status);
+    expect(screen.getByTestId('home-plan-completion')).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['cajun', 'kreole'],
+    ['kreole', 'cajun']
+  ])('keeps a finished %s Day 1 out of the %s Day 1 status', async (studied, other) => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    const twoLessonsTodayByLanguage = {
+      cajun: homeProjectionProgress.twoLessonsToday,
+      kreole: {
+        ...homeProjectionProgress.kreoleLessonToday,
+        ...homeProjectionProgress.reviewLessonTodayByLanguage.kreole
+      }
+    };
+    await seedAsyncStorage({ lessonProgress: twoLessonsTodayByLanguage[studied] });
+    const studiedRender = renderApp({ initialRouteName: 'Home', initialParams: { language: studied } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('2 of 2 done');
+    studiedRender.unmount();
+    renderApp({ initialRouteName: 'Home', initialParams: { language: other } });
+
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('Day 1');
   });
 
   it.each([
