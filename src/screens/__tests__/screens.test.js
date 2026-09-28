@@ -5,6 +5,7 @@ import {
   BackHandler,
   DeviceEventEmitter,
   LayoutAnimation,
+  Platform,
   StyleSheet
 } from 'react-native';
 
@@ -440,33 +441,66 @@ describe('HomeScreen', () => {
       expect(await openBugReport()).toHaveStyle({ paddingBottom: insets.bottom + 14 });
     });
 
-    it('lifts the bug report sheet 14dp above the open keyboard', async () => {
-      const screenHeight = safeAreaMetrics.frame.height;
-      const keyboardTop = 615;
-      const overlay = await openBugReport();
-
-      fireEvent(overlay, 'layout', {
-        persist: () => {},
-        nativeEvent: { layout: { x: 0, y: 0, width: 412, height: screenHeight } }
-      });
-      act(() => {
-        const endCoordinates = {
-          screenX: 0,
+    const screenHeight = safeAreaMetrics.frame.height;
+    const keyboardTop = 615;
+    const statusBarHeight = 38;
+    // Mirrors ReactRootView.checkForKeyboardEvents: Android reports the IME height without
+    // the navigation bar, and a hide screenY equal to the visible window height.
+    const KEYBOARD_EVENTS = {
+      ios: {
+        show: ['keyboardWillShow', { screenY: keyboardTop, height: screenHeight - keyboardTop }],
+        hide: ['keyboardWillHide', { screenY: screenHeight, height: 0 }]
+      },
+      android: {
+        show: ['keyboardDidShow', {
           screenY: keyboardTop,
-          width: 412,
-          height: screenHeight - keyboardTop
-        };
-        DeviceEventEmitter.emit('keyboardWillShow', { endCoordinates });
-        DeviceEventEmitter.emit('keyboardDidShow', { endCoordinates });
-      });
+          height: screenHeight - keyboardTop - insets.bottom
+        }],
+        hide: ['keyboardDidHide', {
+          screenY: screenHeight - statusBarHeight - insets.bottom,
+          height: 0
+        }]
+      }
+    };
 
-      await waitFor(() => {
-        const { height, paddingBottom } = StyleSheet.flatten(
-          screen.getByTestId('bug-report-overlay').props.style
-        );
-        expect(height - paddingBottom).toBe(keyboardTop - 14);
-      });
+    afterEach(() => {
+      jest.restoreAllMocks();
     });
+
+    function sheetBottomEdge() {
+      const { height = screenHeight, paddingBottom } = StyleSheet.flatten(
+        screen.getByTestId('bug-report-overlay').props.style
+      );
+      return height - paddingBottom;
+    }
+
+    function emitKeyboard([eventName, coordinates]) {
+      act(() => {
+        DeviceEventEmitter.emit(eventName, {
+          endCoordinates: { screenX: 0, width: 412, ...coordinates }
+        });
+      });
+    }
+
+    it.each(['ios', 'android'])(
+      'lifts the bug report sheet 14dp above the %s keyboard and lowers it when the keyboard hides',
+      async (platform) => {
+        jest.replaceProperty(Platform, 'OS', platform);
+        const overlay = await openBugReport();
+        fireEvent(overlay, 'layout', {
+          persist: () => {},
+          nativeEvent: { layout: { x: 0, y: 0, width: 412, height: screenHeight } }
+        });
+
+        emitKeyboard(KEYBOARD_EVENTS[platform].show);
+        await waitFor(() => expect(sheetBottomEdge()).toBe(keyboardTop - 14));
+
+        emitKeyboard(KEYBOARD_EVENTS[platform].hide);
+        await waitFor(() =>
+          expect(sheetBottomEdge()).toBe(screenHeight - insets.bottom - 14)
+        );
+      }
+    );
   });
 
   it('keeps the dashboard controls available at mobile and desktop render widths', async () => {

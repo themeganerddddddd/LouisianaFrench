@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
-  KeyboardAvoidingView,
+  Keyboard,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -38,7 +39,22 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const swayAnim = useRef(new Animated.Value(0)).current;
   const submittingRef = useRef(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  useEffect(() => {
+    if (!visible) return undefined;
+    const [showEvent, hideEvent] = Platform.OS === 'ios'
+      ? ['keyboardWillShow', 'keyboardWillHide']
+      : ['keyboardDidShow', 'keyboardDidHide'];
+    const subscriptions = [
+      Keyboard.addListener(showEvent, (event) => setKeyboardHeight(event.endCoordinates.height)),
+      Keyboard.addListener(hideEvent, () => setKeyboardHeight(0)),
+    ];
+    return () => {
+      subscriptions.forEach((subscription) => subscription.remove());
+      setKeyboardHeight(0);
+    };
+  }, [visible]);
   useEffect(() => {
     if (!visible) return;
     setStage('form'); setName(''); setEmail(''); setDescription('');
@@ -94,6 +110,11 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
     }
   }
 
+  // The edge-to-edge Modal window is not resized for the keyboard. Android reports the keyboard
+  // height without the navigation bar; iOS includes the home indicator area.
+  const keyboardOffset = Platform.OS === 'ios'
+    ? Math.max(keyboardHeight - insets.bottom, 0)
+    : keyboardHeight;
   const swayRotation = swayAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['-2deg', '2.5deg', '-2deg'] });
   const swayTranslateY = swayAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -8, 0] });
   function ActionButton({ label, primary, onPress, disabled, accessibilityLabel }) {
@@ -111,13 +132,9 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
   }
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      {/* The Modal window is edge-to-edge, so Android does not resize it for the keyboard.
-          The offset stops the bottom inset from adding a gap above the keyboard. */}
-      <KeyboardAvoidingView
-        behavior="height"
-        keyboardVerticalOffset={-insets.bottom}
+      <View
         testID="bug-report-overlay"
-        style={[styles.overlay, { paddingBottom: insets.bottom + 14 }]}
+        style={[styles.overlay, { paddingBottom: insets.bottom + 14 + keyboardOffset }]}
       >
         <View style={styles.sheet}>
           {stage === 'form' && (
@@ -173,7 +190,7 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
             </View>
           )}
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
