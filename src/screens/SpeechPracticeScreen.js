@@ -136,7 +136,7 @@ export default function SpeechPracticeScreen({
   async function acceptAttempt() {
     setBusy(true);
     if (scored) {
-      await recordStudyAndXp(1);
+      await recordStudyAndXp(language, 1);
       if (acceptedCount + 1 >= wordLimit) {
         await recordPracticeCompletion(language, 'speech');
         setBusy(false);

@@ -20,6 +20,12 @@ export const profiles = frozen({
     streak: 2,
     lastStudyDate: clock.studyDay().toISOString()
   }),
+  kouriVini: frozen({
+    username: 'Player',
+    xp: 12,
+    streak: 5,
+    lastStudyDate: clock.studyDay().toISOString()
+  }),
   beau: frozen({
     username: 'Beau',
     xp: 0,

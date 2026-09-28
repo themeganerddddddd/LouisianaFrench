@@ -3,6 +3,9 @@ import { getNow } from './clock';
 
 const KEYS = {
   PROFILE: 'lf_profile',
+  PROFILE_CAJUN: 'lf_profile_cajun',
+  PROFILE_KREOLE: 'lf_profile_kreole',
+  PROFILE_MIGRATED: 'lf_profile_migrated',
   LESSON_PROGRESS: 'lf_lesson_progress',
   WORD_PROGRESS: 'lf_word_progress',
   REVIEW_STATE: 'lf_review_state',
@@ -77,14 +80,37 @@ export async function markInfoContextSeen(contextKey) {
   );
 }
 
-export async function getProfile() {
-  const raw = await AsyncStorage.getItem(KEYS.PROFILE);
+function getLanguageProfileKey(language) {
+  const key = KEYS[`PROFILE_${String(language).toUpperCase()}`];
+  if (!key) throw new Error(`Unknown Language: ${language}`);
+  return key;
+}
+
+async function migrateSharedProfile() {
+  if ((await AsyncStorage.getItem(KEYS.PROFILE_MIGRATED)) === 'true') return;
+
+  // Never left pending, so a default Language saved later cannot receive another Language's data.
+  // Without a saved default Language, Home opens Louisiana French.
+  const defaultKey = getLanguageProfileKey((await getDefaultLanguage()) || 'cajun');
+  const shared = await AsyncStorage.getItem(KEYS.PROFILE);
+
+  if (shared && !(await AsyncStorage.getItem(defaultKey))) {
+    await AsyncStorage.setItem(defaultKey, shared);
+  }
+
+  await AsyncStorage.setItem(KEYS.PROFILE_MIGRATED, 'true');
+}
+
+export async function getProfile(language) {
+  const key = getLanguageProfileKey(language);
+  await migrateSharedProfile();
+  const raw = await AsyncStorage.getItem(key);
   return raw ? JSON.parse(raw) : defaultProfile;
 }
 
-export async function saveProfile(profile) {
+export async function saveProfile(language, profile) {
   await AsyncStorage.setItem(
-    KEYS.PROFILE,
+    getLanguageProfileKey(language),
     JSON.stringify(profile)
   );
 }
@@ -430,8 +456,8 @@ export async function upsertLeaderboard(name, xp) {
   );
 }
 
-export async function recordStudyAndXp(xpEarned) {
-  const profile = await getProfile();
+export async function recordStudyAndXp(language, xpEarned) {
+  const profile = await getProfile(language);
 
   const now = getNow();
 
@@ -474,7 +500,7 @@ export async function recordStudyAndXp(xpEarned) {
     lastStudyDate: getNow().toISOString()
   };
 
-  await saveProfile(updated);
+  await saveProfile(language, updated);
 
   await upsertLeaderboard(
     updated.username || 'Player',
