@@ -222,7 +222,7 @@ describe('ActivityRenderer requested interaction behavior', () => {
       expect(wordAudioPlayers()).toHaveLength(2);
     });
 
-    it('keeps word-bank taps silent and plays the Word Audio again after a correct answer', async () => {
+    it('keeps word-bank taps silent and does not play the Word Audio again after a correct answer', async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       renderTyping();
       await jest.advanceTimersByTimeAsync(500);
@@ -237,7 +237,9 @@ describe('ActivityRenderer requested interaction behavior', () => {
       await user.press(screen.getByText('Check'));
 
       expect(await screen.findByText('Correct!')).toBeOnTheScreen();
-      expect(wordAudioPlayers()).toHaveLength(2);
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(createAudioPlayer).toHaveBeenCalledTimes(2);
+      expect(wordAudioPlayers()).toHaveLength(1);
     });
 
     it('does not autoplay again after Try Again', async () => {

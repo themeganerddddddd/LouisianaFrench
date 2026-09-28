@@ -1392,9 +1392,6 @@ function Typing({
 
     if (isTextAnswerCorrect(value, activity)) {
       playFeedback('correct');
-      if (activity.audioKey) {
-        playAudioKey(activity.audioKey);
-      }
       setState('correct');
     } else {
       playFeedback('wrong');
