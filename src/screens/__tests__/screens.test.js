@@ -33,6 +33,7 @@ import {
   getLessonProgress,
   getPendingMistakes,
   getProfile,
+  getReviewState,
   getTodayKey,
   getTodayPractice,
   hasSelectedLanguage,
@@ -1807,6 +1808,7 @@ describe('LessonRunner', () => {
         answer: "C'est"
       })
     ]);
+    expect((await getReviewState())['fixture:cajun:ready:build'].lapses).toBe(1);
 
     await user.press(screen.getByText("C'est"));
     await user.press(screen.getByText('paré'));
@@ -1817,6 +1819,9 @@ describe('LessonRunner', () => {
 
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText(/Everyday phrases/)).toBeOnTheScreen();
+    const repairedCard = (await getReviewState())['fixture:cajun:ready:build'];
+    expect(repairedCard.lapses).toBe(0);
+    expect(new Date(repairedCard.nextReviewAt) > clock.dueNow()).toBe(true);
   });
 
   it('completes the Lesson with its full XP after Mistake Review and shows it done on Home', async () => {
@@ -2097,6 +2102,38 @@ describe('MistakeReviewScreen', () => {
     expect(await getTodayPractice('cajun')).toBeNull();
   });
 
+  it('clears the Home Review badge after a due missed Card is corrected', async () => {
+    const user = setupUser();
+    const { cardId } = pendingMistakes.cajun.greetingChoice;
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: {
+        [cardId]: buildCardReviewState({
+          nextReviewAt: clock.pastDue().toISOString(),
+          lapses: 1
+        })
+      },
+      pendingMistakes: { cajun: { [cardId]: pendingMistakes.cajun.greetingChoice } }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByTestId('review-count')).toHaveTextContent('1');
+    fireEvent.press(screen.getByTestId('home-mistakes-control'));
+    await screen.findByText("Choose the match for 'How’s it going?'");
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    await waitFor(() => expect(screen.getByTestId('home-stats')).toHaveTextContent(/^⚡ 10 /));
+    expect(screen.queryByTestId('review-count') === null).toBe(true);
+    expect(screen.queryByTestId('mistakes-count') === null).toBe(true);
+    expect((await getReviewState())[cardId].lapses).toBe(0);
+  });
+
   it('keeps a Home-launched Card visible after another wrong answer', async () => {
     const user = setupUser();
     await seedAsyncStorage({
@@ -2328,6 +2365,39 @@ describe('DailyReviewScreen', () => {
     });
     expect(await getLanguageDailyReviewLog('kreole')).toEqual({});
     expect(await getDailyReviewLog()).toEqual({ [getTodayKey()]: true });
+  });
+
+  it('clears the pending mistake and both Home badges after a correct answer', async () => {
+    const user = setupUser();
+    const { cardId } = pendingMistakes.cajun.greetingChoice;
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: {
+        [cardId]: buildCardReviewState({
+          nextReviewAt: clock.pastDue().toISOString(),
+          lapses: 1
+        })
+      },
+      pendingMistakes: { cajun: { [cardId]: pendingMistakes.cajun.greetingChoice } }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByTestId('mistakes-count')).toHaveTextContent('1');
+    await user.press(screen.getByTestId('home-review-control'));
+    expect(await screen.findByText('1 / 1')).toBeOnTheScreen();
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+    await user.press(await screen.findByText('Back to Home'));
+
+    await waitFor(() => expect(screen.getByTestId('home-stats')).toHaveTextContent(/^⚡ 8 /));
+    expect(screen.queryByTestId('mistakes-count') === null).toBe(true);
+    expect(screen.queryByTestId('review-count') === null).toBe(true);
+    expect(await getPendingMistakes('cajun')).toEqual([]);
   });
 
   it('completes after a final wrong answer without double-scoring (KD-01)', async () => {
