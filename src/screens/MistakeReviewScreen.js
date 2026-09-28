@@ -19,6 +19,7 @@ import SafeScreenView from '../components/SafeScreenView';
 
 import {
   getPendingMistakes,
+  markLessonComplete,
   recordPracticeCompletion,
   recordStudyAndXp,
   removePendingMistake
@@ -32,7 +33,8 @@ export default function MistakeReviewScreen({
     language,
     lessonTitle,
     mistakes,
-    lessonXp
+    lessonXp,
+    lessonId
   } = route.params;
 
   const homeMode =
@@ -271,11 +273,23 @@ export default function MistakeReviewScreen({
       return;
     }
 
+    const totalXp =
+      homeMode
+        ? 10
+        : (lessonXp || 0) + 10;
+
     const updatedProfile =
       await recordStudyAndXp(
         language,
-        10
+        totalXp
       );
+
+    if (!homeMode && lessonId) {
+      await markLessonComplete(
+        language,
+        lessonId
+      );
+    }
 
     if (homeMode) {
       navigation.replace(
@@ -289,8 +303,7 @@ export default function MistakeReviewScreen({
           lessonTitle,
 
           xpEarned:
-            (lessonXp || 0) +
-            10,
+            totalXp,
 
           mistakesCount:
             totalMistakes,
