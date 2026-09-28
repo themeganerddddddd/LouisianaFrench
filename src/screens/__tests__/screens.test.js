@@ -1,6 +1,13 @@
-import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
+import {
+  AccessibilityInfo,
+  BackHandler,
+  DeviceEventEmitter,
+  LayoutAnimation,
+  Platform,
+  StyleSheet
+} from 'react-native';
 
 import {
   activityByCardId,
@@ -406,6 +413,104 @@ describe('HomeScreen', () => {
       paddingBottom: 20
     });
     expect(screen.getByTestId('home-status-bar').props.style).toBe('light');
+  });
+
+  describe.each([
+    ['a bottom inset', FULL_SCREEN_PHONE_METRICS],
+    ['no insets', { ...FULL_SCREEN_PHONE_METRICS, insets: { top: 0, right: 0, bottom: 0, left: 0 } }]
+  ])('on a phone with %s', (_label, safeAreaMetrics) => {
+    const { insets } = safeAreaMetrics;
+
+    async function openBugReport() {
+      const user = setupUser();
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' }, safeAreaMetrics });
+      await screen.findByText('Louisiana French');
+      await user.press(screen.getByLabelText('Report a bug'));
+      return screen.getByTestId('bug-report-overlay');
+    }
+
+    it('keeps the scroll content and bug report sheet above the bottom inset', async () => {
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' }, safeAreaMetrics });
+      await screen.findByText('Louisiana French');
+
+      expect(
+        StyleSheet.flatten(screen.getByTestId('home-scroll').props.contentContainerStyle)
+      ).toMatchObject({ paddingBottom: insets.bottom + 14 });
+      screen.unmount();
+
+      expect(await openBugReport()).toHaveStyle({ paddingBottom: insets.bottom + 14 });
+    });
+
+    const screenHeight = safeAreaMetrics.frame.height;
+    const keyboardTop = 615;
+    const statusBarHeight = 38;
+    // Mirrors ReactRootView.checkForKeyboardEvents: Android reports the IME height without
+    // the navigation bar, and a hide screenY equal to the visible window height.
+    const KEYBOARD_EVENTS = {
+      ios: {
+        show: ['keyboardWillShow', { screenY: keyboardTop, height: screenHeight - keyboardTop }],
+        hide: ['keyboardWillHide', { screenY: screenHeight, height: 0 }]
+      },
+      android: {
+        show: ['keyboardDidShow', {
+          screenY: keyboardTop,
+          height: screenHeight - keyboardTop - insets.bottom
+        }],
+        hide: ['keyboardDidHide', {
+          screenY: screenHeight - statusBarHeight - insets.bottom,
+          height: 0
+        }]
+      }
+    };
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    function sheetBottomEdge() {
+      const { height = screenHeight, paddingBottom } = StyleSheet.flatten(
+        screen.getByTestId('bug-report-overlay').props.style
+      );
+      return height - paddingBottom;
+    }
+
+    function emitKeyboard([eventName, coordinates]) {
+      act(() => {
+        DeviceEventEmitter.emit(eventName, {
+          endCoordinates: { screenX: 0, width: 412, ...coordinates }
+        });
+      });
+    }
+
+    it.each(['ios', 'android'])(
+      'lifts the bug report sheet 14dp above the %s keyboard and lowers it when the keyboard hides',
+      async (platform) => {
+        jest.replaceProperty(Platform, 'OS', platform);
+        const overlay = await openBugReport();
+        fireEvent(overlay, 'layout', {
+          persist: () => {},
+          nativeEvent: { layout: { x: 0, y: 0, width: 412, height: screenHeight } }
+        });
+
+        emitKeyboard(KEYBOARD_EVENTS[platform].show);
+        await waitFor(() => expect(sheetBottomEdge()).toBe(keyboardTop - 14));
+
+        emitKeyboard(KEYBOARD_EVENTS[platform].hide);
+        await waitFor(() =>
+          expect(sheetBottomEdge()).toBe(screenHeight - insets.bottom - 14)
+        );
+      }
+    );
+
+    it('keeps the bug report sheet above the inset for a floating Android keyboard', async () => {
+      jest.replaceProperty(Platform, 'OS', 'android');
+      const overlay = await openBugReport();
+
+      // A floating keyboard has no bottom IME inset, so RN reports 0 minus the navigation bar.
+      emitKeyboard(['keyboardDidShow', { screenY: keyboardTop, height: -Math.max(insets.bottom, 24) }]);
+
+      expect(overlay).toHaveStyle({ paddingBottom: insets.bottom + 14 });
+    });
   });
 
   it('keeps the dashboard controls available at mobile and desktop render widths', async () => {
@@ -1678,6 +1783,23 @@ describe('LessonRunner', () => {
       expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
       expect(screen.getByText('0 / 1')).toBeOnTheScreen();
       expect(screen.getByText('Before you begin')).toBeOnTheScreen();
+    });
+
+    it.each([
+      ['device insets', FULL_SCREEN_PHONE_METRICS.insets],
+      ['no insets', { top: 0, right: 0, bottom: 0, left: 0 }]
+    ])('keeps the preface clear of the top and bottom insets with %s', async (_label, insets) => {
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' },
+        safeAreaMetrics: { ...FULL_SCREEN_PHONE_METRICS, insets }
+      });
+
+      expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
+      expect(screen.getByTestId('preface-overlay')).toHaveStyle({
+        paddingTop: insets.top + 20,
+        paddingBottom: insets.bottom + 20
+      });
     });
 
     it('dismisses the preface and renders the first Activity on "Start lesson"', async () => {
