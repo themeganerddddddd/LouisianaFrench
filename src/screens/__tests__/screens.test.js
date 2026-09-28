@@ -769,9 +769,11 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Dictionary')).toBeOnTheScreen();
   });
 
-  it('shows global XP and streak with active-Language mastery, including zero mastery', async () => {
+  it('shows the active Language XP and streak with its mastery, including zero mastery', async () => {
     await seedAsyncStorage({
-      profile: profiles.established,
+      profileCajun: profiles.established,
+      profileKreole: profiles.kouriVini,
+      profileMigrated: true,
       lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       wordProgress: {}
     });
@@ -782,7 +784,7 @@ describe('HomeScreen', () => {
     });
 
     expect(await screen.findByTestId('home-stats')).toHaveTextContent(
-      '⚡ 40 · 🔥 2 · 0% mastered'
+      '⚡ 12 · 🔥 5 · 0% mastered'
     );
   });
 
@@ -811,7 +813,9 @@ describe('HomeScreen', () => {
   it('toggles and persists the current Language while refreshing header badges', async () => {
     const user = setupUser();
     await seedAsyncStorage({
-      profile: profiles.established,
+      profileCajun: profiles.established,
+      profileKreole: profiles.kouriVini,
+      profileMigrated: true,
       lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
       reviewState: {
         ...reviewStates.overlap,
@@ -839,13 +843,34 @@ describe('HomeScreen', () => {
       backgroundColor: '#FFCD00'
     });
     expect(screen.getByTestId('mistakes-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 0% mastered');
     await user.press(screen.getByLabelText('Louisiana French flag'));
 
     expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
     expect(screen.getByTestId('review-count')).toHaveTextContent('1');
     expect(screen.getByTestId('mistakes-count')).toHaveTextContent('1');
-    expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 0% mastered');
+    expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 12 · 🔥 5 · 0% mastered');
     expect(await getDefaultLanguage()).toBe('kreole');
+  });
+
+  it('moves shared XP and streak into the saved default Language only', async () => {
+    const user = setupUser();
+    await seedAsyncStorage({
+      profile: profiles.established,
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage
+    });
+    await setDefaultLanguage('kreole');
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'kreole' }
+    });
+
+    expect(await screen.findByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 0% mastered');
+    await user.press(screen.getByLabelText('Kouri-Vini flag'));
+
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-stats')).toHaveTextContent('⚡ 0 · 🔥 0 · 0% mastered');
   });
 
   it('shows only the real unique Review count and keeps Review enabled with no real queue', async () => {
@@ -934,7 +959,7 @@ describe('HomeScreen', () => {
       await user.press(screen.getByTestId('home-review-control'));
 
       await seedAsyncStorage({
-        profile: profiles.established,
+        profileCajun: profiles.established,
         wordProgress: {
           'cajun:fixture_cajun_w01': wordMastery.mastered
         }
@@ -1192,7 +1217,7 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Session Complete 🎉')).toBeNull();
     expect(await getPendingMistakes('cajun')).toEqual([]);
     expect(await getTodayPractice('cajun')).toBeNull();
-    expect((await getProfile()).xp).toBe(0);
+    expect((await getProfile('cajun')).xp).toBe(0);
   });
 
   it('shows pressed scale feedback and reduced-motion opacity feedback', async () => {
@@ -1472,7 +1497,7 @@ describe('HomeScreen', () => {
       });
       expect(await getTodayPractice('cajun')).toEqual(expect.objectContaining({ type: 'speech' }));
       expect(await getTodayPractice('kreole')).toBeNull();
-      expect((await getProfile()).xp).toBe(5);
+      expect((await getProfile('cajun')).xp).toBe(5);
     } finally {
       getProjection.mockRestore();
       useAudioRecorder.mockImplementation(defaultRecorder);
@@ -1887,7 +1912,8 @@ describe('MistakeReviewScreen', () => {
     expect(await getPendingMistakes('kreole')).toEqual([
       pendingMistakes.kreole.pronounsChoice
     ]);
-    expect((await getProfile()).xp).toBe(10);
+    expect((await getProfile('cajun')).xp).toBe(10);
+    expect((await getProfile('kreole')).xp).toBe(0);
     expect(await getTodayPractice('cajun')).toEqual({
       type: 'mistakeReview',
       completedAt: expect.any(String)

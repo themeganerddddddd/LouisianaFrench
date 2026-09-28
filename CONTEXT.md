@@ -60,7 +60,7 @@ A pronunciation recording identified by an audio key and resolved to a bundled a
 _Avoid_: Sound when referring to language pronunciation
 
 **Learner Progress**:
-The learner-owned history of Lesson completion, Word mastery, Card review state, XP, streaks, and Daily Review completion.
+The learner-owned history of Lesson completion, Word mastery, Card review state, XP, streaks, and Daily Review completion. Each Language keeps its own XP and streak.
 _Avoid_: Catalog data, app state
 
 **Catalog**:

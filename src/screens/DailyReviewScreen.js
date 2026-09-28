@@ -144,6 +144,7 @@ export default function DailyReviewScreen({
 
     const profile =
       await recordStudyAndXp(
+        language,
         nextXp
       );
 
@@ -231,6 +232,7 @@ export default function DailyReviewScreen({
 
       const profile =
         await recordStudyAndXp(
+          language,
           xp
         );
 

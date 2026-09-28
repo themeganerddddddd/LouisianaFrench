@@ -78,18 +78,68 @@ describe('Language selection', () => {
 });
 
 describe('Profile', () => {
-  it('defaults to a fresh Profile when unset', async () => {
-    expect(await getProfile()).toEqual(profiles.fresh);
+  it('defaults to a fresh Profile for each Language when unset', async () => {
+    expect(await getProfile('cajun')).toEqual(profiles.fresh);
+    expect(await getProfile('kreole')).toEqual(profiles.fresh);
   });
 
-  it('persists a saved Profile', async () => {
-    await saveProfile(profiles.established);
-    expect(await getProfile()).toEqual(profiles.established);
+  it('persists a saved Profile only for its Language', async () => {
+    await saveProfile('kreole', profiles.established);
+
+    expect(await getProfile('kreole')).toEqual(profiles.established);
+    expect(await getProfile('cajun')).toEqual(profiles.fresh);
+  });
+
+  it('rejects an unknown Language', async () => {
+    await expect(getProfile('english')).rejects.toThrow('Unknown Language: english');
   });
 
   it('rejects when the persisted Profile record is malformed JSON', async () => {
-    await seedRawAsyncStorage({ profile: 'not-json' });
-    await expect(getProfile()).rejects.toThrow();
+    await seedRawAsyncStorage({ profileCajun: 'not-json', profileMigrated: 'true' });
+    await expect(getProfile('cajun')).rejects.toThrow();
+  });
+});
+
+describe('Shared Profile migration', () => {
+  it.each(['cajun', 'kreole'])(
+    'moves the shared XP and streak into saved default %s only',
+    async (language) => {
+      const other = language === 'cajun' ? 'kreole' : 'cajun';
+      await seedAsyncStorage({ profile: profiles.established });
+      await setDefaultLanguage(language);
+
+      expect(await getProfile(other)).toEqual(profiles.fresh);
+      expect(await getProfile(language)).toEqual(profiles.established);
+    }
+  );
+
+  it('migrates only once, even after the default Language changes', async () => {
+    await seedAsyncStorage({ profile: profiles.established });
+    await setDefaultLanguage('cajun');
+    await getProfile('cajun');
+
+    await setDefaultLanguage('kreole');
+
+    expect(await getProfile('kreole')).toEqual(profiles.fresh);
+    expect(await getProfile('cajun')).toEqual(profiles.established);
+  });
+
+  it('finishes at the first read without a saved default Language, using Louisiana French', async () => {
+    await seedAsyncStorage({ profile: profiles.established });
+
+    expect(await getProfile('kreole')).toEqual(profiles.fresh);
+    await setDefaultLanguage('kreole');
+    await recordStudyAndXp('cajun', 5);
+
+    expect(await getProfile('kreole')).toEqual(profiles.fresh);
+    expect((await getProfile('cajun')).xp).toBe(45);
+  });
+
+  it('keeps an existing Language Profile instead of overwriting it', async () => {
+    await seedAsyncStorage({ profile: profiles.established, profileCajun: profiles.kouriVini });
+    await setDefaultLanguage('cajun');
+
+    expect(await getProfile('cajun')).toEqual(profiles.kouriVini);
   });
 });
 
@@ -422,7 +472,7 @@ describe('XP and streak recording', () => {
   it('starts a streak at 1 on the first recorded study session', async () => {
     jest.setSystemTime(clock.studyDay());
 
-    const updated = await recordStudyAndXp(15);
+    const updated = await recordStudyAndXp('cajun', 15);
 
     expect(updated.xp).toBe(15);
     expect(updated.streak).toBe(1);
@@ -431,10 +481,10 @@ describe('XP and streak recording', () => {
 
   it('increments the streak on a consecutive calendar day', async () => {
     jest.setSystemTime(clock.studyDay());
-    await recordStudyAndXp(10);
+    await recordStudyAndXp('cajun', 10);
 
     jest.setSystemTime(clock.consecutiveStudyDay());
-    const updated = await recordStudyAndXp(10);
+    const updated = await recordStudyAndXp('cajun', 10);
 
     expect(updated.streak).toBe(2);
     expect(updated.xp).toBe(20);
@@ -442,38 +492,57 @@ describe('XP and streak recording', () => {
 
   it('resets the streak to 1 after a gap of more than one calendar day', async () => {
     jest.setSystemTime(clock.studyDay());
-    await recordStudyAndXp(10);
+    await recordStudyAndXp('cajun', 10);
 
     jest.setSystemTime(clock.gapStudyDay());
-    const updated = await recordStudyAndXp(10);
+    const updated = await recordStudyAndXp('cajun', 10);
 
     expect(updated.streak).toBe(1);
   });
 
   it('does not change the streak for a second study session on the same calendar day', async () => {
     jest.setSystemTime(clock.studyDay());
-    await recordStudyAndXp(10);
+    await recordStudyAndXp('cajun', 10);
 
     jest.setSystemTime(clock.sameStudyDay());
-    const updated = await recordStudyAndXp(5);
+    const updated = await recordStudyAndXp('cajun', 5);
 
     expect(updated.streak).toBe(1);
     expect(updated.xp).toBe(15);
   });
 
+  it('keeps XP earned in one Language out of the other Language', async () => {
+    await recordStudyAndXp('kreole', 10);
+
+    expect((await getProfile('kreole')).xp).toBe(10);
+    expect((await getProfile('cajun')).xp).toBe(0);
+  });
+
+  it('keeps a separate streak for each Language', async () => {
+    jest.setSystemTime(clock.studyDay());
+    await recordStudyAndXp('cajun', 10);
+
+    jest.setSystemTime(clock.consecutiveStudyDay());
+    await recordStudyAndXp('cajun', 10);
+    await recordStudyAndXp('kreole', 10);
+
+    expect((await getProfile('cajun')).streak).toBe(2);
+    expect((await getProfile('kreole')).streak).toBe(1);
+  });
+
   it('gracefully handles a partial Profile record missing xp, streak, and lastStudyDate', async () => {
-    await seedAsyncStorage({ profile: profiles.legacyPartial });
+    await seedAsyncStorage({ profileCajun: profiles.legacyPartial });
     jest.setSystemTime(clock.studyDay());
 
-    const updated = await recordStudyAndXp(10);
+    const updated = await recordStudyAndXp('cajun', 10);
 
     expect(updated.xp).toBe(10);
     expect(updated.streak).toBe(1);
   });
 
   it('also records the updated xp on the Leaderboard for the Profile username', async () => {
-    await saveProfile(profiles.beau);
-    await recordStudyAndXp(25);
+    await saveProfile('cajun', profiles.beau);
+    await recordStudyAndXp('cajun', 25);
 
     expect(await getLeaderboard()).toEqual([{ name: 'Beau', xp: 25 }]);
   });
