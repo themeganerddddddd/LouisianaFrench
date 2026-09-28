@@ -1,3 +1,4 @@
+import { createNavigationContainerRef } from '@react-navigation/native';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { createAudioPlayer, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
@@ -22,6 +23,7 @@ import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncS
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as homeProjection from '../../utils/homeProjection';
+import * as storage from '../../utils/storage';
 import {
   getDailyReviewLog,
   getDefaultLanguage,
@@ -2032,6 +2034,106 @@ describe('DailyReviewScreen', () => {
 });
 
 describe('DictionaryScreen', () => {
+  it('refreshes Word status when the mounted screen regains focus', async () => {
+    const navigationRef = createNavigationContainerRef();
+    await seedAsyncStorage({ wordProgress: {} });
+
+    renderApp({
+      initialRouteName: 'Dictionary',
+      initialParams: { language: 'cajun' },
+      navigationRef
+    });
+
+    expect(await screen.findByText('Hello')).toBeOnTheScreen();
+    expect(screen.queryByText('Mastered')).toBeNull();
+
+    await act(async () => {
+      navigationRef.navigate('Advanced', { language: 'cajun' });
+    });
+    await seedAsyncStorage({
+      wordProgress: { 'cajun:fixture_cajun_w01': wordMastery.mastered }
+    });
+    await act(async () => {
+      navigationRef.goBack();
+    });
+
+    expect(await screen.findByText('Mastered')).toBeOnTheScreen();
+
+    await seedAsyncStorage({
+      wordProgress: { 'kreole:fixture_kreole_w01': wordMastery.learningAfterWrong }
+    });
+    await act(async () => {
+      navigationRef.setParams({ language: 'kreole' });
+    });
+
+    expect(await screen.findByText('Kouri-Vini Dictionary')).toBeOnTheScreen();
+    expect(await screen.findByText('nouzòt')).toBeOnTheScreen();
+    expect(screen.getByText('Learning')).toBeOnTheScreen();
+  });
+
+  it('ignores a Word progress load that finishes after the screen loses focus', async () => {
+    const navigationRef = createNavigationContainerRef();
+    await seedAsyncStorage({ wordProgress: {} });
+
+    renderApp({
+      initialRouteName: 'Dictionary',
+      initialParams: { language: 'cajun' },
+      navigationRef
+    });
+    expect(await screen.findByText('Hello')).toBeOnTheScreen();
+    await act(async () => {
+      navigationRef.navigate('Advanced', { language: 'cajun' });
+    });
+
+    let resolveLateLoad;
+    const getWordProgress = jest
+      .spyOn(storage, 'getWordProgress')
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveLateLoad = resolve; }));
+
+    try {
+      await act(async () => {
+        navigationRef.goBack();
+      });
+      await act(async () => {
+        navigationRef.navigate('Advanced', { language: 'cajun' });
+      });
+      expect(getWordProgress).toHaveBeenCalled();
+      await act(async () => {
+        resolveLateLoad({ 'cajun:fixture_cajun_w01': wordMastery.mastered });
+      });
+
+      expect(screen.queryByText('Mastered', { includeHiddenElements: true })).toBeNull();
+    } finally {
+      getWordProgress.mockRestore();
+    }
+  });
+
+  it('releases the Audio player when the screen loses focus', async () => {
+    const navigationRef = createNavigationContainerRef();
+    const getSource = jest.spyOn(audioManifest, 'getAudioSource').mockReturnValue(1);
+
+    try {
+      const user = setupUser();
+      renderApp({
+        initialRouteName: 'Dictionary',
+        initialParams: { language: 'cajun' },
+        navigationRef
+      });
+
+      await user.press((await screen.findAllByText('Play audio'))[0]);
+      const player = createAudioPlayer.mock.results.at(-1).value;
+      expect(player).toMatchObject({ playing: true, registered: true, released: false });
+
+      await act(async () => {
+        navigationRef.navigate('Advanced', { language: 'cajun' });
+      });
+
+      expect(player).toMatchObject({ playing: false, registered: false, released: true });
+    } finally {
+      getSource.mockRestore();
+    }
+  });
+
   it('applies the final top inset on the first render', async () => {
     renderApp({
       initialRouteName: 'Dictionary',
