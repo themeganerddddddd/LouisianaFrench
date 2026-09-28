@@ -6,6 +6,7 @@ export const clock = Object.freeze({
   studyDay: () => localDate(0, 10, 9),
   sameStudyDay: () => localDate(0, 10, 20),
   consecutiveStudyDay: () => localDate(0, 11, 9),
+  consecutiveStudyEvening: () => localDate(0, 11, 20),
   gapStudyDay: () => localDate(0, 13, 9),
   reviewStart: () => localDate(0, 10, 9),
   pastDue: () => localDate(0, 11, 9),

@@ -404,7 +404,7 @@ describe('HomeScreen', () => {
       '0 of 2 done',
       'home-plan-cta'
     ]
-  ])('shows Nothing to review today %s and leaves it out of the plan', async (
+  ])('shows Nothing to review right now %s and leaves it out of the plan', async (
     _day,
     progress,
     now,
@@ -416,13 +416,42 @@ describe('HomeScreen', () => {
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
 
     const reviewStep = await screen.findByTestId('home-plan-step-review');
-    expect(within(reviewStep).getByText('Nothing to review today')).toBeOnTheScreen();
+    expect(within(reviewStep).getByText('Nothing to review right now')).toBeOnTheScreen();
     expect(reviewStep).toBeDisabled();
     expect(reviewStep.props.onPress).toBeUndefined();
     expect(screen.getByTestId('home-plan-circle-review')).toHaveTextContent('–');
     expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName(count);
     expect(screen.getByTestId(planControlId)).not.toHaveTextContent(/Daily Review/);
     expect(await getLanguageDailyReviewLog('cajun')).toEqual({});
+  });
+
+  it('shows the Review step once a Card reviewed yesterday evening reaches its exact due time', async () => {
+    const reviewedAt = clock.sameStudyDay();
+    const interval = 1;
+    const dueAt = new Date(reviewedAt);
+    dueAt.setDate(dueAt.getDate() + interval);
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          interval,
+          nextReviewAt: dueAt.toISOString()
+        })
+      }
+    });
+
+    jest.setSystemTime(clock.consecutiveStudyDay());
+    const morning = renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+    expect(
+      within(await screen.findByTestId('home-plan-step-review')).getByText('Nothing to review right now')
+    ).toBeOnTheScreen();
+    morning.unmount();
+
+    jest.setSystemTime(clock.consecutiveStudyEvening());
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+    const reviewStep = await screen.findByTestId('home-plan-step-review');
+    expect(within(reviewStep).getByText('Review')).toBeOnTheScreen();
+    expect(reviewStep).toBeEnabled();
   });
 
   it('enables first-day Mistakes only for an active-Language pending Card', async () => {
