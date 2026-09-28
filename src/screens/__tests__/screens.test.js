@@ -322,7 +322,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-stats')).toHaveTextContent(
       "Welcome! Let's learn new words."
     );
-    expect(screen.getByTestId('home-plan-status')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-plan-status')).toHaveTextContent('Day 1');
     expect(screen.getAllByText('Lesson')).toHaveLength(2);
     expect(screen.getByTestId('home-plan-helper')).toHaveTextContent(
       "Reviews unlock once you've learned new words."
@@ -363,7 +363,7 @@ describe('HomeScreen', () => {
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByTestId('home-plan-status')).toBeOnTheScreen();
+    expect(await screen.findByTestId('home-plan-status')).toHaveTextContent('Day 1');
     expect(screen.getByTestId('home-plan-circle-lesson-1')).toHaveTextContent('✓');
     expect(screen.getByTestId('home-plan-cta')).toHaveTextContent('Continue to lesson');
     expect(screen.getByTestId('home-review-control')).toBeEnabled();
@@ -1435,7 +1435,7 @@ describe('HomeScreen', () => {
         borderWidth: 2,
         borderColor: 'rgba(255,255,255,0.35)'
       });
-      expect(screen.getByTestId('home-plan-status')).toBeOnTheScreen();
+      expect(screen.getByTestId('home-plan-status')).toHaveTextContent('1 of 3 done');
     } finally {
       getProjection.mockRestore();
     }
