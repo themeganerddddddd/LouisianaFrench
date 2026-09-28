@@ -52,7 +52,7 @@ A catalog entry pairing a target-language expression with its English meaning an
 _Avoid_: Vocabulary item
 
 **Word mastery**:
-A learner's status for one Word, derived from their correct and wrong answers: new before any answer, learning after any answer until it is strong, strong with at least 2 correct and more correct than wrong answers, and mastered with at least 4 correct and more correct than wrong answers.
+A learner's status for one Word, derived from their correct and wrong answers: new before any answer, learning after any answer while it is neither strong nor mastered, strong with at least 2 correct and more correct than wrong answers, and mastered with at least 4 correct and more correct than wrong answers.
 _Avoid_: Word level, proficiency
 
 **Card**:

@@ -186,6 +186,17 @@ describe('Word mastery status', () => {
 
     expect((await getWordProgress())['cajun:u01_w0005']).toEqual(wordMastery.learningWithEqualAnswers);
   });
+
+  it('keeps a null saved Word entry without failing to read the others', async () => {
+    await seedAsyncStorage({
+      wordProgress: { 'cajun:u01_w0006': null, 'cajun:u01_w0001': wordMastery.strong }
+    });
+
+    expect(await getWordProgress()).toEqual({
+      'cajun:u01_w0006': null,
+      'cajun:u01_w0001': wordMastery.strong
+    });
+  });
 });
 
 describe('Review state persistence', () => {

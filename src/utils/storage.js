@@ -144,6 +144,7 @@ export async function getWordProgress() {
   const progress = raw ? JSON.parse(raw) : {};
 
   for (const record of Object.values(progress)) {
+    if (!record) continue;
     record.status = wordMasteryStatus(record);
   }
 
