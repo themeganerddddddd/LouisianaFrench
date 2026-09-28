@@ -25,7 +25,8 @@ import {
   getPendingMistakes,
   recordPracticeCompletion,
   recordStudyAndXp,
-  removePendingMistake
+  removePendingMistake,
+  updateWordProgress
 } from '../utils/storage';
 
 export default function MistakeReviewScreen({
@@ -224,6 +225,14 @@ export default function MistakeReviewScreen({
       current.cardId,
       4
     );
+
+    if (current.rowId) {
+      await updateWordProgress(
+        language,
+        current.rowId,
+        true
+      );
+    }
 
     await removePendingMistake(
       language,

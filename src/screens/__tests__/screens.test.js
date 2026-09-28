@@ -31,6 +31,7 @@ import {
   getReviewState,
   getTodayKey,
   getTodayPractice,
+  getWordProgress,
   hasSelectedLanguage,
   markLanguageSelected,
   setDefaultLanguage
@@ -1806,6 +1807,77 @@ describe('MistakeReviewScreen', () => {
 
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
+  });
+
+  it('records a correct Word answer when a missed Card is corrected (KD-05)', async () => {
+    const user = setupUser();
+    const activity = activityByCardId('fixture:cajun:greeting:choice');
+    await seedAsyncStorage({
+      wordProgress: { 'cajun:fixture_cajun_w02': wordMastery.learningAfterWrong }
+    });
+
+    renderApp({
+      initialRouteName: 'MistakeReview',
+      initialParams: {
+        language: 'cajun',
+        lessonId: 'fixture_cajun_u01_l01',
+        lessonTitle: 'Greetings & Check-ins — First greetings',
+        mistakes: [{ ...activity, userAnswer: 'Bonjour' }],
+        lessonXp: 20
+      }
+    });
+
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
+    expect((await getWordProgress())['cajun:fixture_cajun_w02']).toEqual({
+      seen: 2,
+      correct: 1,
+      wrong: 1,
+      status: 'learning'
+    });
+  });
+
+  it('adds no Word answer for a wrong answer and one correct answer after the fix', async () => {
+    const user = setupUser();
+    const { cardId } = pendingMistakes.cajun.greetingChoice;
+    await seedAsyncStorage({
+      pendingMistakes: { cajun: { [cardId]: pendingMistakes.cajun.greetingChoice } },
+      wordProgress: { 'cajun:fixture_cajun_w02': wordMastery.learningAfterWrong }
+    });
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+
+    await screen.findByTestId('mistakes-count');
+    fireEvent.press(screen.getByTestId('home-mistakes-control'));
+    await screen.findByText("Choose the match for 'How’s it going?'");
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Try Again'));
+    await user.press(screen.getByText('Bonjour'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Continue'));
+
+    expect(await screen.findByText("Choose the match for 'How’s it going?'")).toBeOnTheScreen();
+    expect((await getWordProgress())['cajun:fixture_cajun_w02'])
+      .toEqual(wordMastery.learningAfterWrong);
+
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
+    expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    expect((await getWordProgress())['cajun:fixture_cajun_w02']).toEqual({
+      seen: 2,
+      correct: 1,
+      wrong: 1,
+      status: 'learning'
+    });
   });
 
   it('removes only the corrected Card while the next pending Card remains', async () => {
