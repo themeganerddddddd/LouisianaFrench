@@ -10,7 +10,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
 import { getAllWords } from '../data/lessonLoader';
-import { recordPracticeCompletion, recordStudyAndXp } from '../utils/storage';
+import {
+  getPendingMistakes,
+  getTodayPractice,
+  recordPracticeCompletion,
+  recordStudyAndXp
+} from '../utils/storage';
 
 const MIN_ATTEMPT_MS = 600;
 export const SPEECH_WORD_LIMIT = 5;
@@ -20,11 +25,12 @@ export default function SpeechPracticeScreen({
   language,
   scored = false,
   wordLimit = SPEECH_WORD_LIMIT,
+  word,
   onComplete
 }) {
   const practiceWords = useMemo(
-    () => getAllWords(language).filter((word) => word.audioKey),
-    [language]
+    () => (word ? [word] : getAllWords(language).filter((w) => w.audioKey)),
+    [language, word]
   );
   const [wordIndex, setWordIndex] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
@@ -135,6 +141,19 @@ export default function SpeechPracticeScreen({
 
   async function acceptAttempt() {
     setBusy(true);
+    if (word) {
+      // Single-Word practice credits today's Practice only while the plan still needs Speech.
+      const [pending, todayPractice] = await Promise.all([
+        getPendingMistakes(language),
+        getTodayPractice(language)
+      ]);
+      if (pending.length === 0 && todayPractice === null) {
+        await recordPracticeCompletion(language, 'speech');
+      }
+      setBusy(false);
+      onComplete?.();
+      return;
+    }
     if (scored) {
       await recordStudyAndXp(1);
       if (acceptedCount + 1 >= wordLimit) {
@@ -165,11 +184,13 @@ export default function SpeechPracticeScreen({
     <View style={styles.card}>
       <Text style={styles.phrase}>{practiceWord.target}</Text>
       <Text style={styles.translation}>{practiceWord.english}</Text>
-      <Text style={styles.progress}>
-        {scored
-          ? `Attempt ${acceptedCount + 1}/${wordLimit}`
-          : `Phrase ${wordIndex + 1}/${practiceWords.length}`}
-      </Text>
+      {word ? null : (
+        <Text style={styles.progress}>
+          {scored
+            ? `Attempt ${acceptedCount + 1}/${wordLimit}`
+            : `Phrase ${wordIndex + 1}/${practiceWords.length}`}
+        </Text>
+      )}
       <Text style={styles.explanation}>
         Pronunciation is not graded. Make an attempt, listen to it, and decide when you are
         ready to continue.

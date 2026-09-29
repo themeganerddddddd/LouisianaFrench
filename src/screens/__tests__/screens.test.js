@@ -13,6 +13,7 @@ import {
   homeProjectionProgress,
   lastWorkedUnits,
   pendingMistakes,
+  practiceLogs,
   profiles,
   reviewStates,
   wordMastery
@@ -2091,6 +2092,110 @@ describe('DictionaryScreen', () => {
     await user.press(screen.getAllByText('Names & Introductions')[0]);
     expect(await screen.findByText("It's ready")).toBeOnTheScreen();
     expect(screen.queryByText('Hello')).toBeNull();
+  });
+
+  it('does not show Practice for a Word without audio', async () => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByRole('button', { name: 'Practice' })).toBeOnTheScreen();
+    await user.type(
+      screen.getByPlaceholderText('Search English, target word, or category'),
+      'How’s it going?'
+    );
+
+    expect(await screen.findByText('Ça va?')).toBeOnTheScreen();
+    expect(screen.queryByText('Play audio')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Practice' })).toBeNull();
+  });
+
+  it('opens single-Word SpeechPractice and returns to Dictionary on back', async () => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+
+    await user.press(await screen.findByRole('button', { name: 'Practice' }));
+
+    expect(await screen.findByText('Record')).toBeOnTheScreen();
+    expect(screen.getByText('Bonjour')).toBeOnTheScreen();
+    expect(screen.queryByText(/^Phrase /)).toBeNull();
+    expect(screen.queryByText(/^Attempt /)).toBeNull();
+    await user.press(screen.getByRole('button', { name: 'Back' }));
+
+    expect(await screen.findByTestId('dictionary-screen')).toBeOnTheScreen();
+    expect(screen.getByText('Hello')).toBeOnTheScreen();
+  });
+
+  describe('Practice credit from single-Word SpeechPractice', () => {
+    let restoreRecorder;
+
+    beforeEach(() => {
+      const defaultRecorder = useAudioRecorder.getMockImplementation();
+      const defaultRecorderState = useAudioRecorderState.getMockImplementation();
+      let isRecording = false;
+      useAudioRecorder.mockReturnValue({
+        uri: 'file:///dictionary-attempt.m4a',
+        prepareToRecordAsync: jest.fn(async () => {}),
+        record: jest.fn(() => { isRecording = true; }),
+        stop: jest.fn(async () => { isRecording = false; })
+      });
+      useAudioRecorderState.mockImplementation(() => ({ isRecording, durationMillis: 1200 }));
+      restoreRecorder = () => {
+        useAudioRecorder.mockImplementation(defaultRecorder);
+        useAudioRecorderState.mockImplementation(defaultRecorderState);
+      };
+    });
+
+    afterEach(() => restoreRecorder());
+
+    async function acceptDictionaryPractice() {
+      const user = setupUser();
+      renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+
+      await user.press(await screen.findByRole('button', { name: 'Practice' }));
+      await user.press(await screen.findByText('Record'));
+      await user.press(await screen.findByText('Stop recording (1.2s)'));
+      await user.press(await screen.findByText('Play my recording'));
+      expect(await screen.findByText('Sounds good, next phrase')).toBeEnabled();
+      await user.press(screen.getByText('Sounds good, next phrase'));
+
+      expect(await screen.findByTestId('dictionary-screen')).toBeOnTheScreen();
+    }
+
+    it('accept writes Practice when no mistakes and no today Practice exist', async () => {
+      await acceptDictionaryPractice();
+
+      expect(await getTodayPractice('cajun')).toEqual({
+        type: 'speech',
+        completedAt: expect.any(String)
+      });
+      expect((await getProfile()).xp).toBe(0);
+    });
+
+    it('does not write Practice when pending mistakes exist', async () => {
+      await seedAsyncStorage({
+        pendingMistakes: {
+          cajun: {
+            [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+          }
+        }
+      });
+
+      await acceptDictionaryPractice();
+
+      expect(await getTodayPractice('cajun')).toBeNull();
+    });
+
+    it('does not overwrite an existing today Practice entry', async () => {
+      jest.setSystemTime(clock.localCalendarLateEvening());
+      const existingPractice = practiceLogs.todayMistakeReview['2026-03-05'];
+      await seedAsyncStorage({
+        practiceLog: { cajun: { [getTodayKey()]: existingPractice } }
+      });
+
+      await acceptDictionaryPractice();
+
+      expect(await getTodayPractice('cajun')).toEqual(existingPractice);
+    });
   });
 });
 
