@@ -5,7 +5,8 @@ import SafeScreenView from '../components/SafeScreenView';
 import SpeechPracticeScreen, { SPEECH_WORD_LIMIT } from './SpeechPracticeScreen';
 
 export default function AdvancedScreen({ route, navigation }) {
-  const { language, scored } = route.params ?? {};
+  const { language, scored, word } = route.params ?? {};
+  const leave = () => (word ? navigation.goBack() : navigation.replace('Home', { language }));
 
   return (
     <SafeScreenView style={styles.container}>
@@ -17,13 +18,13 @@ export default function AdvancedScreen({ route, navigation }) {
                 styles.homeButton,
                 { backgroundColor: language === 'kreole' ? '#E7F5EE' : '#EAF3FF' }
               ]}
-              onPress={() => navigation.replace('Home', { language })}
+              onPress={leave}
               accessibilityRole="button"
-              accessibilityLabel="Back to Home"
+              accessibilityLabel={word ? 'Back' : 'Back to Home'}
               testID="advanced-home-button"
             >
               <Ionicons
-                name="home"
+                name={word ? 'arrow-back' : 'home'}
                 size={21}
                 color={language === 'kreole' ? '#066B3F' : '#2771CB'}
               />
@@ -37,7 +38,8 @@ export default function AdvancedScreen({ route, navigation }) {
           language={language}
           scored={scored}
           wordLimit={SPEECH_WORD_LIMIT}
-          onComplete={() => navigation.replace('Home', { language })}
+          word={word}
+          onComplete={leave}
         />
       </ScrollView>
       <BugReportButton screenName="Advanced" language={language} />
