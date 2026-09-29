@@ -131,7 +131,11 @@ export default function SpeechPracticeScreen({
     try {
       await play({ uri: learnerUri });
       setHasReviewedAttempt(true);
-      setStatus('If it sounds acceptable to you, move to the next phrase.');
+      setStatus(
+        word
+          ? 'If it sounds acceptable to you, tap Sounds good to finish.'
+          : 'If it sounds acceptable to you, move to the next phrase.'
+      );
     } catch (error) {
       setStatus(error.message || 'Could not play your recording.');
     } finally {
@@ -239,7 +243,9 @@ export default function SpeechPracticeScreen({
           onPress={acceptAttempt}
           disabled={!hasReviewedAttempt || busy}
         >
-          <Text style={styles.primaryButtonText}>Sounds good, next phrase</Text>
+          <Text style={styles.primaryButtonText}>
+            {word ? 'Sounds good' : 'Sounds good, next phrase'}
+          </Text>
         </TouchableOpacity>
       ) : null}
 
