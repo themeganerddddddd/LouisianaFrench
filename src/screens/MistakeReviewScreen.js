@@ -156,13 +156,13 @@ export default function MistakeReviewScreen({
     navigation
   ]);
 
-  if (loading) {
-    return null;
-  }
-
-  if (!queue.length) {
-    if (homeMode) {
-      return null;
+  useEffect(() => {
+    if (
+      loading ||
+      homeMode ||
+      queue.length
+    ) {
+      return;
     }
 
     navigation.replace(
@@ -188,7 +188,21 @@ export default function MistakeReviewScreen({
         language
       }
     );
+  }, [
+    homeMode,
+    language,
+    lessonTitle,
+    lessonXp,
+    loading,
+    navigation,
+    queue.length
+  ]);
 
+  if (loading) {
+    return null;
+  }
+
+  if (!queue.length) {
     return null;
   }
 

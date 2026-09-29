@@ -1,4 +1,5 @@
-import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { useLayoutEffect } from 'react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
 
@@ -21,6 +22,7 @@ import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncS
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as homeProjection from '../../utils/homeProjection';
+import MistakeReviewScreen from '../MistakeReviewScreen';
 import {
   getDailyReviewLog,
   getDefaultLanguage,
@@ -1775,6 +1777,47 @@ describe('LessonRunner', () => {
 });
 
 describe('MistakeReviewScreen', () => {
+  it('routes an empty non-home queue from an effect, not during render', () => {
+    let committed = false;
+    const navigation = {
+      replace: jest.fn(() => {
+        if (!committed) throw new Error('navigation.replace called during render');
+      })
+    };
+
+    function RenderProbe() {
+      useLayoutEffect(() => {
+        committed = true;
+      }, []);
+
+      return (
+        <MistakeReviewScreen
+          route={{
+            params: {
+              language: 'cajun',
+              lessonTitle: 'Greetings & Check-ins — First greetings',
+              mistakes: [],
+              lessonXp: 20
+            }
+          }}
+          navigation={navigation}
+        />
+      );
+    }
+
+    expect(() => render(<RenderProbe />)).not.toThrow();
+    expect(navigation.replace).toHaveBeenCalledTimes(1);
+    expect(navigation.replace).toHaveBeenCalledWith('LessonComplete', {
+      lessonTitle: 'Greetings & Check-ins — First greetings',
+      xpEarned: 20,
+      mistakesCount: 0,
+      streak: null,
+      scoreEarned: null,
+      scorePossible: null,
+      language: 'cajun'
+    });
+  });
+
   it('shows missed Activities and reaches completion after correction', async () => {
     const user = setupUser();
     const activity = activityByCardId('fixture:cajun:greeting:choice');
