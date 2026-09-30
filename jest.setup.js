@@ -13,10 +13,10 @@ jest.mock('react-native-safe-area-context', () =>
 );
 
 // Models expo-audio on iOS and Android: remove() only unregisters the player
-// and does not stop it; pause() and release() stop it; any call after
-// release() throws.
+// and does not stop it; pause() and release() stop it; release() does not
+// unregister it; any call after release() throws.
 function mockAudioPlayer() {
-  const player = { playing: false, released: false };
+  const player = { playing: false, registered: true, released: false };
   const call = (fn) =>
     jest.fn(() => {
       if (player.released) throw new Error('Audio player was already released');
@@ -24,7 +24,7 @@ function mockAudioPlayer() {
     });
   player.play = call(() => { player.playing = true; });
   player.pause = call(() => { player.playing = false; });
-  player.remove = call(() => {});
+  player.remove = call(() => { player.registered = false; });
   player.release = jest.fn(() => {
     player.playing = false;
     player.released = true;

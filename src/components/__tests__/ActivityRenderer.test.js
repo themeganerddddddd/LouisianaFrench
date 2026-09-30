@@ -277,7 +277,7 @@ describe('ActivityRenderer Word Audio playback', () => {
     fireEvent.press(screen.getByLabelText('Play audio: Bonjour'));
 
     const [autoplay, replay] = players();
-    expect(autoplay).toMatchObject({ playing: false, released: true });
+    expect(autoplay).toMatchObject({ playing: false, registered: false, released: true });
     expect(replay).toMatchObject({ playing: true, released: false });
   });
 
@@ -287,6 +287,6 @@ describe('ActivityRenderer Word Audio playback', () => {
 
     unmount();
 
-    expect(players()).toEqual([expect.objectContaining({ playing: false, released: true })]);
+    expect(players()).toEqual([expect.objectContaining({ playing: false, registered: false, released: true })]);
   });
 });
