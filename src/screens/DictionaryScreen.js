@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import { createAudioPlayer } from 'expo-audio';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -38,6 +38,13 @@ export default function DictionaryScreen({ route, navigation }) {
   const [selectedUnit, setSelectedUnit] = useState('all');
   const soundRef = useRef(null);
 
+  function unloadSound() {
+    try {
+      soundRef.current?.remove();
+    } catch (_e) {}
+    soundRef.current = null;
+  }
+
   useEffect(() => {
     async function load() {
       setAllWords(getAllWords(language));
@@ -51,15 +58,6 @@ export default function DictionaryScreen({ route, navigation }) {
     };
   }, [language]);
 
-  async function unloadSound() {
-    try {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      }
-    } catch (_e) {}
-  }
-
   async function playAudio(audioKey) {
     try {
       const source = getAudioSource(language, audioKey);
@@ -68,11 +66,11 @@ export default function DictionaryScreen({ route, navigation }) {
         return;
       }
 
-      await unloadSound();
+      unloadSound();
 
-      const { sound } = await Audio.Sound.createAsync(source);
-      soundRef.current = sound;
-      await sound.playAsync();
+      const player = createAudioPlayer(source);
+      soundRef.current = player;
+      player.play();
     } catch (_e) {
       Alert.alert('Audio error', 'Could not play this audio file.');
     }

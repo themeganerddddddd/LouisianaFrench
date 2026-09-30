@@ -35,7 +35,10 @@
         {
           "microphonePermission": "Allow Louisiana Languages to record pronunciation practice."
         }
-      ]
+      ],
+      "expo-status-bar",
+      "expo-asset",
+      "expo-font"
     ]
   }
 }

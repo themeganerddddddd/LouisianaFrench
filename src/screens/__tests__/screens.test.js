@@ -1144,12 +1144,14 @@ describe('HomeScreen', () => {
     const backHandler = jest.spyOn(BackHandler, 'addEventListener');
 
     try {
+      await seedAsyncStorage({ lessonProgress: homeProjectionProgress.priorLessonsByLanguage });
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
       });
 
       await screen.findByText('Louisiana French');
+      expect(screen.getByTestId('home-review-control')).toBeEnabled();
       await user.press(screen.getByTestId('home-review-control'));
       expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
 

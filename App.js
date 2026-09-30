@@ -1,6 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Audio } from 'expo-av';
+import { setAudioModeAsync } from 'expo-audio';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import {
@@ -24,13 +24,11 @@ export default function App() {
   useEffect(() => {
     async function configureAudio() {
       try {
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          interruptionModeIOS: 1,
-          interruptionModeAndroid: 1,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: false,
+          interruptionMode: 'duckOthers',
+          shouldRouteThroughEarpiece: false
         });
       } catch (error) {
         console.log('Audio setup error:', error);
