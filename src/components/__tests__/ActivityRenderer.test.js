@@ -157,44 +157,175 @@ describe('ActivityRenderer requested interaction behavior', () => {
     expect(await screen.findByText('Correct!')).toBeOnTheScreen();
   });
 
-  it('does not play typing audio while word-bank buttons are pressed and plays it only after a correct answer', async () => {
-    const user = userEvent.setup();
+  describe('Typing Audio', () => {
+    const typingActivity = {
+      cardId: 'test:typing-audio',
+      type: 'typing',
+      prompt: "Type: 'hello friend'",
+      english: 'hello friend',
+      answer: 'Bonjour ami',
+      answerDisplay: 'Bonjour ami',
+      audioKey: 'u01_w0001_lf'
+    };
 
-    render(
-      <ActivityRenderer
-        language="cajun"
-        activity={{
-          cardId: 'test:typing-audio',
-          type: 'typing',
-          prompt: "Type: 'hello friend'",
-          english: 'hello friend',
-          answer: 'Bonjour ami',
-          answerDisplay: 'Bonjour ami',
-          audioKey: 'u01_w0001_lf'
-        }}
-        onCorrect={jest.fn()}
-        onWrong={jest.fn()}
-      />
-    );
+    const wordAudioPlayers = () =>
+      createAudioPlayer.mock.results
+        .filter((_, index) => !createAudioPlayer.mock.calls[index][0]?.uri)
+        .map(({ value }) => value);
 
-    expect(createAudioPlayer).not.toHaveBeenCalled();
+    function renderTyping(activity = typingActivity) {
+      return render(
+        <ActivityRenderer
+          key={activity.cardId}
+          language="cajun"
+          activity={activity}
+          onCorrect={jest.fn()}
+          onWrong={jest.fn()}
+        />
+      );
+    }
 
-    await user.press(screen.getByText('Hints'));
-    await user.press(screen.getByText('More hints'));
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
 
-    await user.press(screen.getByText('Bonjour'));
-    await user.press(screen.getByText('ami'));
+    afterEach(() => {
+      jest.useRealTimers();
+    });
 
-    // Pressing word-bank buttons should not play audio.
-    expect(createAudioPlayer).not.toHaveBeenCalled();
+    it('plays the Word Audio 500ms after the Activity appears', async () => {
+      renderTyping();
 
-    await user.press(screen.getByText('Check'));
+      expect(screen.getByText('Tap to hear the word')).toBeOnTheScreen();
+      await jest.advanceTimersByTimeAsync(499);
+      expect(wordAudioPlayers()).toHaveLength(0);
 
-    expect(await screen.findByText('Correct!')).toBeOnTheScreen();
+      await jest.advanceTimersByTimeAsync(1);
+      expect(wordAudioPlayers()).toHaveLength(1);
+    });
 
-    // One call is the correct-answer tone.
-    // The second is the completed answer's audio.
-    expect(createAudioPlayer).toHaveBeenCalledTimes(2);
+    it('does not autoplay or offer tap to hear when the Activity has no audioKey', async () => {
+      renderTyping({ ...typingActivity, audioKey: undefined });
+
+      expect(screen.queryByText('Tap to hear the word')).toBeNull();
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(createAudioPlayer).not.toHaveBeenCalled();
+    });
+
+    it('replays the Word Audio when the learner taps Tap to hear the word', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      renderTyping();
+      await jest.advanceTimersByTimeAsync(500);
+
+      await user.press(screen.getByRole('button', { name: 'Play the word' }));
+
+      expect(wordAudioPlayers()).toHaveLength(2);
+    });
+
+    it('keeps word-bank taps silent and does not play the Word Audio again after a correct answer', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      renderTyping();
+      await jest.advanceTimersByTimeAsync(500);
+      expect(wordAudioPlayers()).toHaveLength(1);
+
+      await user.press(screen.getByText('Hints'));
+      await user.press(screen.getByText('More hints'));
+      await user.press(screen.getByText('Bonjour'));
+      await user.press(screen.getByText('ami'));
+      expect(wordAudioPlayers()).toHaveLength(1);
+
+      await user.press(screen.getByText('Check'));
+
+      expect(await screen.findByText('Correct!')).toBeOnTheScreen();
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(createAudioPlayer).toHaveBeenCalledTimes(2);
+      expect(wordAudioPlayers()).toHaveLength(1);
+      expect(wordAudioPlayers()[0].remove).not.toHaveBeenCalled();
+    });
+
+    it('does not autoplay again after Try Again', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      renderTyping();
+      await jest.advanceTimersByTimeAsync(500);
+
+      await user.type(screen.getByPlaceholderText('Type your answer'), 'nope');
+      await user.press(screen.getByText('Check'));
+      await user.press(await screen.findByText('Try Again'));
+      await jest.advanceTimersByTimeAsync(1000);
+
+      expect(wordAudioPlayers()).toHaveLength(1);
+    });
+
+    it('cancels autoplay when the Activity changes before 500ms', async () => {
+      const { rerender } = renderTyping();
+      await jest.advanceTimersByTimeAsync(300);
+
+      rerender(
+        <ActivityRenderer
+          key="test:typing-audio-next"
+          language="cajun"
+          activity={{ ...typingActivity, cardId: 'test:typing-audio-next', audioKey: undefined }}
+          onCorrect={jest.fn()}
+          onWrong={jest.fn()}
+        />
+      );
+      await jest.advanceTimersByTimeAsync(1000);
+
+      expect(createAudioPlayer).not.toHaveBeenCalled();
+    });
+
+    it('releases the Word Audio when the Activity unmounts', async () => {
+      const { unmount } = renderTyping();
+      await jest.advanceTimersByTimeAsync(500);
+      const [player] = wordAudioPlayers();
+
+      unmount();
+
+      expect(player.remove).toHaveBeenCalled();
+    });
+
+    it('releases Word Audio that is still loading when the Activity unmounts and plays nothing later', async () => {
+      const { unmount } = renderTyping();
+      await jest.advanceTimersByTimeAsync(500);
+      const [player] = wordAudioPlayers();
+
+      unmount();
+      await jest.advanceTimersByTimeAsync(1000);
+
+      expect(player.remove).toHaveBeenCalledTimes(1);
+      expect(createAudioPlayer).toHaveBeenCalledTimes(1);
+    });
+
+    it('plays one sound when the learner taps Tap to hear the word while the autoplay is still loading', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const { unmount } = renderTyping();
+      await jest.advanceTimersByTimeAsync(500);
+
+      await user.press(screen.getByRole('button', { name: 'Play the word' }));
+      const [autoplay, tap] = wordAudioPlayers();
+
+      expect(autoplay.remove).toHaveBeenCalledTimes(1);
+      expect(autoplay.remove.mock.invocationCallOrder[0])
+        .toBeLessThan(tap.play.mock.invocationCallOrder[0]);
+      expect(tap.play).toHaveBeenCalledTimes(1);
+      expect(tap.remove).not.toHaveBeenCalled();
+
+      unmount();
+
+      expect(tap.remove).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not autoplay when the learner answers before 500ms', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      renderTyping();
+
+      await user.type(screen.getByPlaceholderText('Type your answer'), 'Bonjour ami');
+      await user.press(screen.getByText('Check'));
+      expect(await screen.findByText('Correct!')).toBeOnTheScreen();
+      await jest.advanceTimersByTimeAsync(1000);
+
+      expect(wordAudioPlayers()).toHaveLength(0);
+    });
   });
 
   it('does not play sentence-builder audio while word buttons are pressed and plays it only after a correct answer', async () => {
