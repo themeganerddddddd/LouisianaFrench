@@ -462,6 +462,7 @@ export default function HomeScreen() {
             >
               <Image
                 testID="home-pelican-image"
+                pointerEvents="none"
                 source={
                   language === 'kreole'
                     ? require('../../assets/images/kreolelogo.png')
