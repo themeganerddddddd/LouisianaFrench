@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import { createAudioPlayer } from 'expo-audio';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
@@ -126,26 +126,23 @@ function shouldShowIntroAddOns(activity) {
   return activity?.type === 'intro_card';
 }
 
+function releasePlayer(playerRef) {
+  try {
+    playerRef.current?.remove();
+  } catch {}
+  playerRef.current = null;
+}
+
 function useAudio(language) {
   const soundRef = useRef(null);
   const fxRef = useRef(null);
 
-  const stopAudio = useCallback(async () => {
-    try {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      }
-    } catch {}
+  const stopAudio = useCallback(() => {
+    releasePlayer(soundRef);
   }, []);
 
-  const stopFx = useCallback(async () => {
-    try {
-      if (fxRef.current) {
-        await fxRef.current.unloadAsync();
-        fxRef.current = null;
-      }
-    } catch {}
+  const stopFx = useCallback(() => {
+    releasePlayer(fxRef);
   }, []);
 
   const playAudioKey = useCallback(
@@ -154,10 +151,10 @@ function useAudio(language) {
         const source = getAudioSource(language, audioKey);
         if (!source) return false;
 
-        await stopAudio();
-        const { sound } = await Audio.Sound.createAsync(source);
-        soundRef.current = sound;
-        await sound.playAsync();
+        stopAudio();
+        const player = createAudioPlayer(source);
+        soundRef.current = player;
+        player.play();
         return true;
       } catch {
         return false;
@@ -169,11 +166,11 @@ function useAudio(language) {
   const playFeedback = useCallback(
     async (kind) => {
       try {
-        await stopFx();
+        stopFx();
         const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
-        const { sound } = await Audio.Sound.createAsync({ uri });
-        fxRef.current = sound;
-        await sound.playAsync();
+        const player = createAudioPlayer({ uri });
+        fxRef.current = player;
+        player.play();
       } catch {}
     },
     [stopFx]

@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react-native';
 
 import App from '../../App';
 import { lessonById } from '../test/fixtures/catalog/activities';
+import { homeProjectionProgress } from '../test/fixtures/learnerProgress/learnerProgressFixtures';
+import { seedAsyncStorage } from '../test/fixtures/learnerProgress/seedAsyncStorage';
 import {
   REGISTERED_ROUTES,
   renderApp,
@@ -33,12 +35,13 @@ describe('navigation graph', () => {
   it('navigates Home → Daily Review with Language params', async () => {
     const user = setupUser();
 
+    await seedAsyncStorage({ lessonProgress: homeProjectionProgress.priorLessonsByLanguage });
     renderApp({
       initialRouteName: 'Home',
       initialParams: { language: 'cajun' }
     });
 
-    expect(await screen.findByText('Review')).toBeOnTheScreen();
+    expect(await screen.findByTestId('home-review-control')).toBeEnabled();
 
     await user.press(screen.getByTestId('home-review-control'));
 

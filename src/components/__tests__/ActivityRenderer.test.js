@@ -1,5 +1,5 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
-import { Audio } from 'expo-av';
+import { createAudioPlayer } from 'expo-audio';
 import ActivityRenderer from '../ActivityRenderer';
 
 describe('ActivityRenderer requested interaction behavior', () => {
@@ -177,7 +177,7 @@ describe('ActivityRenderer requested interaction behavior', () => {
       />
     );
 
-    expect(Audio.Sound.createAsync).not.toHaveBeenCalled();
+    expect(createAudioPlayer).not.toHaveBeenCalled();
 
     await user.press(screen.getByText('Hints'));
     await user.press(screen.getByText('More hints'));
@@ -186,7 +186,7 @@ describe('ActivityRenderer requested interaction behavior', () => {
     await user.press(screen.getByText('ami'));
 
     // Pressing word-bank buttons should not play audio.
-    expect(Audio.Sound.createAsync).not.toHaveBeenCalled();
+    expect(createAudioPlayer).not.toHaveBeenCalled();
 
     await user.press(screen.getByText('Check'));
 
@@ -194,7 +194,7 @@ describe('ActivityRenderer requested interaction behavior', () => {
 
     // One call is the correct-answer tone.
     // The second is the completed answer's audio.
-    expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(2);
+    expect(createAudioPlayer).toHaveBeenCalledTimes(2);
   });
 
   it('does not play sentence-builder audio while word buttons are pressed and plays it only after a correct answer', async () => {
@@ -219,13 +219,13 @@ describe('ActivityRenderer requested interaction behavior', () => {
       />
     );
 
-    expect(Audio.Sound.createAsync).not.toHaveBeenCalled();
+    expect(createAudioPlayer).not.toHaveBeenCalled();
 
     await user.press(screen.getByText('Bonjour'));
     await user.press(screen.getByText('ami'));
 
     // Selecting sentence-builder words should stay silent.
-    expect(Audio.Sound.createAsync).not.toHaveBeenCalled();
+    expect(createAudioPlayer).not.toHaveBeenCalled();
 
     await user.press(screen.getByText('Check'));
 
@@ -233,6 +233,6 @@ describe('ActivityRenderer requested interaction behavior', () => {
 
     // One call is the correct-answer tone.
     // The second is the completed sentence's audio.
-    expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(2);
+    expect(createAudioPlayer).toHaveBeenCalledTimes(2);
   });
 });
