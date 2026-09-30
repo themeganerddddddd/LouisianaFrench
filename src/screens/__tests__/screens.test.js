@@ -408,6 +408,24 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-status-bar').props.style).toBe('light');
   });
 
+  it('keeps Home scroll content clear of the bottom system inset', async () => {
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' },
+      safeAreaMetrics: FULL_SCREEN_PHONE_METRICS
+    });
+
+    await screen.findByText('Louisiana French');
+
+    expect(screen.getByTestId('home-scroll').props.contentContainerStyle).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          paddingBottom: 14 + FULL_SCREEN_PHONE_METRICS.insets.bottom
+        })
+      ])
+    );
+  });
+
   it('keeps the dashboard controls available at mobile and desktop render widths', async () => {
     const mobile = renderApp({
       initialRouteName: 'Home',

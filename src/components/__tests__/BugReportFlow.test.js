@@ -1,8 +1,14 @@
 import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { Alert, TextInput } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import BugReportButton from '../BugReportButton';
 import BugReportFlow from '../BugReportFlow';
+
+const PHONE_SAFE_AREA = {
+  frame: { x: 0, y: 0, width: 412, height: 915 },
+  insets: { top: 38, right: 0, bottom: 24, left: 0 }
+};
 
 // ---------------------------------------------------------------------------
 // Mocks for utility modules — matched to existing interfaces
@@ -39,15 +45,17 @@ const DEFAULT_DEVICE_INFO = Object.freeze({
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-function getFlow(isVisible = true) {
+function getFlow(isVisible = true, safeAreaMetrics = PHONE_SAFE_AREA) {
   return render(
-    <BugReportFlow
-      visible={isVisible}
-      onClose={jest.fn()}
-      screenName="Home"
-      language="cajun"
-      accentColor="#2771CB"
-    />
+    <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+      <BugReportFlow
+        visible={isVisible}
+        onClose={jest.fn()}
+        screenName="Home"
+        language="cajun"
+        accentColor="#2771CB"
+      />
+    </SafeAreaProvider>
   );
 }
 
@@ -115,6 +123,17 @@ describe('BugReportButton', () => {
 // ---------------------------------------------------------------------------
 // BugReportFlow — validation gate + focus
 // ---------------------------------------------------------------------------
+
+describe('BugReportFlow: safe area', () => {
+  it('lifts the sheet above the bottom system inset', () => {
+    getFlow(true, PHONE_SAFE_AREA);
+
+    expect(screen.getByTestId('bug-report-overlay')).toHaveStyle({
+      paddingBottom: 14 + PHONE_SAFE_AREA.insets.bottom
+    });
+    expect(screen.getByTestId('bug-report-sheet')).toBeOnTheScreen();
+  });
+});
 
 describe('BugReportFlow: validation', () => {
   beforeEach(() => {

@@ -1,4 +1,5 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import LessonPrefaceModal from '../LessonPrefaceModal';
 import { compactCatalogPrefaces } from '../../test/fixtures/catalog/compactCatalog';
 
@@ -8,6 +9,11 @@ import { compactCatalogPrefaces } from '../../test/fixtures/catalog/compactCatal
 
 const cajunPreface = compactCatalogPrefaces.cajun.u03;
 const kreolePreface = compactCatalogPrefaces.kreole.u01;
+
+const PHONE_SAFE_AREA = {
+  frame: { x: 0, y: 0, width: 412, height: 915 },
+  insets: { top: 38, right: 0, bottom: 24, left: 0 }
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -19,17 +25,20 @@ function renderModal({
   mode = 'start',
   onContinue = jest.fn(),
   onClose = jest.fn(),
-  accentColor = '#2771CB'
+  accentColor = '#2771CB',
+  safeAreaMetrics = PHONE_SAFE_AREA
 } = {}) {
   return render(
-    <LessonPrefaceModal
-      preface={preface}
-      visible={visible}
-      mode={mode}
-      onContinue={onContinue}
-      onClose={onClose}
-      accentColor={accentColor}
-    />
+    <SafeAreaProvider initialMetrics={safeAreaMetrics}>
+      <LessonPrefaceModal
+        preface={preface}
+        visible={visible}
+        mode={mode}
+        onContinue={onContinue}
+        onClose={onClose}
+        accentColor={accentColor}
+      />
+    </SafeAreaProvider>
   );
 }
 
@@ -45,6 +54,15 @@ describe('LessonPrefaceModal', () => {
   it('renders summary with title text visible', () => {
     renderModal();
     expect(screen.getByText(cajunPreface.title)).toBeOnTheScreen();
+  });
+
+  it('keeps the overlay clear of the top and bottom system insets', () => {
+    renderModal({ safeAreaMetrics: PHONE_SAFE_AREA });
+
+    expect(screen.getByTestId('preface-overlay')).toHaveStyle({
+      paddingTop: 20 + PHONE_SAFE_AREA.insets.top,
+      paddingBottom: 20 + PHONE_SAFE_AREA.insets.bottom
+    });
   });
 
   it('uses the shared T-Boy speech bubble and accessible artwork in the summary', () => {
