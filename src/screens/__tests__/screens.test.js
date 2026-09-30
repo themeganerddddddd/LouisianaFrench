@@ -1658,6 +1658,10 @@ describe('LessonRunner', () => {
 
     expect(await screen.findByText('New word')).toBeOnTheScreen();
     expect(screen.getByTestId('lesson-activity-shell')).toHaveStyle({ flex: 1 });
+    // Device check on Pixel landscape: Continue starts off-screen and must live
+    // inside the Activity scroll shell so a swipe can reach it.
+    expect(screen.getByTestId('activity-scroll')).toBeOnTheScreen();
+    expect(screen.getByText('Continue')).toBeOnTheScreen();
   });
 
   it('reaches MistakeReview after two wrong answers and completes after correction', async () => {
