@@ -575,6 +575,13 @@ function FeedbackFooter({
   wrongTitle = 'Let’s move on',
   answerContent
 }) {
+  const [submitted, setSubmitted] = useState(false);
+
+  function submit(handler) {
+    setSubmitted(true);
+    handler();
+  }
+
   if (state === 'correct') {
     return (
       <View style={[styles.footer, styles.footerGreen]}>
@@ -582,7 +589,11 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={styles.footerButtonGreen} onPress={onNext}>
+        <TouchableOpacity
+          style={[styles.footerButtonGreen, submitted && styles.disabledButton]}
+          onPress={() => submit(onNext)}
+          disabled={submitted}
+        >
           <Text style={styles.footerButtonText}>Next Question</Text>
         </TouchableOpacity>
       </View>
@@ -601,7 +612,11 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={styles.footerButtonRed} onPress={onIncorrect}>
+        <TouchableOpacity
+          style={[styles.footerButtonRed, submitted && styles.disabledButton]}
+          onPress={() => submit(onIncorrect)}
+          disabled={submitted}
+        >
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -641,7 +656,11 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={styles.footerButtonRed} onPress={onIncorrect}>
+        <TouchableOpacity
+          style={[styles.footerButtonRed, submitted && styles.disabledButton]}
+          onPress={() => submit(onIncorrect)}
+          disabled={submitted}
+        >
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -660,6 +679,19 @@ export default function ActivityRenderer({
   onOpenPreface
 }) {
   const theme = getTheme(language);
+  const submittedRef = useRef(false);
+
+  function submitOnce(handler, ...args) {
+    if (submittedRef.current) return;
+
+    submittedRef.current = true;
+    handler(...args);
+  }
+
+  const submission = {
+    onCorrect: () => submitOnce(onCorrect),
+    onWrong: (answer) => submitOnce(onWrong, answer)
+  };
 
   switch (activity.type) {
     case 'intro_card':
@@ -667,7 +699,7 @@ export default function ActivityRenderer({
         <IntroCard
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
+          onCorrect={submission.onCorrect}
           theme={theme}
           onOpenPreface={onOpenPreface}
         />
@@ -678,8 +710,7 @@ export default function ActivityRenderer({
         <MultipleChoice
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -690,8 +721,7 @@ export default function ActivityRenderer({
         <SelectMultiple
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -702,8 +732,7 @@ export default function ActivityRenderer({
         <ListeningTargetChoice
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -714,8 +743,7 @@ export default function ActivityRenderer({
         <Typing
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -726,8 +754,7 @@ export default function ActivityRenderer({
         <SentenceBuild
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -738,8 +765,7 @@ export default function ActivityRenderer({
         <MatchPairs
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -765,10 +791,16 @@ function IntroCard({
 }) {
   const { playAudioKey } = useAudio(language);
 
+  const [submitted, setSubmitted] = useState(false);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const showAddOns = shouldShowIntroAddOns(activity);
+
+  function submit() {
+    setSubmitted(true);
+    onCorrect();
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -870,9 +902,11 @@ function IntroCard({
       <TouchableOpacity
         style={[
           styles.primaryBtn,
-          { backgroundColor: theme.accent }
+          { backgroundColor: theme.accent },
+          submitted && styles.primaryBtnDisabled
         ]}
-        onPress={onCorrect}
+        onPress={submit}
+        disabled={submitted}
       >
         <Text style={styles.primaryBtnText}>
           Continue

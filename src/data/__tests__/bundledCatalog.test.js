@@ -259,6 +259,23 @@ describe('bundled Catalog', () => {
   );
 
   it.each(languages)(
+    'keeps Card IDs unique within each $language Lesson',
+    ({ language }) => {
+      const lessonsWithRepeatedCards = getLessonsByLanguage(language)
+        .filter((lesson) => {
+          const cardIds = (lesson.activities || []).map(
+            (activity) => activity.cardId
+          );
+
+          return new Set(cardIds).size !== cardIds.length;
+        })
+        .map((lesson) => lesson.id);
+
+      expect(lessonsWithRepeatedCards).toEqual([]);
+    }
+  );
+
+  it.each(languages)(
     'preserves $language Word, Unicode, and Audio identities',
     ({ language, audioWord }) => {
       const words = getAllWords(language);

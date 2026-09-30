@@ -1,6 +1,84 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { createAudioPlayer } from 'expo-audio';
 import ActivityRenderer from '../ActivityRenderer';
+import { chooseAndCheck, retry } from '../../test/activityInteractions';
+import { fixtureActivities } from '../../test/fixtures/catalog/activities';
+
+function renderActivity(activity) {
+  const onCorrect = jest.fn();
+  const onWrong = jest.fn();
+
+  render(
+    <ActivityRenderer
+      language="cajun"
+      activity={activity}
+      onCorrect={onCorrect}
+      onWrong={onWrong}
+    />
+  );
+
+  return { onCorrect, onWrong };
+}
+
+function doublePress(label) {
+  const button = screen.getByText(label);
+
+  fireEvent.press(button);
+  expect(screen.getByText(label)).toBeDisabled();
+  fireEvent.press(button);
+}
+
+describe('ActivityRenderer submission', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('ignores a rapid double press on Continue', () => {
+    const { onCorrect } = renderActivity(fixtureActivities.intro);
+
+    doublePress('Continue');
+
+    expect(onCorrect).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a rapid double press on Next Question', async () => {
+    const user = userEvent.setup();
+    const { onCorrect } = renderActivity(fixtureActivities.multipleChoice);
+
+    await chooseAndCheck(user, 'Ça va?');
+    doublePress('Next Question');
+
+    expect(onCorrect).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a rapid double press on final wrong Continue', async () => {
+    const user = userEvent.setup();
+    const { onWrong } = renderActivity(fixtureActivities.multipleChoice);
+
+    await chooseAndCheck(user, 'Bonjour');
+    await retry(user);
+    await chooseAndCheck(user, 'Bonjour');
+    doublePress('Continue');
+
+    expect(onWrong).toHaveBeenCalledTimes(1);
+    expect(onWrong).toHaveBeenCalledWith('Bonjour');
+  });
+
+  it('ignores two presses on Next Question in the same frame', async () => {
+    const user = userEvent.setup();
+    const { onCorrect } = renderActivity(fixtureActivities.multipleChoice);
+
+    await chooseAndCheck(user, 'Ça va?');
+    const nextButton = screen.getByText('Next Question');
+
+    act(() => {
+      fireEvent.press(nextButton);
+      fireEvent.press(nextButton);
+    });
+
+    expect(onCorrect).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('ActivityRenderer requested interaction behavior', () => {
   beforeEach(() => {
