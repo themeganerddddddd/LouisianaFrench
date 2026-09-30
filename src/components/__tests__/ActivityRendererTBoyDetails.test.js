@@ -130,6 +130,8 @@ describe('ActivityRenderer T-Boy Extra details on practice Activities', () => {
       expect(screen.queryByTestId('tboy-callout')).toBeNull();
 
       await retry(user);
+      expect(screen.queryByTestId('tboy-callout')).toBeNull();
+
       await answerWrongAgain(user);
       expect(screen.queryByText('Not quite')).toBeNull();
       expectOneTBoyCallout();
@@ -152,6 +154,17 @@ describe('ActivityRenderer T-Boy Extra details on practice Activities', () => {
 
       expect(screen.getByText('Skipped')).toBeOnTheScreen();
       expect(screen.queryByTestId('tboy-callout')).toBeNull();
+    });
+
+    it('opens the Unit note from T-Boy', async () => {
+      const user = userEvent.setup();
+      const onOpenPreface = jest.fn();
+      renderActivity(withDetails, { onOpenPreface });
+
+      await press(user, 'Skip');
+      await user.press(screen.getByLabelText('T-Boy: open Unit note'));
+
+      expect(onOpenPreface).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -183,19 +196,5 @@ describe('ActivityRenderer T-Boy Extra details on practice Activities', () => {
 
       expect(screen.getByTestId('tboy-heading')).toHaveTextContent('Context');
     });
-  });
-
-  it('opens the Unit note from T-Boy on a practice Activity', async () => {
-    const user = userEvent.setup();
-    const onOpenPreface = jest.fn();
-    renderActivity(
-      { ...fixtureActivities.typing, extraDetails: EXTRA_DETAILS },
-      { onOpenPreface }
-    );
-
-    await press(user, 'Skip');
-    await user.press(screen.getByLabelText('T-Boy: open Unit note'));
-
-    expect(onOpenPreface).toHaveBeenCalledTimes(1);
   });
 });
