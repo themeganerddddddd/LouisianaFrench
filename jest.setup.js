@@ -12,14 +12,31 @@ jest.mock('react-native-safe-area-context', () =>
   require('react-native-safe-area-context/jest/mock').default
 );
 
+// Models expo-audio on iOS and Android: remove() only unregisters the player
+// and does not stop it; pause() and release() stop it; any call after
+// release() throws.
+function mockAudioPlayer() {
+  const player = { playing: false, released: false };
+  const call = (fn) =>
+    jest.fn(() => {
+      if (player.released) throw new Error('Audio player was already released');
+      fn();
+    });
+  player.play = call(() => { player.playing = true; });
+  player.pause = call(() => { player.playing = false; });
+  player.remove = call(() => {});
+  player.release = jest.fn(() => {
+    player.playing = false;
+    player.released = true;
+  });
+  return player;
+}
+
 jest.mock('expo-audio', () => ({
   RecordingPresets: { HIGH_QUALITY: {} },
   requestRecordingPermissionsAsync: jest.fn(async () => ({ granted: true })),
   setAudioModeAsync: jest.fn(async () => {}),
-  createAudioPlayer: jest.fn(() => ({
-    play: jest.fn(),
-    remove: jest.fn()
-  })),
+  createAudioPlayer: jest.fn(() => mockAudioPlayer()),
   useAudioRecorder: jest.fn(() => ({
     prepareToRecordAsync: jest.fn(async () => {}),
     record: jest.fn(),

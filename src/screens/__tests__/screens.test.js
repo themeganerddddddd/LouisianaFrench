@@ -1,7 +1,8 @@
-import { act, fireEvent, screen, within } from '@testing-library/react-native';
-import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import { createAudioPlayer, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { AccessibilityInfo, BackHandler, LayoutAnimation } from 'react-native';
 
+import * as audioManifest from '../../data/audioManifest';
 import {
   activityByCardId,
   lessonById
@@ -2093,6 +2094,53 @@ describe('DictionaryScreen', () => {
     await user.press(screen.getAllByText('Names & Introductions')[0]);
     expect(await screen.findByText("It's ready")).toBeOnTheScreen();
     expect(screen.queryByText('Hello')).toBeNull();
+  });
+
+  describe('Audio playback', () => {
+    function players() {
+      return createAudioPlayer.mock.results.map((result) => result.value);
+    }
+
+    beforeEach(() => {
+      createAudioPlayer.mockClear();
+      jest.spyOn(audioManifest, 'getAudioSource').mockReturnValue(1);
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    async function renderDictionary() {
+      renderApp({
+        initialRouteName: 'Dictionary',
+        initialParams: { language: 'cajun' }
+      });
+      expect(await screen.findByText('Hello')).toBeOnTheScreen();
+    }
+
+    it('stops and releases the previous Audio when the learner plays it again', async () => {
+      const user = setupUser();
+      await renderDictionary();
+
+      await user.press(screen.getByText('Play audio'));
+      await user.press(screen.getByText('Play audio'));
+
+      const [first, second] = players();
+      expect(first).toMatchObject({ playing: false, released: true });
+      expect(second).toMatchObject({ playing: true, released: false });
+    });
+
+    it('stops and releases the Audio when the learner leaves the Dictionary', async () => {
+      const user = setupUser();
+      await renderDictionary();
+
+      await user.press(screen.getByText('Play audio'));
+      await user.press(screen.getByLabelText('Back to Home'));
+
+      await waitFor(() =>
+        expect(players()).toEqual([expect.objectContaining({ playing: false, released: true })])
+      );
+    });
   });
 });
 

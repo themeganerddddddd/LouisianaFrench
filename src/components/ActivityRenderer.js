@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
 import { resolveAlternativeAudioKey } from '../utils/alternativeAudio';
+import { releaseAudioPlayer } from '../utils/audioPlayer';
 import { splitAlternativeResponses } from '../utils/splitAlternativeResponses';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
@@ -126,23 +127,16 @@ function shouldShowIntroAddOns(activity) {
   return activity?.type === 'intro_card';
 }
 
-function releasePlayer(playerRef) {
-  try {
-    playerRef.current?.remove();
-  } catch {}
-  playerRef.current = null;
-}
-
 function useAudio(language) {
   const soundRef = useRef(null);
   const fxRef = useRef(null);
 
   const stopAudio = useCallback(() => {
-    releasePlayer(soundRef);
+    releaseAudioPlayer(soundRef);
   }, []);
 
   const stopFx = useCallback(() => {
-    releasePlayer(fxRef);
+    releaseAudioPlayer(fxRef);
   }, []);
 
   const playAudioKey = useCallback(
