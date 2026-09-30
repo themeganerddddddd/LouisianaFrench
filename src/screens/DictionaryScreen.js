@@ -14,6 +14,7 @@ import BugReportButton from '../components/BugReportButton';
 import SafeScreenView from '../components/SafeScreenView';
 import { getAudioSource } from '../data/audioManifest';
 import { getAllWords } from '../data/lessonLoader';
+import { releaseAudioPlayer } from '../utils/audioPlayer';
 import { getWordProgress } from '../utils/storage';
 
 function statusLabel(status) {
@@ -38,13 +39,6 @@ export default function DictionaryScreen({ route, navigation }) {
   const [selectedUnit, setSelectedUnit] = useState('all');
   const soundRef = useRef(null);
 
-  function unloadSound() {
-    try {
-      soundRef.current?.remove();
-    } catch (_e) {}
-    soundRef.current = null;
-  }
-
   useEffect(() => {
     async function load() {
       setAllWords(getAllWords(language));
@@ -54,7 +48,7 @@ export default function DictionaryScreen({ route, navigation }) {
     load();
 
     return () => {
-      unloadSound();
+      releaseAudioPlayer(soundRef);
     };
   }, [language]);
 
@@ -66,7 +60,7 @@ export default function DictionaryScreen({ route, navigation }) {
         return;
       }
 
-      unloadSound();
+      releaseAudioPlayer(soundRef);
 
       const player = createAudioPlayer(source);
       soundRef.current = player;
