@@ -498,6 +498,7 @@ function ContextBadge({ activity, language }) {
 
 function TBoyCallout({ activity, language, visible, onOpenPreface }) {
   const theme = getTheme(language);
+  const heading = activity?.english || activity?.target || 'Context';
   const canOpenPreface = typeof onOpenPreface === 'function';
 
   if (!visible || !activity?.extraDetails) return null;
@@ -506,9 +507,11 @@ function TBoyCallout({ activity, language, visible, onOpenPreface }) {
     <View style={styles.tBoyWrap} testID="tboy-callout">
       <View style={styles.tBoyStage}>
         <TBoySpeechBubble
+          heading={heading}
           body={activity.extraDetails}
           accentColor={theme.accent}
           testID="tboy-speech-bubble"
+          headingTestID="tboy-heading"
           bodyTestID="tboy-text"
         />
 
@@ -719,6 +722,7 @@ export default function ActivityRenderer({
           {...submission}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -730,6 +734,7 @@ export default function ActivityRenderer({
           {...submission}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -741,6 +746,7 @@ export default function ActivityRenderer({
           {...submission}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -752,6 +758,7 @@ export default function ActivityRenderer({
           {...submission}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -763,6 +770,7 @@ export default function ActivityRenderer({
           {...submission}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -774,6 +782,7 @@ export default function ActivityRenderer({
           {...submission}
           theme={theme}
           allowSkip={allowSkip}
+          onOpenPreface={onOpenPreface}
         />
       );
 
@@ -928,7 +937,8 @@ function MultipleChoice({
   onCorrect,
   onWrong,
   theme,
-  allowSkip
+  allowSkip,
+  onOpenPreface
 }) {
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
@@ -1036,6 +1046,13 @@ function MultipleChoice({
         />
       ) : null}
 
+      <TBoyCallout
+        activity={activity}
+        language={language}
+        visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
+      />
+
       <FeedbackFooter
         state={state}
         firstWrong={attempts === 1}
@@ -1070,7 +1087,8 @@ function SelectMultiple({
   onCorrect,
   onWrong,
   theme,
-  allowSkip
+  allowSkip,
+  onOpenPreface
 }) {
   const [selected, setSelected] = useState([]);
   const [state, setState] = useState('idle');
@@ -1084,6 +1102,7 @@ function SelectMultiple({
 
   const answerDisplay =
     activity.answerDisplay || answers.join(', ');
+  const revealAddOns = shouldRevealAfterAnswer(state, attempts);
 
   function playOption(opt) {
     const key = activity.optionAudioMap?.[opt];
@@ -1199,6 +1218,13 @@ function SelectMultiple({
         <SkipQuestionButton onSkip={skipQuestion} disabled={false} />
       ) : null}
 
+      <TBoyCallout
+        activity={activity}
+        language={language}
+        visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
+      />
+
       <FeedbackFooter
         state={state}
         firstWrong={attempts === 1}
@@ -1224,7 +1250,8 @@ function ListeningTargetChoice({
   onCorrect,
   onWrong,
   theme,
-  allowSkip
+  allowSkip,
+  onOpenPreface
 }) {
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
@@ -1359,6 +1386,13 @@ function ListeningTargetChoice({
         />
       ) : null}
 
+      <TBoyCallout
+        activity={activity}
+        language={language}
+        visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
+      />
+
       <FeedbackFooter
         state={state}
         firstWrong={attempts === 1}
@@ -1393,7 +1427,8 @@ function Typing({
   onCorrect,
   onWrong,
   theme,
-  allowSkip
+  allowSkip,
+  onOpenPreface
 }) {
   const [value, setValue] = useState('');
   const [state, setState] = useState('idle');
@@ -1574,6 +1609,13 @@ function Typing({
         />
       ) : null}
 
+      <TBoyCallout
+        activity={activity}
+        language={language}
+        visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
+      />
+
       <FeedbackFooter
         state={state}
         firstWrong={attempts === 1}
@@ -1608,7 +1650,8 @@ function SentenceBuild({
   onCorrect,
   onWrong,
   theme,
-  allowSkip
+  allowSkip,
+  onOpenPreface
 }) {
   const [selected, setSelected] = useState([]);
   const [pool, setPool] = useState(
@@ -1758,6 +1801,13 @@ function SentenceBuild({
         />
       ) : null}
 
+      <TBoyCallout
+        activity={activity}
+        language={language}
+        visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
+      />
+
       <FeedbackFooter
         state={state}
         firstWrong={attempts === 1}
@@ -1872,7 +1922,8 @@ function MatchPairs({
   onCorrect,
   onWrong,
   theme,
-  allowSkip
+  allowSkip,
+  onOpenPreface
 }) {
   const { left, right } = useMemo(
     () => makeMatchColumns(activity.pairs || []),
@@ -2090,6 +2141,13 @@ function MatchPairs({
           disabled={false}
         />
       ) : null}
+
+      <TBoyCallout
+        activity={activity}
+        language={language}
+        visible={revealAddOns}
+        onOpenPreface={onOpenPreface}
+      />
 
       <FeedbackFooter
         state={state}
