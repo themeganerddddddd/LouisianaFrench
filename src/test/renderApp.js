@@ -70,11 +70,12 @@ export function renderApp({
   initialRouteName = 'Loading',
   initialParams,
   safeAreaMetrics = initialWindowMetrics,
+  navigationRef,
   ...renderOptions
 } = {}) {
   return render(
     <SafeAreaProvider initialMetrics={safeAreaMetrics}>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <AppStack
           initialRouteName={initialRouteName}
           initialParams={initialParams}
