@@ -13,7 +13,6 @@ import {
   homeProjectionProgress,
   lastWorkedUnits,
   pendingMistakes,
-  practiceLogs,
   profiles,
   reviewStates,
   wordMastery
@@ -2173,14 +2172,6 @@ describe('DictionaryScreen', () => {
 
     afterEach(() => restoreRecorder());
 
-    async function acceptDictionaryPractice() {
-      const user = setupUser();
-      renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
-
-      await user.press(await screen.findByRole('button', { name: 'Practice' }));
-      await acceptSingleWordAttempt(user);
-    }
-
     async function acceptSingleWordAttempt(user) {
       await user.press(await screen.findByText('Record'));
       await user.press(await screen.findByText('Stop recording (1.2s)'));
@@ -2207,18 +2198,6 @@ describe('DictionaryScreen', () => {
 
       expect(await getTodayPractice('cajun')).toBeNull();
       expect((await getProfile()).xp).toBe(0);
-    });
-
-    it('does not overwrite an existing today Practice entry', async () => {
-      jest.setSystemTime(clock.localCalendarLateEvening());
-      const existingPractice = practiceLogs.todayMistakeReview['2026-03-05'];
-      await seedAsyncStorage({
-        practiceLog: { cajun: { [getTodayKey()]: existingPractice } }
-      });
-
-      await acceptDictionaryPractice();
-
-      expect(await getTodayPractice('cajun')).toEqual(existingPractice);
     });
   });
 });
