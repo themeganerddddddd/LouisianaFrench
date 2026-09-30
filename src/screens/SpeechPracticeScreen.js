@@ -11,12 +11,7 @@ import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import { getAudioSource } from '../data/audioManifest';
 import { getAllWords } from '../data/lessonLoader';
 import { releaseAudioPlayer } from '../utils/audioPlayer';
-import {
-  getPendingMistakes,
-  getTodayPractice,
-  recordPracticeCompletion,
-  recordStudyAndXp
-} from '../utils/storage';
+import { recordPracticeCompletion, recordStudyAndXp } from '../utils/storage';
 
 const MIN_ATTEMPT_MS = 600;
 export const SPEECH_WORD_LIMIT = 5;
@@ -145,14 +140,6 @@ export default function SpeechPracticeScreen({
   async function acceptAttempt() {
     setBusy(true);
     if (word) {
-      // Single-Word practice credits today's Practice only while the plan still needs Speech.
-      const [pending, todayPractice] = await Promise.all([
-        getPendingMistakes(language),
-        getTodayPractice(language)
-      ]);
-      if (pending.length === 0 && todayPractice === null) {
-        await recordPracticeCompletion(language, 'speech');
-      }
       setBusy(false);
       onComplete?.();
       return;
