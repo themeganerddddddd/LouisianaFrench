@@ -20,11 +20,12 @@ export default function SpeechPracticeScreen({
   language,
   scored = false,
   wordLimit = SPEECH_WORD_LIMIT,
+  word,
   onComplete
 }) {
   const practiceWords = useMemo(
-    () => getAllWords(language).filter((word) => word.audioKey),
-    [language]
+    () => (word ? [word] : getAllWords(language).filter((w) => w.audioKey)),
+    [language, word]
   );
   const [wordIndex, setWordIndex] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
@@ -130,7 +131,11 @@ export default function SpeechPracticeScreen({
     try {
       await play({ uri: learnerUri });
       setHasReviewedAttempt(true);
-      setStatus('If it sounds acceptable to you, move to the next phrase.');
+      setStatus(
+        word
+          ? 'If it sounds acceptable to you, tap Sounds good to finish.'
+          : 'If it sounds acceptable to you, move to the next phrase.'
+      );
     } catch (error) {
       setStatus(error.message || 'Could not play your recording.');
     } finally {
@@ -139,6 +144,10 @@ export default function SpeechPracticeScreen({
   }
 
   async function acceptAttempt() {
+    if (word) {
+      onComplete?.();
+      return;
+    }
     setBusy(true);
     if (scored) {
       await recordStudyAndXp(1);
@@ -170,11 +179,13 @@ export default function SpeechPracticeScreen({
     <View style={styles.card}>
       <Text style={styles.phrase}>{practiceWord.target}</Text>
       <Text style={styles.translation}>{practiceWord.english}</Text>
-      <Text style={styles.progress}>
-        {scored
-          ? `Attempt ${acceptedCount + 1}/${wordLimit}`
-          : `Phrase ${wordIndex + 1}/${practiceWords.length}`}
-      </Text>
+      {word ? null : (
+        <Text style={styles.progress}>
+          {scored
+            ? `Attempt ${acceptedCount + 1}/${wordLimit}`
+            : `Phrase ${wordIndex + 1}/${practiceWords.length}`}
+        </Text>
+      )}
       <Text style={styles.explanation}>
         Pronunciation is not graded. Make an attempt, listen to it, and decide when you are
         ready to continue.
@@ -223,7 +234,9 @@ export default function SpeechPracticeScreen({
           onPress={acceptAttempt}
           disabled={!hasReviewedAttempt || busy}
         >
-          <Text style={styles.primaryButtonText}>Sounds good, next phrase</Text>
+          <Text style={styles.primaryButtonText}>
+            {word ? 'Sounds good' : 'Sounds good, next phrase'}
+          </Text>
         </TouchableOpacity>
       ) : null}
 

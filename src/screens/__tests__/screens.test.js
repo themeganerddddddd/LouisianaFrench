@@ -2094,6 +2094,114 @@ describe('DictionaryScreen', () => {
     expect(await screen.findByText("It's ready")).toBeOnTheScreen();
     expect(screen.queryByText('Hello')).toBeNull();
   });
+
+  it('does not show Practice for a Word without audio', async () => {
+    const user = setupUser();
+    renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+
+    expect(await screen.findByRole('button', { name: 'Practice' })).toBeOnTheScreen();
+    await user.type(
+      screen.getByPlaceholderText('Search English, target word, or category'),
+      'How’s it going?'
+    );
+
+    expect(await screen.findByText('Ça va?')).toBeOnTheScreen();
+    expect(screen.queryByText('Play audio')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Practice' })).toBeNull();
+  });
+
+  function addSecondAudioWord() {
+    const catalog = require('../../test/fixtures/catalog/activities').fixtureCatalog;
+    const realGetAllWords = catalog.getAllWords;
+    const spy = jest.spyOn(catalog, 'getAllWords').mockImplementation((language) => {
+      const words = realGetAllWords.call(catalog, language);
+      if (language !== 'cajun') return words;
+      const hello = words.find((w) => w.rowId === 'fixture_cajun_w01');
+      return [...words, { ...hello, rowId: 'fixture_cajun_w05', english: 'Thank you', target: 'Merci' }];
+    });
+    return () => spy.mockRestore();
+  }
+
+  async function openSecondWordPractice(user) {
+    renderApp({ initialRouteName: 'Dictionary', initialParams: { language: 'cajun' } });
+
+    const practiceButtons = await screen.findAllByRole('button', { name: 'Practice' });
+    expect(practiceButtons).toHaveLength(2);
+    await user.press(practiceButtons[1]);
+
+    expect(await screen.findByText('Record')).toBeOnTheScreen();
+    expect(screen.getByText('Merci')).toBeOnTheScreen();
+    expect(screen.getByText('Thank you')).toBeOnTheScreen();
+    expect(screen.queryByText('Bonjour')).toBeNull();
+  }
+
+  it('opens single-Word SpeechPractice and returns to Dictionary on back', async () => {
+    const user = setupUser();
+    const restoreWords = addSecondAudioWord();
+
+    try {
+      await openSecondWordPractice(user);
+      expect(screen.queryByText(/^Phrase /)).toBeNull();
+      expect(screen.queryByText(/^Attempt /)).toBeNull();
+      await user.press(screen.getByRole('button', { name: 'Back' }));
+
+      expect(await screen.findByTestId('dictionary-screen')).toBeOnTheScreen();
+      expect(screen.getByText('Hello')).toBeOnTheScreen();
+    } finally {
+      restoreWords();
+    }
+  });
+
+  describe('No Practice credit from single-Word SpeechPractice', () => {
+    let restoreRecorder;
+
+    beforeEach(() => {
+      const defaultRecorder = useAudioRecorder.getMockImplementation();
+      const defaultRecorderState = useAudioRecorderState.getMockImplementation();
+      let isRecording = false;
+      useAudioRecorder.mockReturnValue({
+        uri: 'file:///dictionary-attempt.m4a',
+        prepareToRecordAsync: jest.fn(async () => {}),
+        record: jest.fn(() => { isRecording = true; }),
+        stop: jest.fn(async () => { isRecording = false; })
+      });
+      useAudioRecorderState.mockImplementation(() => ({ isRecording, durationMillis: 1200 }));
+      restoreRecorder = () => {
+        useAudioRecorder.mockImplementation(defaultRecorder);
+        useAudioRecorderState.mockImplementation(defaultRecorderState);
+      };
+    });
+
+    afterEach(() => restoreRecorder());
+
+    async function acceptSingleWordAttempt(user) {
+      await user.press(await screen.findByText('Record'));
+      await user.press(await screen.findByText('Stop recording (1.2s)'));
+      await user.press(await screen.findByText('Play my recording'));
+      expect(
+        await screen.findByText('If it sounds acceptable to you, tap Sounds good to finish.')
+      ).toBeOnTheScreen();
+      expect(screen.queryByText(/next phrase/)).toBeNull();
+      expect(screen.getByText('Sounds good')).toBeEnabled();
+      await user.press(screen.getByText('Sounds good'));
+
+      expect(await screen.findByTestId('dictionary-screen')).toBeOnTheScreen();
+    }
+
+    it('accept does not complete the Speech step or give XP', async () => {
+      const user = setupUser();
+      const restoreWords = addSecondAudioWord();
+      try {
+        await openSecondWordPractice(user);
+        await acceptSingleWordAttempt(user);
+      } finally {
+        restoreWords();
+      }
+
+      expect(await getTodayPractice('cajun')).toBeNull();
+      expect((await getProfile()).xp).toBe(0);
+    });
+  });
 });
 
 describe('AdvancedScreen', () => {
