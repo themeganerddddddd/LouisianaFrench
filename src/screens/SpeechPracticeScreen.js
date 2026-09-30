@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
 import { getAllWords } from '../data/lessonLoader';
+import { releaseAudioPlayer } from '../utils/audioPlayer';
 import { recordPracticeCompletion, recordStudyAndXp } from '../utils/storage';
 
 const MIN_ATTEMPT_MS = 600;
@@ -48,19 +49,12 @@ export default function SpeechPracticeScreen({
   }, [practiceWord?.audioKey]);
 
   useEffect(() => {
-    return () => {
-      try {
-        soundRef.current?.remove();
-      } catch (_e) {}
-      soundRef.current = null;
-    };
+    return () => releaseAudioPlayer(soundRef);
   }, []);
 
   async function play(source) {
     if (!source) return;
-    try {
-      soundRef.current?.remove();
-    } catch (_e) {}
+    releaseAudioPlayer(soundRef);
     const player = createAudioPlayer(source);
     soundRef.current = player;
     player.play();

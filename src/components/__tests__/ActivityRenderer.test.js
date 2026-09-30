@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { createAudioPlayer } from 'expo-audio';
 import ActivityRenderer from '../ActivityRenderer';
 
@@ -234,5 +234,59 @@ describe('ActivityRenderer requested interaction behavior', () => {
     // One call is the correct-answer tone.
     // The second is the completed sentence's audio.
     expect(createAudioPlayer).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('ActivityRenderer Word Audio playback', () => {
+  const introActivity = {
+    cardId: 'test:intro-audio',
+    type: 'intro_card',
+    target: 'Bonjour',
+    english: 'Hello',
+    audioKey: 'u01_w0001_lf'
+  };
+
+  function renderIntro() {
+    return render(
+      <ActivityRenderer
+        language="cajun"
+        activity={introActivity}
+        onCorrect={jest.fn()}
+        onWrong={jest.fn()}
+      />
+    );
+  }
+
+  function players() {
+    return createAudioPlayer.mock.results.map((result) => result.value);
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('stops and releases the autoplaying Word Audio when the learner replays it', () => {
+    renderIntro();
+    act(() => jest.advanceTimersByTime(500));
+
+    fireEvent.press(screen.getByLabelText('Play audio: Bonjour'));
+
+    const [autoplay, replay] = players();
+    expect(autoplay).toMatchObject({ playing: false, registered: false, released: true });
+    expect(replay).toMatchObject({ playing: true, released: false });
+  });
+
+  it('stops and releases the Word Audio when the Activity unmounts', () => {
+    const { unmount } = renderIntro();
+    act(() => jest.advanceTimersByTime(500));
+
+    unmount();
+
+    expect(players()).toEqual([expect.objectContaining({ playing: false, registered: false, released: true })]);
   });
 });
