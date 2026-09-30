@@ -2151,7 +2151,7 @@ describe('DictionaryScreen', () => {
     }
   });
 
-  describe('Practice credit from single-Word SpeechPractice', () => {
+  describe('No Practice credit from single-Word SpeechPractice', () => {
     let restoreRecorder;
 
     beforeEach(() => {
@@ -2195,7 +2195,7 @@ describe('DictionaryScreen', () => {
       expect(await screen.findByTestId('dictionary-screen')).toBeOnTheScreen();
     }
 
-    it('accept writes Practice when no mistakes and no today Practice exist', async () => {
+    it('accept does not complete the Speech step or give XP', async () => {
       const user = setupUser();
       const restoreWords = addSecondAudioWord();
       try {
@@ -2205,25 +2205,8 @@ describe('DictionaryScreen', () => {
         restoreWords();
       }
 
-      expect(await getTodayPractice('cajun')).toEqual({
-        type: 'speech',
-        completedAt: expect.any(String)
-      });
-      expect((await getProfile()).xp).toBe(0);
-    });
-
-    it('does not write Practice when pending mistakes exist', async () => {
-      await seedAsyncStorage({
-        pendingMistakes: {
-          cajun: {
-            [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
-          }
-        }
-      });
-
-      await acceptDictionaryPractice();
-
       expect(await getTodayPractice('cajun')).toBeNull();
+      expect((await getProfile()).xp).toBe(0);
     });
 
     it('does not overwrite an existing today Practice entry', async () => {
