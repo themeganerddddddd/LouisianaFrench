@@ -8,13 +8,11 @@ import {
   BackHandler,
   Image,
   LayoutAnimation,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  UIManager,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -358,12 +356,6 @@ export default function HomeScreen() {
 
     return () => subscription.remove();
   }, [aboutMenuVisible]);
-
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
 
   async function switchLanguage(nextLanguage) {
     setLanguage(nextLanguage);
