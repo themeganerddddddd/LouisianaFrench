@@ -173,7 +173,7 @@ describe('speech practice screen', () => {
       fireEvent.press(screen.getByText('Play Audio'));
 
       const [first, second] = players();
-      expect(first).toMatchObject({ playing: false, released: true });
+      expect(first).toMatchObject({ playing: false, registered: false, released: true });
       expect(second).toMatchObject({ playing: true, released: false });
     });
 
@@ -183,7 +183,7 @@ describe('speech practice screen', () => {
 
       unmount();
 
-      expect(players()).toEqual([expect.objectContaining({ playing: false, released: true })]);
+      expect(players()).toEqual([expect.objectContaining({ playing: false, registered: false, released: true })]);
     });
   });
 });

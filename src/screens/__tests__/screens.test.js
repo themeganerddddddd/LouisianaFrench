@@ -2409,7 +2409,7 @@ describe('DictionaryScreen', () => {
       await user.press(screen.getByText('Play audio'));
 
       const [first, second] = players();
-      expect(first).toMatchObject({ playing: false, released: true });
+      expect(first).toMatchObject({ playing: false, registered: false, released: true });
       expect(second).toMatchObject({ playing: true, released: false });
     });
 
@@ -2421,7 +2421,7 @@ describe('DictionaryScreen', () => {
       await user.press(screen.getByLabelText('Back to Home'));
 
       await waitFor(() =>
-        expect(players()).toEqual([expect.objectContaining({ playing: false, released: true })])
+        expect(players()).toEqual([expect.objectContaining({ playing: false, registered: false, released: true })])
       );
     });
   });

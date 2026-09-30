@@ -1,16 +1,24 @@
-// On iOS and Android, expo-audio remove() only unregisters the player and does
-// not stop it. pause() stops it now, remove() keeps Android's player list free
-// of dead players, and release() frees the native player.
+// release() stops and frees the native player on iOS and Android. remove() must
+// run first: release() does not take the player out of Android's player list,
+// and any call after release() throws. pause() is avoided because on iOS it
+// schedules an audio session shutdown that can silence the next player.
 export function releaseAudioPlayer(playerRef) {
   const player = playerRef.current;
   playerRef.current = null;
   if (!player) return;
 
   try {
-    player.pause();
     player.remove();
-  } catch {}
+  } catch (error) {
+    warn('remove', error);
+  }
   try {
     player.release();
-  } catch {}
+  } catch (error) {
+    warn('release', error);
+  }
+}
+
+function warn(step, error) {
+  if (__DEV__) console.warn(`Could not ${step} audio player`, error);
 }
