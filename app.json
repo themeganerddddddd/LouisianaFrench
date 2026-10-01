@@ -29,13 +29,28 @@
       },
       "bugReportEmail": "louisianafrenchsupport@gmail.com"
     },
-    "plugins": [
-      [
-        "expo-audio",
-        {
-          "microphonePermission": "Allow Louisiana Languages to record pronunciation practice."
-        }
-      ],
+  "plugins": [
+  [
+    "expo-audio",
+    {
+      "microphonePermission": "Allow Louisiana Languages to record pronunciation practice.",
+      "enableBackgroundPlayback": false,
+      "enableBackgroundRecording": false
+    }
+  ],
+  "expo-status-bar",
+  "expo-asset",
+  "expo-font",
+  [
+    "expo-build-properties",
+    {
+      "android": {
+        "enableMinifyInReleaseBuilds": true,
+        "enableShrinkResourcesInReleaseBuilds": false
+      }
+    }
+  ]
+],
       "expo-status-bar",
       "expo-asset",
       "expo-font",
