@@ -33,7 +33,9 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow Louisiana Languages to record pronunciation practice."
+          "microphonePermission": "Allow Louisiana Languages to record pronunciation practice.",
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
         }
       ],
       "expo-status-bar",
