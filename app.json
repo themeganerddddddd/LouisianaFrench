@@ -49,7 +49,14 @@
             "enableShrinkResourcesInReleaseBuilds": false
           }
         }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
       ]
-    ]
+    ],
+    "scheme": "com.westleysturhan.louisianafrench"
   }
 }
