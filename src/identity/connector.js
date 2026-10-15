@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import * as WebBrowser from 'expo-web-browser';
 
 import { createSessionStore } from './sessionStore';
 
 const UNAVAILABLE = 'Sign-in is unavailable.';
 const FAILED = 'Sign-in failed.';
 const WRONG_PASSWORD = 'That email or password is not right.';
+const AUTH_REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback';
 
 function displayNameFrom(user, fallbackEmail) {
   const metadata = user?.user_metadata ?? {};
@@ -25,6 +27,7 @@ function toIdentity(user, fallbackEmail) {
 
 function learnerMessage(error) {
   const raw = String(error?.message || '');
+  if (/com\.westleysturhan\.louisianafrench|code=|error_description/i.test(raw)) return FAILED;
   if (/invalid login credentials/i.test(raw)) return WRONG_PASSWORD;
   if (/already registered|already exists/i.test(raw)) {
     return 'That email is already registered.';
@@ -40,7 +43,7 @@ function remember(session, email) {
   };
 }
 
-export function createIdentityConnector({ client } = {}) {
+export function createIdentityConnector({ client, openBrowser } = {}) {
   if (!client) {
     return {
       async getIdentity() {
@@ -61,6 +64,9 @@ export function createIdentityConnector({ client } = {}) {
       async sendPasswordReset() {
         return { identity: null, message: UNAVAILABLE };
       },
+      async signInWithProvider() {
+        return { identity: null, message: UNAVAILABLE };
+      },
       async signOut() {
         return { identity: null };
       }
@@ -69,6 +75,7 @@ export function createIdentityConnector({ client } = {}) {
 
   let identity = null;
   let accessToken = null;
+  let providerAttempt = 0;
   const listeners = new Set();
   let ready = hydrate();
 
@@ -133,6 +140,48 @@ export function createIdentityConnector({ client } = {}) {
       }
       return { identity: null, message: null };
     },
+    async signInWithProvider(provider) {
+      const attempt = ++providerAttempt;
+      const { data, error } = await client.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: AUTH_REDIRECT, skipBrowserRedirect: true }
+      });
+      if (error || !data?.url || !openBrowser) {
+        return { identity: null, message: error ? learnerMessage(error) : UNAVAILABLE };
+      }
+
+      let returned = null;
+      try {
+        returned = await openBrowser(data.url);
+      } catch (browserError) {
+        return { identity: null, message: learnerMessage(browserError) };
+      }
+      if (attempt !== providerAttempt || !returned?.url) {
+        return { identity: null, message: null };
+      }
+
+      let code = null;
+      try {
+        const parsed = new URL(returned.url);
+        if (!returned.url.startsWith(AUTH_REDIRECT) || parsed.searchParams.get('error')) {
+          return { identity: null, message: FAILED };
+        }
+        code = parsed.searchParams.get('code');
+      } catch {
+        return { identity: null, message: FAILED };
+      }
+      if (!code) return { identity: null, message: FAILED };
+
+      const exchanged = await client.auth.exchangeCodeForSession(code);
+      if (attempt !== providerAttempt) return { identity: null, message: null };
+      if (exchanged.error || !exchanged.data?.session) {
+        return {
+          identity: null,
+          message: exchanged.error ? learnerMessage(exchanged.error) : FAILED
+        };
+      }
+      return apply(exchanged.data.session);
+    },
     async signOut() {
       await client.auth.signOut({ scope: 'local' });
       identity = null;
@@ -160,5 +209,12 @@ export function createSupabaseIdentityConnector(env = process.env) {
     }
   });
 
-  return createIdentityConnector({ client });
+  return createIdentityConnector({
+    client,
+    openBrowser: async (url) => {
+      const result = await WebBrowser.openAuthSessionAsync(url, AUTH_REDIRECT);
+      if (result.type !== 'success' || !result.url) return null;
+      return { url: result.url };
+    }
+  });
 }
