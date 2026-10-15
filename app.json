@@ -55,7 +55,8 @@
         {
           "configureAndroidBackup": true
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "scheme": "com.westleysturhan.louisianafrench"
   }

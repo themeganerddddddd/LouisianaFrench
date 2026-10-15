@@ -55,6 +55,15 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
     setFields((current) => ({ ...current, password: '' }));
   }
 
+  async function continueWithGoogle() {
+    const result = await connector.signInWithProvider('google');
+    if (result.identity) {
+      close();
+      return;
+    }
+    if (result.message) setMessage(result.message);
+  }
+
   async function signOut() {
     await connector.signOut();
     close();
@@ -110,6 +119,9 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
                 />
               )}
               {message ? <Text testID="sign-in-message">{message}</Text> : null}
+              <Pressable onPress={continueWithGoogle} testID="sign-in-google" accessibilityRole="button">
+                <Text style={styles.primary}>Continue with Google</Text>
+              </Pressable>
               <Pressable onPress={submit} testID="sign-in-submit" accessibilityRole="button">
                 <Text style={styles.primary}>
                   {mode === 'create' ? 'Create' : mode === 'reset' ? 'Send reset email' : 'Sign in'}

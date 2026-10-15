@@ -45,6 +45,13 @@ const mockConnector = {
   async sendPasswordReset() {
     return { identity: null, message: null };
   },
+  async signInWithProvider(provider) {
+    this.provider = provider;
+    if (this.failure === 'cancel') return { identity: null, message: null };
+    this.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+    this.emit();
+    return { identity: this.identity, message: null };
+  },
   async signOut() {
     this.signOutScope = 'local';
     this.identity = null;
@@ -180,6 +187,27 @@ describe('Home email sign-in', () => {
     mockConnector.failure = 'unavailable';
     await user.press(screen.getByTestId('sign-in-submit'));
     expect(await screen.findByText('Sign-in is unavailable.')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Sign in')).toBeOnTheScreen();
+  });
+
+  it('continues with Google and shows the display name', async () => {
+    const user = setupUser();
+    await openHome();
+    await user.press(screen.getByLabelText('Sign in'));
+    await user.press(screen.getByTestId('sign-in-google'));
+    expect(await screen.findByLabelText('Ada')).toBeOnTheScreen();
+    expect(mockConnector.provider).toBe('google');
+    expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
+  });
+
+  it('stays a guest when Google is cancelled', async () => {
+    const user = setupUser();
+    mockConnector.failure = 'cancel';
+    await openHome();
+    await user.press(screen.getByLabelText('Sign in'));
+    await user.press(screen.getByTestId('sign-in-google'));
+    expect(screen.getByTestId('sign-in-modal')).toBeOnTheScreen();
+    expect(screen.queryByTestId('sign-in-message')).toBeNull();
     expect(screen.getByLabelText('Sign in')).toBeOnTheScreen();
   });
 

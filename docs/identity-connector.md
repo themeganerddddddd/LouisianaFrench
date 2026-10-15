@@ -6,7 +6,7 @@ Home signs a learner in through one connector. Later features use that same conn
 
 ## The learner, today
 
-A learner can study as a Guest. Home reads the Catalog and Learner Progress. Learner Progress is lesson history, Word mastery, Card review, XP, and streaks. It stays on the device. Home also has an identity row. It reads Sign in until the learner creates an identity or signs in with email. Google and Facebook are not on that row yet.
+A learner can study as a Guest. Home reads the Catalog and Learner Progress. Learner Progress is lesson history, Word mastery, Card review, XP, and streaks. It stays on the device. Home also has an identity row. It reads Sign in until the learner creates an identity, signs in with email, or continues with Google. Facebook is not on that row yet.
 
 ```mermaid
 flowchart LR
