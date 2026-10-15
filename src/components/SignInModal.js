@@ -63,7 +63,8 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <Pressable style={styles.backdrop} onPress={close} testID="sign-in-backdrop">
-        <Pressable style={styles.card} onPress={() => {}} testID="sign-in-modal">
+        <Pressable onPress={() => {}} testID="sign-in-modal">
+          <View style={styles.card}>
           <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Close sign in">
             <Text style={styles.close}>Close</Text>
           </Pressable>
@@ -121,6 +122,7 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
               </View>
             </View>
           )}
+          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -137,7 +139,10 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16
+    padding: 16,
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center'
   },
   close: { alignSelf: 'flex-end', color: '#52677A' },
   title: { fontSize: 20, color: '#17324D', marginBottom: 12 },
