@@ -201,6 +201,36 @@ describe('identity connector', () => {
     );
   });
 
+  it('uses a safe message for a duplicate email and a network failure', async () => {
+    const client = {
+      auth: {
+        getSession: async () => ({ data: { session: null } }),
+        signUp: async () => ({
+          data: { session: null },
+          error: { message: 'User already registered' }
+        }),
+        signInWithPassword: async () => ({
+          data: { session: null },
+          error: { message: 'Network request failed' }
+        })
+      }
+    };
+    const connector = createIdentityConnector({ client });
+    expect(
+      await connector.signUpWithPassword({
+        email: 'ada@example.com',
+        password: 'secret',
+        displayName: 'Ada'
+      })
+    ).toEqual({ identity: null, message: 'That email is already registered.' });
+    expect(
+      await connector.signInWithPassword({
+        email: 'ada@example.com',
+        password: 'secret'
+      })
+    ).toEqual({ identity: null, message: 'The network failed. Try again.' });
+  });
+
   it('stays a guest when sign-in is not configured', async () => {
     const connector = createIdentityConnector({ client: null });
     expect(await connector.getIdentity()).toBeNull();
