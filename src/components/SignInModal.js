@@ -55,8 +55,8 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
     setFields((current) => ({ ...current, password: '' }));
   }
 
-  async function continueWithGoogle() {
-    const result = await connector.signInWithProvider('google');
+  async function continueWith(provider) {
+    const result = await connector.signInWithProvider(provider);
     if (result.identity) {
       close();
       return;
@@ -119,8 +119,11 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
                 />
               )}
               {message ? <Text testID="sign-in-message">{message}</Text> : null}
-              <Pressable onPress={continueWithGoogle} testID="sign-in-google" accessibilityRole="button">
+              <Pressable onPress={() => continueWith('google')} testID="sign-in-google" accessibilityRole="button">
                 <Text style={styles.primary}>Continue with Google</Text>
+              </Pressable>
+              <Pressable onPress={() => continueWith('facebook')} testID="sign-in-facebook" accessibilityRole="button">
+                <Text style={styles.primary}>Continue with Facebook</Text>
               </Pressable>
               <Pressable onPress={submit} testID="sign-in-submit" accessibilityRole="button">
                 <Text style={styles.primary}>

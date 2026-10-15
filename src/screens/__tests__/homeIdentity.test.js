@@ -200,6 +200,28 @@ describe('Home email sign-in', () => {
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
 
+  it('continues with Facebook and shows the display name', async () => {
+    const user = setupUser();
+    await openHome();
+    await user.press(screen.getByLabelText('Sign in'));
+    expect(screen.getByTestId('sign-in-google')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('sign-in-facebook'));
+    expect(await screen.findByLabelText('Ada')).toBeOnTheScreen();
+    expect(mockConnector.provider).toBe('facebook');
+    expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
+  });
+
+  it('stays a guest when Facebook is cancelled', async () => {
+    const user = setupUser();
+    mockConnector.failure = 'cancel';
+    await openHome();
+    await user.press(screen.getByLabelText('Sign in'));
+    await user.press(screen.getByTestId('sign-in-facebook'));
+    expect(screen.getByTestId('sign-in-modal')).toBeOnTheScreen();
+    expect(screen.queryByTestId('sign-in-message')).toBeNull();
+    expect(screen.getByLabelText('Sign in')).toBeOnTheScreen();
+  });
+
   it('stays a guest when Google is cancelled', async () => {
     const user = setupUser();
     mockConnector.failure = 'cancel';
