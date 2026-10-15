@@ -11,7 +11,9 @@
     "prototype": "expo start",
     "test": "jest --watchAll=false",
     "lint": "eslint .",
-    "build": "expo export --platform ios --output-dir dist"
+    "build:ios": "expo export --platform ios --output-dir dist/ios",
+    "build:android": "expo export --platform android --output-dir dist/android",
+    "build": "npm run build:ios && npm run build:android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
