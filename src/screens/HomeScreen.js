@@ -509,17 +509,6 @@ export default function HomeScreen() {
                     : `⚡ ${projection.dashboard.xp} · 🔥 ${projection.dashboard.streak} · ${projection.dashboard.masteryPercent}% mastered`
                   : null}
               </Text>
-              <Pressable
-                testID="home-sign-in"
-                accessibilityRole="button"
-                accessibilityLabel={identity ? identity.displayName : 'Sign in'}
-                onPress={() => setSignInVisible(true)}
-                style={styles.signInControl}
-              >
-                <Text style={styles.signInLabel}>
-                  {identity ? identity.displayName : 'Sign in'}
-                </Text>
-              </Pressable>
             </View>
           </View>
 
@@ -775,7 +764,13 @@ export default function HomeScreen() {
         anchorTop={insets.top + 68}
         anchorLeft={20}
         accentColor={theme.accent}
+        accountDetail={identity?.displayName || ''}
         expanded={aboutExpanded}
+        onAccount={() => {
+          setAboutMenuVisible(false);
+          setAboutExpanded(false);
+          setSignInVisible(true);
+        }}
         onToggle={() => setAboutExpanded((expanded) => !expanded)}
         onSelect={selectAbout}
         onDismiss={() => {
@@ -797,6 +792,7 @@ export default function HomeScreen() {
       <SignInModal
         visible={signInVisible}
         identity={identity}
+        accentColor={theme.accent}
         connector={connectorRef.current}
         onClose={() => setSignInVisible(false)}
       />
@@ -839,17 +835,6 @@ const styles = StyleSheet.create({
   identityText: {
     flex: 1,
     minWidth: 0
-  },
-
-  signInControl: {
-    alignSelf: 'flex-start',
-    marginTop: 2
-  },
-
-  signInLabel: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700'
   },
 
   pelican: {

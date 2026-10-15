@@ -67,8 +67,15 @@ jest.mock('../../identity/connector', () => ({
 setupAppTests();
 
 async function openHome() {
-  renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
-  return screen.findByTestId('home-sign-in');
+  const view = renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+  await screen.findByLabelText('About menu');
+  expect(screen.queryByTestId('home-sign-in')).toBeNull();
+  return view;
+}
+
+async function openAccount(user) {
+  await user.press(screen.getByLabelText('About menu'));
+  await user.press(screen.getByTestId('about-menu-account'));
 }
 
 describe('Home email sign-in', () => {
@@ -106,60 +113,63 @@ describe('Home email sign-in', () => {
     language.unmount();
 
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     expect(screen.getByTestId('sign-in-modal')).toBeOnTheScreen();
   });
 
   it('creates an identity and shows the display name', async () => {
     const user = setupUser();
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     await user.press(screen.getByTestId('sign-in-create-mode'));
+    expect(screen.getAllByText('Create an account').length).toBeGreaterThan(0);
     await user.type(screen.getByTestId('sign-in-display-name'), 'Ada');
     await user.type(screen.getByTestId('sign-in-email'), 'ada@example.com');
     await user.type(screen.getByTestId('sign-in-password'), 'secret');
     await user.press(screen.getByTestId('sign-in-submit'));
 
-    expect(await screen.findByLabelText('Ada')).toBeOnTheScreen();
     expect(screen.queryByTestId('sign-in-modal')).toBeNull();
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
 
   it('signs in with email and password', async () => {
     const user = setupUser();
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     await user.type(screen.getByTestId('sign-in-email'), 'ada@example.com');
     await user.type(screen.getByTestId('sign-in-password'), 'secret');
     await user.press(screen.getByTestId('sign-in-submit'));
-    expect(await screen.findByLabelText('Ada')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
   });
 
   it('sends a reset and leaves the learner a guest', async () => {
     const user = setupUser();
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     await user.press(screen.getByTestId('sign-in-reset-mode'));
     await user.type(screen.getByTestId('sign-in-email'), 'ada@example.com');
     await user.press(screen.getByTestId('sign-in-submit'));
     expect(await screen.findByText('Check your email.')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Sign in')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Account, Ada')).toBeNull();
   });
 
   it('shows a safe message for a wrong password and clears the password on close', async () => {
     const user = setupUser();
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     await user.type(screen.getByTestId('sign-in-password'), 'nope');
     await user.press(screen.getByTestId('sign-in-submit'));
     expect(await screen.findByText('That email or password is not right.')).toBeOnTheScreen();
     expect(screen.getByTestId('sign-in-password').props.value).toBe('');
-    expect(screen.getByLabelText('Sign in')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Account, Ada')).toBeNull();
 
     await user.type(screen.getByTestId('sign-in-password'), 'typed');
     await user.press(screen.getByTestId('sign-in-backdrop'));
     expect(screen.queryByTestId('sign-in-modal')).toBeNull();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     expect(screen.getByTestId('sign-in-password').props.value).toBe('');
 
     await user.type(screen.getByTestId('sign-in-password'), 'typed');
@@ -168,12 +178,12 @@ describe('Home email sign-in', () => {
       openModal.props.onRequestClose();
     });
     expect(screen.queryByTestId('sign-in-modal')).toBeNull();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     expect(screen.getByTestId('sign-in-password').props.value).toBe('');
     await user.press(screen.getByLabelText('Close sign in'));
 
     mockConnector.failure = 'duplicate';
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     await user.press(screen.getByTestId('sign-in-create-mode'));
     await user.press(screen.getByTestId('sign-in-submit'));
     expect(await screen.findByText('That email is already registered.')).toBeOnTheScreen();
@@ -187,15 +197,16 @@ describe('Home email sign-in', () => {
     mockConnector.failure = 'unavailable';
     await user.press(screen.getByTestId('sign-in-submit'));
     expect(await screen.findByText('Sign-in is unavailable.')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Sign in')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Account, Ada')).toBeNull();
   });
 
   it('continues with Google and shows the display name', async () => {
     const user = setupUser();
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     await user.press(screen.getByTestId('sign-in-google'));
-    expect(await screen.findByLabelText('Ada')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
     expect(mockConnector.provider).toBe('google');
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
@@ -203,10 +214,11 @@ describe('Home email sign-in', () => {
   it('continues with Facebook and shows the display name', async () => {
     const user = setupUser();
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     expect(screen.getByTestId('sign-in-google')).toBeOnTheScreen();
     await user.press(screen.getByTestId('sign-in-facebook'));
-    expect(await screen.findByLabelText('Ada')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
     expect(mockConnector.provider).toBe('facebook');
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
@@ -215,40 +227,43 @@ describe('Home email sign-in', () => {
     const user = setupUser();
     mockConnector.failure = 'cancel';
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     await user.press(screen.getByTestId('sign-in-facebook'));
     expect(screen.getByTestId('sign-in-modal')).toBeOnTheScreen();
     expect(screen.queryByTestId('sign-in-message')).toBeNull();
-    expect(screen.getByLabelText('Sign in')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Account, Ada')).toBeNull();
   });
 
   it('stays a guest when Google is cancelled', async () => {
     const user = setupUser();
     mockConnector.failure = 'cancel';
     await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    await openAccount(user);
     await user.press(screen.getByTestId('sign-in-google'));
     expect(screen.getByTestId('sign-in-modal')).toBeOnTheScreen();
     expect(screen.queryByTestId('sign-in-message')).toBeNull();
-    expect(screen.getByLabelText('Sign in')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Account, Ada')).toBeNull();
   });
 
   it('signs out on this device and restores a stored identity on relaunch', async () => {
     const user = setupUser();
-    await openHome();
-    await user.press(screen.getByLabelText('Sign in'));
+    const home = await openHome();
+    await openAccount(user);
     await user.type(screen.getByTestId('sign-in-email'), 'ada@example.com');
     await user.type(screen.getByTestId('sign-in-password'), 'secret');
     await user.press(screen.getByTestId('sign-in-submit'));
-    await screen.findByLabelText('Ada');
-
-    await user.press(screen.getByLabelText('Ada'));
+    await user.press(screen.getByLabelText('About menu'));
+    await user.press(screen.getByLabelText('Account, Ada'));
     await user.press(screen.getByTestId('sign-out'));
-    expect(await screen.findByLabelText('Sign in')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Account, Ada')).toBeNull();
     expect(mockConnector.signOutScope).toBe('local');
+    home.unmount();
 
     mockConnector.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
-    expect(await screen.findByLabelText('Ada')).toBeOnTheScreen();
+    await user.press(await screen.findByLabelText('About menu'));
+    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
   });
 });
