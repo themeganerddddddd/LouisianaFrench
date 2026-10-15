@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AboutTextModal from '../components/AboutTextModal';
+import SignInModal from '../components/SignInModal';
+import { createSupabaseIdentityConnector } from '../identity/connector';
 import BugReportButton from '../components/BugReportButton';
 import DebugCatalogModal from '../components/DebugCatalogModal';
 import HomeAboutMenu from '../components/HomeAboutMenu';
@@ -295,8 +297,29 @@ export default function HomeScreen() {
   const [aboutMenuVisible, setAboutMenuVisible] = useState(false);
   const [aboutExpanded, setAboutExpanded] = useState(false);
   const [aboutModal, setAboutModal] = useState(null);
+  const [identity, setIdentity] = useState(null);
+  const [signInVisible, setSignInVisible] = useState(false);
+  const connectorRef = useRef(null);
+  if (!connectorRef.current) {
+    connectorRef.current = createSupabaseIdentityConnector();
+  }
   const initialExpansionLanguage = useRef(null);
   const tboyTapRef = useRef({ count: 0, lastTapAt: 0 });
+
+  useEffect(() => {
+    let live = true;
+    const connector = connectorRef.current;
+    connector.getIdentity().then((next) => {
+      if (live) setIdentity(next);
+    });
+    const unsubscribe = connector.subscribe((next) => {
+      if (live) setIdentity(next);
+    });
+    return () => {
+      live = false;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     async function bootstrapLanguage() {
@@ -486,6 +509,17 @@ export default function HomeScreen() {
                     : `⚡ ${projection.dashboard.xp} · 🔥 ${projection.dashboard.streak} · ${projection.dashboard.masteryPercent}% mastered`
                   : null}
               </Text>
+              <Pressable
+                testID="home-sign-in"
+                accessibilityRole="button"
+                accessibilityLabel={identity ? identity.displayName : 'Sign in'}
+                onPress={() => setSignInVisible(true)}
+                style={styles.signInControl}
+              >
+                <Text style={styles.signInLabel}>
+                  {identity ? identity.displayName : 'Sign in'}
+                </Text>
+              </Pressable>
             </View>
           </View>
 
@@ -760,6 +794,13 @@ export default function HomeScreen() {
         />
       ) : null}
 
+      <SignInModal
+        visible={signInVisible}
+        identity={identity}
+        connector={connectorRef.current}
+        onClose={() => setSignInVisible(false)}
+      />
+
       <DebugCatalogModal
         visible={debugCatalogVisible}
         language={language}
@@ -798,6 +839,17 @@ const styles = StyleSheet.create({
   identityText: {
     flex: 1,
     minWidth: 0
+  },
+
+  signInControl: {
+    alignSelf: 'flex-start',
+    marginTop: 2
+  },
+
+  signInLabel: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700'
   },
 
   pelican: {

@@ -26,6 +26,10 @@ function toIdentity(user, fallbackEmail) {
 function learnerMessage(error) {
   const raw = String(error?.message || '');
   if (/invalid login credentials/i.test(raw)) return WRONG_PASSWORD;
+  if (/already registered|already exists/i.test(raw)) {
+    return 'That email is already registered.';
+  }
+  if (/network|fetch/i.test(raw)) return 'The network failed. Try again.';
   return FAILED;
 }
 

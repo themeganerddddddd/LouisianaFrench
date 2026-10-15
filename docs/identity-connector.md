@@ -2,11 +2,11 @@
 
 Update this file in the same change when Identity behavior or this design changes. Words used here are defined in `CONTEXT.md`. The storage decision is [ADR 0005](adr/0005-supabase-auth-for-identity.md). The current spec is GitHub issue 275. A diagrammed copy of this explainer is `docs/identity-connector.html`.
 
-Home will sign a learner in through one connector. Later features use that same connector for the learner’s id and a token. They never talk to Supabase themselves.
+Home signs a learner in through one connector. Later features use that same connector for the learner’s id and a token. They never talk to Supabase themselves.
 
 ## The learner, today
 
-A learner can already study. Home reads the Catalog and Learner Progress. Learner Progress is lesson history, Word mastery, Card review, XP, and streaks. It stays on the device. There is no Identity yet, so every learner is a Guest.
+A learner can study as a Guest. Home reads the Catalog and Learner Progress. Learner Progress is lesson history, Word mastery, Card review, XP, and streaks. It stays on the device. Home also has an identity row. It reads Sign in until the learner creates an identity or signs in with email. Google and Facebook are not on that row yet.
 
 ```mermaid
 flowchart LR
