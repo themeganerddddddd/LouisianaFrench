@@ -14,7 +14,7 @@
       }
     },
     "android": {
-      "package": "com.westleysturhan.louisianafrench",
+      "package": "com.louisianalanguages.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/pelicanicon.png",
         "backgroundColor": "#2771CB"
