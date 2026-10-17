@@ -22,19 +22,16 @@ import {
   getUnitPreface
 } from '../data/lessonLoader';
 
-import {
-  getDueReviewItems,
-  updateCardReview
-} from '../utils/spacedRepetition';
+import { recordActivityOutcome } from '../utils/activityOutcome';
+
+import { getDueReviewItems } from '../utils/spacedRepetition';
 
 import {
   isPrefaceRead,
   markLessonComplete,
   markPrefaceRead,
   recordStudyAndXp,
-  setLastWorkedUnit,
-  updateWordProgress,
-  upsertPendingMistake
+  setLastWorkedUnit
 } from '../utils/storage';
 
 export default function LessonRunner({
@@ -369,153 +366,82 @@ export default function LessonRunner({
             'intro_card'
         ).length;
 
-  async function handleCorrect() {
-    await updateCardReview(
-      current.cardId,
-      current.isReview
-        ? 5
-        : 4
-    );
+  async function applyOutcome(outcome, {
+    nextMistakes,
+    nextXp
+  }) {
+    if (outcome.countsTowardScore) {
+      setScoreEarned((v) => v + 1);
+    }
 
-    if (current.rowId) {
-      await updateWordProgress(
+    setLessonXp(nextXp);
+
+    if (outcome.nextStep === 'advance') {
+      animateToNext(() => setIndex((i) => i + 1));
+      return;
+    }
+
+    if (outcome.nextStep === 'mistakeReview') {
+      navigation.replace('MistakeReview', {
         language,
-        current.rowId,
-        true
-      );
+        lessonId,
+        lessonTitle: `${lesson.unitTitle} — ${lesson.lessonTitle}`,
+        mistakes: nextMistakes,
+        lessonXp: nextXp
+      });
+      return;
     }
 
-    if (
-      lesson.type !==
-        'review' &&
-      current.type !==
-        'intro_card'
-    ) {
-      setScoreEarned(
-        (v) => v + 1
-      );
-    }
-
-    const gained =
-      current.isReview
-        ? 6
-        : 10;
-
-    const nextXp =
-      lessonXp + gained;
-
-    setLessonXp(
-      nextXp
+    await finishLesson(
+      nextXp,
+      scoreEarned + (outcome.countsTowardScore ? 1 : 0)
     );
-
-    if (
-      index <
-      activities.length - 1
-    ) {
-      animateToNext(
-        () =>
-          setIndex(
-            (i) => i + 1
-          )
-      );
-    } else if (
-      mistakes.length > 0
-    ) {
-      navigation.replace(
-        'MistakeReview',
-        {
-          language,
-          lessonId,
-          lessonTitle:
-            `${lesson.unitTitle} — ${lesson.lessonTitle}`,
-          mistakes,
-          lessonXp:
-            nextXp
-        }
-      );
-    } else {
-      await finishLesson(
-        nextXp,
-        scoreEarned +
-          (
-            lesson.type !==
-              'review' &&
-            current.type !==
-              'intro_card'
-              ? 1
-              : 0
-          )
-      );
-    }
   }
 
-  async function handleWrong(
-    userAnswer
-  ) {
-    await updateCardReview(
-      current.cardId,
-      2
-    );
-
-    if (current.rowId) {
-      await updateWordProgress(
-        language,
-        current.rowId,
-        false
-      );
-    }
-
-    await upsertPendingMistake(
+  async function handleCorrect() {
+    const outcome = await recordActivityOutcome({
+      sessionKind: 'lesson',
       language,
-      current.cardId,
-      {
-        answer:
-          userAnswer,
-        source:
-          'lesson',
-        sourceId:
-          lesson.id
-      }
-    );
+      activity: current,
+      wasCorrect: true,
+      userAnswer: null,
+      lessonId: lesson.id,
+      lessonType: lesson.type,
+      isLastActivity: index >= activities.length - 1,
+      mistakeCount: mistakes.length
+    });
 
+    await applyOutcome(outcome, {
+      nextMistakes: mistakes,
+      nextXp: lessonXp + outcome.xpDelta
+    });
+  }
+
+  async function handleWrong(userAnswer) {
     const nextMistake = {
       ...current,
       userAnswer
     };
+    const nextMistakes = [...mistakes, nextMistake];
 
-    setMistakes(
-      (prev) => [
-        ...prev,
-        nextMistake
-      ]
-    );
+    const outcome = await recordActivityOutcome({
+      sessionKind: 'lesson',
+      language,
+      activity: current,
+      wasCorrect: false,
+      userAnswer,
+      lessonId: lesson.id,
+      lessonType: lesson.type,
+      isLastActivity: index >= activities.length - 1,
+      mistakeCount: nextMistakes.length
+    });
 
-    if (
-      index <
-      activities.length - 1
-    ) {
-      animateToNext(
-        () =>
-          setIndex(
-            (i) => i + 1
-          )
-      );
-    } else {
-      navigation.replace(
-        'MistakeReview',
-        {
-          language,
-          lessonId,
-          lessonTitle:
-            `${lesson.unitTitle} — ${lesson.lessonTitle}`,
-          mistakes: [
-            ...mistakes,
-            nextMistake
-          ],
-          lessonXp
-        }
-      );
-    }
+    setMistakes(nextMistakes);
+
+    await applyOutcome(outcome, {
+      nextMistakes,
+      nextXp: lessonXp + outcome.xpDelta
+    });
   }
 
   async function finishLesson(

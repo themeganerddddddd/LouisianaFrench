@@ -1,9 +1,8 @@
 /**
- * Compact Lesson Activity-outcome fixtures for characterization (#195) and
- * later recordActivityOutcome module tests (#196).
+ * Compact Lesson Activity-outcome fixtures for recordActivityOutcome tests.
  *
- * expected mirrors today's LessonRunner policy: Card quality, XP delta, score
- * counting, Word update, pending Mistake source, and next step.
+ * expected names Card quality, XP delta, score counting, Word update,
+ * pending Mistake source, and next step.
  */
 const frozen = (record) => Object.freeze(record);
 

@@ -35,6 +35,14 @@ _Avoid_: Daily lesson
 The follow-up learner session for Activities missed during a Lesson.
 _Avoid_: Remediation
 
+**Lesson session**:
+The in-progress Lesson: Activity queue, score, XP, mistakes, and next step.
+_Avoid_: runner, game loop
+
+**Activity outcome**:
+The Learner Progress result of settling one Activity (Card review, Word mastery, pending Mistake, XP).
+_Avoid_: settle; avoid grade when Activity rendering decided correctness
+
 **Activity**:
 One learner interaction in a Lesson or review session, such as an introduction, choice, listening, typing, sentence-building, or matching task.
 _Avoid_: Question when the interaction is not a question
