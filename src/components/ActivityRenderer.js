@@ -30,15 +30,25 @@ function shuffle(arr, randomFn = Math.random) {
 function makeMatchColumns(pairs = []) {
   const safePairs = Array.isArray(pairs) ? pairs : [];
 
-  const leftItems = shuffle(safePairs.map((p) => p.left));
-  let rightItems = shuffle(safePairs.map((p) => p.right));
+  const leftItems = shuffle(
+    safePairs.map((pair, pairIndex) => ({
+      id: `left:${pairIndex}`,
+      value: pair.left,
+      pairIndex
+    }))
+  );
+  let rightItems = shuffle(
+    safePairs.map((pair, pairIndex) => ({
+      id: `right:${pairIndex}`,
+      value: pair.right,
+      pairIndex
+    }))
+  );
 
   function hasDirectMatch(leftList, rightList) {
-    return rightList.some((rightValue, index) => {
-      const leftValue = leftList[index];
-      const matchingPair = safePairs.find((p) => p.left === leftValue);
-      return matchingPair?.right === rightValue;
-    });
+    return rightList.some(
+      (rightItem, index) => leftList[index]?.pairIndex === rightItem.pairIndex
+    );
   }
 
   if (safePairs.length > 1) {
@@ -1871,7 +1881,7 @@ function MatchPairs({
 }) {
   const { left, right } = useMemo(
     () => makeMatchColumns(activity.pairs || []),
-    [activity]
+    [activity.pairs]
   );
 
   const [selectedLeft, setSelectedLeft] = useState(null);
@@ -1890,41 +1900,44 @@ function MatchPairs({
 
   function isMatchedLeft(item) {
     return matches.some(
-      (m) => m.left === item
+      (m) => m.leftId === item.id
     );
   }
 
   function isMatchedRight(item) {
     return matches.some(
-      (m) => m.right === item
+      (m) => m.rightId === item.id
     );
+  }
+
+  function valueForId(items, id) {
+    return items.find((item) => item.id === id)?.value;
   }
 
   function rightAudioKey(item) {
-    return activity.pairs
-      ?.find(
-        (p) => p.right === item
-      )
-      ?.audioKey;
+    return activity.pairs?.[item.pairIndex]?.audioKey;
   }
 
-  function evaluatePair(leftValue, rightValue) {
-    if (!leftValue || !rightValue || state !== 'idle') {
+  // Rows with the same text look identical, so a pairing is graded by
+  // text: it is correct while that text pair still has unmatched copies.
+  // Same-text rows share partners, so the Activity can always be finished.
+  function evaluatePair(leftId, rightId) {
+    if (!leftId || !rightId || state !== 'idle') {
       return;
     }
 
-    const pair = activity.pairs?.find(
-      (p) => p.left === leftValue
-    );
+    const leftValue = valueForId(left, leftId);
+    const rightValue = valueForId(right, rightId);
+    const isSamePair = (l, r) => l === leftValue && r === rightValue;
+    const pairCount = (activity.pairs || []).filter(
+      (p) => isSamePair(p.left, p.right)
+    ).length;
+    const matchedCount = matches.filter((m) =>
+      isSamePair(valueForId(left, m.leftId), valueForId(right, m.rightId))
+    ).length;
 
-    if (pair?.right === rightValue) {
-      const nextMatches = [
-        ...matches,
-        {
-          left: leftValue,
-          right: rightValue
-        }
-      ];
+    if (matchedCount < pairCount) {
+      const nextMatches = [...matches, { leftId, rightId }];
 
       setMatches(nextMatches);
       setSelectedLeft(null);
@@ -1944,17 +1957,17 @@ function MatchPairs({
   function selectLeft(item) {
     if (isMatchedLeft(item) || isLocked(state)) return;
 
-    setSelectedLeft(item);
+    setSelectedLeft(item.id);
 
     if (selectedRight) {
-      evaluatePair(item, selectedRight);
+      evaluatePair(item.id, selectedRight);
     }
   }
 
   function selectRight(item) {
     if (isMatchedRight(item) || isLocked(state)) return;
 
-    setSelectedRight(item);
+    setSelectedRight(item.id);
 
     const key = rightAudioKey(item);
     if (key) {
@@ -1962,7 +1975,7 @@ function MatchPairs({
     }
 
     if (selectedLeft) {
-      evaluatePair(selectedLeft, item);
+      evaluatePair(selectedLeft, item.id);
     }
   }
 
@@ -2008,15 +2021,15 @@ function MatchPairs({
             isMatchedRight(rightItem);
 
           const leftActive =
-            selectedLeft === leftItem;
+            selectedLeft === leftItem.id;
 
           const rightActive =
-            selectedRight === rightItem;
+            selectedRight === rightItem.id;
 
           return (
             <View
               style={styles.matchRow}
-              key={`${leftItem}-${rightItem}-${rowIndex}`}
+              key={`${leftItem.id}-${rightItem.id}`}
             >
               <TouchableOpacity
                 disabled={
@@ -2037,10 +2050,11 @@ function MatchPairs({
                 ]}
                 onPress={() => selectLeft(leftItem)}
                 accessibilityRole="button"
-                accessibilityLabel={leftItem}
+                accessibilityLabel={leftItem.value}
+                accessibilityState={{ selected: leftActive }}
               >
                 <Text style={styles.matchText}>
-                  {leftItem}
+                  {leftItem.value}
                 </Text>
               </TouchableOpacity>
 
@@ -2063,10 +2077,11 @@ function MatchPairs({
                 ]}
                 onPress={() => selectRight(rightItem)}
                 accessibilityRole="button"
-                accessibilityLabel={rightItem}
+                accessibilityLabel={rightItem.value}
+                accessibilityState={{ selected: rightActive }}
               >
                 <Text style={styles.matchText}>
-                  {rightItem}
+                  {rightItem.value}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -2098,7 +2113,7 @@ function MatchPairs({
           onWrong(
             state === 'skipped'
               ? '__skipped__'
-              : `${selectedLeft || ''} ↔ ${selectedRight || ''}`
+              : `${valueForId(left, selectedLeft) || ''} ↔ ${valueForId(right, selectedRight) || ''}`
           )
         }
         altContent={
