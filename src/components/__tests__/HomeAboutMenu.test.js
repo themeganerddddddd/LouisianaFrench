@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { render, screen, userEvent, within } from '@testing-library/react-native';
 import { useState } from 'react';
 import { Pressable, Text } from 'react-native';
 
@@ -33,6 +33,7 @@ function AboutMenuHarness() {
       <HomeAboutMenu
         {...aboutMenuFixture}
         visible={visible}
+        onAccount={jest.fn()}
         onToggle={jest.fn()}
         onSelect={jest.fn()}
         onDismiss={() => setVisible(false)}
@@ -46,6 +47,7 @@ describe('HomeAboutMenu', () => {
     render(
       <HomeAboutMenu
         {...aboutMenuFixture}
+        onAccount={jest.fn()}
         onToggle={jest.fn()}
         onSelect={jest.fn()}
         onDismiss={jest.fn()}
@@ -61,6 +63,40 @@ describe('HomeAboutMenu', () => {
     });
     expect(screen.getByText('About Us')).toHaveStyle({ color: '#102A43' });
     expect(screen.getByTestId('about-menu-disclosure').props.color).toBe('#2771CB');
+  });
+
+  it('starts with Account above About Us', () => {
+    render(
+      <HomeAboutMenu
+        {...aboutMenuFixture}
+        onAccount={jest.fn()}
+        onToggle={jest.fn()}
+        onSelect={jest.fn()}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    const labels = within(screen.getByTestId('home-about-menu'))
+      .getAllByRole('button')
+      .map((node) => node.props.accessibilityLabel);
+    expect(labels.indexOf('Account')).toBeGreaterThanOrEqual(0);
+    expect(labels.indexOf('Account')).toBeLessThan(labels.indexOf('About Us'));
+  });
+
+  it('shows the display name with Account when signed in', () => {
+    render(
+      <HomeAboutMenu
+        {...aboutMenuFixture}
+        accountDetail="Ada"
+        onAccount={jest.fn()}
+        onToggle={jest.fn()}
+        onSelect={jest.fn()}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
+    expect(screen.getByText('Ada')).toBeOnTheScreen();
   });
 
   it('keeps the menu open after the control that opened it is pressed', async () => {
