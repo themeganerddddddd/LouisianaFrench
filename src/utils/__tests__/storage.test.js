@@ -304,14 +304,31 @@ describe('Daily Review log', () => {
     );
   });
 
-  it('defers legacy migration until a default Language exists', async () => {
+  it('finishes at the first read without a saved default Language, using Louisiana French', async () => {
     await seedAsyncStorage({ dailyReviewLog: dailyReviewLogs.legacy });
 
-    expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.fresh);
-    expect(await AsyncStorage.getItem('lf_daily_review_migrated')).toBeNull();
-
-    await setDefaultLanguage('cajun');
+    expect(await getLanguageDailyReviewLog('kreole')).toEqual(dailyReviewLogs.fresh);
+    expect(await AsyncStorage.getItem('lf_daily_review_migrated')).toBe('true');
     expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.legacy);
+
+    await setDefaultLanguage('kreole');
+    await markLanguageDailyReviewDone('cajun', '2026-01-16');
+
+    expect(await getLanguageDailyReviewLog('kreole')).toEqual(dailyReviewLogs.fresh);
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual({
+      ...dailyReviewLogs.legacy,
+      '2026-01-16': true
+    });
+  });
+
+  it('does not copy a French review into Kouri-Vini when the default Language is saved later', async () => {
+    await markLanguageDailyReviewDone('cajun', '2026-01-15');
+
+    await setDefaultLanguage('kreole');
+
+    expect(await getLanguageDailyReviewLog('kreole')).toEqual(dailyReviewLogs.fresh);
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual(dailyReviewLogs.completed);
+    expect(await AsyncStorage.getItem('lf_daily_review_log_v2_kreole')).toBeNull();
   });
 
   it('does not change the legacy record while migrating it', async () => {

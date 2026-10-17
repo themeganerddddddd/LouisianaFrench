@@ -262,11 +262,9 @@ export async function getLanguageDailyReviewLog(language) {
     return current;
   }
 
-  const defaultLanguage = await getDefaultLanguage();
-
-  if (!defaultLanguage) {
-    return current;
-  }
+  // Never left pending, so a default Language saved later cannot receive another Language's data.
+  // Without a saved default Language, Home opens Louisiana French.
+  const defaultLanguage = (await getDefaultLanguage()) || 'cajun';
 
   const legacy = await getDailyReviewLog();
 
