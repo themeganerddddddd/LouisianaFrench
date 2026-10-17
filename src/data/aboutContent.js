@@ -119,7 +119,7 @@ export const ABOUT_TEXT = {
       {
         heading: 'Something not working?',
         paragraphs: [
-          'Use Report a bug on the screen where it happened. Support in this menu is just a note. It does not send email.'
+          'Open Support in this menu, or Report a bug on the screen where it happened. Both open the same report form.'
         ]
       },
       {
@@ -128,14 +128,6 @@ export const ABOUT_TEXT = {
           'A small team and some generous voices. Their names are under Acknowledgements, right here in this menu.'
         ]
       }
-    ]
-  },
-  support: {
-    title: 'Support',
-    paragraphs: [
-      'This placeholder support note is here to help learners find their way around the application.',
-      'If something is unclear, please make a note of the screen and the steps that led there.',
-      'A dedicated support contact and final guidance will be added in a later content update.'
     ]
   }
 };
