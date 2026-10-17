@@ -6,7 +6,7 @@ Home signs a learner in through one connector. Later features use that same conn
 
 ## The learner, today
 
-A learner can study as a Guest. Home reads the Catalog and Learner Progress. Learner Progress is lesson history, Word mastery, Card review, XP, and streaks. It stays on the device. Home also has an identity row. It reads Sign in until the learner creates an identity, signs in with email, or continues with Google or Facebook.
+A learner can study as a Guest. Home reads the Catalog and Learner Progress. Learner Progress is lesson history, Word mastery, Card review, XP, and streaks. It stays on the device. The square icon on Home opens a menu. Account is the first option, above About Us. Choosing Account opens sign-in. A guest sees Account. A signed-in learner sees Account with the Display name. The learner-facing word there is Account. The domain term remains Identity. Email, Google, and Facebook all return that same Identity.
 
 ```mermaid
 flowchart LR

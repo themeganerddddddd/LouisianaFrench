@@ -14,6 +14,8 @@ export default function HomeAboutMenu({
   anchorLeft,
   accentColor,
   expanded,
+  accountDetail,
+  onAccount,
   onToggle,
   onSelect,
   onDismiss
@@ -42,12 +44,29 @@ export default function HomeAboutMenu({
           ]}
         >
           <Pressable
+            testID="about-menu-account"
+            accessibilityRole="button"
+            accessibilityLabel={accountDetail ? `Account, ${accountDetail}` : 'Account'}
+            onPress={onAccount}
+            style={styles.sectionButton}
+          >
+            <View style={styles.accountCopy}>
+              <Text style={styles.sectionLabel}>Account</Text>
+              {accountDetail ? (
+                <Text style={styles.accountDetail} numberOfLines={1}>
+                  {accountDetail}
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
+
+          <Pressable
             testID="about-menu-section"
             accessibilityRole="button"
             accessibilityLabel="About Us"
             accessibilityState={{ expanded }}
             onPress={onToggle}
-            style={styles.sectionButton}
+            style={[styles.sectionButton, styles.aboutSection]}
           >
             <Text style={styles.sectionLabel}>About Us</Text>
             <Feather
@@ -104,6 +123,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF'
+  },
+  aboutSection: {
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0'
+  },
+  accountCopy: {
+    flex: 1,
+    minWidth: 0
+  },
+  accountDetail: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700'
   },
   sectionLabel: {
     color: '#102A43',
