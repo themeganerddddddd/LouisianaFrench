@@ -1026,7 +1026,7 @@ const styles = StyleSheet.create({
 
   planStepper: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 6
   },
 
@@ -1067,20 +1067,23 @@ const styles = StyleSheet.create({
   planStepLabelActive: {
     color: '#FFFFFF',
     fontSize: 11.5,
-    fontWeight: '800'
+    fontWeight: '800',
+    textAlign: 'center'
   },
 
   planStepLabelPending: {
     color: 'rgba(255,255,255,0.7)',
     fontSize: 11.5,
-    fontWeight: '700'
+    fontWeight: '700',
+    textAlign: 'center'
   },
 
+  // Pin connector to the circle midline: (circle 30 − bar 3) / 2.
   planConnector: {
     flex: 1,
     height: 3,
     borderRadius: 2,
-    marginBottom: 20
+    marginTop: 13.5
   },
 
   planHelper: {
