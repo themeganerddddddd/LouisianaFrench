@@ -54,10 +54,10 @@ describe('Supabase identity connector', () => {
   });
 
   it('reads the public URL and publishable key directly when no env object is passed', () => {
-    const code = connectorSource.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-    expect(code).toContain('process.env.EXPO_PUBLIC_SUPABASE_URL');
-    expect(code).toContain('process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY');
-    expect(code).not.toMatch(/service_role|SUPABASE_SERVICE/i);
+    const source = connectorSource.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    expect(source).toContain('process.env.EXPO_PUBLIC_SUPABASE_URL');
+    expect(source).toContain('process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY');
+    expect(source).not.toMatch(/service_role|SUPABASE_SERVICE/i);
 
     const previousUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
     const previousKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
