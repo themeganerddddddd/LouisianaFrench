@@ -58,6 +58,8 @@ The password is sent once and hashed by Supabase. The app does not store it. On 
 
 A later feature never reads these stores. It asks the connector for a token.
 
+A release build carries the public project URL and publishable key for its EAS profile. The connector reads `process.env.EXPO_PUBLIC_SUPABASE_URL` and `process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY` directly, so that build can contain them. A caller that passes its own values uses those instead. The secret key is not part of the build.
+
 ## Later callers
 
 These are known and not built. None of them is specified beyond the connector calls below.
