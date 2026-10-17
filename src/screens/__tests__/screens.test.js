@@ -2531,6 +2531,29 @@ describe('DailyReviewScreen', () => {
     }
   });
 
+  it('describes due Cards in the subtitle, not weak words', async () => {
+    jest.setSystemTime(clock.pastDue());
+
+    await seedAsyncStorage({
+      reviewState: {
+        'fixture:cajun:greeting:choice': buildCardReviewState({
+          nextReviewAt: clock.reviewStart().toISOString()
+        })
+      }
+    });
+
+    renderApp({
+      initialRouteName: 'DailyReview',
+      initialParams: { language: 'cajun' }
+    });
+
+    expect(await screen.findByText('1 / 1')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Cards due now, with missed Cards first.')
+    ).toBeOnTheScreen();
+    expect(screen.queryByText(/weak words/i)).toBeNull();
+  });
+
   it('completes when the sole due Card is answered correctly', async () => {
     jest.setSystemTime(clock.pastDue());
 
