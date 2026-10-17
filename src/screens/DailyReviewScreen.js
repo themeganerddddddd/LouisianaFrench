@@ -302,7 +302,7 @@ export default function DailyReviewScreen({
             styles.sub
           }
         >
-          Due cards, weak words, and review practice.
+          Cards due now, with missed Cards first.
         </Text>
 
         <ActivityRenderer
