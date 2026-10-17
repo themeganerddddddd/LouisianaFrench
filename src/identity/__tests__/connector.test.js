@@ -72,9 +72,21 @@ function createFakeClient(storage) {
         );
         return { data: { session, user: session.user }, error: null };
       },
-      async resetPasswordForEmail(email) {
-        calls.push({ method: 'reset', email });
+      async resetPasswordForEmail(email, options) {
+        calls.push({ method: 'reset', email, options });
         return { error: null };
+      },
+      async exchangeCodeForSession(code) {
+        calls.push({ method: 'exchange', code });
+        await persist(sessionFor());
+        return { data: { session }, error: null };
+      },
+      async updateUser({ password }) {
+        calls.push({ method: 'updatePassword', password });
+        if (password === 'bad') {
+          return { data: { user: null }, error: { message: 'Password is too weak' } };
+        }
+        return { data: { user: USER }, error: null };
       },
       async signOut(options) {
         calls.push({ method: 'signOut', options });
@@ -169,11 +181,40 @@ describe('identity connector', () => {
   });
 
   it('sends a password reset without creating an identity', async () => {
-    const { connector } = await harness();
+    const { connector, client } = await harness();
     const result = await connector.sendPasswordReset('ada@example.com');
     expect(result).toEqual({ identity: null, message: null });
     expect(await connector.getIdentity()).toBeNull();
     expect(await connector.getAccessToken()).toBeNull();
+    expect(client.calls[0].options.redirectTo).toBe(
+      'com.westleysturhan.louisianafrench://auth/callback'
+    );
+  });
+
+  it('opens a recovery return for a new password and ignores a provider-style return', async () => {
+    const { connector, client } = await harness();
+    const recovery = await connector.handleAuthUrl(
+      'com.westleysturhan.louisianafrench://auth/callback?code=recover-code&type=recovery'
+    );
+    expect(recovery).toEqual({ kind: 'recovery' });
+    expect(await connector.getIdentity()).toEqual({
+      id: 'learner-1',
+      email: 'ada@example.com',
+      displayName: 'Ada'
+    });
+    expect(client.calls[0]).toEqual({ method: 'exchange', code: 'recover-code' });
+
+    const providerStyle = await connector.handleAuthUrl(
+      'com.westleysturhan.louisianafrench://auth/callback?code=oauth-code'
+    );
+    expect(providerStyle).toEqual({ kind: null });
+
+    const saved = await connector.updatePassword('new-secret');
+    expect(saved.identity.displayName).toBe('Ada');
+    expect(client.calls.some((call) => call.method === 'updatePassword')).toBe(true);
+    expect(JSON.stringify(await AsyncStorage.getItem('sb-auth-token'))).not.toContain(
+      'recover-code'
+    );
   });
 
   it('signs out on this device only', async () => {

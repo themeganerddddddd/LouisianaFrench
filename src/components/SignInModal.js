@@ -13,18 +13,30 @@ import {
 import TBoySpeechBubble from './TBoySpeechBubble';
 
 const EMPTY = { email: '', password: '', displayName: '' };
-const CHECK_EMAIL = 'Check your email.';
 const TBOY_LINES = {
   signIn:
     "Sign in with an email, Google, or Facebook. I don't store any of your personal information that I don't need to make the app work!",
-  create: "A name, an email, and a password. That’s the account."
+  create: "A name, an email, and a password. That’s the account.",
+  forgot:
+    'I can email a one-time link. It opens this app so you can choose a new password.',
+  inbox: 'Check that inbox. I give the same reply for every address.',
+  replace: 'Choose a new password. Home stays closed until it is saved.',
+  done: 'You’re in. That link is finished.'
 };
 const tBoyImage = require('../../assets/images/mainscreen.png');
 
-export default function SignInModal({ visible, identity, connector, onClose }) {
+export default function SignInModal({
+  visible,
+  identity,
+  connector,
+  recoveryActive,
+  onRecoveryFinished,
+  onClose
+}) {
   const [mode, setMode] = useState('signIn');
   const [fields, setFields] = useState(EMPTY);
   const [message, setMessage] = useState('');
+  const locked = mode === 'replace';
 
   useEffect(() => {
     if (!visible) {
@@ -34,7 +46,16 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (recoveryActive) {
+      setMode('replace');
+      setMessage('');
+      setFields(EMPTY);
+    }
+  }, [recoveryActive]);
+
   function close() {
+    if (locked) return;
     setFields(EMPTY);
     setMessage('');
     onClose();
@@ -52,7 +73,24 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
       });
     } else if (mode === 'forgot') {
       result = await connector.sendPasswordReset(email);
-      setMessage(result.message || CHECK_EMAIL);
+      if (result.message) {
+        setMessage(result.message);
+        return;
+      }
+      setMode('inbox');
+      setMessage('');
+      setFields((current) => ({ ...current, password: '' }));
+      return;
+    } else if (mode === 'replace') {
+      result = await connector.updatePassword(password);
+      if (result.identity) {
+        setMode('done');
+        setFields(EMPTY);
+        setMessage('');
+        onRecoveryFinished?.();
+        return;
+      }
+      setMessage(result.message || 'Sign-in failed.');
       setFields((current) => ({ ...current, password: '' }));
       return;
     } else {
@@ -81,22 +119,33 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
     close();
   }
 
-  const note = mode === 'create' ? TBOY_LINES.create : TBOY_LINES.signIn;
+  const note = TBOY_LINES[mode] || TBOY_LINES.signIn;
+  const showSignedIn = identity && mode !== 'replace' && mode !== 'done';
+  const showLogos = mode === 'signIn' || mode === 'create';
+  const showEmail = showLogos || mode === 'forgot';
+  const showPassword = showLogos || mode === 'replace';
+  const showSubmit = mode !== 'inbox' && mode !== 'done';
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
-      <Pressable style={styles.backdrop} onPress={close} testID="sign-in-backdrop">
+      <Pressable
+        style={styles.backdrop}
+        onPress={locked ? undefined : close}
+        testID="sign-in-backdrop"
+      >
         <Pressable onPress={() => {}} testID="sign-in-modal">
           <View style={styles.card}>
-            <Pressable
-              onPress={close}
-              accessibilityRole="button"
-              accessibilityLabel="Close sign in"
-            >
-              <Text style={styles.close}>Close</Text>
-            </Pressable>
+            {locked ? null : (
+              <Pressable
+                onPress={close}
+                accessibilityRole="button"
+                accessibilityLabel="Close sign in"
+              >
+                <Text style={styles.close}>Close</Text>
+              </Pressable>
+            )}
 
-            {identity ? (
+            {showSignedIn ? (
               <View>
                 <Text style={styles.title}>{identity.displayName}</Text>
                 <Pressable onPress={signOut} testID="sign-out" accessibilityRole="button">
@@ -123,7 +172,7 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
                   />
                 </View>
 
-                {mode === 'forgot' ? null : (
+                {showLogos ? (
                   <View style={styles.logoRow}>
                     <Pressable
                       onPress={() => continueWith('google')}
@@ -144,7 +193,7 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
                       <FontAwesome5 name="facebook-f" size={22} color="#1877F2" />
                     </Pressable>
                   </View>
-                )}
+                ) : null}
 
                 {mode === 'create' ? (
                   <TextInput
@@ -159,45 +208,51 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
                   />
                 ) : null}
 
-                <TextInput
-                  testID="sign-in-email"
-                  value={fields.email}
-                  onChangeText={(email) => setFields((current) => ({ ...current, email }))}
-                  placeholder="Email"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  style={styles.input}
-                />
+                {showEmail ? (
+                  <TextInput
+                    testID="sign-in-email"
+                    value={fields.email}
+                    onChangeText={(email) => setFields((current) => ({ ...current, email }))}
+                    placeholder="Email"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    style={styles.input}
+                  />
+                ) : null}
 
-                {mode === 'forgot' ? null : (
+                {showPassword ? (
                   <TextInput
                     testID="sign-in-password"
                     value={fields.password}
                     onChangeText={(password) =>
                       setFields((current) => ({ ...current, password }))
                     }
-                    placeholder="Password"
+                    placeholder={mode === 'replace' ? 'New password' : 'Password'}
                     secureTextEntry
                     style={styles.input}
                   />
-                )}
+                ) : null}
 
                 {message ? <Text testID="sign-in-message">{message}</Text> : null}
 
-                <Pressable
-                  onPress={submit}
-                  testID="sign-in-submit"
-                  accessibilityRole="button"
-                  style={styles.primaryFilled}
-                >
-                  <Text style={styles.primaryFilledText}>
-                    {mode === 'create'
-                      ? 'Create an account'
-                      : mode === 'forgot'
-                        ? 'Email me a link'
-                        : 'Sign in'}
-                  </Text>
-                </Pressable>
+                {showSubmit ? (
+                  <Pressable
+                    onPress={submit}
+                    testID="sign-in-submit"
+                    accessibilityRole="button"
+                    style={styles.primaryFilled}
+                  >
+                    <Text style={styles.primaryFilledText}>
+                      {mode === 'create'
+                        ? 'Create an account'
+                        : mode === 'forgot'
+                          ? 'Email me a link'
+                          : mode === 'replace'
+                            ? 'Save password'
+                            : 'Sign in'}
+                    </Text>
+                  </Pressable>
+                ) : null}
 
                 {mode === 'signIn' ? (
                   <View style={styles.textActions}>
@@ -223,7 +278,9 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
                       <Text style={styles.textAction}>Forgot password?</Text>
                     </Pressable>
                   </View>
-                ) : (
+                ) : null}
+
+                {mode === 'create' || mode === 'forgot' || mode === 'inbox' ? (
                   <Pressable
                     onPress={() => {
                       setMode('signIn');
@@ -234,7 +291,18 @@ export default function SignInModal({ visible, identity, connector, onClose }) {
                   >
                     <Text style={styles.textAction}>Sign in</Text>
                   </Pressable>
-                )}
+                ) : null}
+
+                {mode === 'done' ? (
+                  <Pressable
+                    onPress={close}
+                    testID="sign-in-done"
+                    accessibilityRole="button"
+                    style={styles.primaryFilled}
+                  >
+                    <Text style={styles.primaryFilledText}>Continue</Text>
+                  </Pressable>
+                ) : null}
               </View>
             )}
           </View>

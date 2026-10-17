@@ -64,6 +64,12 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       async sendPasswordReset() {
         return { identity: null, message: UNAVAILABLE };
       },
+      async handleAuthUrl() {
+        return { kind: null };
+      },
+      async updatePassword() {
+        return { identity: null, message: UNAVAILABLE };
+      },
       async signInWithProvider() {
         return { identity: null, message: UNAVAILABLE };
       },
@@ -137,11 +143,50 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       return apply(data.session, email);
     },
     async sendPasswordReset(email) {
-      const { error } = await client.auth.resetPasswordForEmail(email);
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: AUTH_REDIRECT
+      });
       if (error) {
         return { identity: null, message: learnerMessage(error) };
       }
       return { identity: null, message: null };
+    },
+    async handleAuthUrl(url) {
+      let code = null;
+      let type = null;
+      try {
+        if (!url || !String(url).startsWith(AUTH_REDIRECT)) return { kind: null };
+        const parsed = new URL(url);
+        if (parsed.searchParams.get('error')) {
+          return { kind: null, message: FAILED };
+        }
+        code = parsed.searchParams.get('code');
+        type = parsed.searchParams.get('type');
+      } catch {
+        return { kind: null, message: FAILED };
+      }
+      if (!code || type !== 'recovery') return { kind: null };
+
+      const exchanged = await client.auth.exchangeCodeForSession(code);
+      if (exchanged.error || !exchanged.data?.session) {
+        return {
+          kind: null,
+          message: exchanged.error ? learnerMessage(exchanged.error) : FAILED
+        };
+      }
+      await apply(exchanged.data.session);
+      return { kind: 'recovery' };
+    },
+    async updatePassword(password) {
+      const { data, error } = await client.auth.updateUser({ password });
+      if (error || !data?.user) {
+        return { identity: null, message: error ? learnerMessage(error) : FAILED };
+      }
+      const { data: sessionData } = await client.auth.getSession();
+      if (!sessionData?.session) {
+        return { identity: null, message: FAILED };
+      }
+      return apply(sessionData.session);
     },
     async signInWithProvider(provider) {
       const attempt = ++providerAttempt;

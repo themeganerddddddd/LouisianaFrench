@@ -8,6 +8,7 @@ import {
   BackHandler,
   Image,
   LayoutAnimation,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -300,6 +301,7 @@ export default function HomeScreen() {
   const [aboutModal, setAboutModal] = useState(null);
   const [identity, setIdentity] = useState(null);
   const [signInVisible, setSignInVisible] = useState(false);
+  const [recoveryActive, setRecoveryActive] = useState(false);
   const connectorRef = useRef(null);
   if (!connectorRef.current) {
     connectorRef.current = createSupabaseIdentityConnector();
@@ -316,9 +318,25 @@ export default function HomeScreen() {
     const unsubscribe = connector.subscribe((next) => {
       if (live) setIdentity(next);
     });
+
+    async function openRecovery(url) {
+      const result = await connector.handleAuthUrl(url);
+      if (!live || result.kind !== 'recovery') return;
+      setRecoveryActive(true);
+      setSignInVisible(true);
+    }
+
+    Linking.getInitialURL().then((url) => {
+      if (url) openRecovery(url);
+    });
+    const linking = Linking.addEventListener('url', ({ url }) => {
+      openRecovery(url);
+    });
+
     return () => {
       live = false;
       unsubscribe();
+      linking.remove();
     };
   }, []);
 
@@ -808,7 +826,12 @@ export default function HomeScreen() {
         visible={signInVisible}
         identity={identity}
         connector={connectorRef.current}
-        onClose={() => setSignInVisible(false)}
+        recoveryActive={recoveryActive}
+        onRecoveryFinished={() => setRecoveryActive(false)}
+        onClose={() => {
+          setSignInVisible(false);
+          setRecoveryActive(false);
+        }}
       />
 
       <DebugCatalogModal
