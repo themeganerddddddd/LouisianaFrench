@@ -118,8 +118,11 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
         password,
         options: { data: { display_name: displayName } }
       });
-      if (error || !data?.session) {
-        return { identity: null, message: error ? learnerMessage(error) : FAILED };
+      if (error) {
+        return { identity: null, message: learnerMessage(error) };
+      }
+      if (!data?.session) {
+        return { identity: null, message: 'Check your email.' };
       }
       return apply(data.session, email);
     },
