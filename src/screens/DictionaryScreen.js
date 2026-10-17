@@ -198,6 +198,15 @@ export default function DictionaryScreen({ route, navigation }) {
                     <Ionicons name="play" size={16} color="#fff" />
                     <Text style={styles.audioBtnText}>Play audio</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="Practice"
+                    style={styles.practiceBtn}
+                    onPress={() => navigation.navigate('Advanced', { language, word })}
+                  >
+                    <Ionicons name="mic" size={15} color="#2771CB" />
+                    <Text style={styles.practiceBtnText}>Practice</Text>
+                  </TouchableOpacity>
                 </View>
               ) : null}
             </View>
@@ -317,6 +326,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginLeft: 6
   },
+  practiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: '#2771CB',
+    backgroundColor: '#fff'
+  },
+  practiceBtnText: { color: '#2771CB', fontWeight: '800' },
   empty: {
     paddingVertical: 40,
     alignItems: 'center'
