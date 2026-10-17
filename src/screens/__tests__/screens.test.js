@@ -1098,13 +1098,14 @@ describe('HomeScreen', () => {
       });
 
     try {
+      // Returning-day Louisiana French at "2 of 3 done"; Kouri-Vini stays "0 of 2 done".
       await seedAsyncStorage({
-        lessonProgress: homeProjectionProgress.twoLessonsToday,
-        reviewState: {
-          'fixture:cajun:greeting:choice': buildCardReviewState({
-            nextReviewAt: clock.pastDue().toISOString()
-          })
-        }
+        lessonProgress: {
+          ...homeProjectionProgress.priorLessonsByLanguage,
+          ...homeProjectionProgress.establishedLessonToday
+        },
+        dailyReviewLogV2Cajun: dailyReviewLogs.today,
+        reviewState: reviewStates.allFuture
       });
 
       renderApp({
