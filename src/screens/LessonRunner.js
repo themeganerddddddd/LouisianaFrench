@@ -518,6 +518,7 @@ export default function LessonRunner({
   ) {
     const profile =
       await recordStudyAndXp(
+        language,
         totalLessonXp
       );
 

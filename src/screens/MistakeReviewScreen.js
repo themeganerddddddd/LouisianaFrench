@@ -273,6 +273,7 @@ export default function MistakeReviewScreen({
 
     const updatedProfile =
       await recordStudyAndXp(
+        language,
         10
       );
 
