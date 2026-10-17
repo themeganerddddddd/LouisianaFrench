@@ -2065,7 +2065,7 @@ describe('MistakeReviewScreen', () => {
 
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
     expect(screen.getByText('Greetings & Check-ins — First greetings')).toBeOnTheScreen();
-    expect((await getProfile()).xp).toBe(30);
+    expect((await getProfile('cajun')).xp).toBe(30);
     expect((await getLessonProgress())['cajun:fixture_cajun_u01_l01'].completed).toBe(true);
   });
 
