@@ -13,3 +13,12 @@ What are you changing, and why are these changes needed?
 What did you test? Explain what each test is meant to check and why those tests give us confidence that the change works.
 
 -
+
+## Risk
+
+Is this an ordinary change, or does it touch Identity, session storage, auth, CI workflows, or release config? Say which, and who read the latest commit.
+
+## How to revert
+
+How do we undo this if it breaks something for learners?
+
