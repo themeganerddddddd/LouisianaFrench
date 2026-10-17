@@ -1081,6 +1081,57 @@ describe('HomeScreen', () => {
     expect(await getDefaultLanguage()).toBe('kreole');
   });
 
+  it('does not show the previous Language Home status after tapping the flag', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    const realGetHomeProjection = homeProjection.getHomeProjection;
+    let releaseKreoleLoad;
+    const kreoleLoad = new Promise((resolve) => {
+      releaseKreoleLoad = resolve;
+    });
+    const getProjection = jest
+      .spyOn(homeProjection, 'getHomeProjection')
+      .mockImplementation(async (nextLanguage) => {
+        if (nextLanguage === 'kreole') {
+          await kreoleLoad;
+        }
+        return realGetHomeProjection(nextLanguage);
+      });
+
+    try {
+      await seedAsyncStorage({
+        lessonProgress: homeProjectionProgress.twoLessonsToday,
+        reviewState: {
+          'fixture:cajun:greeting:choice': buildCardReviewState({
+            nextReviewAt: clock.pastDue().toISOString()
+          })
+        }
+      });
+
+      renderApp({
+        initialRouteName: 'Home',
+        initialParams: { language: 'cajun' }
+      });
+
+      expect(await screen.findByLabelText('2 of 3 done')).toBeOnTheScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText('Louisiana French flag'));
+      });
+
+      expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
+      expect(screen.queryByLabelText('2 of 3 done')).toBeNull();
+      expect(screen.queryByTestId('home-plan')).toBeNull();
+
+      await act(async () => {
+        releaseKreoleLoad();
+      });
+
+      expect(await screen.findByLabelText('0 of 2 done')).toBeOnTheScreen();
+    } finally {
+      getProjection.mockRestore();
+    }
+  });
+
   it('moves shared XP and streak into the saved default Language only', async () => {
     const user = setupUser();
     await seedAsyncStorage({

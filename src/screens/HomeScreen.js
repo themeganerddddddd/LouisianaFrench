@@ -490,13 +490,14 @@ export default function HomeScreen() {
           planSoft: '#6EE7B7'
         };
 
-  const units = projection?.units || [];
-  const reviewQueueCount = projection?.dashboard.reviewCount || 0;
-  const pendingMistakesCount = projection?.dashboard.pendingMistakeCount || 0;
-  const reviewEnabled = projection?.dashboard.reviewEnabled ?? true;
-  const plan = projection?.plan;
+  const loadedProjection = projection?.language === language ? projection : null;
+  const units = loadedProjection?.units || [];
+  const reviewQueueCount = loadedProjection?.dashboard.reviewCount || 0;
+  const pendingMistakesCount = loadedProjection?.dashboard.pendingMistakeCount || 0;
+  const reviewEnabled = loadedProjection?.dashboard.reviewEnabled ?? true;
+  const plan = loadedProjection?.plan;
   const firstLesson = Boolean(
-    projection?.firstDay && !plan?.steps.find((step) => step.id === 'lesson-1')?.complete
+    loadedProjection?.firstDay && !plan?.steps.find((step) => step.id === 'lesson-1')?.complete
   );
 
   return (
@@ -538,10 +539,10 @@ export default function HomeScreen() {
                 numberOfLines={1}
                 style={[styles.topSubtitle, { color: theme.subtitle }]}
               >
-                {projection
-                  ? projection.firstDay
+                {loadedProjection
+                  ? loadedProjection.firstDay
                     ? "Welcome! Let's learn new words."
-                    : `⚡ ${projection.dashboard.xp} · 🔥 ${projection.dashboard.streak} · ${projection.dashboard.masteryPercent}% mastered`
+                    : `⚡ ${loadedProjection.dashboard.xp} · 🔥 ${loadedProjection.dashboard.streak} · ${loadedProjection.dashboard.masteryPercent}% mastered`
                   : null}
               </Text>
             </View>
@@ -625,7 +626,7 @@ export default function HomeScreen() {
         {plan ? (
           <TodaysPlan
             plan={plan}
-            firstDay={projection.firstDay}
+            firstDay={loadedProjection.firstDay}
             theme={theme}
             reduceMotion={reduceMotion}
             onAction={() => navigation.navigate(
@@ -634,17 +635,17 @@ export default function HomeScreen() {
             )}
           />
         ) : null}
-        {projection ? (
+        {loadedProjection ? (
           <CurrentUnit
-            currentUnit={projection.currentUnit}
-            catalogComplete={projection.catalogComplete}
+            currentUnit={loadedProjection.currentUnit}
+            catalogComplete={loadedProjection.catalogComplete}
             hasLessons={units.some((unit) => unit.totalLessons > 0)}
-            firstDay={projection.firstDay}
+            firstDay={loadedProjection.firstDay}
             firstLesson={firstLesson}
             theme={theme}
             onContinue={() => navigation.navigate('Lesson', {
               language,
-              lessonId: projection.currentUnit.nextLesson.id
+              lessonId: loadedProjection.currentUnit.nextLesson.id
             })}
           />
         ) : null}
