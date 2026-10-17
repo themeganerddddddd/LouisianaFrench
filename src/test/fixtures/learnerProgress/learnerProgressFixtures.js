@@ -144,6 +144,9 @@ export const reviewStates = frozen({
     kreole: frozen({
       'fixture:kreole:pronouns:choice': reviewState(clock.pastDue())
     })
+  }),
+  dueListenOnly: frozen({
+    'fixture:cajun:greeting:listen': reviewState(clock.pastDue())
   })
 });
 
