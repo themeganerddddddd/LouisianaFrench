@@ -44,6 +44,23 @@ const mockConnector = {
   async sendPasswordReset() {
     return { identity: null, message: null };
   },
+  async handleAuthUrl(url) {
+    this.lastAuthUrl = url;
+    if (String(url).includes('type=recovery')) {
+      this.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+      this.emit();
+      return { kind: 'recovery' };
+    }
+    return { kind: null };
+  },
+  async updatePassword(password) {
+    if (password === 'bad') {
+      return { identity: null, message: 'That password was rejected.' };
+    }
+    this.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+    this.emit();
+    return { identity: this.identity, message: null };
+  },
   async signInWithProvider(provider) {
     this.provider = provider;
     if (this.failure === 'cancel') return { identity: null, message: null };
@@ -156,9 +173,14 @@ describe('Home email sign-in', () => {
     await openHome();
     await openAccount(user);
     await user.press(screen.getByTestId('sign-in-forgot'));
+    expect(
+      screen.getByText(/I can email a one-time link/)
+    ).toBeOnTheScreen();
     await user.type(screen.getByTestId('sign-in-email'), 'ada@example.com');
     await user.press(screen.getByTestId('sign-in-submit'));
-    expect(await screen.findByText('Check your email.')).toBeOnTheScreen();
+    expect(
+      await screen.findByText(/Check that inbox/)
+    ).toBeOnTheScreen();
     expect(screen.queryByLabelText('Account, Ada')).toBeNull();
   });
 
