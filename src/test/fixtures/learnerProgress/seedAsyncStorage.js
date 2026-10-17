@@ -2,6 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const storageKeys = Object.freeze({
   profile: 'lf_profile',
+  profileCajun: 'lf_profile_cajun',
+  profileKreole: 'lf_profile_kreole',
+  profileMigrated: 'lf_profile_migrated',
   lessonProgress: 'lf_lesson_progress',
   wordProgress: 'lf_word_progress',
   reviewState: 'lf_review_state',
