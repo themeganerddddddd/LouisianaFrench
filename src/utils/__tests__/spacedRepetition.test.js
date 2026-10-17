@@ -73,6 +73,19 @@ describe('updateCardReview', () => {
     expect(lapsed.lapses).toBe(1);
   });
 
+  it.each([4, 5])('graduates a weak Card after a quality %i review', async (quality) => {
+    jest.setSystemTime(clock.reviewStart());
+    await saveReviewState({
+      weakCard: buildCardReviewState({ repetitions: 0, lapses: 1 })
+    });
+
+    const card = await updateCardReview('weakCard', quality);
+
+    expect(card.repetitions).toBe(1);
+    expect(card.lapses).toBe(0);
+    expect(await getWeakItems([{ cardId: 'weakCard' }])).toEqual([]);
+  });
+
   it('persists Card state across calls, keyed by Card id', async () => {
     jest.setSystemTime(clock.reviewStart());
 
