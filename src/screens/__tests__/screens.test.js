@@ -499,7 +499,7 @@ describe('HomeScreen', () => {
       '0 of 2 done',
       'home-plan-cta'
     ]
-  ])('shows Nothing to review right now %s and leaves it out of the plan', async (
+  ])('shows No review %s and leaves it out of the plan', async (
     _day,
     progress,
     now,
@@ -511,13 +511,29 @@ describe('HomeScreen', () => {
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
 
     const reviewStep = await screen.findByTestId('home-plan-step-review');
-    expect(within(reviewStep).getByText('Nothing to review right now')).toBeOnTheScreen();
+    expect(within(reviewStep).getByText('No review')).toBeOnTheScreen();
     expect(reviewStep).toBeDisabled();
     expect(reviewStep.props.onPress).toBeUndefined();
     expect(screen.getByTestId('home-plan-circle-review')).toHaveTextContent('–');
     expect(screen.getByTestId('home-plan-stepper')).toHaveAccessibleName(count);
     expect(screen.getByTestId(planControlId)).not.toHaveTextContent(/Daily Review/);
     expect(await getLanguageDailyReviewLog('cajun')).toEqual({});
+  });
+
+  it('keeps excluded-review plan circles and connectors top-aligned', async () => {
+    jest.setSystemTime(clock.dueNow());
+    await seedAsyncStorage({});
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+    const reviewStep = await screen.findByTestId('home-plan-step-review');
+    expect(within(reviewStep).getByText('No review')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-plan-helper')).toHaveTextContent(
+      "Reviews unlock once you've learned new words."
+    );
+    expect(screen.getByTestId('home-plan-stepper')).toHaveStyle({ alignItems: 'flex-start' });
+    expect(screen.getByTestId('home-plan-connector-0')).toHaveStyle({ marginTop: 13.5 });
+    expect(screen.getByTestId('home-plan-connector-1')).toHaveStyle({ marginTop: 13.5 });
+    expect(within(reviewStep).getByText('No review')).toHaveStyle({ textAlign: 'center' });
   });
 
   it('shows the Review step once a Card reviewed yesterday evening reaches its exact due time', async () => {
@@ -538,7 +554,7 @@ describe('HomeScreen', () => {
     jest.setSystemTime(clock.consecutiveStudyDay());
     const morning = renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
     expect(
-      within(await screen.findByTestId('home-plan-step-review')).getByText('Nothing to review right now')
+      within(await screen.findByTestId('home-plan-step-review')).getByText('No review')
     ).toBeOnTheScreen();
     morning.unmount();
 

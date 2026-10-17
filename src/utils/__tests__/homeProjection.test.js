@@ -44,7 +44,7 @@ const catalogWords = (language) => fixtureCatalog.getAllWords(language);
 const dueQueue = [{ cardId: 'fixture:cajun:greeting:choice' }];
 const nothingToReview = {
   id: 'review',
-  label: 'Nothing to review right now',
+  label: 'No review',
   complete: false,
   excluded: true
 };
