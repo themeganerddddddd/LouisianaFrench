@@ -283,8 +283,7 @@ describe('HomeScreen', () => {
 
     for (const [kind, title] of [
       ['privacy', 'Privacy'],
-      ['faq', 'FAQ'],
-      ['support', 'Support']
+      ['faq', 'FAQ']
     ]) {
       await openLeaves();
       await user.press(screen.getByTestId(`about-menu-leaf-${kind}`));
@@ -295,12 +294,17 @@ describe('HomeScreen', () => {
       if (kind === 'faq') {
         expect(screen.getByText('Which languages can I learn?')).toBeOnTheScreen();
       }
-      if (kind === 'support') {
-        expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
-      }
       await user.press(screen.getByTestId('about-text-close'));
       expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
     }
+
+    await openLeaves();
+    await user.press(screen.getByTestId('about-menu-leaf-support'));
+    expect(screen.queryByTestId('home-about-menu')).toBeNull();
+    expect(await screen.findByText('Tell us what went wrong.')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('Cancel bug report'));
+    expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
+    expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
 
     expect(screen.getByTestId('home-plan')).toBeOnTheScreen();
     expect(screen.getByTestId('home-language-flag')).toBeOnTheScreen();

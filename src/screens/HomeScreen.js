@@ -20,6 +20,7 @@ import AboutTextModal from '../components/AboutTextModal';
 import SignInModal from '../components/SignInModal';
 import { createSupabaseIdentityConnector } from '../identity/connector';
 import BugReportButton from '../components/BugReportButton';
+import BugReportFlow from '../components/BugReportFlow';
 import DebugCatalogModal from '../components/DebugCatalogModal';
 import HomeAboutMenu from '../components/HomeAboutMenu';
 import { ABOUT_TEXT } from '../data/aboutContent';
@@ -425,6 +426,10 @@ export default function HomeScreen() {
   function selectAbout(kind) {
     setAboutMenuVisible(false);
     setAboutExpanded(false);
+    if (kind === 'support') {
+      setAboutModal({ type: 'bugReport' });
+      return;
+    }
     setAboutModal({ type: 'text', content: ABOUT_TEXT[kind] });
   }
 
@@ -785,6 +790,16 @@ export default function HomeScreen() {
           content={aboutModal.content}
           accentColor={theme.accent}
           reduceMotion={reduceMotion}
+          onClose={() => setAboutModal(null)}
+        />
+      ) : null}
+
+      {aboutModal?.type === 'bugReport' ? (
+        <BugReportFlow
+          visible
+          screenName="Home"
+          language={language}
+          accentColor={theme.accent}
           onClose={() => setAboutModal(null)}
         />
       ) : null}
