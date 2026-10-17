@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { useAudioRecorder, useAudioRecorderState } from 'expo-audio';
+import { createAudioPlayer, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { getAllWords } from '../../data/lessonLoader';
 import { recordPracticeCompletion, recordStudyAndXp } from '../../utils/storage';
 
@@ -153,6 +153,37 @@ describe('speech practice screen', () => {
       unmount();
 
       expect(stop).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Audio playback', () => {
+    function players() {
+      return createAudioPlayer.mock.results.map((result) => result.value);
+    }
+
+    beforeEach(() => {
+      createAudioPlayer.mockClear();
+      makeRecorder();
+    });
+
+    it('stops and releases the previous Audio when the learner plays it again', () => {
+      render(<SpeechPracticeScreen language="cajun" />);
+
+      fireEvent.press(screen.getByText('Play Audio'));
+      fireEvent.press(screen.getByText('Play Audio'));
+
+      const [first, second] = players();
+      expect(first).toMatchObject({ playing: false, registered: false, released: true });
+      expect(second).toMatchObject({ playing: true, released: false });
+    });
+
+    it('stops and releases the Audio when the screen unmounts', () => {
+      const { unmount } = render(<SpeechPracticeScreen language="cajun" />);
+      fireEvent.press(screen.getByText('Play Audio'));
+
+      unmount();
+
+      expect(players()).toEqual([expect.objectContaining({ playing: false, registered: false, released: true })]);
     });
   });
 });
