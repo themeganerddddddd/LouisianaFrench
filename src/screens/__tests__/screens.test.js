@@ -1877,8 +1877,13 @@ describe('LessonRunner', () => {
     expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
     await user.press(screen.getByText('Continue'));
 
+    expect(await screen.findByText("Choose the match for 'to be'")).toBeOnTheScreen();
+    await user.press(screen.getByText('être'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+
     expect(await screen.findByText('Session Complete 🎉')).toBeOnTheScreen();
-    expect((await getProfile('cajun')).xp).toBe(10);
+    expect((await getProfile('cajun')).xp).toBe(20);
     expect((await getLessonProgress())['cajun:fixture_cajun_u03_l01'].completed).toBe(true);
   });
 
@@ -1899,7 +1904,7 @@ describe('LessonRunner', () => {
       });
 
       expect(await screen.findByText('A note before you begin')).toBeOnTheScreen();
-      expect(screen.getByText('0 / 1')).toBeOnTheScreen();
+      expect(screen.getByText('0 / 2')).toBeOnTheScreen();
       expect(screen.getByText('Before you begin')).toBeOnTheScreen();
     });
 
@@ -1916,7 +1921,7 @@ describe('LessonRunner', () => {
       await user.press(screen.getByText('Start lesson'));
 
       expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
-      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
       expect(screen.queryByText('A note before you begin')).toBeNull();
     });
 
@@ -1944,7 +1949,7 @@ describe('LessonRunner', () => {
 
       expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
       expect(screen.queryByText('A note before you begin')).toBeNull();
-      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
     });
 
     it('does not show the preface when it was previously read', async () => {
@@ -1975,14 +1980,14 @@ describe('LessonRunner', () => {
       // Activity should now be visible
       expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
       expect(screen.getByLabelText('T-Boy: open Unit note')).toBeOnTheScreen();
-      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
 
       // T-Boy should open the same reference-mode Unit note without changing progress.
       await user.press(screen.getByLabelText('T-Boy: open Unit note'));
       expect(await screen.findByText('Back to lesson')).toBeOnTheScreen();
 
       await user.press(screen.getByText('Back to lesson'));
-      expect(screen.getByText('1 / 1')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
 
       // "Unit note" button should be visible in ProgressHeader
       expect(screen.getByText('Unit note')).toBeOnTheScreen();
@@ -1993,6 +1998,86 @@ describe('LessonRunner', () => {
       // Modal should show "Back to lesson" (reference mode) instead of "Start lesson"
       expect(await screen.findByText('Back to lesson')).toBeOnTheScreen();
       expect(screen.queryByText('Start lesson')).toBeNull();
+    });
+
+    async function reachFinalWrongOnUnitNoteLesson(user) {
+      const { markPrefaceRead } = require('../../utils/storage');
+      await markPrefaceRead('cajun:u03');
+
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: {
+          language: 'cajun',
+          lessonId: 'fixture_cajun_u03_l01',
+          startActivityIndex: 1,
+          debugJump: true
+        }
+      });
+
+      expect(await screen.findByText("Choose the match for 'to be'")).toBeOnTheScreen();
+      expect(screen.getByText('2 / 2')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('avoir'));
+      await user.press(screen.getByText('Check'));
+      expect(screen.getByText('Not quite')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Try Again'));
+      await user.press(screen.getByText('avoir'));
+      await user.press(screen.getByText('Check'));
+      expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
+    }
+
+    it('keeps a final wrong answer after opening the Unit note from the header (#267)', async () => {
+      const user = setupUser();
+      await reachFinalWrongOnUnitNoteLesson(user);
+
+      await user.press(screen.getByText('Unit note'));
+      expect(await screen.findByText('Back to lesson')).toBeOnTheScreen();
+      expect(screen.getByText('2 / 2')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Back to lesson'));
+      expect(screen.getByText('Let’s move on')).toBeOnTheScreen();
+      expect(screen.queryByText('Correct!')).toBeNull();
+
+      await user.press(screen.getByText('Continue'));
+      expect(await screen.findByText('Mistake Review')).toBeOnTheScreen();
+      expect(await getPendingMistakes('cajun')).toEqual([
+        expect.objectContaining({
+          cardId: 'fixture:cajun:to-be:choice',
+          source: 'lesson',
+          sourceId: 'fixture_cajun_u03_l01',
+          answer: 'avoir'
+        })
+      ]);
+    });
+
+    it("keeps Activity state after opening the Unit note from T-Boy's Advice (#267)", async () => {
+      const user = setupUser();
+      const { markPrefaceRead } = require('../../utils/storage');
+      await markPrefaceRead('cajun:u03');
+
+      renderApp({
+        initialRouteName: 'Lesson',
+        initialParams: { language: 'cajun', lessonId: 'fixture_cajun_u03_l01' }
+      });
+
+      expect(await screen.findByText('Listen and learn')).toBeOnTheScreen();
+      expect(screen.getByLabelText('T-Boy: open Unit note')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
+
+      await user.press(screen.getByLabelText('T-Boy: open Unit note'));
+      expect(await screen.findByText('Back to lesson')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
+      expect(screen.getByText('Listen and learn')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Back to lesson'));
+      expect(screen.getByText('Listen and learn')).toBeOnTheScreen();
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
+      expect(screen.getByText('Continue')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Continue'));
+      expect(await screen.findByText("Choose the match for 'to be'")).toBeOnTheScreen();
+      expect(screen.getByText('2 / 2')).toBeOnTheScreen();
     });
   });
 });

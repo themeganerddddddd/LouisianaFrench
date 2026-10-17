@@ -160,6 +160,18 @@ export const compactCatalogLessons = deepFreeze({
           english: 'to be',
           target: 'être',
           extraDetails: 'This phrase has a Unit note.'
+        },
+        {
+          cardId: 'fixture:cajun:to-be:choice',
+          rowId: 'fixture_cajun_w04',
+          type: 'multiple_choice',
+          prompt: "Choose the match for 'to be'",
+          options: ['être', 'avoir'],
+          answer: 'être',
+          answerDisplay: 'être',
+          english: 'to be',
+          target: 'être',
+          extraDetails: 'This practice Activity has a Unit note.'
         }
       ]
     }
