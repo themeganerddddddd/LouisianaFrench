@@ -602,17 +602,21 @@ export default function LessonRunner({
 
         {!prefaceVisible ? (
           <Animated.View
-            style={{
-              opacity:
-                fadeAnim,
+            testID="lesson-activity-shell"
+            style={[
+              styles.activityShell,
+              {
+                opacity:
+                  fadeAnim,
 
-              transform: [
-                {
-                  translateX:
-                    slideAnim
-                }
-              ]
-            }}
+                transform: [
+                  {
+                    translateX:
+                      slideAnim
+                  }
+                ]
+              }
+            ]}
           >
             <ActivityRenderer
               key={
@@ -678,5 +682,9 @@ const styles =
         18,
       paddingBottom:
         18
+    },
+
+    activityShell: {
+      flex: 1
     }
   });

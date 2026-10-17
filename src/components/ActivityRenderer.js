@@ -284,6 +284,7 @@ function isTextAnswerCorrect(value, activity) {
 function QuestionScrollView({ state, children }) {
   return (
     <ScrollView
+      testID="activity-scroll"
       style={styles.scrollShell}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
