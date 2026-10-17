@@ -14,9 +14,7 @@ import ActivityRenderer from '../components/ActivityRenderer';
 import ProgressHeader from '../components/ProgressHeader';
 import SafeScreenView from '../components/SafeScreenView';
 
-import {
-  updateCardReview
-} from '../utils/spacedRepetition';
+import { recordActivityOutcome } from '../utils/activityOutcome';
 
 import {
   getDailyReviewQueue
@@ -25,10 +23,7 @@ import {
 import {
   getTodayKey,
   markLanguageDailyReviewDone,
-  recordStudyAndXp,
-  removePendingMistake,
-  updateWordProgress,
-  upsertPendingMistake
+  recordStudyAndXp
 } from '../utils/storage';
 
 export default function DailyReviewScreen({
@@ -106,43 +101,7 @@ export default function DailyReviewScreen({
   const current =
     queue[index];
 
-  async function handleCorrect() {
-    await updateCardReview(
-      current.cardId,
-      5
-    );
-
-    if (current.rowId) {
-      await updateWordProgress(
-        language,
-        current.rowId,
-        true
-      );
-    }
-
-    await removePendingMistake(
-      language,
-      current.cardId
-    );
-
-    const nextXp =
-      xp + 8;
-
-    setXp(
-      nextXp
-    );
-
-    if (
-      index <
-      queue.length - 1
-    ) {
-      setIndex(
-        (i) => i + 1
-      );
-
-      return;
-    }
-
+  async function finishDailyReview(totalXp, nextMistakes) {
     await markLanguageDailyReviewDone(
       language,
       getTodayKey()
@@ -151,7 +110,7 @@ export default function DailyReviewScreen({
     const profile =
       await recordStudyAndXp(
         language,
-        nextXp
+        totalXp
       );
 
     navigation.replace(
@@ -161,10 +120,10 @@ export default function DailyReviewScreen({
           'Daily Review',
 
         xpEarned:
-          nextXp,
+          totalXp,
 
         mistakesCount:
-          mistakes.length,
+          nextMistakes.length,
 
         streak:
           profile.streak,
@@ -180,37 +139,38 @@ export default function DailyReviewScreen({
     );
   }
 
-  async function handleWrong(
-    userAnswer
-  ) {
-    await updateCardReview(
-      current.cardId,
-      2
-    );
+  async function applyOutcome(outcome, {
+    nextMistakes,
+    nextXp
+  }) {
+    setXp(nextXp);
 
-    if (current.rowId) {
-      await updateWordProgress(
-        language,
-        current.rowId,
-        false
-      );
+    if (outcome.nextStep === 'advance') {
+      setIndex((i) => i + 1);
+      return;
     }
 
-    await upsertPendingMistake(
+    await finishDailyReview(nextXp, nextMistakes);
+  }
+
+  async function handleCorrect() {
+    const outcome = await recordActivityOutcome({
+      sessionKind: 'dailyReview',
       language,
-      current.cardId,
-      {
-        answer:
-          userAnswer,
+      activity: current,
+      wasCorrect: true,
+      userAnswer: null,
+      isLastActivity: index >= queue.length - 1,
+      mistakeCount: mistakes.length
+    });
 
-        source:
-          'dailyReview',
+    await applyOutcome(outcome, {
+      nextMistakes: mistakes,
+      nextXp: xp + outcome.xpDelta
+    });
+  }
 
-        sourceId:
-          null
-      }
-    );
-
+  async function handleWrong(userAnswer) {
     const nextMistakes = [
       ...mistakes,
       {
@@ -219,54 +179,22 @@ export default function DailyReviewScreen({
       }
     ];
 
-    setMistakes(
-      nextMistakes
-    );
+    const outcome = await recordActivityOutcome({
+      sessionKind: 'dailyReview',
+      language,
+      activity: current,
+      wasCorrect: false,
+      userAnswer,
+      isLastActivity: index >= queue.length - 1,
+      mistakeCount: nextMistakes.length
+    });
 
-    if (
-      index <
-      queue.length - 1
-    ) {
-      setIndex(
-        (i) => i + 1
-      );
-    } else {
-      await markLanguageDailyReviewDone(
-        language,
-        getTodayKey()
-      );
+    setMistakes(nextMistakes);
 
-      const profile =
-        await recordStudyAndXp(
-          language,
-          xp
-        );
-
-      navigation.replace(
-        'LessonComplete',
-        {
-          lessonTitle:
-            'Daily Review',
-
-          xpEarned:
-            xp,
-
-          mistakesCount:
-            nextMistakes.length,
-
-          streak:
-            profile.streak,
-
-          scoreEarned:
-            null,
-
-          scorePossible:
-            null,
-
-          language
-        }
-      );
-    }
+    await applyOutcome(outcome, {
+      nextMistakes,
+      nextXp: xp + outcome.xpDelta
+    });
   }
 
   return (

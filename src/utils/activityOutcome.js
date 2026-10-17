@@ -1,5 +1,6 @@
 import { updateCardReview } from './spacedRepetition';
 import {
+  removePendingMistake,
   updateWordProgress,
   upsertPendingMistake
 } from './storage';
@@ -28,30 +29,28 @@ function lessonNextStep(isLastActivity, mistakeCount) {
   return 'complete';
 }
 
-/**
- * Plans and records the Learner Progress result of one settled Activity.
- * Callers animate or navigate from nextStep; they do not pass Card quality
- * numbers or XP tables.
- *
- * sessionKind `dailyReview` is wired in a later Issue.
- */
-export async function recordActivityOutcome({
-  sessionKind,
+function dailyReviewCardQuality(wasCorrect) {
+  return wasCorrect ? 5 : 2;
+}
+
+function dailyReviewXpDelta(wasCorrect) {
+  return wasCorrect ? 8 : 0;
+}
+
+function dailyReviewNextStep(isLastActivity) {
+  return isLastActivity ? 'complete' : 'advance';
+}
+
+async function recordLessonOutcome({
   language,
   activity,
   wasCorrect,
-  userAnswer = null,
-  lessonId = null,
-  lessonType = null,
+  userAnswer,
+  lessonId,
+  lessonType,
   isLastActivity,
-  mistakeCount = 0
+  mistakeCount
 }) {
-  if (sessionKind !== 'lesson') {
-    throw new Error(
-      `recordActivityOutcome: unsupported sessionKind "${sessionKind}"`
-    );
-  }
-
   const cardQuality = lessonCardQuality(activity, wasCorrect);
   await updateCardReview(activity.cardId, cardQuality);
 
@@ -76,4 +75,79 @@ export async function recordActivityOutcome({
     ),
     nextStep: lessonNextStep(isLastActivity, mistakeCount)
   };
+}
+
+async function recordDailyReviewOutcome({
+  language,
+  activity,
+  wasCorrect,
+  userAnswer,
+  isLastActivity
+}) {
+  const cardQuality = dailyReviewCardQuality(wasCorrect);
+  await updateCardReview(activity.cardId, cardQuality);
+
+  if (activity.rowId) {
+    await updateWordProgress(language, activity.rowId, wasCorrect);
+  }
+
+  if (wasCorrect) {
+    await removePendingMistake(language, activity.cardId);
+  } else {
+    await upsertPendingMistake(language, activity.cardId, {
+      answer: userAnswer,
+      source: 'dailyReview',
+      sourceId: null
+    });
+  }
+
+  return {
+    xpDelta: dailyReviewXpDelta(wasCorrect),
+    countsTowardScore: false,
+    nextStep: dailyReviewNextStep(isLastActivity)
+  };
+}
+
+/**
+ * Plans and records the Learner Progress result of one settled Activity.
+ * Callers animate or navigate from nextStep; they do not pass Card quality
+ * numbers or XP tables.
+ */
+export async function recordActivityOutcome({
+  sessionKind,
+  language,
+  activity,
+  wasCorrect,
+  userAnswer = null,
+  lessonId = null,
+  lessonType = null,
+  isLastActivity,
+  mistakeCount = 0
+}) {
+  if (sessionKind === 'lesson') {
+    return recordLessonOutcome({
+      language,
+      activity,
+      wasCorrect,
+      userAnswer,
+      lessonId,
+      lessonType,
+      isLastActivity,
+      mistakeCount
+    });
+  }
+
+  if (sessionKind === 'dailyReview') {
+    return recordDailyReviewOutcome({
+      language,
+      activity,
+      wasCorrect,
+      userAnswer,
+      isLastActivity
+    });
+  }
+
+  throw new Error(
+    `recordActivityOutcome: unsupported sessionKind "${sessionKind}"`
+  );
 }
