@@ -24,6 +24,7 @@ import {
   homeProjectionProgress,
   lastWorkedUnits,
   pendingMistakes,
+  practiceLogs,
   profiles,
   reviewStates,
   wordMastery
@@ -3293,7 +3294,7 @@ describe('DictionaryScreen', () => {
       }
 
       expect(await getTodayPractice('cajun')).toBeNull();
-      expect((await getProfile()).xp).toBe(0);
+      expect((await getProfile('cajun')).xp).toBe(0);
     });
   });
 });
