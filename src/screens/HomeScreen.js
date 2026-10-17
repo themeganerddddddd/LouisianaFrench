@@ -8,18 +8,20 @@ import {
   BackHandler,
   Image,
   LayoutAnimation,
-  Platform,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  UIManager,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AboutTextModal from '../components/AboutTextModal';
+import SignInModal from '../components/SignInModal';
+import { createSupabaseIdentityConnector } from '../identity/connector';
 import BugReportButton from '../components/BugReportButton';
+import BugReportFlow from '../components/BugReportFlow';
 import DebugCatalogModal from '../components/DebugCatalogModal';
 import HomeAboutMenu from '../components/HomeAboutMenu';
 import { ABOUT_TEXT } from '../data/aboutContent';
@@ -297,8 +299,46 @@ export default function HomeScreen() {
   const [aboutMenuVisible, setAboutMenuVisible] = useState(false);
   const [aboutExpanded, setAboutExpanded] = useState(false);
   const [aboutModal, setAboutModal] = useState(null);
+  const [identity, setIdentity] = useState(null);
+  const [signInVisible, setSignInVisible] = useState(false);
+  const [recoveryActive, setRecoveryActive] = useState(false);
+  const connectorRef = useRef(null);
+  if (!connectorRef.current) {
+    connectorRef.current = createSupabaseIdentityConnector();
+  }
   const initialExpansionLanguage = useRef(null);
   const tboyTapRef = useRef({ count: 0, lastTapAt: 0 });
+
+  useEffect(() => {
+    let live = true;
+    const connector = connectorRef.current;
+    connector.getIdentity().then((next) => {
+      if (live) setIdentity(next);
+    });
+    const unsubscribe = connector.subscribe((next) => {
+      if (live) setIdentity(next);
+    });
+
+    async function openRecovery(url) {
+      const result = await connector.handleAuthUrl(url);
+      if (!live || result.kind !== 'recovery') return;
+      setRecoveryActive(true);
+      setSignInVisible(true);
+    }
+
+    Linking.getInitialURL().then((url) => {
+      if (url) openRecovery(url);
+    });
+    const linking = Linking.addEventListener('url', ({ url }) => {
+      openRecovery(url);
+    });
+
+    return () => {
+      live = false;
+      unsubscribe();
+      linking.remove();
+    };
+  }, []);
 
   useEffect(() => {
     async function bootstrapLanguage() {
@@ -359,12 +399,6 @@ export default function HomeScreen() {
     return () => subscription.remove();
   }, [aboutMenuVisible]);
 
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
-
   async function switchLanguage(nextLanguage) {
     setLanguage(nextLanguage);
     await setDefaultLanguage(nextLanguage);
@@ -410,6 +444,10 @@ export default function HomeScreen() {
   function selectAbout(kind) {
     setAboutMenuVisible(false);
     setAboutExpanded(false);
+    if (kind === 'support') {
+      setAboutModal({ type: 'bugReport' });
+      return;
+    }
     setAboutModal({ type: 'text', content: ABOUT_TEXT[kind] });
   }
 
@@ -470,6 +508,7 @@ export default function HomeScreen() {
             >
               <Image
                 testID="home-pelican-image"
+                pointerEvents="none"
                 source={
                   language === 'kreole'
                     ? require('../../assets/images/kreolelogo.png')
@@ -748,7 +787,13 @@ export default function HomeScreen() {
         anchorTop={insets.top + 68}
         anchorLeft={20}
         accentColor={theme.accent}
+        accountDetail={identity?.displayName || ''}
         expanded={aboutExpanded}
+        onAccount={() => {
+          setAboutMenuVisible(false);
+          setAboutExpanded(false);
+          setSignInVisible(true);
+        }}
         onToggle={() => setAboutExpanded((expanded) => !expanded)}
         onSelect={selectAbout}
         onDismiss={() => {
@@ -766,6 +811,28 @@ export default function HomeScreen() {
           onClose={() => setAboutModal(null)}
         />
       ) : null}
+
+      {aboutModal?.type === 'bugReport' ? (
+        <BugReportFlow
+          visible
+          screenName="Home"
+          language={language}
+          accentColor={theme.accent}
+          onClose={() => setAboutModal(null)}
+        />
+      ) : null}
+
+      <SignInModal
+        visible={signInVisible}
+        identity={identity}
+        connector={connectorRef.current}
+        recoveryActive={recoveryActive}
+        onRecoveryFinished={() => setRecoveryActive(false)}
+        onClose={() => {
+          setSignInVisible(false);
+          setRecoveryActive(false);
+        }}
+      />
 
       <DebugCatalogModal
         visible={debugCatalogVisible}

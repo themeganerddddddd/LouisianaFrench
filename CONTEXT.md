@@ -51,6 +51,10 @@ _Avoid_: Tooltip, hint when referring to Catalog content
 A catalog entry pairing a target-language expression with its English meaning and optional Audio.
 _Avoid_: Vocabulary item
 
+**Word mastery**:
+A learner's status for one Word, derived from their correct and wrong answers: new before any answer, learning after any answer while it is neither strong nor mastered, strong with at least 2 correct and more correct than wrong answers, and mastered with at least 4 correct and more correct than wrong answers.
+_Avoid_: Word level, proficiency
+
 **Card**:
 The stable review identity of an Activity used by spaced repetition.
 _Avoid_: Activity when discussing review state
@@ -61,7 +65,19 @@ _Avoid_: Sound when referring to language pronunciation
 
 **Learner Progress**:
 The learner-owned history of Lesson completion, Word mastery, Card review state, XP, streaks, and Daily Review completion.
-_Avoid_: Catalog data, app state
+_Avoid_: Catalog data, app state, Identity
+
+**Identity**:
+A signed-in learner, distinct from Learner Progress. It has a stable id, an email, and a Display name. The same Identity may be present on one device and absent on another.
+_Avoid_: Account, user, player, Community identity
+
+**Guest**:
+A learner with no Identity on the device they are using.
+_Avoid_: Anonymous account, logged-out user
+
+**Display name**:
+The name carried by an Identity. It is not unique, and it is not the username stored with Learner Progress.
+_Avoid_: Username, handle, profile name
 
 **Catalog**:
 The read-only-at-runtime collection of Languages, Units, Lessons, Words, Activities, and Audio identities shipped with the application.

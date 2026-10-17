@@ -23,7 +23,7 @@ permission:
 
 Conduct an adversarial, read-only review. Findings are the product.
 
-1. **Baseline.** Establish the fixed point and complete diff. Read `AGENTS.md`, `CONTEXT.md`, relevant ADRs, supplied Issues or specifications, and named artifacts. Record unavailable authority.
+1. **Baseline.** Establish the fixed point and complete diff. Read `REVIEW.md`, `AGENTS.md`, `CONTEXT.md`, relevant ADRs, supplied Issues or specifications, and named artifacts. Record unavailable authority. Classify findings with the severity rules in `REVIEW.md`.
 2. **Inspect.** Read every changed hunk and enough surrounding implementation, callers, tests, fixtures, and persisted-data paths to evaluate effects. Treat summaries as claims, not evidence.
 3. **Challenge.** Check the requested axis; when it is open, check specification coverage and repository standards, including correctness, regressions, lifecycle, migration, accessibility, module depth, false-positive tests, and edge cases. Calibrate depth to validated scope and behavior changed by the diff; do not silently expand the ticket into general transactional, restart, failure-recovery, or hardening work.
 4. **Classify.** Classify each candidate as `BLOCKING`, `HARDENING`, or `PRE-EXISTING`. A blocking finding must violate cited authority or be a reachable regression introduced by the diff. Hardening adds an unspecced guarantee. Pre-existing behavior is not charged to the diff unless the change makes it worse.

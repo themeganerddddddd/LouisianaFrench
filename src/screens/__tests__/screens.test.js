@@ -183,6 +183,31 @@ describe('LanguageSelectScreen', () => {
     expect(await getDefaultLanguage()).toBe('cajun');
     expect(await hasSelectedLanguage()).toBe(true);
   });
+
+  it('keeps both Languages reachable in a short landscape viewport', async () => {
+    renderApp({
+      initialRouteName: 'LanguageSelect',
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 844, height: 390 },
+        insets: { top: 0, right: 48, bottom: 21, left: 48 }
+      }
+    });
+
+    const scroll = screen.getByTestId('language-select-scroll');
+    expect(scroll).toBeOnTheScreen();
+    expect(scroll.props.contentContainerStyle).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          paddingTop: 24,
+          paddingBottom: 45,
+          paddingLeft: 48,
+          paddingRight: 48
+        })
+      ])
+    );
+    expect(screen.getByText('French')).toBeOnTheScreen();
+    expect(screen.getByText('Kouri-Vini')).toBeOnTheScreen();
+  });
 });
 
 describe('HomeScreen', () => {
@@ -285,8 +310,7 @@ describe('HomeScreen', () => {
 
     for (const [kind, title] of [
       ['privacy', 'Privacy'],
-      ['faq', 'FAQ'],
-      ['support', 'Support']
+      ['faq', 'FAQ']
     ]) {
       await openLeaves();
       await user.press(screen.getByTestId(`about-menu-leaf-${kind}`));
@@ -297,12 +321,17 @@ describe('HomeScreen', () => {
       if (kind === 'faq') {
         expect(screen.getByText('Which languages can I learn?')).toBeOnTheScreen();
       }
-      if (kind === 'support') {
-        expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
-      }
       await user.press(screen.getByTestId('about-text-close'));
       expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
     }
+
+    await openLeaves();
+    await user.press(screen.getByTestId('about-menu-leaf-support'));
+    expect(screen.queryByTestId('home-about-menu')).toBeNull();
+    expect(await screen.findByText('Tell us what went wrong.')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('Cancel bug report'));
+    expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
+    expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
 
     expect(screen.getByTestId('home-plan')).toBeOnTheScreen();
     expect(screen.getByTestId('home-language-flag')).toBeOnTheScreen();
@@ -1146,12 +1175,14 @@ describe('HomeScreen', () => {
     const backHandler = jest.spyOn(BackHandler, 'addEventListener');
 
     try {
+      await seedAsyncStorage({ lessonProgress: homeProjectionProgress.priorLessonsByLanguage });
       renderApp({
         initialRouteName: 'Home',
         initialParams: { language: 'cajun' }
       });
 
       await screen.findByText('Louisiana French');
+      expect(screen.getByTestId('home-review-control')).toBeEnabled();
       await user.press(screen.getByTestId('home-review-control'));
       expect(await screen.findByText('Daily Review')).toBeOnTheScreen();
 
@@ -1619,6 +1650,26 @@ describe('LessonRunner', () => {
     expect(screen.getByText('2 / 4')).toBeOnTheScreen();
   });
 
+  it('gives the Activity shell flex room so short landscape viewports can scroll', async () => {
+    const lesson = lessonById('fixture_cajun_u01_l01');
+
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: { language: 'cajun', lessonId: lesson.id },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 844, height: 390 },
+        insets: { top: 0, right: 48, bottom: 21, left: 48 }
+      }
+    });
+
+    expect(await screen.findByText('New word')).toBeOnTheScreen();
+    expect(screen.getByTestId('lesson-activity-shell')).toHaveStyle({ flex: 1 });
+    // Device check on Pixel landscape: Continue starts off-screen and must live
+    // inside the Activity scroll shell so a swipe can reach it.
+    expect(screen.getByTestId('activity-scroll')).toBeOnTheScreen();
+    expect(screen.getByText('Continue')).toBeOnTheScreen();
+  });
+
   it('reaches MistakeReview after two wrong answers and completes after correction', async () => {
     const user = setupUser();
     const lesson = lessonById('fixture_cajun_u02_l01');
@@ -1963,6 +2014,26 @@ describe('LessonCompleteScreen', () => {
 
     await user.press(screen.getByText('Back to Home'));
     expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+  });
+
+  it('keeps Back to Home inside a scroll shell for short landscape viewports', () => {
+    renderApp({
+      initialRouteName: 'LessonComplete',
+      initialParams: {
+        lessonTitle: 'Greetings & Check-ins — First greetings',
+        xpEarned: 30,
+        mistakesCount: 1,
+        streak: 2,
+        language: 'cajun'
+      },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 844, height: 390 },
+        insets: { top: 0, right: 48, bottom: 21, left: 48 }
+      }
+    });
+
+    expect(screen.getByTestId('lesson-complete-scroll')).toBeOnTheScreen();
+    expect(screen.getByText('Back to Home')).toBeOnTheScreen();
   });
 });
 

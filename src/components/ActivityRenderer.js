@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import { createAudioPlayer } from 'expo-audio';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
@@ -126,26 +126,23 @@ function shouldShowIntroAddOns(activity) {
   return activity?.type === 'intro_card';
 }
 
+function releasePlayer(playerRef) {
+  try {
+    playerRef.current?.remove();
+  } catch {}
+  playerRef.current = null;
+}
+
 function useAudio(language) {
   const soundRef = useRef(null);
   const fxRef = useRef(null);
 
-  const stopAudio = useCallback(async () => {
-    try {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      }
-    } catch {}
+  const stopAudio = useCallback(() => {
+    releasePlayer(soundRef);
   }, []);
 
-  const stopFx = useCallback(async () => {
-    try {
-      if (fxRef.current) {
-        await fxRef.current.unloadAsync();
-        fxRef.current = null;
-      }
-    } catch {}
+  const stopFx = useCallback(() => {
+    releasePlayer(fxRef);
   }, []);
 
   const playAudioKey = useCallback(
@@ -154,10 +151,10 @@ function useAudio(language) {
         const source = getAudioSource(language, audioKey);
         if (!source) return false;
 
-        await stopAudio();
-        const { sound } = await Audio.Sound.createAsync(source);
-        soundRef.current = sound;
-        await sound.playAsync();
+        stopAudio();
+        const player = createAudioPlayer(source);
+        soundRef.current = player;
+        player.play();
         return true;
       } catch {
         return false;
@@ -169,11 +166,11 @@ function useAudio(language) {
   const playFeedback = useCallback(
     async (kind) => {
       try {
-        await stopFx();
+        stopFx();
         const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
-        const { sound } = await Audio.Sound.createAsync({ uri });
-        fxRef.current = sound;
-        await sound.playAsync();
+        const player = createAudioPlayer({ uri });
+        fxRef.current = player;
+        player.play();
       } catch {}
     },
     [stopFx]
@@ -287,6 +284,7 @@ function isTextAnswerCorrect(value, activity) {
 function QuestionScrollView({ state, children }) {
   return (
     <ScrollView
+      testID="activity-scroll"
       style={styles.scrollShell}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
@@ -578,6 +576,13 @@ function FeedbackFooter({
   wrongTitle = 'Let’s move on',
   answerContent
 }) {
+  const [submitted, setSubmitted] = useState(false);
+
+  function submit(handler) {
+    setSubmitted(true);
+    handler();
+  }
+
   if (state === 'correct') {
     return (
       <View style={[styles.footer, styles.footerGreen]}>
@@ -585,7 +590,11 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={styles.footerButtonGreen} onPress={onNext}>
+        <TouchableOpacity
+          style={[styles.footerButtonGreen, submitted && styles.disabledButton]}
+          onPress={() => submit(onNext)}
+          disabled={submitted}
+        >
           <Text style={styles.footerButtonText}>Next Question</Text>
         </TouchableOpacity>
       </View>
@@ -604,7 +613,11 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={styles.footerButtonRed} onPress={onIncorrect}>
+        <TouchableOpacity
+          style={[styles.footerButtonRed, submitted && styles.disabledButton]}
+          onPress={() => submit(onIncorrect)}
+          disabled={submitted}
+        >
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -644,7 +657,11 @@ function FeedbackFooter({
 
         {altContent}
 
-        <TouchableOpacity style={styles.footerButtonRed} onPress={onIncorrect}>
+        <TouchableOpacity
+          style={[styles.footerButtonRed, submitted && styles.disabledButton]}
+          onPress={() => submit(onIncorrect)}
+          disabled={submitted}
+        >
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -663,6 +680,19 @@ export default function ActivityRenderer({
   onOpenPreface
 }) {
   const theme = getTheme(language);
+  const submittedRef = useRef(false);
+
+  function submitOnce(handler, ...args) {
+    if (submittedRef.current) return;
+
+    submittedRef.current = true;
+    handler(...args);
+  }
+
+  const submission = {
+    onCorrect: () => submitOnce(onCorrect),
+    onWrong: (answer) => submitOnce(onWrong, answer)
+  };
 
   switch (activity.type) {
     case 'intro_card':
@@ -670,7 +700,7 @@ export default function ActivityRenderer({
         <IntroCard
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
+          onCorrect={submission.onCorrect}
           theme={theme}
           onOpenPreface={onOpenPreface}
         />
@@ -681,8 +711,7 @@ export default function ActivityRenderer({
         <MultipleChoice
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -693,8 +722,7 @@ export default function ActivityRenderer({
         <SelectMultiple
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -705,8 +733,7 @@ export default function ActivityRenderer({
         <ListeningTargetChoice
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -717,8 +744,7 @@ export default function ActivityRenderer({
         <Typing
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -729,8 +755,7 @@ export default function ActivityRenderer({
         <SentenceBuild
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -741,8 +766,7 @@ export default function ActivityRenderer({
         <MatchPairs
           activity={activity}
           language={language}
-          onCorrect={onCorrect}
-          onWrong={onWrong}
+          {...submission}
           theme={theme}
           allowSkip={allowSkip}
         />
@@ -768,10 +792,16 @@ function IntroCard({
 }) {
   const { playAudioKey } = useAudio(language);
 
+  const [submitted, setSubmitted] = useState(false);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const showAddOns = shouldShowIntroAddOns(activity);
+
+  function submit() {
+    setSubmitted(true);
+    onCorrect();
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -873,9 +903,11 @@ function IntroCard({
       <TouchableOpacity
         style={[
           styles.primaryBtn,
-          { backgroundColor: theme.accent }
+          { backgroundColor: theme.accent },
+          submitted && styles.primaryBtnDisabled
         ]}
-        onPress={onCorrect}
+        onPress={submit}
+        disabled={submitted}
       >
         <Text style={styles.primaryBtnText}>
           Continue

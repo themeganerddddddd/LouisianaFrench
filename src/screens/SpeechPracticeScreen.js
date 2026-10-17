@@ -1,5 +1,5 @@
-import { Audio } from 'expo-av';
 import {
+  createAudioPlayer,
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
@@ -49,16 +49,21 @@ export default function SpeechPracticeScreen({
 
   useEffect(() => {
     return () => {
-      soundRef.current?.unloadAsync();
+      try {
+        soundRef.current?.remove();
+      } catch (_e) {}
+      soundRef.current = null;
     };
   }, []);
 
   async function play(source) {
     if (!source) return;
-    await soundRef.current?.unloadAsync();
-    const { sound } = await Audio.Sound.createAsync(source);
-    soundRef.current = sound;
-    await sound.playAsync();
+    try {
+      soundRef.current?.remove();
+    } catch (_e) {}
+    const player = createAudioPlayer(source);
+    soundRef.current = player;
+    player.play();
   }
 
   async function beginRecording() {

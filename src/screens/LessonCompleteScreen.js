@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import BugReportButton from '../components/BugReportButton';
 import SafeScreenView from '../components/SafeScreenView';
 
@@ -9,7 +9,11 @@ export default function LessonCompleteScreen({ route, navigation }) {
 
   return (
     <SafeScreenView style={[styles.container, { backgroundColor: softBackground }]}>
-      <View style={styles.content}>
+      <ScrollView
+        testID="lesson-complete-scroll"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.card}>
           <Image
             source={require('../../assets/images/cooloutline.png')}
@@ -43,7 +47,7 @@ export default function LessonCompleteScreen({ route, navigation }) {
             <Text style={styles.primaryText}>Back to Home</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
 
       <BugReportButton screenName="LessonComplete" language={language} />
     </SafeScreenView>
@@ -57,13 +61,10 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    flex: 1,
+    flexGrow: 1,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-
-    // Gives the white completion card breathing room
-    // from the left and right edges.
     paddingHorizontal: 10
   },
 

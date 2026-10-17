@@ -3,18 +3,27 @@
     "name": "Louisiana Languages",
     "slug": "louisiana-french",
     "version": "1.0.2",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/pelicanicon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.westleysturhan.louisianafrench",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait"
+        ],
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
       }
     },
     "android": {
-      "package": "com.westleysturhan.louisianafrench",
+      "package": "com.louisianalanguages.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/pelicanicon.png",
         "backgroundColor": "#2771CB"
@@ -33,9 +42,31 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow Louisiana Languages to record pronunciation practice."
+          "microphonePermission": "Allow Louisiana Languages to record pronunciation practice.",
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
         }
-      ]
-    ]
+      ],
+      "expo-status-bar",
+      "expo-asset",
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": false
+          }
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "scheme": "com.westleysturhan.louisianafrench"
   }
 }
