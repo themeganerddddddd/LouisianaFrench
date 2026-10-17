@@ -231,6 +231,27 @@ describe('identity connector', () => {
     ).toEqual({ identity: null, message: 'The network failed. Try again.' });
   });
 
+  it('asks the learner to check email when sign-up waits for confirmation', async () => {
+    const client = {
+      auth: {
+        getSession: async () => ({ data: { session: null } }),
+        signUp: async () => ({
+          data: { session: null, user: USER },
+          error: null
+        })
+      }
+    };
+    const connector = createIdentityConnector({ client });
+    expect(
+      await connector.signUpWithPassword({
+        email: 'ada@example.com',
+        password: 'secret',
+        displayName: 'Ada'
+      })
+    ).toEqual({ identity: null, message: 'Check your email.' });
+    expect(await connector.getIdentity()).toBeNull();
+  });
+
   it('stays a guest when sign-in is not configured', async () => {
     const connector = createIdentityConnector({ client: null });
     expect(await connector.getIdentity()).toBeNull();
