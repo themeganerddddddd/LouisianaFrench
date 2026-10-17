@@ -161,13 +161,41 @@ describe('Word mastery status', () => {
     expect(record).toEqual(wordMastery.learningAfterWrong);
   });
 
-  it('does not mark a Word mastered when wrong answers equal correct answers', async () => {
+  it('demotes a Word to learning when wrong answers equal correct answers', async () => {
     const rowId = 'u01_w0003';
     for (let i = 0; i < 4; i += 1) await updateWordProgress('cajun', rowId, true);
     for (let i = 0; i < 4; i += 1) await updateWordProgress('cajun', rowId, false);
 
     const record = (await getWordProgress())['cajun:u01_w0003'];
-    expect(record).toEqual(wordMastery.strongWithEqualAnswers);
+    expect(record).toEqual(wordMastery.learningWithEqualAnswers);
+  });
+
+  it.each([
+    ['2 correct and 1 wrong', [true, false, true], wordMastery.strongAfterOneWrong],
+    ['3 correct and 2 wrong', [true, false, true, false, true], wordMastery.strongWithOneMoreCorrect]
+  ])('marks a Word strong with %s answers', async (_label, answers, expected) => {
+    for (const wasCorrect of answers) await updateWordProgress('cajun', 'u01_w0004', wasCorrect);
+
+    expect((await getWordProgress())['cajun:u01_w0004']).toEqual(expected);
+  });
+
+  it('reads a saved strong Word with equal correct and wrong answers as learning', async () => {
+    await seedAsyncStorage({
+      wordProgress: { 'cajun:u01_w0005': wordMastery.savedStrongWithEqualAnswers }
+    });
+
+    expect((await getWordProgress())['cajun:u01_w0005']).toEqual(wordMastery.learningWithEqualAnswers);
+  });
+
+  it('keeps a null saved Word entry without failing to read the others', async () => {
+    await seedAsyncStorage({
+      wordProgress: { 'cajun:u01_w0006': null, 'cajun:u01_w0001': wordMastery.strong }
+    });
+
+    expect(await getWordProgress()).toEqual({
+      'cajun:u01_w0006': null,
+      'cajun:u01_w0001': wordMastery.strong
+    });
   });
 });
 
