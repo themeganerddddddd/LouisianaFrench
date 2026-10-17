@@ -192,7 +192,10 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
   };
 }
 
-export function createSupabaseIdentityConnector(env = process.env) {
+export function createSupabaseIdentityConnector(env = {
+  EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
+}) {
   const url = env.EXPO_PUBLIC_SUPABASE_URL;
   const key = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
