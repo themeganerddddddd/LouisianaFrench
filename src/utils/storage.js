@@ -460,58 +460,78 @@ export async function upsertLeaderboard(name, xp) {
   );
 }
 
-export async function recordStudyAndXp(language, xpEarned) {
-  const profile = await getProfile(language);
+// One Language's Profile at a time: overlapping recordStudyAndXp calls
+// used to read the same XP and overwrite each other (#249).
+const recordStudyAndXpByLanguage = new Map();
 
-  const now = getNow();
-
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
+function enqueueRecordStudyAndXp(language, task) {
+  const previous = recordStudyAndXpByLanguage.get(language) || Promise.resolve();
+  const next = previous.then(task, task);
+  // Keep the chain alive after a rejected task so later awards still run.
+  recordStudyAndXpByLanguage.set(
+    language,
+    next.then(
+      () => undefined,
+      () => undefined
+    )
   );
+  return next;
+}
 
-  let streak = profile.streak || 0;
+export function recordStudyAndXp(language, xpEarned) {
+  return enqueueRecordStudyAndXp(language, async () => {
+    const profile = await getProfile(language);
 
-  if (!profile.lastStudyDate) {
-    streak = 1;
-  } else {
-    const last = new Date(
-      profile.lastStudyDate
+    const now = getNow();
+
+    const today = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
     );
 
-    const lastDay = new Date(
-      last.getFullYear(),
-      last.getMonth(),
-      last.getDate()
-    );
+    let streak = profile.streak || 0;
 
-    const diffDays = Math.floor(
-      (today - lastDay) / 86400000
-    );
-
-    if (diffDays === 1) {
-      streak += 1;
-    } else if (diffDays > 1) {
+    if (!profile.lastStudyDate) {
       streak = 1;
+    } else {
+      const last = new Date(
+        profile.lastStudyDate
+      );
+
+      const lastDay = new Date(
+        last.getFullYear(),
+        last.getMonth(),
+        last.getDate()
+      );
+
+      const diffDays = Math.floor(
+        (today - lastDay) / 86400000
+      );
+
+      if (diffDays === 1) {
+        streak += 1;
+      } else if (diffDays > 1) {
+        streak = 1;
+      }
     }
-  }
 
-  const updated = {
-    ...profile,
-    xp: (profile.xp || 0) + xpEarned,
-    streak,
-    lastStudyDate: getNow().toISOString()
-  };
+    const updated = {
+      ...profile,
+      xp: (profile.xp || 0) + xpEarned,
+      streak,
+      lastStudyDate: getNow().toISOString()
+    };
 
-  await saveProfile(language, updated);
+    await saveProfile(language, updated);
 
-  await upsertLeaderboard(
-    updated.username || 'Player',
-    updated.xp
-  );
+    await upsertLeaderboard(
+      updated.username || 'Player',
+      updated.xp
+    );
 
-  return updated;
+    return updated;
+  });
 }
 
 export async function isPrefaceRead(prefaceId) {

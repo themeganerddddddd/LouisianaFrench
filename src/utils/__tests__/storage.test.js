@@ -574,6 +574,49 @@ describe('XP and streak recording', () => {
 
     expect(await getLeaderboard()).toEqual([{ name: 'Beau', xp: 25 }]);
   });
+
+  it('adds both XP amounts when two recordStudyAndXp calls overlap', async () => {
+    jest.setSystemTime(clock.studyDay());
+
+    const profileKey = 'lf_profile_cajun';
+    const priorGetItem = AsyncStorage.getItem.getMockImplementation();
+    let releaseFirstProfileRead;
+    const firstProfileReadGate = new Promise((resolve) => {
+      releaseFirstProfileRead = resolve;
+    });
+    let profileReads = 0;
+
+    AsyncStorage.getItem.mockImplementation(async (key) => {
+      const value = await priorGetItem(key);
+      if (key === profileKey) {
+        profileReads += 1;
+        if (profileReads === 1) {
+          await firstProfileReadGate;
+        }
+      }
+      return value;
+    });
+
+    try {
+      const first = recordStudyAndXp('cajun', 40);
+      await Promise.resolve();
+      const second = recordStudyAndXp('cajun', 40);
+      releaseFirstProfileRead();
+
+      const [firstResult, secondResult] = await Promise.all([first, second]);
+
+      expect(firstResult.xp).toBe(40);
+      expect(secondResult.xp).toBe(80);
+      expect((await getProfile('cajun')).xp).toBe(80);
+      expect((await getProfile('cajun')).streak).toBe(1);
+      expect((await getProfile('cajun')).lastStudyDate).toBe(
+        clock.studyDay().toISOString()
+      );
+      expect(await getLeaderboard()).toEqual([{ name: 'Player', xp: 80 }]);
+    } finally {
+      AsyncStorage.getItem.mockImplementation(priorGetItem);
+    }
+  });
 });
 
 describe('Preface read tracking', () => {
