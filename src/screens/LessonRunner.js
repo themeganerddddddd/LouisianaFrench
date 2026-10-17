@@ -338,8 +338,15 @@ export default function LessonRunner({
       ? '#6D28D9'
       : '#2771CB';
 
+  // Only the first-open "start" preface hides the Activity. Reference mode
+  // (header Unit note / T-Boy's Advice) must keep ActivityRenderer mounted so
+  // answers, attempts, and reveal state survive closing the note (#267).
+  const startPrefaceOpen =
+    prefaceVisible &&
+    prefaceMode === 'start';
+
   const displayProgress =
-    prefaceVisible
+    startPrefaceOpen
       ? 0
       : index + 1;
 
@@ -584,7 +591,7 @@ export default function LessonRunner({
             lesson.unitTitle
           }
           modeLabel={
-            prefaceVisible
+            startPrefaceOpen
               ? 'Before you begin'
               : lesson.lessonTitle
           }
@@ -601,7 +608,7 @@ export default function LessonRunner({
           }
         />
 
-        {!prefaceVisible ? (
+        {!startPrefaceOpen ? (
           <Animated.View
             testID="lesson-activity-shell"
             style={[

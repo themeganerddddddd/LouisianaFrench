@@ -64,6 +64,7 @@ describe('createCatalog', () => {
       'listening_target_choice',
       'match_pairs',
       'multiple_choice',
+      'multiple_choice',
       'sentence_build',
       'typing'
     ]);
