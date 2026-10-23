@@ -1,6 +1,6 @@
 # Issue #329 — Advanced Home label and bug-report keyboard
 
-Captured on Android emulator with Expo Go **58.0.5** against this branch (`exp://127.0.0.1:8092`).
+Captured on Android emulator with Expo Go **58.0.5** against this branch (`exp://127.0.0.1:8092`). Grabs and the video are resized to 50% on each side (aspect ratio kept).
 
 ## What was clicked
 
