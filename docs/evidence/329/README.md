@@ -7,5 +7,5 @@ Captured on Android emulator with Expo Go **58.0.5** against this branch (`exp:/
 1. Language select → Louisiana French Home (`01-home.png`).
 2. Hub → Advanced French Hub — top-left control shows icon + **Home** (`02-advanced-home-label.png`).
 3. Tap **Home** → back on Home (`06-back-home.png`, `07-advanced-home-back.mp4`).
-4. Open Report a bug — Cancel/Submit sit in a sticky row under the fields (`03-bug-report-sheet.png`).
-5. Focus “What happened?” and type — typed text stays visible above the keyboard; Cancel/Submit stay in the sticky row (`04-bug-report-keyboard-description.png`).
+4. Open Report a bug — full form with Cancel/Submit (`08-bug-report-sheet-idle.png`).
+5. Focus Email / What happened? with the keyboard up — Name, Email, and What happened? stay visible; sheet sits above the keyboard (`10-keyboard-email-all-fields.png`, `11-keyboard-description-all-fields.png`).

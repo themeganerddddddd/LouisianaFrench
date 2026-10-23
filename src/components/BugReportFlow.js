@@ -10,6 +10,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,8 +26,42 @@ const CONSENT_FIELDS = [
   ['App context', 'Selected language, screen name, time sent'],
 ];
 
+const OVERLAY_PADDING = 14;
+const ACTION_BAR_HEIGHT = 72;
+const MIN_SHEET_HEIGHT = 220;
+
+/** Keep the sheet in the band above the keyboard instead of letting maxHeight 92% clip the top. */
+export function bugReportSheetMaxHeight({
+  windowHeight,
+  keyboardOffset,
+  topInset,
+  bottomInset,
+  padding = OVERLAY_PADDING,
+  maxFraction = 0.92,
+}) {
+  const uncapped = windowHeight * maxFraction;
+  if (keyboardOffset <= 0) return Math.max(uncapped, MIN_SHEET_HEIGHT);
+  const aboveKeyboard =
+    windowHeight - Math.max(topInset, padding) - bottomInset - padding - keyboardOffset;
+  return Math.max(Math.min(uncapped, aboveKeyboard), MIN_SHEET_HEIGHT);
+}
+
+/** Prefer the smaller credible height so an inflated Android `height` cannot park the sheet at the top. */
+export function keyboardHeightFromEvent(endCoordinates, windowHeight) {
+  const screenY = endCoordinates?.screenY;
+  const reportedHeight = endCoordinates?.height;
+  const fromScreenY =
+    typeof screenY === 'number' && screenY > 0 ? Math.max(0, windowHeight - screenY) : 0;
+  const fromHeight = typeof reportedHeight === 'number' && reportedHeight > 0 ? reportedHeight : 0;
+  const limit = windowHeight * 0.7;
+  const candidates = [fromScreenY, fromHeight].filter((height) => height > 0 && height < limit);
+  if (!candidates.length) return 0;
+  return Math.min(...candidates);
+}
+
 export default function BugReportFlow({ visible, onClose, screenName, language, accentColor }) {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const [stage, setStage] = useState('form');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -36,7 +71,6 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
   const nameInputRef = useRef();
   const emailInputRef = useRef();
   const descInputRef = useRef();
-  const formScrollRef = useRef();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const swayAnim = useRef(new Animated.Value(0)).current;
   const submittingRef = useRef(false);
@@ -48,14 +82,16 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
       ? ['keyboardWillShow', 'keyboardWillHide']
       : ['keyboardDidShow', 'keyboardDidHide'];
     const subscriptions = [
-      Keyboard.addListener(showEvent, (event) => setKeyboardHeight(event.endCoordinates.height)),
+      Keyboard.addListener(showEvent, (event) => {
+        setKeyboardHeight(keyboardHeightFromEvent(event?.endCoordinates, windowHeight));
+      }),
       Keyboard.addListener(hideEvent, () => setKeyboardHeight(0)),
     ];
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
       setKeyboardHeight(0);
     };
-  }, [visible]);
+  }, [visible, windowHeight]);
   useEffect(() => {
     if (!visible) return;
     setStage('form'); setName(''); setEmail(''); setDescription('');
@@ -111,23 +147,22 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
     }
   }
 
-  function scrollFieldIntoView(towardEnd = false) {
-    // Wait for the keyboard lift so the focused field is not left under the keys.
-    setTimeout(() => {
-      const scroll = formScrollRef.current;
-      if (!scroll) return;
-      if (towardEnd) scroll.scrollToEnd({ animated: true });
-      else scroll.scrollTo({ y: 0, animated: true });
-    }, Platform.OS === 'ios' ? 280 : 100);
-  }
-
-  // The edge-to-edge Modal window is not resized for the keyboard. Android reports the keyboard
-  // height without the navigation bar (negative for floating keyboards); iOS includes the home
-  // indicator area.
-  const keyboardOffset = Math.max(
+  // Occlusion used to cap the sheet so Name/Email/What happened? stay in the visible band.
+  const keyboardOcclusion = Math.max(
     Platform.OS === 'ios' ? keyboardHeight - insets.bottom : keyboardHeight,
     0
   );
+  // iOS Modal does not move for the keyboard — pad by the occlusion.
+  // Android/Expo Go already pans the Modal; padding again parks the sheet at the top with a gap.
+  const keyboardPad = Platform.OS === 'ios' ? keyboardOcclusion : 0;
+  const sheetMaxHeight = bugReportSheetMaxHeight({
+    windowHeight,
+    keyboardOffset: keyboardOcclusion,
+    topInset: insets.top,
+    bottomInset: insets.bottom,
+  });
+  const formScrollMaxHeight = Math.max(sheetMaxHeight - ACTION_BAR_HEIGHT, 120);
+  const keyboardOpen = keyboardOcclusion > 0;
   const swayRotation = swayAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['-2deg', '2.5deg', '-2deg'] });
   const swayTranslateY = swayAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -8, 0] });
   function ActionButton({ label, primary, onPress, disabled, accessibilityLabel }) {
@@ -147,21 +182,22 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <View
         testID="bug-report-overlay"
-        style={[styles.overlay, { paddingBottom: insets.bottom + 14 + keyboardOffset }]}
+        style={[styles.overlay, { paddingBottom: insets.bottom + OVERLAY_PADDING + keyboardPad }]}
       >
-        <View style={styles.sheet}>
+        <View testID="bug-report-sheet" style={[styles.sheet, { maxHeight: sheetMaxHeight }]}>
           {stage === 'form' && (
             <>
               <ScrollView
-                ref={formScrollRef}
                 testID="bug-report-form-scroll"
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
-                automaticallyAdjustKeyboardInsets
+                style={{ maxHeight: formScrollMaxHeight }}
                 contentContainerStyle={styles.content}
               >
                 <Text style={styles.heading}>Report a bug</Text>
-                <Text style={styles.subtitle}>Tell us what went wrong.</Text>
+                <Text style={[styles.subtitle, keyboardOpen && styles.subtitleCompact]}>
+                  Tell us what went wrong.
+                </Text>
                 <Text style={styles.label}>Name</Text>
                 <TextInput
                   ref={nameInputRef}
@@ -169,7 +205,6 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
                   placeholder="Your name"
                   value={name}
                   onChangeText={setName}
-                  onFocus={() => scrollFieldIntoView(false)}
                   accessibilityLabel="Bug report name"
                 />
                 {errors.name && <Text style={styles.fieldError}>{errors.name}</Text>}
@@ -181,19 +216,22 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
-                  onFocus={() => scrollFieldIntoView(false)}
                   accessibilityLabel="Bug report email"
                 />
                 {errors.email && <Text style={styles.fieldError}>{errors.email}</Text>}
                 <Text style={styles.label}>What happened?</Text>
                 <TextInput
                   ref={descInputRef}
-                  style={[styles.input, styles.textArea, errors.description && styles.inputError]}
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    keyboardOpen && styles.textAreaCompact,
+                    errors.description && styles.inputError
+                  ]}
                   placeholder={'Describe the bug or issue\u2026'}
                   value={description}
                   onChangeText={setDescription}
                   multiline
-                  onFocus={() => scrollFieldIntoView(true)}
                   accessibilityLabel="Bug report description"
                 />
                 {errors.description && <Text style={styles.fieldError}>{errors.description}</Text>}
@@ -206,7 +244,11 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
           )}
           {stage === 'consent' && (
             <>
-              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                style={{ maxHeight: formScrollMaxHeight }}
+                contentContainerStyle={styles.content}
+              >
                 <Text style={styles.heading}>Share device info?</Text>
                 <View style={styles.warningBox}>
                   <Text style={styles.warningText}>{'To help troubleshoot, we\u2019ll attach some device information to your email. Nothing is collected until you accept.'}</Text>
@@ -246,22 +288,23 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end', padding: 14 },
+  overlay: { flex: 1, justifyContent: 'flex-end', padding: OVERLAY_PADDING },
   sheet: {
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: '#000',
     borderRadius: 22,
-    maxHeight: '92%',
     overflow: 'hidden'
   },
   content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
   heading: { fontSize: 20, fontWeight: '900', color: '#17324D', marginBottom: 4 },
   subtitle: { fontSize: 14, fontWeight: '600', color: '#64748B', marginBottom: 16 },
+  subtitleCompact: { marginBottom: 8 },
   label: { fontSize: 13, fontWeight: '800', color: '#486581', marginBottom: 6, marginTop: 12 },
   input: { borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14, padding: 12, fontSize: 15, fontWeight: '600', color: '#17324D', backgroundColor: '#F8FAFC' },
   inputError: { borderColor: '#B91C1C' },
   textArea: { minHeight: 110 },
+  textAreaCompact: { minHeight: 64 },
   fieldError: { color: '#B91C1C', fontSize: 13, fontWeight: '700', marginTop: 6 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
   actionBar: {
