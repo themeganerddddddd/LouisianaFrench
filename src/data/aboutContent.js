@@ -6,7 +6,7 @@ export const ABOUT_TEXT = {
         heading: 'Core team',
         names: [
           'Westley Sturham',
-          'Marguerite “Maggie” Justus, CODOFIL',
+          'Marguerite Justus, CODOFIL',
           'Taalib Pierre-Auguste',
           'Logan Delafosse'
         ]
@@ -14,22 +14,22 @@ export const ABOUT_TEXT = {
       {
         heading: 'Louisiana French',
         names: [
-          'Maggie Justus, CODOFIL',
-          'Logan Delafosse',
-          'Marlene Breaux Toups',
-          'Burnell Lemoine',
-          'Daniel Blanchard',
-          'Megan Constantin, CODOFIL',
-          'Zachary Fusilier',
-          'Sam Craft',
-          'Blake Miller',
-          'Ryan Langley',
           'Clélie Ancelet',
+          'Daniel Blanchard',
+          'Marlene Breaux Toups',
           'Valerie Broussard Boston',
+          'Megan Constantin, CODOFIL',
+          'Sam Craft',
           'Sherman Cravins',
+          'Logan Delafosse',
           'Gail DuBois Broussard',
-          'Wildon Fontent',
-          'Lester Gauthier'
+          'Wil Fontenot',
+          'Zachary Fusilier',
+          'Lester Gauthier',
+          'Maggie Justus',
+          'Ryan Langley',
+          'Burnell Lemoine',
+          'Blake Miller'
         ]
       },
       {

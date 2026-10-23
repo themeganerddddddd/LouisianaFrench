@@ -1,43 +1,39 @@
 import { ABOUT_TEXT } from '../aboutContent';
 
-function louisianaFrenchNames() {
-  const section = ABOUT_TEXT.acknowledgements.sections.find(
-    (entry) => entry.heading === 'Louisiana French'
+function sectionNames(heading) {
+  return (
+    ABOUT_TEXT.acknowledgements.sections.find((entry) => entry.heading === heading)
+      ?.names ?? []
   );
-  return section?.names ?? [];
 }
 
 describe('ABOUT_TEXT acknowledgements', () => {
-  it('lists the Louisiana French contributors with CODOFIL on Megan Constantin', () => {
-    const names = louisianaFrenchNames();
-
-    expect(names).toEqual(
-      expect.arrayContaining([
-        'Sherman Cravins',
-        'Gail DuBois Broussard',
-        'Wildon Fontent',
-        'Lester Gauthier',
-        'Megan Constantin, CODOFIL'
-      ])
-    );
-    expect(names).not.toContain('Megan Constantin');
-  });
-
-  it('leaves Core team and Kouri-Vini name lists unchanged by this content update', () => {
-    const core = ABOUT_TEXT.acknowledgements.sections.find(
-      (entry) => entry.heading === 'Core team'
-    );
-    const kouriVini = ABOUT_TEXT.acknowledgements.sections.find(
-      (entry) => entry.heading === 'Kouri-Vini'
-    );
-
-    expect(core?.names).toEqual([
+  it('lists Core team, Louisiana French, and Kouri-Vini in the provided order', () => {
+    expect(sectionNames('Core team')).toEqual([
       'Westley Sturham',
-      'Marguerite “Maggie” Justus, CODOFIL',
+      'Marguerite Justus, CODOFIL',
       'Taalib Pierre-Auguste',
       'Logan Delafosse'
     ]);
-    expect(kouriVini?.names).toEqual([
+    expect(sectionNames('Louisiana French')).toEqual([
+      'Clélie Ancelet',
+      'Daniel Blanchard',
+      'Marlene Breaux Toups',
+      'Valerie Broussard Boston',
+      'Megan Constantin, CODOFIL',
+      'Sam Craft',
+      'Sherman Cravins',
+      'Logan Delafosse',
+      'Gail DuBois Broussard',
+      'Wil Fontenot',
+      'Zachary Fusilier',
+      'Lester Gauthier',
+      'Maggie Justus',
+      'Ryan Langley',
+      'Burnell Lemoine',
+      'Blake Miller'
+    ]);
+    expect(sectionNames('Kouri-Vini')).toEqual([
       'Taalib Pierre-Auguste',
       'Alexandre “Hibou” Leblanc',
       'Kaël “Chaoui” Leblanc',
