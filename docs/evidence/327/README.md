@@ -19,3 +19,11 @@
 ## Note
 
 Expo Go only runs one major client at a time. With 58.0.5 installed, the main-branch SDK 57 harness on :8083 may need Expo Go 57 again until `main` upgrades.
+
+## Dropdown + Support
+
+- Open pelican menu: Account + About Us
+- Expand About Us: Acknowledgements, Privacy, FAQ, Support
+- FAQ leaf opens content
+- Support leaf opens bug-report flow (Report a bug / Cancel)
+- Account row opens account surface
