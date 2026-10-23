@@ -69,3 +69,22 @@ jest.mock('react-native-gesture-handler', () => {
     Directions: {}
   };
 });
+
+// SDK 58 vector-icon font loading goes through expo-asset; keep icons renderable
+// in Jest without registering real font modules.
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  const Icon = ({ name, testID, ...props }) =>
+    React.createElement(Text, { testID, accessibilityLabel: name, ...props }, name);
+  return new Proxy(
+    {},
+    {
+      get: (_target, prop) => {
+        if (prop === '__esModule') return true;
+        if (prop === 'default') return Icon;
+        return Icon;
+      }
+    }
+  );
+});
