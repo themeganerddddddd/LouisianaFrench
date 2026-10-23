@@ -21,7 +21,6 @@ import AboutTextModal from '../components/AboutTextModal';
 import SignInModal from '../components/SignInModal';
 import { createSupabaseIdentityConnector } from '../identity/connector';
 import BugReportButton from '../components/BugReportButton';
-import BugReportFlow from '../components/BugReportFlow';
 import DebugCatalogModal from '../components/DebugCatalogModal';
 import HomeAboutMenu from '../components/HomeAboutMenu';
 import { ABOUT_TEXT } from '../data/aboutContent';
@@ -32,6 +31,10 @@ import {
   getLastWorkedUnit,
   setDefaultLanguage
 } from '../utils/storage';
+
+// About menu uses a fade Modal. Opening the bug-report sheet in the same turn can
+// leave Android's mail app with a bare address and no subject or Device block.
+const ABOUT_MENU_EXIT_MS = 200;
 
 function getLessonButtonText(done, locked = false) {
   if (done) return 'Done';
@@ -311,6 +314,8 @@ export default function HomeScreen() {
   const [aboutMenuVisible, setAboutMenuVisible] = useState(false);
   const [aboutExpanded, setAboutExpanded] = useState(false);
   const [aboutModal, setAboutModal] = useState(null);
+  const [bugReportVisible, setBugReportVisible] = useState(false);
+  const bugReportOpenTimerRef = useRef(null);
   const [identity, setIdentity] = useState(null);
   const [signInVisible, setSignInVisible] = useState(false);
   const [recoveryActive, setRecoveryActive] = useState(false);
@@ -351,6 +356,13 @@ export default function HomeScreen() {
       linking.remove();
     };
   }, []);
+
+  useEffect(
+    () => () => {
+      clearTimeout(bugReportOpenTimerRef.current);
+    },
+    []
+  );
 
   useEffect(() => {
     async function bootstrapLanguage() {
@@ -457,7 +469,11 @@ export default function HomeScreen() {
     setAboutMenuVisible(false);
     setAboutExpanded(false);
     if (kind === 'support') {
-      setAboutModal({ type: 'bugReport' });
+      clearTimeout(bugReportOpenTimerRef.current);
+      bugReportOpenTimerRef.current = setTimeout(
+        () => setBugReportVisible(true),
+        ABOUT_MENU_EXIT_MS
+      );
       return;
     }
     setAboutModal({ type: 'text', content: ABOUT_TEXT[kind] });
@@ -793,6 +809,9 @@ export default function HomeScreen() {
           language={language}
           accentColor={theme.start}
           appearance="text"
+          flowVisible={bugReportVisible}
+          onFlowOpen={() => setBugReportVisible(true)}
+          onFlowClose={() => setBugReportVisible(false)}
         />
 
         <View style={{ height: 30 }} />
@@ -824,16 +843,6 @@ export default function HomeScreen() {
           content={aboutModal.content}
           accentColor={theme.accent}
           reduceMotion={reduceMotion}
-          onClose={() => setAboutModal(null)}
-        />
-      ) : null}
-
-      {aboutModal?.type === 'bugReport' ? (
-        <BugReportFlow
-          visible
-          screenName="Home"
-          language={language}
-          accentColor={theme.accent}
           onClose={() => setAboutModal(null)}
         />
       ) : null}

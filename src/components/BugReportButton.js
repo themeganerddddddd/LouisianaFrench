@@ -3,17 +3,43 @@ import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import BugReportFlow from './BugReportFlow';
 
-export default function BugReportButton({ screenName, language, accentColor, appearance = 'icon' }) {
-  const [showFlow, setShowFlow] = useState(false);
+export default function BugReportButton({
+  screenName,
+  language,
+  accentColor,
+  appearance = 'icon',
+  flowVisible,
+  onFlowOpen,
+  onFlowClose
+}) {
+  const [internalVisible, setInternalVisible] = useState(false);
+  const controlled = flowVisible !== undefined;
+  const visible = controlled ? flowVisible : internalVisible;
   const resolvedAccentColor =
     accentColor || (language === 'kreole' ? '#065F3B' : '#174A8B');
   const textOnly = appearance === 'text';
+
+  function openFlow() {
+    if (controlled) {
+      onFlowOpen?.();
+      return;
+    }
+    setInternalVisible(true);
+  }
+
+  function closeFlow() {
+    if (controlled) {
+      onFlowClose?.();
+      return;
+    }
+    setInternalVisible(false);
+  }
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={textOnly ? styles.textButton : [styles.iconButton, { backgroundColor: resolvedAccentColor }]}
-        onPress={() => setShowFlow(true)}
+        onPress={openFlow}
         accessibilityRole="button"
         accessibilityLabel="Report a bug"
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -27,8 +53,8 @@ export default function BugReportButton({ screenName, language, accentColor, app
         )}
       </TouchableOpacity>
       <BugReportFlow
-        visible={showFlow}
-        onClose={() => setShowFlow(false)}
+        visible={visible}
+        onClose={closeFlow}
         screenName={screenName}
         language={language}
         accentColor={resolvedAccentColor}
