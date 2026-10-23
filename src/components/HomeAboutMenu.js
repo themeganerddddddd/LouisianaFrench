@@ -4,8 +4,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 const LEAVES = [
   ['acknowledgements', 'Acknowledgements'],
   ['privacy', 'Privacy'],
-  ['faq', 'FAQ'],
-  ['support', 'Support']
+  ['faq', 'FAQ']
 ];
 
 export default function HomeAboutMenu({
@@ -66,7 +65,7 @@ export default function HomeAboutMenu({
             accessibilityLabel="About Us"
             accessibilityState={{ expanded }}
             onPress={onToggle}
-            style={[styles.sectionButton, styles.aboutSection]}
+            style={[styles.sectionButton, styles.dividedSection]}
           >
             <Text style={styles.sectionLabel}>About Us</Text>
             <Feather
@@ -93,6 +92,16 @@ export default function HomeAboutMenu({
               ))}
             </View>
           ) : null}
+
+          <Pressable
+            testID="about-menu-support"
+            accessibilityRole="button"
+            accessibilityLabel="Support"
+            onPress={() => onSelect('support')}
+            style={[styles.sectionButton, styles.dividedSection]}
+          >
+            <Text style={styles.sectionLabel}>Support</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>
@@ -124,7 +133,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF'
   },
-  aboutSection: {
+  dividedSection: {
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0'
   },

@@ -304,7 +304,9 @@ describe('HomeScreen', () => {
     await openLeaves();
     const leaves = screen.getByTestId('about-menu-leaves');
     expect(within(leaves).getAllByRole('button').map((button) => button.props.accessibilityLabel))
-      .toEqual(['Acknowledgements', 'Privacy', 'FAQ', 'Support']);
+      .toEqual(['Acknowledgements', 'Privacy', 'FAQ']);
+    expect(screen.getByTestId('about-menu-support')).toBeOnTheScreen();
+    expect(screen.queryByTestId('about-menu-leaf-support')).toBeNull();
     expect(screen.queryByText('Account settings')).toBeNull();
     expect(screen.queryByText('Why make this app')).toBeNull();
     expect(screen.queryByText('Remerciements')).toBeNull();
@@ -343,8 +345,8 @@ describe('HomeScreen', () => {
       expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
     }
 
-    await openLeaves();
-    await user.press(screen.getByTestId('about-menu-leaf-support'));
+    await user.press(screen.getByLabelText('About menu'));
+    await user.press(screen.getByTestId('about-menu-support'));
     expect(screen.queryByTestId('home-about-menu')).toBeNull();
     await act(async () => {
       jest.advanceTimersByTime(200);

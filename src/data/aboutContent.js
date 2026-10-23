@@ -119,7 +119,7 @@ export const ABOUT_TEXT = {
       {
         heading: 'Something not working?',
         paragraphs: [
-          'Open Support in this menu, or Report a bug on the screen where it happened. Both open the same report form.'
+          'Open Support in this menu (next to Account and About Us), or Report a bug on the screen where it happened. Both open the same report form.'
         ]
       },
       {

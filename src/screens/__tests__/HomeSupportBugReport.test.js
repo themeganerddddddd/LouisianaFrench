@@ -44,8 +44,7 @@ describe('Home About Support mailto parity', () => {
 
   async function openSupportSheet(user) {
     await user.press(screen.getByLabelText('About menu'));
-    await user.press(screen.getByRole('button', { name: 'About Us' }));
-    await user.press(screen.getByTestId('about-menu-leaf-support'));
+    await user.press(screen.getByTestId('about-menu-support'));
     expect(screen.queryByTestId('home-about-menu')).toBeNull();
     await act(async () => {
       jest.advanceTimersByTime(200);
