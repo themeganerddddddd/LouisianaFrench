@@ -121,6 +121,23 @@ describe('BugReportFlow: validation', () => {
     jest.clearAllMocks();
   });
 
+  it('keeps Cancel and Submit in a sticky action row outside the field scroll', () => {
+    const { getByTestId, getByLabelText } = render(
+      <BugReportFlow
+        visible
+        onClose={jest.fn()}
+        screenName="Home"
+        language="cajun"
+        accentColor="#2771CB"
+      />
+    );
+
+    expect(getByTestId('bug-report-form-scroll')).toBeOnTheScreen();
+    expect(getByTestId('bug-report-actions')).toBeOnTheScreen();
+    expect(getByLabelText('Cancel bug report')).toBeOnTheScreen();
+    expect(getByLabelText('Submit bug report')).toBeOnTheScreen();
+  });
+
   it('shows field errors and blocks consent when form is invalid', async () => {
     const user = userEvent.setup();
     mockValidate.mockReturnValue({

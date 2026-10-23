@@ -36,6 +36,7 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
   const nameInputRef = useRef();
   const emailInputRef = useRef();
   const descInputRef = useRef();
+  const formScrollRef = useRef();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const swayAnim = useRef(new Animated.Value(0)).current;
   const submittingRef = useRef(false);
@@ -110,6 +111,16 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
     }
   }
 
+  function scrollFieldIntoView(towardEnd = false) {
+    // Wait for the keyboard lift so the focused field is not left under the keys.
+    setTimeout(() => {
+      const scroll = formScrollRef.current;
+      if (!scroll) return;
+      if (towardEnd) scroll.scrollToEnd({ animated: true });
+      else scroll.scrollTo({ y: 0, animated: true });
+    }, Platform.OS === 'ios' ? 280 : 100);
+  }
+
   // The edge-to-edge Modal window is not resized for the keyboard. Android reports the keyboard
   // height without the navigation bar (negative for floating keyboards); iOS includes the home
   // indicator area.
@@ -140,45 +151,82 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
       >
         <View style={styles.sheet}>
           {stage === 'form' && (
-            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-              <Text style={styles.heading}>Report a bug</Text>
-              <Text style={styles.subtitle}>Tell us what went wrong.</Text>
-              <Text style={styles.label}>Name</Text>
-              <TextInput ref={nameInputRef} style={[styles.input, errors.name && styles.inputError]} placeholder="Your name" value={name} onChangeText={setName} accessibilityLabel="Bug report name" />
-              {errors.name && <Text style={styles.fieldError}>{errors.name}</Text>}
-              <Text style={styles.label}>Email</Text>
-              <TextInput ref={emailInputRef} style={[styles.input, errors.email && styles.inputError]} placeholder="you@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" accessibilityLabel="Bug report email" />
-              {errors.email && <Text style={styles.fieldError}>{errors.email}</Text>}
-              <Text style={styles.label}>What happened?</Text>
-              <TextInput ref={descInputRef} style={[styles.input, styles.textArea, errors.description && styles.inputError]} placeholder={'Describe the bug or issue\u2026'} value={description} onChangeText={setDescription} multiline accessibilityLabel="Bug report description" />
-              {errors.description && <Text style={styles.fieldError}>{errors.description}</Text>}
-              <View style={styles.actions}>
+            <>
+              <ScrollView
+                ref={formScrollRef}
+                testID="bug-report-form-scroll"
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="interactive"
+                automaticallyAdjustKeyboardInsets
+                contentContainerStyle={styles.content}
+              >
+                <Text style={styles.heading}>Report a bug</Text>
+                <Text style={styles.subtitle}>Tell us what went wrong.</Text>
+                <Text style={styles.label}>Name</Text>
+                <TextInput
+                  ref={nameInputRef}
+                  style={[styles.input, errors.name && styles.inputError]}
+                  placeholder="Your name"
+                  value={name}
+                  onChangeText={setName}
+                  onFocus={() => scrollFieldIntoView(false)}
+                  accessibilityLabel="Bug report name"
+                />
+                {errors.name && <Text style={styles.fieldError}>{errors.name}</Text>}
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  ref={emailInputRef}
+                  style={[styles.input, errors.email && styles.inputError]}
+                  placeholder="you@example.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  onFocus={() => scrollFieldIntoView(false)}
+                  accessibilityLabel="Bug report email"
+                />
+                {errors.email && <Text style={styles.fieldError}>{errors.email}</Text>}
+                <Text style={styles.label}>What happened?</Text>
+                <TextInput
+                  ref={descInputRef}
+                  style={[styles.input, styles.textArea, errors.description && styles.inputError]}
+                  placeholder={'Describe the bug or issue\u2026'}
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  onFocus={() => scrollFieldIntoView(true)}
+                  accessibilityLabel="Bug report description"
+                />
+                {errors.description && <Text style={styles.fieldError}>{errors.description}</Text>}
+              </ScrollView>
+              <View testID="bug-report-actions" style={styles.actionBar}>
                 <ActionButton label="Cancel" onPress={handleClose} accessibilityLabel="Cancel bug report" />
                 <ActionButton label="Submit" primary onPress={handleSubmit} accessibilityLabel="Submit bug report" />
               </View>
-            </ScrollView>
+            </>
           )}
           {stage === 'consent' && (
-            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-              <Text style={styles.heading}>Share device info?</Text>
-              <View style={styles.warningBox}>
-                <Text style={styles.warningText}>{'To help troubleshoot, we\u2019ll attach some device information to your email. Nothing is collected until you accept.'}</Text>
-              </View>
-              <Text style={[styles.subtitle, { marginBottom: 8, marginTop: 8 }]}>We will include:</Text>
-              {CONSENT_FIELDS.map(([label, hint]) => (
-                <View key={label} style={styles.fieldRow}>
-                  <View style={[styles.dot, { backgroundColor: accentColor }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>{label}</Text>
-                    <Text style={styles.fieldHint}>{hint}</Text>
-                  </View>
+            <>
+              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+                <Text style={styles.heading}>Share device info?</Text>
+                <View style={styles.warningBox}>
+                  <Text style={styles.warningText}>{'To help troubleshoot, we\u2019ll attach some device information to your email. Nothing is collected until you accept.'}</Text>
                 </View>
-              ))}
-              <View style={styles.actions}>
+                <Text style={[styles.subtitle, { marginBottom: 8, marginTop: 8 }]}>We will include:</Text>
+                {CONSENT_FIELDS.map(([label, hint]) => (
+                  <View key={label} style={styles.fieldRow}>
+                    <View style={[styles.dot, { backgroundColor: accentColor }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.fieldLabel}>{label}</Text>
+                      <Text style={styles.fieldHint}>{hint}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+              <View testID="bug-report-consent-actions" style={styles.actionBar}>
                 <ActionButton label="Decline" onPress={handleClose} accessibilityLabel="Decline consent and close" />
                 <ActionButton label={submitting ? 'Sending\u2026' : 'Accept & send'} primary onPress={handleAccept} disabled={submitting} accessibilityLabel="Accept and send bug report" />
               </View>
-            </ScrollView>
+            </>
           )}
           {stage === 'confirmation' && (
             <View style={{ alignItems: 'center', padding: 24 }}>
@@ -199,8 +247,15 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', padding: 14 },
-  sheet: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#000', borderRadius: 22, maxHeight: '92%', overflow: 'hidden' },
-  content: { padding: 20 },
+  sheet: {
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#000',
+    borderRadius: 22,
+    maxHeight: '92%',
+    overflow: 'hidden'
+  },
+  content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
   heading: { fontSize: 20, fontWeight: '900', color: '#17324D', marginBottom: 4 },
   subtitle: { fontSize: 14, fontWeight: '600', color: '#64748B', marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '800', color: '#486581', marginBottom: 6, marginTop: 12 },
@@ -209,6 +264,16 @@ const styles = StyleSheet.create({
   textArea: { minHeight: 110 },
   fieldError: { color: '#B91C1C', fontSize: 13, fontWeight: '700', marginTop: 6 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  actionBar: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    backgroundColor: '#fff'
+  },
   actionButton: { flex: 1, borderRadius: 16, paddingVertical: 13, alignItems: 'center' },
   warningBox: { backgroundColor: '#FFF7ED', borderWidth: 1, borderColor: '#FDBA74', borderRadius: 16, padding: 14, marginTop: 8, marginBottom: 4 },
   warningText: { fontSize: 14, fontWeight: '700', color: '#9A3412' },

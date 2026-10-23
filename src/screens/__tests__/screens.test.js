@@ -3330,6 +3330,7 @@ describe('AdvancedScreen', () => {
     expect(screen.getByText('Advanced Kouri-Vini Hub')).toHaveStyle({ textAlign: 'center' });
     expect(screen.getByTestId('advanced-home-button')).toBeOnTheScreen();
     expect(screen.getByLabelText('Back to Home')).toBeOnTheScreen();
+    expect(screen.getByText('Home')).toBeOnTheScreen();
     expect(screen.queryByText('Experimental speaking drills')).toBeNull();
     expect(screen.queryByText('Self-reviewed speech practice prototype')).toBeNull();
     expect(screen.getByText('Play Audio')).toBeOnTheScreen();

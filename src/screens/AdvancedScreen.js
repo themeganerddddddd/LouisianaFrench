@@ -7,6 +7,9 @@ import SpeechPracticeScreen, { SPEECH_WORD_LIMIT } from './SpeechPracticeScreen'
 export default function AdvancedScreen({ route, navigation }) {
   const { language, scored, word } = route.params ?? {};
   const leave = () => (word ? navigation.goBack() : navigation.replace('Home', { language }));
+  const leaveLabel = word ? 'Back' : 'Home';
+  const accent = language === 'kreole' ? '#066B3F' : '#2771CB';
+  const buttonFill = language === 'kreole' ? '#E7F5EE' : '#EAF3FF';
 
   return (
     <SafeScreenView style={styles.container}>
@@ -14,10 +17,7 @@ export default function AdvancedScreen({ route, navigation }) {
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <TouchableOpacity
-              style={[
-                styles.homeButton,
-                { backgroundColor: language === 'kreole' ? '#E7F5EE' : '#EAF3FF' }
-              ]}
+              style={[styles.homeButton, { backgroundColor: buttonFill }]}
               onPress={leave}
               accessibilityRole="button"
               accessibilityLabel={word ? 'Back' : 'Back to Home'}
@@ -25,9 +25,10 @@ export default function AdvancedScreen({ route, navigation }) {
             >
               <Ionicons
                 name={word ? 'arrow-back' : 'home'}
-                size={21}
-                color={language === 'kreole' ? '#066B3F' : '#2771CB'}
+                size={20}
+                color={accent}
               />
+              <Text style={[styles.homeButtonLabel, { color: accent }]}>{leaveLabel}</Text>
             </TouchableOpacity>
             <Text style={styles.title}>
               {language === 'cajun' ? 'Advanced French Hub' : 'Advanced Kouri-Vini Hub'}
@@ -53,11 +54,18 @@ const styles = StyleSheet.create({
   header: { marginBottom: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   homeButton: {
-    width: 44,
-    height: 44,
+    minWidth: 44,
+    minHeight: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    gap: 2
+  },
+  homeButtonLabel: {
+    fontSize: 12,
+    fontWeight: '800'
   },
   title: {
     flex: 1,
