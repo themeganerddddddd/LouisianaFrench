@@ -65,7 +65,7 @@ describe('HomeAboutMenu', () => {
     expect(screen.getByTestId('about-menu-disclosure').props.color).toBe('#2771CB');
   });
 
-  it('starts with Account above About Us', () => {
+  it('orders Account, About Us, then Support at the top level', () => {
     render(
       <HomeAboutMenu
         {...aboutMenuFixture}
@@ -81,6 +81,25 @@ describe('HomeAboutMenu', () => {
       .map((node) => node.props.accessibilityLabel);
     expect(labels.indexOf('Account')).toBeGreaterThanOrEqual(0);
     expect(labels.indexOf('Account')).toBeLessThan(labels.indexOf('About Us'));
+    expect(labels.indexOf('About Us')).toBeLessThan(labels.indexOf('Support'));
+    expect(screen.queryByTestId('about-menu-leaf-support')).toBeNull();
+  });
+
+  it('calls onSelect(support) from the top-level Support row', async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+    render(
+      <HomeAboutMenu
+        {...aboutMenuFixture}
+        onAccount={jest.fn()}
+        onToggle={jest.fn()}
+        onSelect={onSelect}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    await user.press(screen.getByTestId('about-menu-support'));
+    expect(onSelect).toHaveBeenCalledWith('support');
   });
 
   it('shows the display name with Account when signed in', () => {

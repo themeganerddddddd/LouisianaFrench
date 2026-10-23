@@ -14,6 +14,12 @@ What did you test? Explain what each test is meant to check and why those tests 
 
 -
 
+## What a learner sees
+
+If this changes the UI, add screen grabs and/or a short video of the feature working. Put files under `docs/evidence/<issue>/`, link them from this section with `raw.githubusercontent.com` URLs on this branch’s commit, and say what was clicked and what happened. If it does not change the UI, say so.
+
+-
+
 ## Risk
 
 Is this an ordinary change, or does it touch Identity, session storage, auth, CI workflows, or release config? Say which, and who read the latest commit.
@@ -21,4 +27,3 @@ Is this an ordinary change, or does it touch Identity, session storage, auth, CI
 ## How to revert
 
 How do we undo this if it breaks something for learners?
-
