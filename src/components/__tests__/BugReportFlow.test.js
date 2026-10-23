@@ -2,7 +2,10 @@ import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/
 import { Alert, TextInput } from 'react-native';
 
 import BugReportButton from '../BugReportButton';
-import BugReportFlow from '../BugReportFlow';
+import BugReportFlow, {
+  bugReportSheetMaxHeight,
+  keyboardHeightFromEvent
+} from '../BugReportFlow';
 
 // ---------------------------------------------------------------------------
 // Mocks for utility modules — matched to existing interfaces
@@ -119,6 +122,51 @@ describe('BugReportButton', () => {
 describe('BugReportFlow: validation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('keeps Cancel and Submit in a sticky action row outside the field scroll', () => {
+    const { getByTestId, getByLabelText } = render(
+      <BugReportFlow
+        visible
+        onClose={jest.fn()}
+        screenName="Home"
+        language="cajun"
+        accentColor="#2771CB"
+      />
+    );
+
+    expect(getByTestId('bug-report-form-scroll')).toBeOnTheScreen();
+    expect(getByTestId('bug-report-actions')).toBeOnTheScreen();
+    expect(getByLabelText('Cancel bug report')).toBeOnTheScreen();
+    expect(getByLabelText('Submit bug report')).toBeOnTheScreen();
+  });
+
+  it('caps the sheet to the space above the keyboard so fields are not clipped off the top', () => {
+    expect(
+      bugReportSheetMaxHeight({
+        windowHeight: 800,
+        keyboardOffset: 320,
+        topInset: 40,
+        bottomInset: 20,
+      })
+    ).toBe(800 - 40 - 20 - 14 - 320);
+
+    expect(
+      bugReportSheetMaxHeight({
+        windowHeight: 800,
+        keyboardOffset: 0,
+        topInset: 40,
+        bottomInset: 20,
+      })
+    ).toBe(800 * 0.92);
+  });
+
+  it('uses the smaller credible keyboard height so an inflated Android height is ignored', () => {
+    expect(
+      keyboardHeightFromEvent({ height: 780, screenY: 500 }, 800)
+    ).toBe(300);
+    expect(keyboardHeightFromEvent({ height: -40, screenY: 0 }, 800)).toBe(0);
+    expect(keyboardHeightFromEvent({ height: 320 }, 800)).toBe(320);
   });
 
   it('shows field errors and blocks consent when form is invalid', async () => {

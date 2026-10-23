@@ -14,5 +14,6 @@ Follow the personal `pr-ui-evidence` skill. Repo specifics:
 - Evidence root: `docs/evidence/<issue>/`
 - Example of linked grabs: PR #317 (`docs/evidence/307/`)
 - AGENTS.md requires this for UI pull requests
+- Before commit: resize grabs and videos to **50%** on each side (same aspect ratio). Emulator full-res is too large for the PR.
 
 Owner/repo for raw links: `themeganerddddddd/LouisianaFrench`.

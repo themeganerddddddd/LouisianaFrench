@@ -731,25 +731,47 @@ describe('HomeScreen', () => {
       });
     }
 
-    it.each(['ios', 'android'])(
-      'lifts the bug report sheet 14dp above the %s keyboard and lowers it when the keyboard hides',
-      async (platform) => {
-        jest.replaceProperty(Platform, 'OS', platform);
-        const overlay = await openBugReport();
-        fireEvent(overlay, 'layout', {
-          persist: () => {},
-          nativeEvent: { layout: { x: 0, y: 0, width: 412, height: screenHeight } }
-        });
+    it('lifts the bug report sheet 14dp above the iOS keyboard and lowers it when the keyboard hides', async () => {
+      jest.replaceProperty(Platform, 'OS', 'ios');
+      const overlay = await openBugReport();
+      fireEvent(overlay, 'layout', {
+        persist: () => {},
+        nativeEvent: { layout: { x: 0, y: 0, width: 412, height: screenHeight } }
+      });
 
-        emitKeyboard(KEYBOARD_EVENTS[platform].show);
-        await waitFor(() => expect(sheetBottomEdge()).toBe(keyboardTop - 14));
+      emitKeyboard(KEYBOARD_EVENTS.ios.show);
+      await waitFor(() => expect(sheetBottomEdge()).toBe(keyboardTop - 14));
 
-        emitKeyboard(KEYBOARD_EVENTS[platform].hide);
-        await waitFor(() =>
-          expect(sheetBottomEdge()).toBe(screenHeight - insets.bottom - 14)
+      emitKeyboard(KEYBOARD_EVENTS.ios.hide);
+      await waitFor(() =>
+        expect(sheetBottomEdge()).toBe(screenHeight - insets.bottom - 14)
+      );
+    });
+
+    it('caps the Android bug report sheet for the keyboard without double-padding the overlay', async () => {
+      jest.replaceProperty(Platform, 'OS', 'android');
+      const overlay = await openBugReport();
+      fireEvent(overlay, 'layout', {
+        persist: () => {},
+        nativeEvent: { layout: { x: 0, y: 0, width: 412, height: screenHeight } }
+      });
+      const closedMaxHeight = StyleSheet.flatten(
+        screen.getByTestId('bug-report-sheet').props.style
+      ).maxHeight;
+
+      emitKeyboard(KEYBOARD_EVENTS.android.show);
+      await waitFor(() => {
+        expect(StyleSheet.flatten(overlay.props.style).paddingBottom).toBe(insets.bottom + 14);
+        expect(StyleSheet.flatten(screen.getByTestId('bug-report-sheet').props.style).maxHeight).toBeLessThan(
+          closedMaxHeight
         );
-      }
-    );
+      });
+
+      emitKeyboard(KEYBOARD_EVENTS.android.hide);
+      await waitFor(() =>
+        expect(sheetBottomEdge()).toBe(screenHeight - insets.bottom - 14)
+      );
+    });
 
     it('keeps the bug report sheet above the inset for a floating Android keyboard', async () => {
       jest.replaceProperty(Platform, 'OS', 'android');
@@ -3330,6 +3352,7 @@ describe('AdvancedScreen', () => {
     expect(screen.getByText('Advanced Kouri-Vini Hub')).toHaveStyle({ textAlign: 'center' });
     expect(screen.getByTestId('advanced-home-button')).toBeOnTheScreen();
     expect(screen.getByLabelText('Back to Home')).toBeOnTheScreen();
+    expect(screen.getByText('Home')).toBeOnTheScreen();
     expect(screen.queryByText('Experimental speaking drills')).toBeNull();
     expect(screen.queryByText('Self-reviewed speech practice prototype')).toBeNull();
     expect(screen.getByText('Play Audio')).toBeOnTheScreen();
