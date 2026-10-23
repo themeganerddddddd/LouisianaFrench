@@ -346,6 +346,9 @@ describe('HomeScreen', () => {
     await openLeaves();
     await user.press(screen.getByTestId('about-menu-leaf-support'));
     expect(screen.queryByTestId('home-about-menu')).toBeNull();
+    await act(async () => {
+      jest.advanceTimersByTime(200);
+    });
     expect(await screen.findByText('Tell us what went wrong.')).toBeOnTheScreen();
     await user.press(screen.getByLabelText('Cancel bug report'));
     expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
