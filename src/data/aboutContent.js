@@ -19,13 +19,17 @@ export const ABOUT_TEXT = {
           'Marlene Breaux Toups',
           'Burnell Lemoine',
           'Daniel Blanchard',
-          'Megan Constantin',
+          'Megan Constantin, CODOFIL',
           'Zachary Fusilier',
           'Sam Craft',
           'Blake Miller',
           'Ryan Langley',
           'Clélie Ancelet',
-          'Valerie Broussard Boston'
+          'Valerie Broussard Boston',
+          'Sherman Cravins',
+          'Gail DuBois Broussard',
+          'Wildon Fontent',
+          'Lester Gauthier'
         ]
       },
       {
