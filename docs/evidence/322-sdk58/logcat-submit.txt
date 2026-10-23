@@ -1,0 +1,302 @@
+--------- beginning of main
+10-23 13:08:14.595 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.chromesync.tasks.SendDeviceInfoTaskBoundService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.596 31161 15342 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.596 31161 13363 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.596 31161 31161 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.chromesync.tasks.SendDeviceInfoTaskBoundService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.602 31161 15342 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.606 31161 13927 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.612 31161 13927 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.612 31161 13927 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.631 31161 13927 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.631 31161 15342 I Auth    : (REDACTED) [GcmTaskChimeraService] Sync reported at %s has status of %s.
+10-23 13:08:14.632 31161 15342 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.637 31161 13927 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.643 19694 15309 I Finsky:background: [156] IV2::TD: Fetching metadata done. com.google.android.tts[iid:96] [isid:i9ZnA2KdRxawu10HZBUJzg] [tid: 1000000096]
+10-23 13:08:14.643 31161 10432 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.644 19694 15308 I Finsky:background: [155] ICalc: Partition available space: 3835363328, install size: 71699866, min free: 520557158, additional needed: 0
+10-23 13:08:14.644 19694 19739 I Finsky:background: [64] AV::DSC: sufficient disk space space available for com.google.android.tts[iid:96] [isid:i9ZnA2KdRxawu10HZBUJzg] [tid: 1000000096]: 71699866
+10-23 13:08:14.648 31161 13363 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.670 31161 15342 I RecoverableKeyStoreGms: [SignedCertificatesCache] Invalidating expired cached value (current time 1792778894670, cache expired 1792706402878)
+10-23 13:08:14.696 19694 19746 W Finsky:background: [70] AV::PV: Can't download patch for package com.google.android.tts, artifact config.en, because didn't receive one in delivery response.
+10-23 13:08:14.696 19694 19746 W Finsky:background: [70] AV::PV: Can't download patch for package com.google.android.tts, artifact config.x86_64, because didn't receive one in delivery response.
+10-23 13:08:14.697 19694 19746 W Finsky:background: [70] AV::PV: Can't download patch for package com.google.android.tts, artifact config.xxhdpi, because didn't receive one in delivery response.
+10-23 13:08:14.697 19694 15309 I Finsky:background: [156] IV2::AdvHelper: Triggering verification metadata sync gRPC for session 847490911, package com.google.android.tts (isWebApk=false, isPrivateApp=false)
+10-23 13:08:14.698 31161 13363 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+--------- beginning of system
+10-23 13:08:14.698   709  1274 W ActivityManager: Unable to start service Intent { act=com.google.android.verifier.BIND_VERIFIER_PUBLIC_API xflg=0x4 pkg=com.google.android.verifier } U=0: not found
+10-23 13:08:14.698   709  1986 W ActivityManager: Unbind failed: could not find connection for android.os.BinderProxy@7001e85
+10-23 13:08:14.699 19694 15309 W Finsky:background: [156] IV2::AdvHelper: Failed to sync verification metadata for session 847490911, package com.google.android.tts: io.grpc.StatusRuntimeException: UNIMPLEMENTED: bindService(Intent { act=com.google.android.verifier.BIND_VERIFIER_PUBLIC_API xflg=0x4 pkg=com.google.android.verifier }) returned false
+10-23 13:08:14.699 19694 15309 I Finsky:background: [156] IV2::TD: Resource fetch start. com.google.android.tts[iid:96] [isid:i9ZnA2KdRxawu10HZBUJzg] [tid: 1000000096]
+10-23 13:08:14.699 19694 19746 I Finsky:background: [70] RF: No TaskData found for a new request.
+10-23 13:08:14.700 19694 15309 I Finsky:background: [156] IV2: onTaskProgress com.google.android.tts[iid:96] [isid:i9ZnA2KdRxawu10HZBUJzg] status:RESOURCE_FETCH_START, size: 0/0
+10-23 13:08:14.700 19694 15307 I Finsky:background: [154] IQ: Notifying installation update. [Package:com.google.android.tts, isid:i9ZnA2KdRxawu10HZBUJzg] state:DOWNLOADING, status=DOWNLOADING, status_code=0, reason=auto_update, tsc=PT45H22M41.556S, attempt=0
+10-23 13:08:14.702 19694 19737 I Finsky:background: [63] RF: RowId of the upserted row is 1000000096.
+10-23 13:08:14.702 31161 15337 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.702 19694 19737 I Finsky:background: [63] RF: Start fetching and post processing all artifacts with real time bandwidth check.
+10-23 13:08:14.703 19694 19694 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.tts, isid: i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.705 20075 20075 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.tts, isid:i9ZnA2KdRxawu10HZBUJzg] state:DOWNLOADING]
+10-23 13:08:14.709 31161 13927 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.709 31161 15288 I TelephonySpamChimeraSer: Running Telephony Spam Chimera Service [CONTEXT service_id=150 ]
+10-23 13:08:14.709 31161 15288 I TelephonySpamChimeraSer: Cleaning SIP Header local table of old entries [CONTEXT service_id=150 ]
+10-23 13:08:14.709 31161 15288 I SpamListSync: Call spam module disabled. Skipping cleaning cache sip header table. [CONTEXT service_id=150 ]
+10-23 13:08:14.709 31161 15288 I TelephonySpamChimeraSer: Syncing Call Spam List [CONTEXT service_id=150 ]
+10-23 13:08:14.709 31161 15288 I SpamListSync: (REDACTED) SpamListSyncChimeraService.syncSpamList called with tag: %s, extras: %s
+10-23 13:08:14.709 31161 15288 I SpamListSync: Call spam module disabled. Skipping spam list syncing. [CONTEXT service_id=150 ]
+10-23 13:08:14.709 31161 13927 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.710 19694 19739 I Finsky:background: [64] RM: create resource request id d28cb774-86a2-45e5-b23a-89e1adaf3182 for request pkg_id=com.google.android.tts artifact_id=config.x86_64 reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.711 19694 19737 I Finsky:background: [63] RM: create resource request id 2c8d5d40-33f2-497a-a5b6-8d7fe11a3415 for request pkg_id=com.google.android.tts artifact_id=com.google.android.tts.dm reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.713 19694 19739 I Finsky:background: [64] RM: create resource request id 93277c8a-c52f-409e-a775-a9e482b428ad for request pkg_id=com.google.android.tts artifact_id=com.google.android.tts.apk reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.713 19694 19737 I Finsky:background: [63] RM: create resource request id 78e55ed0-4dc6-48fa-b5c0-0969441b3c91 for request pkg_id=com.google.android.tts artifact_id=config.en reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.715 19694 19743 I Finsky:background: [67] RM: create resource request id a5d23589-f96e-40db-84b2-ce282387f69c for request pkg_id=com.google.android.tts artifact_id=config.xxhdpi reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.723 19694 19745 I Finsky:background: [69] DSC: enqueue()
+10-23 13:08:14.724 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.threadnetwork.credentials.firstparty.BorderRouterSyncBoundService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.724 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.threadnetwork.credentials.firstparty.BorderRouterSyncBoundService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.724 31161 15288 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.725 31161 10432 I GmsThreadNetwork: [BorderRouterSyncBoundService] Border Router sync service run task [CONTEXT service_id=305 ]
+10-23 13:08:14.725 19694 15361 I Finsky:background: [177] DS: request_id=502 generated with shared preferences
+10-23 13:08:14.725 19694 15361 I Finsky:background: [177] DS: enqueue(request_id=502, files_to_download=[config.x86_64(size:44233555)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY
+10-23 13:08:14.726 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.mdns.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+10-23 13:08:14.726 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.mdns.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+10-23 13:08:14.727   709   873 D ConnectivityService: NetReassign [no changes] [c 0] [a 0] [i 0]
+10-23 13:08:14.728 19694 19745 I Finsky:background: [69] DSC: enqueue()
+10-23 13:08:14.729 19694 15361 I Finsky:background: [177] DS: request_id=503 generated with shared preferences
+10-23 13:08:14.729 19694 15361 I Finsky:background: [177] DS: enqueue(request_id=503, files_to_download=[com.google.android.tts.dm(size:102079)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY
+10-23 13:08:14.731   709   873 D ConnectivityService: NetReassign [no changes] [c 0] [a 1] [i 0]
+10-23 13:08:14.731 31161 10432 I GmsThreadNetwork: [BorderRouterSynchronizer] Start syncing 1P Border Routers [CONTEXT service_id=305 ]
+10-23 13:08:14.732 19694 19744 I Finsky:background: [68] DSC: enqueue()
+10-23 13:08:14.732   709  1274 I WifiService: acquireMulticastLock uid=10211 lockTag=MdnsServiceBrowserImpl
+10-23 13:08:14.733 31161 31182 I MdnsServiceBrowser: (REDACTED) registering %s
+10-23 13:08:14.733 19694 15361 I Finsky:background: [177] DS: request_id=504 generated with shared preferences
+10-23 13:08:14.733 31161 13927 I GmsThreadNetwork: [BorderAgentScannerImpl] Started mDNS service browser [CONTEXT service_id=305 ]
+10-23 13:08:14.733 19694 15361 I Finsky:background: [177] DS: enqueue(request_id=504, files_to_download=[com.google.android.tts.apk(size:10813707)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY
+10-23 13:08:14.734  1069  1258 D IpClient.wlan0: set max DTIM multiplier to 1
+10-23 13:08:14.735   709   861 E WifiStaIfaceAidlImpl: setDtimMultiplier failed with service-specific exception: android.os.ServiceSpecificException:  (code 4)
+10-23 13:08:14.736   709   876 I serviceDiscovery: [MdnsDiscoveryManager] Registering listener for serviceType: _meshcop._udp.local
+10-23 13:08:14.742 19694 15361 I Finsky:background: [177] DS: enqueue with parallel downloads (request_id=502,groupId=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg)
+10-23 13:08:14.742 19694 15361 I Finsky:background: [177] DS::CD: download(502)
+10-23 13:08:14.742 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <502:QUEUED with WAITING_FOR_START:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.742 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.742 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.742 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.742 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <502:QUEUED with WAITING_FOR_START:0%[0%]>
+10-23 13:08:14.742 19694 15361 I Finsky:background: [177] DS::ISM: Starting invisible download job
+10-23 13:08:14.742 19694 19740 I Finsky:background: [65] DSC: enqueue()
+10-23 13:08:14.743 19694 15305 I Finsky:background: [152] SCH: Received scheduling request: Id: 40-9998, Constraints: [{ L: 0, D: 86400000, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+10-23 13:08:14.743 19694 19744 I Finsky:background: [68] RM: new request resource_request=d28cb774-86a2-45e5-b23a-89e1adaf3182 request_id=502 pkg_id=com.google.android.tts artifact_id=config.x86_64 isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.743 19694 15361 I Finsky:background: [177] DS: request_id=505 generated with shared preferences
+10-23 13:08:14.743 19694 15361 I Finsky:background: [177] DS: enqueue(request_id=505, files_to_download=[config.en(size:111001)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY
+10-23 13:08:14.744 19694 19744 I Finsky:background: [68] DSC: enqueue()
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DS: enqueue with parallel downloads (request_id=503,groupId=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg)
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DS::CD: download(503)
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DS: request_id=506 generated with shared preferences
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DS: enqueue(request_id=506, files_to_download=[config.xxhdpi(size:77375)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <503:QUEUED with WAITING_FOR_START:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.745 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <503:QUEUED with WAITING_FOR_START:0%[0%]>
+10-23 13:08:14.745 19694 19745 I Finsky:background: [69] RM: new request resource_request=2c8d5d40-33f2-497a-a5b6-8d7fe11a3415 request_id=503 pkg_id=com.google.android.tts artifact_id=com.google.android.tts.dm isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.749 19694 15361 I Finsky:background: [177] DS: enqueue with parallel downloads (request_id=504,groupId=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg)
+10-23 13:08:14.749 19694 15361 I Finsky:background: [177] DS::CD: download(504)
+10-23 13:08:14.750 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <504:QUEUED with WAITING_FOR_START:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.750 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.750 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.750 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.750 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <504:QUEUED with WAITING_FOR_START:0%[0%]>
+10-23 13:08:14.750 19694 19745 I Finsky:background: [69] RM: new request resource_request=93277c8a-c52f-409e-a775-a9e482b428ad request_id=504 pkg_id=com.google.android.tts artifact_id=com.google.android.tts.apk isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.752 19694 19744 I Finsky:background: [68] RM: getStatus resource_request=d28cb774-86a2-45e5-b23a-89e1adaf3182 request_id=502 pkg_id=com.google.android.tts artifact_id=config.x86_64 isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.752 19694 19744 I Finsky:background: [68] DSC: reviveDownload(502)
+10-23 13:08:14.752 19694 19744 I Finsky:background: [68] DS: reviveDownload(request_id=502)
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <502:RUNNING:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] DS: Received onProgress request_id=502
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] RM: receive resource status onProgress download_request_id=502, pkg_id=com.google.android.tts artifact_id=config.x86_64 reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 0/44233555
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <502:RUNNING:0%[0%]>
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] DS::CD: Using Cronet.
+10-23 13:08:14.752 19694 15361 I Finsky:background: [177] Device is eligible for platform Cronet and will attempt to use it.
+10-23 13:08:14.755 19694 19745 I Finsky:background: [69] RM: getStatus resource_request=2c8d5d40-33f2-497a-a5b6-8d7fe11a3415 request_id=503 pkg_id=com.google.android.tts artifact_id=com.google.android.tts.dm isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.755 19694 19745 I Finsky:background: [69] DSC: reviveDownload(503)
+10-23 13:08:14.755 19694 19745 I Finsky:background: [69] DS: reviveDownload(request_id=503)
+10-23 13:08:14.755 19694 19744 I Finsky:background: [68] RM: getStatus resource_request=d28cb774-86a2-45e5-b23a-89e1adaf3182 request_id=502 pkg_id=com.google.android.tts artifact_id=config.x86_64 isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.755 19694 19744 I Finsky:background: [68] DSC: reviveDownload(502)
+10-23 13:08:14.755 19694 19744 I Finsky:background: [68] DS: reviveDownload(request_id=502)
+10-23 13:08:14.755 19694 19740 I Finsky:background: [65] RM: getStatus resource_request=93277c8a-c52f-409e-a775-a9e482b428ad request_id=504 pkg_id=com.google.android.tts artifact_id=com.google.android.tts.apk isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.755 19694 19740 I Finsky:background: [65] DSC: reviveDownload(504)
+10-23 13:08:14.755 19694 19740 I Finsky:background: [65] DS: reviveDownload(request_id=504)
+10-23 13:08:14.757   709  1274 D ConnectivityService: requestNetwork for uid/pid:10145/19694 activeRequest: null callbackRequest: 751 [NetworkRequest [ REQUEST id=752, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10145 RequestorUid: 10145 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS: Current runningDownloadsCount: 0, queuedCount: 1
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS: Incremented runningDownloadsCount to: 1
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <503:RUNNING:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS: Received onProgress request_id=503
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] RM: receive resource status onProgress download_request_id=503, pkg_id=com.google.android.tts artifact_id=com.google.android.tts.dm reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 0/102079
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <503:RUNNING:0%[0%]>
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS::CD: Using Cronet.
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <504:RUNNING:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS: Received onProgress request_id=504
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] RM: receive resource status onProgress download_request_id=504, pkg_id=com.google.android.tts artifact_id=com.google.android.tts.apk reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 0/10813707
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <504:RUNNING:0%[0%]>
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS::CD: Using Cronet.
+10-23 13:08:14.757   709   861 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=752, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10145 RequestorUid: 10145 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+10-23 13:08:14.757 19694 19759 I Finsky:background: [80] DS: Network is available [NetworkState(isConnected=true, isWifi=true, isMetered=false, isRoaming=false)].
+10-23 13:08:14.757 19694 19759 I Finsky:background: [80] DS: Updating downloads for network change
+10-23 13:08:14.757 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=502, files_to_download=[config.x86_64(size:44233555)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=44233555, retry[count=0, next_retry=n/a])
+10-23 13:08:14.757 19694 19745 I Finsky:background: [69] RM: getStatus resource_request=2c8d5d40-33f2-497a-a5b6-8d7fe11a3415 request_id=503 pkg_id=com.google.android.tts artifact_id=com.google.android.tts.dm isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.757 19694 19745 I Finsky:background: [69] DSC: reviveDownload(503)
+10-23 13:08:14.757   709   873 D ConnectivityService: NetReassign [752 : null → 102] [c 0] [a 0] [i 1]
+10-23 13:08:14.758   709   861 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=752, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10145 RequestorUid: 10145 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+10-23 13:08:14.758   709   861 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=752, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10145 RequestorUid: 10145 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+10-23 13:08:14.758   709   861 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=752, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10145 RequestorUid: 10145 RequestorPkg: com.android.vending UnderlyingNetworks: Null] ]
+10-23 13:08:14.758 19694 19745 I Finsky:background: [69] DS: reviveDownload(request_id=503)
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: Current runningDownloadsCount: 1, queuedCount: 1
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: Incremented runningDownloadsCount to: 2
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: Current runningDownloadsCount: 2, queuedCount: 1
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: Incremented runningDownloadsCount to: 3
+10-23 13:08:14.758 19694 19744 I Finsky:background: [68] RM: getStatus resource_request=93277c8a-c52f-409e-a775-a9e482b428ad request_id=504 pkg_id=com.google.android.tts artifact_id=com.google.android.tts.apk isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.758 19694 19744 I Finsky:background: [68] DSC: reviveDownload(504)
+10-23 13:08:14.758 19694 19744 I Finsky:background: [68] DS: reviveDownload(request_id=504)
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=503, files_to_download=[com.google.android.tts.dm(size:102079)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=102079, retry[count=0, next_retry=n/a])
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=502, files_to_download=[config.x86_64(size:44233555)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=44233555, retry[count=0, next_retry=n/a])
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=504, files_to_download=[com.google.android.tts.apk(size:10813707)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=10813707, retry[count=0, next_retry=n/a])
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=503, files_to_download=[com.google.android.tts.dm(size:102079)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=102079, retry[count=0, next_retry=n/a])
+10-23 13:08:14.758 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=504, files_to_download=[com.google.android.tts.apk(size:10813707)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=10813707, retry[count=0, next_retry=n/a])
+10-23 13:08:14.759 19694 19694 I Finsky:background: [2] RF: onProgress request_id=504, pkg_id=com.google.android.tts artifact_id=com.google.android.tts.apk isid=i9ZnA2KdRxawu10HZBUJzg artifact_bytes=0/10813707 pkg_bytes=0/55337717
+10-23 13:08:14.760 19694 15361 I Finsky:background: [177] DS: enqueue with parallel downloads (request_id=505,groupId=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg)
+10-23 13:08:14.760 19694 15361 I Finsky:background: [177] DS::CD: download(505)
+10-23 13:08:14.760 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <505:QUEUED with WAITING_FOR_START:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.760 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.760 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.760 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.760 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <505:QUEUED with WAITING_FOR_START:0%[0%]>
+10-23 13:08:14.760 19694 19694 I Finsky:background: [2] Updated time lastBroadcast=2026-10-23T18:08:12.700Z current=2026-10-23T18:08:14.760Z
+10-23 13:08:14.760 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.760 19694 19694 I Finsky:background: [2] RF: onProgress request_id=502, pkg_id=com.google.android.tts artifact_id=config.x86_64 isid=i9ZnA2KdRxawu10HZBUJzg artifact_bytes=0/44233555 pkg_bytes=0/55337717
+10-23 13:08:14.761 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.761 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.761 19694 19694 I Finsky:background: [2] RF: onProgress request_id=503, pkg_id=com.google.android.tts artifact_id=com.google.android.tts.dm isid=i9ZnA2KdRxawu10HZBUJzg artifact_bytes=0/102079 pkg_bytes=0/55337717
+10-23 13:08:14.762 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.762 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.762 19694 19744 I Finsky:background: [68] RM: new request resource_request=78e55ed0-4dc6-48fa-b5c0-0969441b3c91 request_id=505 pkg_id=com.google.android.tts artifact_id=config.en isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.762 19694 15361 I Finsky:background: [177] DS: enqueue with parallel downloads (request_id=506,groupId=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg)
+10-23 13:08:14.762 19694 15361 I Finsky:background: [177] DS::CD: download(506)
+10-23 13:08:14.762 19694 15361 I Finsky:background: [177] DS: downloadState filtering results: {502=true, 503=true, 504=true, 505=true, 506=true}
+10-23 13:08:14.762 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <506:QUEUED with WAITING_FOR_START:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.762 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.762 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.762 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.762 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <506:QUEUED with WAITING_FOR_START:0%[0%]>
+10-23 13:08:14.763 19694 19740 I Finsky:background: [65] RM: new request resource_request=a5d23589-f96e-40db-84b2-ce282387f69c request_id=506 pkg_id=com.google.android.tts artifact_id=config.xxhdpi isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.768 19694 19740 I Finsky:background: [65] RM: getStatus resource_request=78e55ed0-4dc6-48fa-b5c0-0969441b3c91 request_id=505 pkg_id=com.google.android.tts artifact_id=config.en isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.768 19694 19740 I Finsky:background: [65] DSC: reviveDownload(505)
+10-23 13:08:14.768 19694 19740 I Finsky:background: [65] DS: reviveDownload(request_id=505)
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <505:RUNNING:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DS: Received onProgress request_id=505
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] RM: receive resource status onProgress download_request_id=505, pkg_id=com.google.android.tts artifact_id=config.en reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 0/111001
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <505:RUNNING:0%[0%]>
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DS::CD: Using Cronet.
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DS: Current runningDownloadsCount: 3, queuedCount: 1
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DS: Incremented runningDownloadsCount to: 4
+10-23 13:08:14.768 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=505, files_to_download=[config.en(size:111001)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=111001, retry[count=0, next_retry=n/a])
+10-23 13:08:14.769 19694 19740 I Finsky:background: [65] RM: getStatus resource_request=a5d23589-f96e-40db-84b2-ce282387f69c request_id=506 pkg_id=com.google.android.tts artifact_id=config.xxhdpi isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.769 19694 19740 I Finsky:background: [65] DSC: reviveDownload(506)
+10-23 13:08:14.769 19694 19740 I Finsky:background: [65] RM: getStatus resource_request=78e55ed0-4dc6-48fa-b5c0-0969441b3c91 request_id=505 pkg_id=com.google.android.tts artifact_id=config.en isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.769 19694 19740 I Finsky:background: [65] DSC: reviveDownload(505)
+10-23 13:08:14.769 19694 19740 I Finsky:background: [65] DS: reviveDownload(request_id=506)
+10-23 13:08:14.769 19694 19740 I Finsky:background: [65] DS: reviveDownload(request_id=505)
+10-23 13:08:14.769 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=506, files_to_download=[config.xxhdpi(size:77375)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=77375, retry[count=0, next_retry=n/a])
+10-23 13:08:14.769 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=505, files_to_download=[config.en(size:111001)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=111001, retry[count=0, next_retry=n/a])
+10-23 13:08:14.769 19694 19694 I Finsky:background: [2] RF: onProgress request_id=505, pkg_id=com.google.android.tts artifact_id=config.en isid=i9ZnA2KdRxawu10HZBUJzg artifact_bytes=0/111001 pkg_bytes=0/55337717
+10-23 13:08:14.770 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.770 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.770 19694 15361 I Finsky:background: [177] DSC::L: Update all listeners for download <506:RUNNING:0%[0%]> in group com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.770 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::aslu@1287986 for download
+10-23 13:08:14.771 19694 15361 I Finsky:background: [177] DS: Received onProgress request_id=506
+10-23 13:08:14.771 19694 15361 I Finsky:background: [177] RM: receive resource status onProgress download_request_id=506, pkg_id=com.google.android.tts artifact_id=config.xxhdpi reason=auto_update isid=i9ZnA2KdRxawu10HZBUJzg, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 0/77375
+10-23 13:08:14.771 19694 15361 I Finsky:background: [177] DSC::L: Updating listener xga@63a9bdc for download
+10-23 13:08:14.771 19694 15361 I Finsky:background: [177] DSC::L: Updating listener DownloadServiceManagerListener::usr@8a6184f for download
+10-23 13:08:14.771 19694 15361 I Finsky:background: [177] DS::IDC: updateWith: <506:RUNNING:0%[0%]>
+10-23 13:08:14.771 19694 15361 I Finsky:background: [177] DS::CD: Using Cronet.
+10-23 13:08:14.771 19694 19745 I Finsky:background: [69] RM: getStatus resource_request=a5d23589-f96e-40db-84b2-ce282387f69c request_id=506 pkg_id=com.google.android.tts artifact_id=config.xxhdpi isid=i9ZnA2KdRxawu10HZBUJzg
+10-23 13:08:14.771 19694 19745 I Finsky:background: [69] DSC: reviveDownload(506)
+10-23 13:08:14.771 19694 19745 I Finsky:background: [69] DS: reviveDownload(request_id=506)
+10-23 13:08:14.771 19694 15361 I Finsky:background: [177] DS: Current runningDownloadsCount: 4, queuedCount: 1
+10-23 13:08:14.771 19694 15361 I Finsky:background: [177] DS: DS: onReviveDownload(request_id=506, files_to_download=[config.xxhdpi(size:77375)], context[group_id=com.google.android.tts:i9ZnA2KdRxawu10HZBUJzg], display_data[invisible=true, title=Speech Recognition & Synthesis], network_restrictions=UNMETERED_ONLY status=running, bytes_downloaded=0, total_bytes=77375, retry[count=0, next_retry=n/a])
+10-23 13:08:14.771 19694 19694 I Finsky:background: [2] RF: onProgress request_id=506, pkg_id=com.google.android.tts artifact_id=config.xxhdpi isid=i9ZnA2KdRxawu10HZBUJzg artifact_bytes=0/77375 pkg_bytes=0/55337717
+10-23 13:08:14.772 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.772 19694 19694 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+10-23 13:08:14.899 31161 15342 I RecoverableKeyStoreGms: [EnrollmentManager] Successfully downloaded certificates. [CONTEXT service_id=172 ]
+10-23 13:08:14.912   709  1274 I RecoverableKeyStoreMgr: The cert file serial number is the same, so skip updating.
+10-23 13:08:14.912 31161 15342 I RecoverableKeyStoreGms: [EnrollmentManager] Recovery service is initialized. [CONTEXT service_id=172 ]
+10-23 13:08:14.913 31161 15342 I RecoverableKeyStoreGms: [RecoverableKeyStoreGmsGcmTaskChimeraService] Cert download and update status=[INIT_RECOVERY_SERVICE_SUCCESS]
+10-23 13:08:14.914 31161 15342 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.917 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.auth.api.credentials.credman.service.CleanupExpiredHiddenChromeSyncKeyService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.917 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.auth.api.credentials.credman.service.CleanupExpiredHiddenChromeSyncKeyService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.918 31161 15342 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.919 31161 15342 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.919 31161 31161 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.auth.api.credentials.credman.service.CleanupExpiredHiddenChromeSyncKeyService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.919 31161 15342 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.923 31161 15343 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.946 31161 31170 W System  : A resource failed to call close. 
+10-23 13:08:14.947   709   718 I system_server: Background young concurrent mark compact GC freed 21MB AllocSpace bytes, 116(1920KB) LOS objects, 36% free, 39MB/62MB, paused 480us,20.020ms total 30.610ms
+10-23 13:08:14.948 19694 15373 I Finsky:background: [183] CronetDownloader: onRedirectReceived
+10-23 13:08:14.949 19694 19732 I Finsky:background: [59] WM::SCH: Logging work initialize for 40-9998
+10-23 13:08:14.949 19694 15373 I Finsky:background: [183] CronetDownloader: onRedirectReceived
+10-23 13:08:14.951 31161 13927 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.952 19694 15373 I Finsky:background: [183] CronetDownloader: onRedirectReceived
+10-23 13:08:14.952 31161 15288 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.952 19694 19739 I Finsky:background: [64] SCH: Scheduling phonesky job Id: 40-9998, CT: 1792778894743, Constraints: [{ L: 0, D: 86400000, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }, { L: 0, D: 0, C: CHARGING_NONE, I: IDLE_NONE, N: NET_NONE, B: BATTERY_ANY }]
+10-23 13:08:14.953 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.safetynet.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+10-23 13:08:14.953 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.safetynet.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+10-23 13:08:14.954 19694 19737 I Finsky:background: [63] SCH: Scheduling 2 system job(s)
+10-23 13:08:14.954 19694 19737 I Finsky:background: [63] SCH: Scheduling system job Id: 10262, L: 0, D: 86399789, C: false, I: false, N: 1
+10-23 13:08:14.955 19694 19737 I Finsky:background: [63] SCH: Scheduling expedited system job 10263
+10-23 13:08:14.955 19694 19694 I Finsky:background: [2] SCH: job service start with id 10262.
+10-23 13:08:14.956 19694 19694 I Finsky:background: [2] SCH: job service start with id 10263.
+10-23 13:08:14.956 19694 15305 I Finsky:background: [152] SCH: Satisfied jobs for 10262 are: 40-9998
+10-23 13:08:14.957 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.significantplaces.service.SettingsLoggingService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.957 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.significantplaces.service.SettingsLoggingService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.958 31161 13927 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.958 19694 15305 I Finsky:background: [152] SCH: Satisfied jobs for 10263 are: 40-9998
+10-23 13:08:14.959 31161 13927 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.959 31161 31161 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.significantplaces.service.SettingsLoggingService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.962 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.significantplaces.service.StalePlacesCleaningService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.962 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.significantplaces.service.StalePlacesCleaningService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.963 31161 15288 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.964 31161 15389 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.964 31161 31161 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.significantplaces.service.StalePlacesCleaningService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.967 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.semanticlocationhistory.db.OdlhPppCleanupJob.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.967 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.semanticlocationhistory.db.OdlhPppCleanupJob.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.967 31161 15338 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.968 31161 31161 D BoundBrokerSvc: onRebind: Intent { act=com.google.android.gms.auth.aang.events.services.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+10-23 13:08:14.968 31161 15389 W LocationHistory: [OdlhPppCleanup] No page token found in Settings or DeviceMetadata [CONTEXT service_id=314 ]
+10-23 13:08:14.970 31161 15288 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.970 31161 31161 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.semanticlocationhistory.db.OdlhPppCleanupJob.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.973 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.semanticlocationhistory.settings.SettingsSyncService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.973 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.semanticlocationhistory.settings.SettingsSyncService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.973 31161 15338 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.974 31161 15288 I LocationHistory: [SettingsSync] Synced ODLH settings for all accounts. [CONTEXT service_id=314 ]
+10-23 13:08:14.974 31161 15288 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.975 31161 31161 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.semanticlocationhistory.settings.SettingsSyncService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.978 31161 31161 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.semanticlocationhistory.settings.LocationHistoryActiveProcessingService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.978 31161 31161 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.semanticlocationhistory.settings.LocationHistoryActiveProcessingService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.978 31161 15389 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.979 31161 15288 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:14.979 31161 31161 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.semanticlocationhistory.settings.LocationHistoryActiveProcessingService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsInternalBoundBrokerService }
+10-23 13:08:14.998 31161 15389 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:14.998 31161 15338 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:15.004 31161 15389 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:15.007 31161 15288 I NetworkScheduler.Stats: (REDACTED) HousekeepingTask %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-23 13:08:15.010 25046 25046 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.droidguard.DroidGuardFastRefreshGmsTaskBoundService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.UnstableInternalBoundBrokerService }
+10-23 13:08:15.010 25046 25046 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.droidguard.DroidGuardFastRefreshGmsTaskBoundService.ACTION_TASK_READY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.UnstableInternalBoundBrokerService }
+10-23 13:08:15.011 31161 15288 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-23 13:08:15.019   551   551 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-t' '300''

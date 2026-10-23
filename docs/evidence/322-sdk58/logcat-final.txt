@@ -1,0 +1,369 @@
+--------- beginning of main
+10-23 13:09:32.890   551   551 I adbd    : adbd service requested 'shell,v2,TERM=dumb,raw:input tap 961 2670'
+10-23 13:09:32.918   709   785 W AS.PlaybackActivityMon: No piid assigned for invalid/internal port id 17
+10-23 13:09:32.918   709   787 W AS.PlaybackActivityMon: No piid assigned for invalid/internal port id 17
+--------- beginning of system
+10-23 13:09:32.932 13995 13995 I ImeTracker: host.exp.exponent:2131012d: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+10-23 13:09:32.933 13995 13995 D InsetsController: show(ime())
+10-23 13:09:32.934 13995 13995 D InsetsController: Setting requestedVisibleTypes to 511 (was 503)
+10-23 13:09:32.937   709   827 W InputChannel-JNI: Channel already disposed.
+10-23 13:09:32.938  4757  4757 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():2404 
+10-23 13:09:32.938  4757  4757 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1552 onStartInput(EditorInfo{EditorInfo{packageName=host.exp.exponent, inputType=204021, inputTypeString=EmailAddress[CapSentences], enableLearning=true, autoCorrection=false, autoComplete=true, imeOptions=c000006, privateImeOptions=null, actionName=DONE, actionLabel=null, initialSelStart=0, initialSelEnd=0, initialCapsMode=2000, label=null, fieldId=1922, fieldName=null, extras=Bundle[mParcelledData.dataSize=404], hintText=non-empty, hintLocales=[]}}, false)
+10-23 13:09:32.938  4757 13767 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatusInternal():119 repeatCheckTimes = 0, locked = false
+10-23 13:09:32.938  4757  4757 I LatinInputMethodServiceBase: LatinInputMethodServiceBase.updateInputViewCoverNavigation():360 Update input view padding, isNavbarOverInputWindow=true, bottom inset=144
+10-23 13:09:32.939  4757 13810 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatusInternal():119 repeatCheckTimes = 1, locked = false
+10-23 13:09:32.940  4757  4757 I GoogleInputMethodService: GoogleInputMethodService.onStartInputView():1638 onStartInputView(EditorInfo{EditorInfo{packageName=host.exp.exponent, inputType=204021, inputTypeString=EmailAddress[CapSentences], enableLearning=true, autoCorrection=false, autoComplete=true, imeOptions=c000006, privateImeOptions=null, actionName=DONE, actionLabel=null, initialSelStart=0, initialSelEnd=0, initialCapsMode=2000, label=null, fieldId=1922, fieldName=null, extras=Bundle[{android.support.text.emoji.emojiCompat_metadataVersion=11, androidx.core.view.inputmethod.EditorInfoCompat.STYLUS_HANDWRITING_ENABLED=true, android.support.text.emoji.emojiCompat_replaceAll=false}], hintText=non-empty, hintLocales=[]}}, false)
+10-23 13:09:32.940  4757  4757 I KeyboardHeightUtil: KeyboardHeightUtil.getOemKeyboardHeightRatio():81 systemKeyboardHeightRatio:1.000000.
+10-23 13:09:32.940   709  1274 W PackageConfigPersister: App-specific configuration not found for packageName: host.exp.exponent and userId: 0
+10-23 13:09:32.940  4757  4757 I InputBundleManager: InputBundleManager.startInput():356 startInput2 restarting=false
+10-23 13:09:32.940  4757  4757 I InputBundleManager: InputBundleManager.loadActiveInputBundleId():552 loadActiveInputBundleId: en-US, ime_english_united_states
+10-23 13:09:32.940  4757  4757 I InputBundle: InputBundle.activateIme():599 activateIme: INACTIVE, keyboardType=prime
+10-23 13:09:32.940  4757  4757 I AbstractIme: AbstractIme.onActivate():111 LatinIme.onActivate() : EditorInfo = EditorInfo{packageName=host.exp.exponent, inputType=204021, inputTypeString=EmailAddress[CapSentences], enableLearning=true, autoCorrection=false, autoComplete=true, imeOptions=c000006, privateImeOptions=null, actionName=DONE, actionLabel=null, initialSelStart=0, initialSelEnd=0, initialCapsMode=2000, label=null, fieldId=1922, fieldName=null, extras=Bundle[{android.support.text.emoji.emojiCompat_metadataVersion=11, androidx.core.view.inputmethod.EditorInfoCompat.STYLUS_HANDWRITING_ENABLED=true, android.support.text.emoji.emojiCompat_replaceAll=false}], hintText=non-empty, hintLocales=[]}, IncognitoMode = false, DeviceLocked = false
+10-23 13:09:32.940  4757  4757 I InputBundle: InputBundle.consumeEvent():1062 Skip consuming an event as keyboard status is INACTIVE
+10-23 13:09:32.941  4757  4757 I Delight5Facilitator: Delight5Facilitator.initializeForIme():748 initializeForIme() : Locale = [en_US], layout = qwerty
+10-23 13:09:32.941  4757  4832 W ModuleManager: ModuleManager.loadModule():641 Module rww is not available
+10-23 13:09:32.941  4757  4757 I LatinIme: LatinIme.updateEnableInlineSuggestionsOnDecoderSideFlags():1307 inline flag updated to:false
+10-23 13:09:32.941  4757  4757 I LatinIme: LatinIme.updateEnableInlineSuggestionsOnDecoderSideFlags():1307 inline flag updated to:false
+10-23 13:09:32.942  4757  4832 I NebulaeTrainingCacheMetricsProcessor: NebulaeTrainingCacheMetricsProcessor.processBeginSession():277 Begin training cache session: /
+10-23 13:09:32.942  4757  4757 I InputBundle: InputBundle.consumeEvent():1062 Skip consuming an event as keyboard status is INACTIVE
+10-23 13:09:32.942  4757  4757 I LatinIme: LatinIme.resetInputContext():2413 resetInputContext(): reason=1, externalEditsInfo=ExternalEditsInfo{action=0, offset=-1, textLength=0, originalTextLength=0, hasEdits=false}
+10-23 13:09:32.942  4757  4757 I InputBundle: InputBundle.consumeEvent():1062 Skip consuming an event as keyboard status is INACTIVE
+10-23 13:09:32.942  4757  4757 I InputBundle: InputBundle.activateKeyboard():662 activateKeyboard: ACTIVE, type=KeyboardTypeAndPayload(keyboardType=prime, payload=null)
+10-23 13:09:32.942  4757  4757 I KeyboardWrapper: KeyboardWrapper.activateKeyboard():592 activateKeyboard(): type=prime, status=INACTIVE, imeDef=ImeDef{stringId=ime_english_united_states, language=en-US, languageTag=en-US, processedConditions={device=phone, enable_pk_simulator=false, true=true, writing_helper_enable_by_word_revert=false, enable_number_row=false}, className=com.google.android.apps.inputmethod.libs.latin5.LatinIme, label=0, keyEventInterpreter=null, inlineComposing=true, autoCapital=true, announceAutoSelectedCandidate=true, statusIcon=0, indicatorIcon=0, indicatorLabel=US, displayAppCompletions=true, extraValues=ptq{#0x7f0b02e7=TypedValue{t=0x3/d=0x0 "com.google.android.apps.inputmethod.libs.latin5.LatinIme"}}, processors=com.google.android.libraries.inputmethod.metadata.ProcessorsDef@139fa9c, unacceptableMetaKeys=4098, languageSpecificSettings=0, asciiCapable=true, alwaysShowSuggestions=false, useAsciiPasswordKeyboard=false, keyboardGroupDef=KeyboardGroupDef(variant=qwerty, variantLabel=0, pkLanguageTag=, pkLayoutType=, dynamicLayout=null, layoutSpecificSettings=[], layoutSpecificTheme=0, order=0, supportsSplitMode=true, supportsOneHandedMode=true, isVariantNameMandatory=false, keyboardDefInfos={prime=KeyboardDefInfo(kbType=prime, initialStates=0, keyboardSources=[Xml(resId=2132215128), Xml(resId=2132215790)], extraValues=ptq{}), digit=KeyboardDefInfo(kbType=digit, initialStates=0, keyboardSources=[Xml(resId=2132215751)], extraValues=ptq{}), symbol=KeyboardDefInfo(kbType=symbol, initialStates=0, keyboardSources=[Xml(resId=2132215931)], extraValues=ptq{})}, overrideKeyboardXmlConditions=com.google.android.libraries.inputmethod.metadata.OverrideKeyboardXmlConditionsDef@1), phenotypeFlagId=0, localizationLanguageTag=null, supportsInlineSuggestion=true}
+10-23 13:09:32.942  4757  4757 I KeyboardManager: KeyboardManager.requestKeyboard():250 Creating keyboard prime, imeId=ime_english_united_states, cacheKey=theme,!gsf,!pgsans,!pgsf,!use_system_font,BORDER,FLAVOR_DPI=XXHDPI,IS_LIGHT,KEYBOARD_WIDTH_CATEGORY=NORMAL,KEY_BORDER_SHAPE=1,LIGHT_THEME=true,PHYSICAL_DIAGONAL=6.532579,POPUP,SCREEN_SHORTEST_WIDTH=448,SCREEN_SHORTEST_WIDTH_NO_SCALE=448,SW400DP,XXHDPI,bottom4dp,enable_popup_on_keypress=true,keyboard_redesign_google_sans=true,non_linear_scale,noshadow,overlay_builtin_dynamic_color_light_base.binarypb:gm3-light-fffaf8fe-ff4c5e8b-4fb1adea13304a190d4abf12326cf60c,silkpopup
+10-23 13:09:32.942  4757  4757 I KeyboardDefManager: KeyboardDefManager.requestKeyboardDef():141 requestKeyboardDef(): type=prime, info=pve{defIds=[#0x7f170558, #0x7f1707ee], defIdsCacheKey=2132215128,2132215790}
+10-23 13:09:32.942  4757  4757 I KeyboardDefManager: KeyboardDefManager.requestKeyboardDef():230 requestKeyboardDef(): getOrCreate from cache, info=pve{defIds=[#0x7f170558, #0x7f1707ee], defIdsCacheKey=2132215128,2132215790}
+10-23 13:09:32.942  4757  4757 I KeyboardDefManager: KeyboardDefManager$Companion$addFutureCallbackForKeyboardDefReceiver$<anonymous>.onSuccess():523 requestKeyboardDef onSuccess(): info=pve{defIds=[#0x7f170558, #0x7f1707ee], defIdsCacheKey=2132215128,2132215790}
+10-23 13:09:32.942  4757  4757 I KeyboardWrapper: KeyboardWrapper.onKeyboardReady():226 onKeyboardReady(): type=prime(prime), kb=com.google.android.apps.inputmethod.latin.keyboard.LatinPrimeKeyboard@4318ad9
+10-23 13:09:32.942  4757  4757 I KeyboardWrapper: KeyboardWrapper.doActivateKeyboard():624 doActivateKeyboard(): prime
+10-23 13:09:32.943  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.943  4757  4757 W Keyboard: Keyboard.getKeyboardViewHelper():624 null helper is returned: keyboardDef=KeyboardDef{processedConditions={device=phone, enable_pk_simulator=false, free_cursor_del_swipe_delete=false, android_software_xr_api_spatial=false, free_cursor=false, enable_free_cursor_by_long_press_space=true, enable_scrub_move=true, layout_9key_split=false, expressions=normal, language=en-US, variant=qwerty, free_cursor_in_split_keyboard_gap=false, show_comma_key=true, show_period_key=true, keyboard_mode=normal, pref_enable_flick_symbols=false, show_secondary_digits=true, enable_secondary_symbols=false, enable_number_row=false}, globalConditions={global_theme_key=theme,!gsf,!pgsans,!pgsf,!use_system_font,BORDER,FLAVOR_DPI=XXHDPI,IS_LIGHT,KEYBOARD_WIDTH_CATEGORY=NORMAL,KEY_BORDER_SHAPE=1,LIGHT_THEME=true,PHYSICAL_DIAGONAL=6.532579,POPUP,SCREEN_SHORTEST_WIDTH=448,SCREEN_SHORTEST_WIDTH_NO_SCALE=448,SW400DP,XXHDPI,bottom4dp,enable_popup_on_keypress=true,keyboard_redesign_google_sans=true,non_linear_scale,noshadow,overlay_builtin_dynamic_color_light_base.binarypb:gm3-light-fffaf8fe-ff4c5e8b-4fb1adea13304a190d4abf12326cf60c,silkpopup, global_locale=en_US, global_density_dpi=480, global_orientation=1}, className=.latin.keyboard.LatinPrimeKeyboard, sources=[Xml(resId=2132215128), Xml(resId=2132215790)], initialStates=0, keyboardViewDefs=[KeyboardViewDef{direction=null, id=#0x7f0b0215, isScalable=true, layoutId=#0x7f0e03a1, type=BODY, touchable=true, defaultShow=true}, KeyboardViewDef{direction=null, id=#0x7f0b0215, isScalable=false, layoutId=#0x7f0e0235, type=FLOATING_CANDIDATES, touchable=false, defaultShow=false}, KeyboardViewDef{direction=LOCALE, id=#0x7f0b0215, isScalable=false, layoutId=#0x7f0e053b, type=HEADER, touchable=true, defaultShow=true}], persistentStates=0, persistentStatesPrefKey=null, popupBubbleLayoutId=#0x7f0e0625, recentKeyLayoutId=#0x0, recentKeyPopupLayoutId=#0x0, recentKeyType=null, rememberRecentKey=NONE, sessionStates=6597069766656}, type=WIDGET, helpersCreated={HEADER=pfm@437adeb, BODY=pfm@174d748, FLOATING_CANDIDATES=pfm@207c9e1}, context.getResources().getConfiguration(): {1.0 310mcc260mnc [en_US] ldltr sw448dp w448dp h997dp 480dpi nrml long compactNeeded port finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1344, 2992) mAppBounds=Rect(0, 0 - 1344, 2992) mMaxBounds=Rect(0, 0 - 1344, 2992) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.36 fontWeightAdjustment=0}
+10-23 13:09:32.943  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.945  4757  4757 I InputBundleManager: InputBundleManager.startInput():371 startInput() with KeyboardTypeAndPayload(keyboardType=prime, payload=null)
+10-23 13:09:32.945  4757  4757 I PkModeUpdater: PkModeUpdater.onActivate():95 End PK mode: disablePkMode=false, entry=oyp{languageTag=en-US, variant=qwerty, hasLocalizedResources=true, conditionCacheKey=_android_software_xr_api_spatial=false_device=phone_device_size=default_enable_free_cursor_by_long_press_space=true_enable_number_row=false_enable_number_row_in_password=true_enable_pk_simulator=false_enable_pk_simulator_setting=false_enable_scrub_move=true_enable_secondary_digits=true_enable_secondary_symbols=false_enable_simplified_expression_keyboard=false_expressions=normal_four_or_more_letter_rows=false_free_cursor=false_free_cursor_del_swipe_delete=false_free_cursor_in_split_keyboard_gap=false_keyboard_font_size_setting=_keyboard_mode=normal_language=en-US_layout_9key_split=false_orientation=portrait_physical_keyboard=qwerty_pk_simulator_vk_ready=false_pref_enable_flick_symbols=false_rtl_layout=false_show_comma_key=true_show_period_key=true_show_secondary_digits=true_show_suggestion_strip=true_show_suggestions=true_split_with_duplicate_keys=true_true=true_variant=qwerty_writing_helper_enable_by_word_revert=false, imeDef.stringId=ime_english_united_states, imeDef.className=com.google.android.apps.inputmethod.libs.latin5.LatinIme, imeDef.languageTag=en-US}, editorInfo=android.view.inputmethod.EditorInfo@eeb9b96
+10-23 13:09:32.945  4757  4757 I AccessoryInputModeManager: AccessoryInputModeManager.onModeStarted():331 Accessory input mode started: null
+10-23 13:09:32.945  4757  4757 W SupplementaryKeyboardsWrapper: SupplementaryKeyboardsWrapper.deactivateKeyboard():162 keyboard accessory_candidates_consumer is not activated before!
+10-23 13:09:32.945  4757  4757 I EmojiAndGlobeKeyExtension: EmojiAndGlobeKeyExtension.onActivate():146 
+10-23 13:09:32.945  4757  4757 I KeyboardModeUtils: KeyboardModeUtils.getKeyboardBottomOffset():435 inch: 0.000000 ydpi: 480.000000 adjustKeyboardBottomByDisplaySize: false currentDensityDpi: 480 defaultDensityDpi: 480 keyboardBottomToScreenPx: 0 keyboardBottomToNavBarPx: -144 navBarHeight: 144
+10-23 13:09:32.945  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.946  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.946  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.946  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.946  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.946  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.946  4757  4757 W ExtensionWrapper: ExtensionWrapper.setExtensionViewVisibility():948 interface pjg is not activate
+10-23 13:09:32.946  4757  4757 I OnBackCallbackManagerExtension: OnBackCallbackManagerExtension.updateDispositionForBack():226 setBackDisposition: 0
+10-23 13:09:32.946  4757  4757 I VoiceInputManagerWrapper: VoiceInputManagerWrapper.cancelShutdown():111 cancelShutdown() [RD]
+10-23 13:09:32.946  4757  4757 I VoiceInputManagerWrapper: VoiceInputManagerWrapper.syncLanguagePacks():123 syncLanguagePacks() [RD]
+10-23 13:09:32.946  4757  4757 I VoiceInputManager: VoiceInputManager.onKeyboardActivated():1229 onKeyboardActivated() [UD]
+10-23 13:09:32.946  4757  4757 I UniversalDictationUiProvider: UniversalDictationUiProvider.onActivate():63 onActivate() [UD]
+10-23 13:09:32.946  4757  4731 I SpeechFactory: SpeechRecognitionFactory.maybeScheduleAutoPackDownloadForFallback():286 maybeScheduleAutoPackDownloadForFallback()
+10-23 13:09:32.946  4757  4731 I FallbackOnDeviceRecognitionProvider: FallbackOnDeviceRecognitionProvider.maybeScheduleAutoPackDownload():208 maybeScheduleAutoPackDownload() for language tag en-US
+10-23 13:09:32.946  4757  4757 I VoiceImeUtils: VoiceImeUtils.shouldStartVoiceInputAutomaticallyInCurrentInputBox():159 No private IME option set to start voice input. [RD]
+10-23 13:09:32.946  4757  4757 I GoogleInputMethodService: GoogleInputMethodService.onWindowShown():2556 
+10-23 13:09:32.946  4757  4757 D ImeBackCallbackSender: Register OnBackInvokedCallback with priority=-1 at app window (packageName=host.exp.exponent)
+10-23 13:09:32.946  4757 13810 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatusInternal():119 repeatCheckTimes = 1, locked = false
+10-23 13:09:32.946  4757  4757 W AccessPointsManager: AccessPointsManager.addAccessPoint():1138 The holder controller #0x7f0b2940 is not registered
+10-23 13:09:32.948   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.949   709  1039 D WindowManager: setClientSurface Surface(name=VRI-InputMethod#2391)/@0x920de8c for 95dc7c7 InputMethod
+10-23 13:09:32.949  4757  4757 I Surface : Creating surface for consumer unnamed-4757-4 with slotExpansion=1 for 64 slots
+10-23 13:09:32.949 13995 13995 W RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection
+10-23 13:09:32.949  4757  4757 I Surface : Creating surface for consumer VRI[InputMethod]#4(BLAST Consumer)4 with slotExpansion=1 for 64 slots
+10-23 13:09:32.949 13995 13995 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ImeBackAnimationController@be853f9
+10-23 13:09:32.950 13995 14055 D WindowOnBackDispatcher: setOnBackInvokedCallbackInfo: android.view.ImeBackAnimationController@be853f9
+10-23 13:09:32.950  4757  4757 I KeyboardModeUtils: KeyboardModeUtils.getKeyboardBottomOffset():435 inch: 0.000000 ydpi: 480.000000 adjustKeyboardBottomByDisplaySize: false currentDensityDpi: 480 defaultDensityDpi: 480 keyboardBottomToScreenPx: 0 keyboardBottomToNavBarPx: -144 navBarHeight: 144
+10-23 13:09:32.950  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.950  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.950   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.950   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.951   709  1274 D CoreBackPreview: Window{32f6456 u0 host.exp.exponent/host.exp.exponent.experience.ExperienceActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@90c50db, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}
+10-23 13:09:32.964  4757  4757 W TextView: onProvideContentCaptureStructure(): calling assumeLayout()
+10-23 13:09:32.964  4757  4757 I GoogleInputMethodService: GoogleInputMethodService$1.onKeyboardViewShown():356 onKeyboardViewShown: keyboardType=prime, keyboardViewType=HEADER keyboardView=com.google.android.libraries.inputmethod.widgets.SoftKeyboardView{d30e403 V.E...... ........ 0,0-1344,132 aid=164}
+10-23 13:09:32.964  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.964  4757  4757 I GoogleInputMethodService: GoogleInputMethodService$1.onKeyboardViewShown():356 onKeyboardViewShown: keyboardType=prime, keyboardViewType=BODY keyboardView=com.google.android.libraries.inputmethod.widgets.SoftKeyboardView{94d5c40 V.E...... ........ 0,0-1344,732 aid=22}
+10-23 13:09:32.964  4757  4757 I BaseKeyboardSizeHelper: BaseKeyboardSizeHelper.calculateMaxKeyboardBodyHeight():79 leave 321 height for app when ime window height:2689, header height:132 and isFullscreenMode:false, so the max keyboard body height is:2236
+10-23 13:09:32.964  4757  4757 I NewLanguagePromptExtension: NewLanguagePromptExtension$1.onKeyboardViewShown():98 Not show new language banner: no change in enabled input method entries
+10-23 13:09:32.964  4757  4897 I Delight5Decoder: Delight5DecoderWrapper.setKeyboardLayout():674 setKeyboardLayout()
+10-23 13:09:32.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.965   513   548 D AudioFlinger: mixer(0x7b84b330f790) throttle end: throttle time(33)
+10-23 13:09:32.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.965   979  1082 D WindowManagerShell: PipDesktopState: isPipInDesktopMode isAnyDeskActive=false isDisplayDesktopFirst=false
+10-23 13:09:32.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.981 13995 13995 D VRI[ExperienceActivity]: WindowInsets changed: ime:[0,0,0,1008] 
+10-23 13:09:32.998   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.998   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.998   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.998   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.998   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.998   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:32.998   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.015   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.050   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.050   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.050   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.078   513   546 I APM_AudioPolicyManager: getNewOutputDevices io 13 recent device override {AUDIO_DEVICE_OUT_SPEAKER, @:}
+10-23 13:09:33.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.098   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.098   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.098   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.098   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.098   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.098   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.098   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.098   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.115   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.115   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.115   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.115   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.115   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.115   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.115   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.115   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.131   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.131   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.131   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.131   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.131   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.131   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.131   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.131   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.142  4757  4757 W TooltipLifecycleManager: TooltipLifecycleManager.dismissTooltips():152 Tooltip with id spell_check_add_to_dictionary not found in tooltipManager.
+10-23 13:09:33.148   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.148   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.148   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.148   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.148   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.148   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.148   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.148   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.150   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.150   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.150   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.165   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.165   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.165   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.165   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.165   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.165   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.165   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.165   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.181   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.181   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.181   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.181   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.181   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.181   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.181   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.181   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.198   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.198   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.198   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.198   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.198   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.198   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.198   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.198   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.199 13995 13995 I ImeTracker: host.exp.exponent:2131012d: onShown
+10-23 13:09:33.215   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.215   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.215   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.215   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.215   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.215   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.215   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.215   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.231   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.248   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.251   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.251   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.251   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.265   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.281   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.298   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.315   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.351   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.351   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.351   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.452   709   861 E WifiDataStall: Ignore this poll. newStats: null txLinkSpeedMbps: 1 rxLinkSpeedMbps: 2 rssi: -50 connectionCapabilities: com.android.server.wifi.WifiNative$ConnectionCapabilities@f23de6b
+10-23 13:09:33.452   709   900 I AdbWifiNetworkMonitor: Wi-Fi network available
+10-23 13:09:33.452   709   900 I AdbWifiNetworkMonitor: Received the same Wi-Fi SSID. Ignoring.
+10-23 13:09:33.454   709   873 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:33.454   709   873 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:33.454   709   873 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:33.454   709   873 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:33.454   709   873 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:33.455   709   873 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:33.455   709   873 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:33.455  4823  4931 D WM-WorkConstraintsTrack: NetworkRequestConstraintController onCapabilitiesChanged callback
+10-23 13:09:33.456   709   873 D ConnectivityService: NetReassign [no changes] [c 0] [a 0] [i 0]
+10-23 13:09:33.456  4585  4811 I BugleRcsEngine: Connected state: [1], networkType: [WIFI] [CONTEXT thread_id=63 ]
+10-23 13:09:33.456  4823  4912 I BugleConnectivity: Connection state change: onCapabilitiesChanged, data connection: WIFI, manual connection eligibility: false, ntn roaming: false
+10-23 13:09:33.456  4585  4821 I BugleRcsEngine: handleMessage processing message:[NOTIFY_UPTIME_IGNORE_STATE_CHANGED] with [non-null]:RcsEngineImpl reference [CONTEXT log_prefix="RcsEngineImpl:[1dd93009-08c4]>Handler" thread_id=65 ]
+10-23 13:09:33.456  4823  4912 I BugleConnectivity: New default data network: wifi
+10-23 13:09:33.457 31161 13991 I NearbyMediums: Wifi changed new SSID: "AndroidWifi"
+10-23 13:09:33.457 31161 13991 I NearbyMediums: WifiLanConnectivityInfo is not changed, skip notify.
+10-23 13:09:33.458  4585  4821 I BugleRcsEngine: No RCS Configuration was found in Bugle for simID: redacted-pii:sim_id[chars:20,last3:897] [CONTEXT log_prefix="ProvisioningEngineDataRetriever" thread_id=65 ]
+10-23 13:09:33.465   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.815   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.817   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.817   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.817   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.849   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.865   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.877   551   551 I adbd    : adbd service requested 'shell,v2,TERM=dumb,raw:dumpsys package com.google.android.gms'
+10-23 13:09:33.881   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.898   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.903  2189  2199 I artd    : GetBestInfo: odex next to the dex file (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/oat/x86_64/base.odex) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.903  2189  2199 I artd    : GetBestInfo: odex next to the dex file (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/oat/x86_64/base.odex) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.904  2189  2199 I artd    : GetBestInfo: dm (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/split_AdsDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.904  2189  2199 I artd    : GetBestInfo: odex next to the dex file (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/oat/x86_64/split_CronetDynamite_installtime.odex) is kOatUpToDate with filter 'speed-profile' executable 'false'
+10-23 13:09:33.904  2189  2199 I artd    : GetBestInfo: odex next to the dex file (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/oat/x86_64/split_CronetDynamite_installtime.odex) is kOatUpToDate with filter 'speed-profile' executable 'false'
+10-23 13:09:33.905  2189  2199 I artd    : GetBestInfo: dm (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/split_DynamiteLoader_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.906  2189  2199 I artd    : GetBestInfo: dm (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/split_DynamiteModulesA_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.907  2189  2199 I artd    : GetBestInfo: dm (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/split_DynamiteModulesC_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.907  2189  2199 I artd    : GetBestInfo: dm (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/split_GoogleCertificates_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.908  2189  2199 I artd    : GetBestInfo: dm (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/split_MapsDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.909  2189  2199 I artd    : GetBestInfo: dm (/data/app/~~P7Kc2jg7fZ74Bzh6lLu-sw==/com.google.android.gms-pQ-2Yo9LF7wRTnS_RgwKYQ==/split_MeasurementDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.909  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000011/dl-PlayCloudSearch.optional_263131100000.apk has no usable artifacts
+10-23 13:09:33.910  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000c/dl-MlkitBarcodeUi.optional_262236100800.apk has no usable artifacts
+10-23 13:09:33.910  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000001/CronetDynamite.apk has no usable artifacts
+10-23 13:09:33.910  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000002/DynamiteLoader.apk has no usable artifacts
+10-23 13:09:33.910  2189  2199 I artd    : GetBestInfo: /data/user/0/com.google.android.gms/app_dg_cache/FBBAB0C936B5DF55F009F8BAF903A19505BD33A3/the.apk has no usable artifacts
+10-23 13:09:33.911  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000013/dl-TfliteDynamiteDynamite.integ_260580502100800.apk has no usable artifacts
+10-23 13:09:33.911  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000005/GoogleCertificates.apk has no usable artifacts
+10-23 13:09:33.911  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000028/dl-MlkitOcrCommon.optional_263436100800.apk has no usable artifacts
+10-23 13:09:33.912  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000b/dl-VisionOcr.optional_262236100000.apk has no usable artifacts
+10-23 13:09:33.913  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000027/dl-PlayCloudSearch.optional_263436100000.apk has no usable artifacts
+10-23 13:09:33.914  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000002b/dl-IdentityCredentialsPlatform.optional_263436100800.apk has no usable artifacts
+10-23 13:09:33.914  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000f/dl-MlkitOcrCommon.optional_263131100800.apk has no usable artifacts
+10-23 13:09:33.914  2189  2199 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000016/dl-Appsearch.optional_263131100800.apk has no usable artifacts
+10-23 13:09:33.914  2189  2199 I artd    : GetBestInfo: /data/user/0/com.google.android.gms/app_dg_cache/D76594F451C00E79F4C61E3B54BC3D01968BC47C/the.apk has no usable artifacts
+10-23 13:09:33.915   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.915  2189  2199 I artd    : GetBestInfo: vdex next to the dex file (/data/user/0/com.google.android.gms/app_dg_cache/476A36E35ABF01578AB5E50CBAEDC9FC525822EA/oat/x86_64/the.vdex) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.915  2189  2199 I artd    : GetBestInfo: /data/user/0/com.google.android.gms/app_dg_cache/0C4F7ED4FBAFD8F0B9C2015293C70B84A7E731C8/the.apk has no usable artifacts
+10-23 13:09:33.916  2189  2199 I artd    : GetBestInfo: vdex next to the dex file (/data/user/0/com.google.android.gms/app_dg_cache/AA0B212FB534F904D4133C0C416483B08397E7C6/oat/x86_64/the.vdex) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.916  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000014/dl-VisionOcr.optional_263131100000.apk has no usable artifacts
+10-23 13:09:33.917  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000d/dl-PlayCloudSearch.optional_262236100000.apk has no usable artifacts
+10-23 13:09:33.917   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.917   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.917   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.917  2189 10994 I artd    : GetBestInfo: vdex next to the dex file (/data/user/0/com.google.android.gms/app_dg_cache/01F6C0AD032BFD9FBACF0642871820D6DC85C588/oat/x86_64/the.vdex) is kOatUpToDate with filter 'verify' executable 'false'
+10-23 13:09:33.917  2189 10994 I artd    : GetBestInfo: /data/user/0/com.google.android.gms/app_dg_cache/8A87D3ADD3A68B58A4F768E677B14023FB08B0E1/the.apk has no usable artifacts
+10-23 13:09:33.918  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000021/dl-VisionOcr.optional_263332100000.apk has no usable artifacts
+10-23 13:09:33.918  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000012/dl-IdentityCredentialsPlatform.optional_263131100800.apk has no usable artifacts
+10-23 13:09:33.918  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000001f/dl-IdentityCredentialsPlatform.optional_263332100800.apk has no usable artifacts
+10-23 13:09:33.918  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000000a/dl-MlkitOcrCommon.optional_262236100800.apk has no usable artifacts
+10-23 13:09:33.918  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000022/dl-MlkitBarcodeUi.optional_263332100800.apk has no usable artifacts
+10-23 13:09:33.918  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000010/dl-MlkitBarcodeUi.optional_263131100800.apk has no usable artifacts
+10-23 13:09:33.919  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000002d/dl-MlkitBarcodeUi.optional_263436100800.apk has no usable artifacts
+10-23 13:09:33.920  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000002c/dl-Appsearch.optional_263436100800.apk has no usable artifacts
+10-23 13:09:33.920  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000025/dl-MlkitOcrCommon.optional_263332100800.apk has no usable artifacts
+10-23 13:09:33.920  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000020/dl-Appsearch.optional_263332100800.apk has no usable artifacts
+10-23 13:09:33.921  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/0000002a/dl-VisionOcr.optional_263436100000.apk has no usable artifacts
+10-23 13:09:33.921  2189 10994 I artd    : GetBestInfo: /data/user/0/com.google.android.gms/app_dg_cache/EC7C859F3FC767BB82D82EE06B046D25E8EB9283/the.apk has no usable artifacts
+10-23 13:09:33.921  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000007/MeasurementDynamite.apk has no usable artifacts
+10-23 13:09:33.922  2189 10994 I artd    : GetBestInfo: /data/user/0/com.google.android.gms/app_dg_cache/33EEFCDDEF7EECFCBCB86B77A3024BEF5E2711F4/the.apk has no usable artifacts
+10-23 13:09:33.922  2189 10994 I artd    : GetBestInfo: /data/user_de/0/com.google.android.gms/app_chimera/m/00000026/dl-PlayCloudSearch.optional_263332100000.apk has no usable artifacts
+10-23 13:09:33.931   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.948   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.955 31161 13991 I NearbySharing: Network state changed: NetworkState(isRestricted=false, isOnline=true, isCongested=false, isMetered=false, isWifiConnected=true)
+10-23 13:09:33.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.981   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:33.998   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.015   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.017   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.017   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.017   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.031   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.048   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.063  8141  8141 I HidDeviceService: unregisterAppUid(): uid=10105
+10-23 13:09:34.063  8141  8141 W HidDeviceService: unregisterAppUid(): caller UID doesn't match user UID
+10-23 13:09:34.065   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.081   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.117   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.117   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.117   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.465   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.486   709   737 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:34.486   709   737 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:34.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:34.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:35.465   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:35.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:35.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:35.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:35.492   709   737 W libbinder.IPCThreadState: Sending oneway calls to frozen process.
+10-23 13:09:35.957   469  1504 D android.hardware.audio@7.1-impl.ranchu: threadLoop: entering standby, frames: 18176128
+10-23 13:09:35.957   469  1504 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: joining consumeThread
+10-23 13:09:35.957   469 16934 D android.hardware.audio@7.1-impl.ranchu: consumeThread: exiting
+10-23 13:09:35.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:35.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:35.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:35.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:36.455   709   861 E WifiDataStall: Ignore this poll. newStats: null txLinkSpeedMbps: 1 rxLinkSpeedMbps: 2 rssi: -50 connectionCapabilities: com.android.server.wifi.WifiNative$ConnectionCapabilities@f23de6b
+10-23 13:09:36.465   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:36.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:36.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:36.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:36.681   959   959 I wpa_supplicant: wlan0: CTRL-EVENT-BEACON-LOSS 
+10-23 13:09:36.965   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:36.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:36.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:36.966   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:37.465   517   517 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:37.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:37.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:37.466   517   586 W skia    : AGTM parsing failed flags.readFromStream(s) at 159
+10-23 13:09:37.909   551   551 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-t' '500''
