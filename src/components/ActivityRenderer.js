@@ -13,7 +13,12 @@ import {
 } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
 import { resolveAlternativeAudioKey } from '../utils/alternativeAudio';
-import { releaseAudioPlayer } from '../utils/audioPlayer';
+import {
+  releaseAudioPlayer,
+  stopLessonAudio,
+  trackLessonFxPlayer,
+  trackLessonWordPlayer
+} from '../utils/audioPlayer';
 import { splitAlternativeResponses } from '../utils/splitAlternativeResponses';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
@@ -159,6 +164,7 @@ function useAudio(language) {
         stopAudio();
         const player = createAudioPlayer(source);
         soundRef.current = player;
+        trackLessonWordPlayer(player);
         player.play();
         return true;
       } catch {
@@ -175,20 +181,37 @@ function useAudio(language) {
         const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
         const player = createAudioPlayer({ uri });
         fxRef.current = player;
+        trackLessonFxPlayer(player);
         player.play();
       } catch {}
     },
     [stopFx]
   );
 
-  useEffect(() => {
-    return () => {
-      stopAudio();
-      stopFx();
-    };
+  const stopAll = useCallback(() => {
+    stopAudio();
+    stopFx();
+    stopLessonAudio();
   }, [stopAudio, stopFx]);
 
-  return { playAudioKey, playFeedback };
+  // Wrap Continue / Next so Word Audio stops before LessonRunner's async
+  // outcome + transition keep the old Activity mounted (#335).
+  const stopThen = useCallback(
+    (handler) =>
+      (...args) => {
+        stopAll();
+        return handler?.(...args);
+      },
+    [stopAll]
+  );
+
+  useEffect(() => {
+    return () => {
+      stopAll();
+    };
+  }, [stopAll]);
+
+  return { playAudioKey, playFeedback, stopAll, stopThen };
 }
 
 function getHintText(activity) {
@@ -804,7 +827,7 @@ function IntroCard({
   theme,
   onOpenPreface
 }) {
-  const { playAudioKey } = useAudio(language);
+  const { playAudioKey, stopAll } = useAudio(language);
 
   const [submitted, setSubmitted] = useState(false);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
@@ -813,6 +836,7 @@ function IntroCard({
   const showAddOns = shouldShowIntroAddOns(activity);
 
   function submit() {
+    stopAll();
     setSubmitted(true);
     onCorrect();
   }
@@ -944,7 +968,7 @@ function MultipleChoice({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback } = useAudio(language);
+  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
 
   const targetText = getPrimaryTarget(activity);
   const promptText = getPromptDisplay(activity);
@@ -1059,14 +1083,14 @@ function MultipleChoice({
         hintText={getHintText(activity)}
         answerDisplay={targetText}
         onTryAgain={resetWrong}
-        onNext={onCorrect}
-        onIncorrect={() =>
+        onNext={stopThen(onCorrect)}
+        onIncorrect={stopThen(() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : selected
           )
-        }
+        )}
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -1094,7 +1118,7 @@ function SelectMultiple({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback } = useAudio(language);
+  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
 
   const answers = Array.isArray(activity.answers)
     ? activity.answers
@@ -1231,14 +1255,14 @@ function SelectMultiple({
         hintText={`Select every French form that means “${activity.english || ''}”.`}
         answerDisplay={answerDisplay}
         onTryAgain={resetWrong}
-        onNext={onCorrect}
-        onIncorrect={() =>
+        onNext={stopThen(onCorrect)}
+        onIncorrect={stopThen(() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : selected.join(' | ')
           )
-        }
+        )}
       />
     </QuestionScrollView>
   );
@@ -1257,7 +1281,7 @@ function ListeningTargetChoice({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback } = useAudio(language);
+  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
 
   const targetText = getPrimaryTarget(activity);
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
@@ -1399,14 +1423,14 @@ function ListeningTargetChoice({
         hintText={getHintText(activity)}
         answerDisplay={targetText}
         onTryAgain={resetWrong}
-        onNext={onCorrect}
-        onIncorrect={() =>
+        onNext={stopThen(onCorrect)}
+        onIncorrect={stopThen(() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : selected
           )
-        }
+        )}
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -1435,7 +1459,7 @@ function Typing({
   const [attempts, setAttempts] = useState(0);
   const [hintLevel, setHintLevel] = useState(0);
 
-  const { playAudioKey, playFeedback } = useAudio(language);
+  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
   const stateRef = useRef(state);
 
   useEffect(() => {
@@ -1659,14 +1683,14 @@ function Typing({
         hintText={getHintText(activity)}
         answerDisplay={targetText}
         onTryAgain={resetWrong}
-        onNext={onCorrect}
-        onIncorrect={() =>
+        onNext={stopThen(onCorrect)}
+        onIncorrect={stopThen(() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : value
           )
-        }
+        )}
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -1697,7 +1721,7 @@ function SentenceBuild({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback } = useAudio(language);
+  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
 
   const targetText = getPrimaryTarget(activity);
   const promptText = getPromptDisplay(activity);
@@ -1851,14 +1875,14 @@ function SentenceBuild({
         hintText={getHintText(activity)}
         answerDisplay={targetText}
         onTryAgain={resetWrong}
-        onNext={onCorrect}
-        onIncorrect={() =>
+        onNext={stopThen(onCorrect)}
+        onIncorrect={stopThen(() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : selected.join(' ')
           )
-        }
+        )}
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -1973,7 +1997,7 @@ function MatchPairs({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback } = useAudio(language);
+  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
 
   const revealAddOns =
     shouldRevealAfterAnswer(
@@ -2198,14 +2222,14 @@ function MatchPairs({
           />
         }
         onTryAgain={resetWrong}
-        onNext={onCorrect}
-        onIncorrect={() =>
+        onNext={stopThen(onCorrect)}
+        onIncorrect={stopThen(() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : `${valueForId(left, selectedLeft) || ''} ↔ ${valueForId(right, selectedRight) || ''}`
           )
-        }
+        )}
         altContent={
           <AnswerAltButtons
             activity={activity}

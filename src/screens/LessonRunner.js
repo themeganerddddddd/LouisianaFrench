@@ -23,6 +23,7 @@ import {
 } from '../data/lessonLoader';
 
 import { recordActivityOutcome } from '../utils/activityOutcome';
+import { stopLessonAudio } from '../utils/audioPlayer';
 
 import { getDueReviewItems } from '../utils/spacedRepetition';
 
@@ -259,6 +260,10 @@ export default function LessonRunner({
   ]);
 
   function animateToNext(cb) {
+    // Safety net for #335: stop any Word Audio still holding the native
+    // player before the transition keeps the old Activity mounted.
+    stopLessonAudio();
+
     Animated.parallel([
       Animated.timing(
         fadeAnim,
