@@ -1,5 +1,10 @@
 import { createAudioPlayer } from 'expo-audio';
-import { releaseAudioPlayer } from '../audioPlayer';
+import {
+  releaseAudioPlayer,
+  stopLessonAudio,
+  trackLessonFxPlayer,
+  trackLessonWordPlayer
+} from '../audioPlayer';
 
 describe('releaseAudioPlayer', () => {
   function playingPlayerRef() {
@@ -64,5 +69,46 @@ describe('releaseAudioPlayer', () => {
 
     expect(() => releaseAudioPlayer(playerRef)).not.toThrow();
     expect(playerRef.current).toBeNull();
+  });
+});
+
+describe('stopLessonAudio (#335)', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    stopLessonAudio();
+  });
+
+  afterEach(() => {
+    stopLessonAudio();
+    jest.restoreAllMocks();
+  });
+
+  it('stops the tracked Word and feedback players even without a React ref', () => {
+    const word = createAudioPlayer(1);
+    const fx = createAudioPlayer(2);
+    word.play();
+    fx.play();
+    trackLessonWordPlayer(word);
+    trackLessonFxPlayer(fx);
+
+    stopLessonAudio();
+
+    expect(word).toMatchObject({ playing: false, registered: false, released: true });
+    expect(fx).toMatchObject({ playing: false, registered: false, released: true });
+  });
+
+  it('replaces a previous Word player when a new one is tracked', () => {
+    const first = createAudioPlayer(1);
+    const second = createAudioPlayer(2);
+    first.play();
+    trackLessonWordPlayer(first);
+    trackLessonWordPlayer(second);
+    second.play();
+
+    expect(first).toMatchObject({ playing: false, registered: false, released: true });
+    expect(second).toMatchObject({ playing: true, released: false });
+
+    stopLessonAudio();
+    expect(second).toMatchObject({ playing: false, released: true });
   });
 });
