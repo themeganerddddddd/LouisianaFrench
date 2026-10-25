@@ -308,8 +308,8 @@ describe('HomeScreen', () => {
       .toEqual(['Acknowledgements', 'Privacy', 'FAQ']);
     expect(screen.getByTestId('about-menu-support')).toBeOnTheScreen();
     expect(screen.queryByTestId('about-menu-leaf-support')).toBeNull();
-    expect(screen.queryByTestId('about-menu-account')).toBeNull();
-    expect(screen.queryByLabelText(/^Account/)).toBeNull();
+    expect(screen.getByTestId('about-menu-account')).toBeOnTheScreen();
+    expect(screen.getByLabelText(/^Account/)).toBeOnTheScreen();
     expect(screen.queryByText('Account settings')).toBeNull();
     expect(screen.queryByText('Why make this app')).toBeNull();
     expect(screen.queryByText('Remerciements')).toBeNull();

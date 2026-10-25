@@ -123,7 +123,7 @@ export const ABOUT_TEXT = {
       {
         heading: 'Something not working?',
         paragraphs: [
-          'Open Support in this menu (next to About Us), or Report a bug on the screen where it happened. Both open the same report form. The form sits just above the keyboard so you can see every field, with Cancel and Submit pinned while you type. On Advanced speech practice, use Home (or Back) at the top left to leave.'
+          'Open Support in this menu (next to Account and About Us), or Report a bug on the screen where it happened. Both open the same report form. The form sits just above the keyboard so you can see every field, with Cancel and Submit pinned while you type. On Advanced speech practice, use Home (or Back) at the top left to leave.'
         ]
       },
       {

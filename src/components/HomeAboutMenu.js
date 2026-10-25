@@ -7,8 +7,9 @@ const LEAVES = [
   ['faq', 'FAQ']
 ];
 
-// Identity sign-in is built but not shipping yet — keep Account out of the menu.
-const SHOW_ACCOUNT_MENU_ENTRY = false;
+// Identity continuation branch: show Account for sign-in work. Keep false on
+// release/`main` until Identity is ready to ship (see #344).
+const SHOW_ACCOUNT_MENU_ENTRY = true;
 
 export default function HomeAboutMenu({
   visible,
