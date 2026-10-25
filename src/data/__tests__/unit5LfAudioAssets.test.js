@@ -31,8 +31,8 @@ const EXPECTED_WORD_AUDIO = [
 
 function sha256OfAsset(audioKey) {
   const assetPath = path.join(
-    __dirname,
-    '../../../assets/audio/cajun',
+    process.cwd(),
+    'assets/audio/cajun',
     `${audioKey}.mp3`
   );
   return createHash('sha256').update(readFileSync(assetPath)).digest('hex');
