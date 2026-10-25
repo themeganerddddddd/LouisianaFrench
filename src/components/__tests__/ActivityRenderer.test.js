@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { createAudioPlayer } from 'expo-audio';
 import ActivityRenderer from '../ActivityRenderer';
 import { chooseAndCheck, retry } from '../../test/activityInteractions';
@@ -77,6 +77,46 @@ describe('ActivityRenderer submission', () => {
     });
 
     expect(onCorrect).toHaveBeenCalledTimes(1);
+  });
+
+  // #330: FeedbackFooter / submitOnce one-shot must not leave Next Question dead
+  // when the session advance (recordActivityOutcome) rejects.
+  it('re-enables Next Question when onCorrect rejects so the learner can retry', async () => {
+    const user = userEvent.setup();
+    const onCorrect = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('storage unavailable'))
+      .mockResolvedValueOnce(undefined);
+    const onWrong = jest.fn();
+
+    render(
+      <ActivityRenderer
+        language="kreole"
+        activity={{
+          ...fixtureActivities.typing,
+          cardId: 'fixture:kreole:going:typing',
+          english: 'How is it going?',
+          answer: "Komen ç'apé kouri?",
+          answerDisplay: "Komen ç'apé kouri?",
+          target: "Komen ç'apé kouri?"
+        }}
+        onCorrect={onCorrect}
+        onWrong={onWrong}
+      />
+    );
+
+    expect(screen.getByText("Type: 'How is it going?'")).toBeOnTheScreen();
+    await user.type(screen.getByPlaceholderText('Type your answer'), "Komen ç'apé kouri?");
+    await user.press(screen.getByText('Check'));
+    expect(screen.getByText('Correct!')).toBeOnTheScreen();
+
+    await user.press(screen.getByText('Next Question'));
+
+    await waitFor(() => expect(onCorrect).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText('Next Question')).not.toBeDisabled());
+
+    await user.press(screen.getByText('Next Question'));
+    await waitFor(() => expect(onCorrect).toHaveBeenCalledTimes(2));
   });
 });
 
