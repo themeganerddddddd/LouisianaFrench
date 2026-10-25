@@ -32,6 +32,7 @@ import {
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
+import * as activityOutcome from '../../utils/activityOutcome';
 import * as homeProjection from '../../utils/homeProjection';
 import * as storage from '../../utils/storage';
 import * as reviewQueue from '../../utils/reviewQueue';
@@ -3076,6 +3077,55 @@ describe('DailyReviewScreen', () => {
     });
 
     expect(await screen.findByTestId('review-count')).toHaveTextContent('1');
+  });
+
+  // #330: FeedbackFooter one-shot + failed recordActivityOutcome must not trap
+  // Daily Review on Correct / Next Question (Kouri-Vini Typing path).
+  it('re-enables Next Question after a failed Daily Review Typing advance', async () => {
+    const typing = {
+      ...activityByCardId('fixture:kreole:well:typing', 'kreole'),
+      english: 'How is it going?',
+      isReview: true
+    };
+    const nextCard = {
+      ...activityByCardId('fixture:kreole:pronouns:choice', 'kreole'),
+      isReview: true
+    };
+    const queueLoad = jest
+      .spyOn(reviewQueue, 'getDailyReviewQueue')
+      .mockResolvedValue([typing, nextCard]);
+    const realRecord = activityOutcome.recordActivityOutcome.bind(activityOutcome);
+    const record = jest
+      .spyOn(activityOutcome, 'recordActivityOutcome')
+      .mockRejectedValueOnce(new Error('storage unavailable'))
+      .mockImplementation((...args) => realRecord(...args));
+
+    try {
+      const user = setupUser();
+      renderApp({
+        initialRouteName: 'DailyReview',
+        initialParams: { language: 'kreole' }
+      });
+
+      expect(await screen.findByText('1 / 2')).toBeOnTheScreen();
+      expect(screen.getByText("Type: 'How is it going?'")).toBeOnTheScreen();
+
+      await user.type(screen.getByPlaceholderText('Type your answer'), 'Mo byin');
+      await user.press(screen.getByText('Check'));
+      expect(screen.getByText('Correct!')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Next Question'));
+      await waitFor(() => expect(record).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(screen.getByText('Next Question')).not.toBeDisabled());
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Next Question'));
+      expect(await screen.findByText('2 / 2')).toBeOnTheScreen();
+      expect(record).toHaveBeenCalledTimes(2);
+    } finally {
+      queueLoad.mockRestore();
+      record.mockRestore();
+    }
   });
 });
 
