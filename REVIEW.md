@@ -33,4 +33,6 @@ A blocking finding needs the violated authority or invariant, exact file and lin
 
 Start the summary with counts by severity. Say plainly when nothing needs fixing.
 
-Only blocking findings trigger repair. After two failed repairs, stop and write a narrower spec. On a re-review, judge the new commit; do not restate findings already posted.
+Only blocking findings trigger repair. Cap: at most one review and one fix round before REPLAN / a narrower spec. On a re-review, judge the new commit; do not restate findings already posted.
+
+Evidence-only commits (paths under `docs/evidence/**` only) do not require a full dual-axis re-review; a mechanical UI evidence check suffices.
