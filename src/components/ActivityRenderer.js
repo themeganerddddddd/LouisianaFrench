@@ -666,9 +666,19 @@ function FeedbackFooter({
 }) {
   const [submitted, setSubmitted] = useState(false);
 
-  function submit(handler) {
+  // One-shot the advance control, but re-enable if the session handler rejects
+  // (e.g. recordActivityOutcome / storage). Otherwise Next Question stays dimmed
+  // and the review never moves — #330.
+  async function submit(handler) {
     setSubmitted(true);
-    handler();
+    try {
+      await handler?.();
+    } catch (error) {
+      setSubmitted(false);
+      if (__DEV__ && process.env.NODE_ENV !== 'test') {
+        console.warn('Activity advance failed; re-enabling footer', error);
+      }
+    }
   }
 
   if (state === 'correct') {
@@ -680,7 +690,9 @@ function FeedbackFooter({
 
         <TouchableOpacity
           style={[styles.footerButtonGreen, submitted && styles.disabledButton]}
-          onPress={() => submit(onNext)}
+          onPress={() => {
+            void submit(onNext);
+          }}
           disabled={submitted}
         >
           <Text style={styles.footerButtonText}>Next Question</Text>
@@ -703,7 +715,9 @@ function FeedbackFooter({
 
         <TouchableOpacity
           style={[styles.footerButtonRed, submitted && styles.disabledButton]}
-          onPress={() => submit(onIncorrect)}
+          onPress={() => {
+            void submit(onIncorrect);
+          }}
           disabled={submitted}
         >
           <Text style={styles.footerButtonText}>Continue</Text>
@@ -747,7 +761,9 @@ function FeedbackFooter({
 
         <TouchableOpacity
           style={[styles.footerButtonRed, submitted && styles.disabledButton]}
-          onPress={() => submit(onIncorrect)}
+          onPress={() => {
+            void submit(onIncorrect);
+          }}
           disabled={submitted}
         >
           <Text style={styles.footerButtonText}>Continue</Text>
@@ -774,7 +790,19 @@ export default function ActivityRenderer({
     if (submittedRef.current) return;
 
     submittedRef.current = true;
-    handler(...args);
+    try {
+      const result = handler(...args);
+      if (result != null && typeof result.then === 'function') {
+        return result.catch((error) => {
+          submittedRef.current = false;
+          throw error;
+        });
+      }
+      return result;
+    } catch (error) {
+      submittedRef.current = false;
+      throw error;
+    }
   }
 
   const submission = {

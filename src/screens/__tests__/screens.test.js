@@ -32,6 +32,7 @@ import {
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
+import * as activityOutcome from '../../utils/activityOutcome';
 import * as homeProjection from '../../utils/homeProjection';
 import * as storage from '../../utils/storage';
 import * as reviewQueue from '../../utils/reviewQueue';
@@ -2105,6 +2106,31 @@ describe('LessonRunner', () => {
     // Device check on Pixel landscape: Continue starts off-screen and must live
     // inside the Activity scroll shell so a swipe can reach it.
     expect(screen.getByTestId('activity-scroll')).toBeOnTheScreen();
+    expect(screen.getByTestId('activity-scroll')).toHaveStyle({ flex: 1 });
+    expect(screen.getByText('Continue')).toBeOnTheScreen();
+  });
+
+  it('bounds the Activity scroll shell on kreole New-word intro so Continue stays reachable', async () => {
+    const lesson = lessonById('fixture_kreole_u01_l01', 'kreole');
+
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: {
+        language: 'kreole',
+        lessonId: lesson.id,
+        // Skip Unit preface so the New-word intro (and its scroll shell) mount.
+        debugJump: true
+      },
+      // Tall-phone frame (Galaxy S24 class): intro content can still exceed the
+      // fold; the scroll shell must be flex-bounded or Continue is unreachable.
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 360, height: 780 },
+        insets: { top: 32, right: 0, bottom: 24, left: 0 }
+      }
+    });
+
+    expect(await screen.findByText('New word')).toBeOnTheScreen();
+    expect(screen.getByTestId('activity-scroll')).toHaveStyle({ flex: 1 });
     expect(screen.getByText('Continue')).toBeOnTheScreen();
   });
 
@@ -3085,6 +3111,55 @@ describe('DailyReviewScreen', () => {
     });
 
     expect(await screen.findByTestId('review-count')).toHaveTextContent('1');
+  });
+
+  // #330: FeedbackFooter one-shot + failed recordActivityOutcome must not trap
+  // Daily Review on Correct / Next Question (Kouri-Vini Typing path).
+  it('re-enables Next Question after a failed Daily Review Typing advance', async () => {
+    const typing = {
+      ...activityByCardId('fixture:kreole:well:typing', 'kreole'),
+      english: 'How is it going?',
+      isReview: true
+    };
+    const nextCard = {
+      ...activityByCardId('fixture:kreole:pronouns:choice', 'kreole'),
+      isReview: true
+    };
+    const queueLoad = jest
+      .spyOn(reviewQueue, 'getDailyReviewQueue')
+      .mockResolvedValue([typing, nextCard]);
+    const realRecord = activityOutcome.recordActivityOutcome.bind(activityOutcome);
+    const record = jest
+      .spyOn(activityOutcome, 'recordActivityOutcome')
+      .mockRejectedValueOnce(new Error('storage unavailable'))
+      .mockImplementation((...args) => realRecord(...args));
+
+    try {
+      const user = setupUser();
+      renderApp({
+        initialRouteName: 'DailyReview',
+        initialParams: { language: 'kreole' }
+      });
+
+      expect(await screen.findByText('1 / 2')).toBeOnTheScreen();
+      expect(screen.getByText("Type: 'How is it going?'")).toBeOnTheScreen();
+
+      await user.type(screen.getByPlaceholderText('Type your answer'), 'Mo byin');
+      await user.press(screen.getByText('Check'));
+      expect(screen.getByText('Correct!')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Next Question'));
+      await waitFor(() => expect(record).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(screen.getByText('Next Question')).not.toBeDisabled());
+      expect(screen.getByText('1 / 2')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Next Question'));
+      expect(await screen.findByText('2 / 2')).toBeOnTheScreen();
+      expect(record).toHaveBeenCalledTimes(2);
+    } finally {
+      queueLoad.mockRestore();
+      record.mockRestore();
+    }
   });
 });
 
