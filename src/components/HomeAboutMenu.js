@@ -7,6 +7,9 @@ const LEAVES = [
   ['faq', 'FAQ']
 ];
 
+// Identity sign-in is built but not shipping yet — keep Account out of the menu.
+const SHOW_ACCOUNT_MENU_ENTRY = false;
+
 export default function HomeAboutMenu({
   visible,
   anchorTop,
@@ -42,22 +45,24 @@ export default function HomeAboutMenu({
             { top: anchorTop, left: anchorLeft, borderColor: accentColor }
           ]}
         >
-          <Pressable
-            testID="about-menu-account"
-            accessibilityRole="button"
-            accessibilityLabel={accountDetail ? `Account, ${accountDetail}` : 'Account'}
-            onPress={onAccount}
-            style={styles.sectionButton}
-          >
-            <View style={styles.accountCopy}>
-              <Text style={styles.sectionLabel}>Account</Text>
-              {accountDetail ? (
-                <Text style={styles.accountDetail} numberOfLines={1}>
-                  {accountDetail}
-                </Text>
-              ) : null}
-            </View>
-          </Pressable>
+          {SHOW_ACCOUNT_MENU_ENTRY ? (
+            <Pressable
+              testID="about-menu-account"
+              accessibilityRole="button"
+              accessibilityLabel={accountDetail ? `Account, ${accountDetail}` : 'Account'}
+              onPress={onAccount}
+              style={styles.sectionButton}
+            >
+              <View style={styles.accountCopy}>
+                <Text style={styles.sectionLabel}>Account</Text>
+                {accountDetail ? (
+                  <Text style={styles.accountDetail} numberOfLines={1}>
+                    {accountDetail}
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
+          ) : null}
 
           <Pressable
             testID="about-menu-section"
@@ -65,7 +70,10 @@ export default function HomeAboutMenu({
             accessibilityLabel="About Us"
             accessibilityState={{ expanded }}
             onPress={onToggle}
-            style={[styles.sectionButton, styles.dividedSection]}
+            style={[
+              styles.sectionButton,
+              SHOW_ACCOUNT_MENU_ENTRY ? styles.dividedSection : null
+            ]}
           >
             <Text style={styles.sectionLabel}>About Us</Text>
             <Feather

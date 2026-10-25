@@ -93,7 +93,8 @@ async function openAccount(user) {
   await user.press(screen.getByLabelText(/^Account/));
 }
 
-describe('Home email sign-in', () => {
+// Account menu entry is hidden until Identity ships (SHOW_ACCOUNT_MENU_ENTRY).
+describe.skip('Home email sign-in', () => {
   beforeEach(async () => {
     mockConnector.identity = null;
     mockConnector.listeners = new Set();
