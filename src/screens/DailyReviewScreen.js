@@ -15,6 +15,7 @@ import ProgressHeader from '../components/ProgressHeader';
 import SafeScreenView from '../components/SafeScreenView';
 
 import { recordActivityOutcome } from '../utils/activityOutcome';
+import { stopLessonAudio } from '../utils/audioPlayer';
 
 import {
   getDailyReviewQueue
@@ -146,6 +147,7 @@ export default function DailyReviewScreen({
     setXp(nextXp);
 
     if (outcome.nextStep === 'advance') {
+      stopLessonAudio();
       setIndex((i) => i + 1);
       return;
     }
