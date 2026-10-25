@@ -161,6 +161,12 @@ describe('BugReportFlow: validation', () => {
     ).toBe(800 * 0.92);
   });
 
+  it('never forces a sheet taller than the space left above the keyboard', () => {
+    expect(bugReportSheetMaxHeight({
+      windowHeight: 400, keyboardOffset: 250, topInset: 30, bottomInset: 20
+    })).toBe(86);
+  });
+
   it('uses the smaller credible keyboard height so an inflated Android height is ignored', () => {
     expect(
       keyboardHeightFromEvent({ height: 780, screenY: 500 }, 800)

@@ -3,6 +3,7 @@ import { createAudioPlayer } from 'expo-audio';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,12 +14,7 @@ import {
 } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
 import { resolveAlternativeAudioKey } from '../utils/alternativeAudio';
-import {
-  releaseAudioPlayer,
-  stopLessonAudio,
-  trackLessonFxPlayer,
-  trackLessonWordPlayer
-} from '../utils/audioPlayer';
+import { releaseAudioPlayer } from '../utils/audioPlayer';
 import { splitAlternativeResponses } from '../utils/splitAlternativeResponses';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
@@ -164,7 +160,6 @@ function useAudio(language) {
         stopAudio();
         const player = createAudioPlayer(source);
         soundRef.current = player;
-        trackLessonWordPlayer(player);
         player.play();
         return true;
       } catch {
@@ -181,37 +176,20 @@ function useAudio(language) {
         const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
         const player = createAudioPlayer({ uri });
         fxRef.current = player;
-        trackLessonFxPlayer(player);
         player.play();
       } catch {}
     },
     [stopFx]
   );
 
-  const stopAll = useCallback(() => {
-    stopAudio();
-    stopFx();
-    stopLessonAudio();
-  }, [stopAudio, stopFx]);
-
-  // Wrap Continue / Next so Word Audio stops before LessonRunner's async
-  // outcome + transition keep the old Activity mounted (#335).
-  const stopThen = useCallback(
-    (handler) =>
-      (...args) => {
-        stopAll();
-        return handler?.(...args);
-      },
-    [stopAll]
-  );
-
   useEffect(() => {
     return () => {
-      stopAll();
+      stopAudio();
+      stopFx();
     };
-  }, [stopAll]);
+  }, [stopAudio, stopFx]);
 
-  return { playAudioKey, playFeedback, stopAll, stopThen };
+  return { playAudioKey, playFeedback };
 }
 
 function getHintText(activity) {
@@ -309,17 +287,87 @@ function isTextAnswerCorrect(value, activity) {
   );
 }
 
+// Show the feedback button only if it falls below the visible area.
+// Unlike scrollToEnd, this never scrolls into the blank bottom spacer.
+export function getFeedbackScrollTarget({ cardBottom, viewportHeight, scrollY }) {
+  if (cardBottom <= 0 || viewportHeight <= 0) return null;
+
+  const currentY = Math.max(0, scrollY);
+  const hiddenPixels = cardBottom - (currentY + viewportHeight);
+  if (hiddenPixels <= 8) return null;
+
+  return currentY + hiddenPixels + 12;
+}
+
 function QuestionScrollView({ state, children }) {
+  const scrollRef = useRef(null);
+  const previousState = useRef(state);
+  const layoutRef = useRef({ cardBottom: 0, viewportHeight: 0, scrollY: 0 });
+  const feedbackPendingRef = useRef(false);
+  const feedbackReadyRef = useRef(false);
+
+  const revealFeedbackIfNeeded = useCallback(() => {
+    if (!feedbackPendingRef.current || !feedbackReadyRef.current) return;
+
+    const metrics = layoutRef.current;
+    if (!metrics.viewportHeight || !metrics.cardBottom) return;
+
+    const targetY = getFeedbackScrollTarget(metrics);
+    if (targetY !== null) {
+      scrollRef.current?.scrollTo?.({ y: targetY, animated: true });
+    }
+    feedbackPendingRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (previousState.current === state) return undefined;
+    previousState.current = state;
+    feedbackPendingRef.current = state !== 'idle';
+    feedbackReadyRef.current = false;
+
+    if (state === 'idle') {
+      // For Try Again, return to the answer field.
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+      return undefined;
+    }
+
+    // Allow feedback to finish laying out and the typing keyboard to close.
+    // Short questions do not scroll at all; taller questions move only enough
+    // to make their bottom action button accessible.
+    const timer = setTimeout(() => {
+      feedbackReadyRef.current = true;
+      revealFeedbackIfNeeded();
+    }, 260);
+    return () => clearTimeout(timer);
+  }, [state, revealFeedbackIfNeeded]);
+
   return (
     <ScrollView
+      ref={scrollRef}
       testID="activity-scroll"
       style={styles.scrollShell}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       nestedScrollEnabled
+      scrollEventThrottle={16}
+      onScroll={(event) => {
+        layoutRef.current.scrollY = event.nativeEvent.contentOffset.y;
+      }}
+      onLayout={(event) => {
+        layoutRef.current.viewportHeight = event.nativeEvent.layout.height;
+        revealFeedbackIfNeeded();
+      }}
       contentContainerStyle={styles.scrollContent}
     >
-      <View style={[styles.card, getCardStatusStyle(state)]}>
+      <View
+        style={[styles.card, getCardStatusStyle(state)]}
+        onLayout={(event) => {
+          const { y, height } = event.nativeEvent.layout;
+          layoutRef.current.cardBottom = y + height;
+          revealFeedbackIfNeeded();
+        }}
+      >
         {children}
       </View>
 
@@ -336,6 +384,7 @@ function getVariantAlternativeLabel(language) {
 
 function AlternativeList({
   text,
+  responses,
   textStyle,
   containerStyle,
   language,
@@ -343,7 +392,7 @@ function AlternativeList({
   onPlayAudioKey,
   playableColor
 }) {
-  const items = splitAlternativeResponses(text);
+  const items = responses || splitAlternativeResponses(text);
 
   if (items.length === 0) return null;
 
@@ -436,13 +485,15 @@ function AnswerAltButtons({
   visible,
   theme,
   language,
-  onPlayAudioKey
+  onPlayAudioKey,
+  showOriginalWithAlternatives = false
 }) {
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const hasEnglishAlt = !!activity?.englishAltResponse;
-  const hasVariantAlt = !!activity?.variantAltResponse;
+  const variantAlternatives = getAcceptedVariantAlts(activity);
+  const hasVariantAlt = variantAlternatives.length > 0;
 
   if (!visible || (!hasEnglishAlt && !hasVariantAlt)) return null;
 
@@ -460,11 +511,14 @@ function AnswerAltButtons({
           </TouchableOpacity>
 
           {showEnglishAlt ? (
+            <>{showOriginalWithAlternatives ? (
+              <Text style={styles.answerOriginalText}>{getPrimaryEnglish(activity)}</Text>
+            ) : null}
             <AlternativeList
               text={activity.englishAltResponse}
               textStyle={styles.answerAltText}
               containerStyle={styles.answerAltList}
-            />
+            /></>
           ) : null}
         </View>
       ) : null}
@@ -481,15 +535,18 @@ function AnswerAltButtons({
           </TouchableOpacity>
 
           {showVariantAlt ? (
+            <>{showOriginalWithAlternatives ? (
+              <Text style={styles.answerOriginalText}>{getPrimaryTarget(activity)}</Text>
+            ) : null}
             <AlternativeList
-              text={activity.variantAltResponse}
+              responses={variantAlternatives}
               textStyle={styles.answerAltText}
               containerStyle={styles.answerAltList}
               language={language}
               activity={activity}
               onPlayAudioKey={onPlayAudioKey}
               playableColor={theme.text}
-            />
+            /></>
           ) : null}
         </View>
       ) : null}
@@ -827,7 +884,7 @@ function IntroCard({
   theme,
   onOpenPreface
 }) {
-  const { playAudioKey, stopAll } = useAudio(language);
+  const { playAudioKey } = useAudio(language);
 
   const [submitted, setSubmitted] = useState(false);
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
@@ -836,7 +893,6 @@ function IntroCard({
   const showAddOns = shouldShowIntroAddOns(activity);
 
   function submit() {
-    stopAll();
     setSubmitted(true);
     onCorrect();
   }
@@ -968,7 +1024,7 @@ function MultipleChoice({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
+  const { playAudioKey, playFeedback } = useAudio(language);
 
   const targetText = getPrimaryTarget(activity);
   const promptText = getPromptDisplay(activity);
@@ -1083,14 +1139,14 @@ function MultipleChoice({
         hintText={getHintText(activity)}
         answerDisplay={targetText}
         onTryAgain={resetWrong}
-        onNext={stopThen(onCorrect)}
-        onIncorrect={stopThen(() =>
+        onNext={onCorrect}
+        onIncorrect={() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : selected
           )
-        )}
+        }
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -1118,7 +1174,7 @@ function SelectMultiple({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
+  const { playAudioKey, playFeedback } = useAudio(language);
 
   const answers = Array.isArray(activity.answers)
     ? activity.answers
@@ -1255,14 +1311,14 @@ function SelectMultiple({
         hintText={`Select every French form that means “${activity.english || ''}”.`}
         answerDisplay={answerDisplay}
         onTryAgain={resetWrong}
-        onNext={stopThen(onCorrect)}
-        onIncorrect={stopThen(() =>
+        onNext={onCorrect}
+        onIncorrect={() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : selected.join(' | ')
           )
-        )}
+        }
       />
     </QuestionScrollView>
   );
@@ -1281,7 +1337,7 @@ function ListeningTargetChoice({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
+  const { playAudioKey, playFeedback } = useAudio(language);
 
   const targetText = getPrimaryTarget(activity);
   const revealAddOns = shouldRevealAfterAnswer(state, attempts);
@@ -1423,14 +1479,14 @@ function ListeningTargetChoice({
         hintText={getHintText(activity)}
         answerDisplay={targetText}
         onTryAgain={resetWrong}
-        onNext={stopThen(onCorrect)}
-        onIncorrect={stopThen(() =>
+        onNext={onCorrect}
+        onIncorrect={() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : selected
           )
-        )}
+        }
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -1459,7 +1515,7 @@ function Typing({
   const [attempts, setAttempts] = useState(0);
   const [hintLevel, setHintLevel] = useState(0);
 
-  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
+  const { playAudioKey, playFeedback } = useAudio(language);
   const stateRef = useRef(state);
 
   useEffect(() => {
@@ -1495,6 +1551,7 @@ function Typing({
 
   function checkAnswer() {
     if (!value.trim()) return;
+    Keyboard.dismiss();
 
     if (isTextAnswerCorrect(value, activity)) {
       playFeedback('correct');
@@ -1511,6 +1568,7 @@ function Typing({
   }
 
   function skipQuestion() {
+    Keyboard.dismiss();
     playFeedback('wrong');
     setState('skipped');
   }
@@ -1569,6 +1627,8 @@ function Typing({
         onChangeText={setValue}
         style={styles.input}
         autoCapitalize="none"
+        returnKeyType="done"
+        onSubmitEditing={Keyboard.dismiss}
         editable={!isLocked(state)}
       />
 
@@ -1683,14 +1743,14 @@ function Typing({
         hintText={getHintText(activity)}
         answerDisplay={targetText}
         onTryAgain={resetWrong}
-        onNext={stopThen(onCorrect)}
-        onIncorrect={stopThen(() =>
+        onNext={onCorrect}
+        onIncorrect={() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : value
           )
-        )}
+        }
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -1698,6 +1758,7 @@ function Typing({
             visible={revealAddOns}
             theme={theme}
             onPlayAudioKey={playAudioKey}
+            showOriginalWithAlternatives
           />
         }
       />
@@ -1721,7 +1782,7 @@ function SentenceBuild({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
+  const { playAudioKey, playFeedback } = useAudio(language);
 
   const targetText = getPrimaryTarget(activity);
   const promptText = getPromptDisplay(activity);
@@ -1875,14 +1936,14 @@ function SentenceBuild({
         hintText={getHintText(activity)}
         answerDisplay={targetText}
         onTryAgain={resetWrong}
-        onNext={stopThen(onCorrect)}
-        onIncorrect={stopThen(() =>
+        onNext={onCorrect}
+        onIncorrect={() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : selected.join(' ')
           )
-        )}
+        }
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -1997,7 +2058,7 @@ function MatchPairs({
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
 
-  const { playAudioKey, playFeedback, stopThen } = useAudio(language);
+  const { playAudioKey, playFeedback } = useAudio(language);
 
   const revealAddOns =
     shouldRevealAfterAnswer(
@@ -2222,14 +2283,14 @@ function MatchPairs({
           />
         }
         onTryAgain={resetWrong}
-        onNext={stopThen(onCorrect)}
-        onIncorrect={stopThen(() =>
+        onNext={onCorrect}
+        onIncorrect={() =>
           onWrong(
             state === 'skipped'
               ? '__skipped__'
               : `${valueForId(left, selectedLeft) || ''} ↔ ${valueForId(right, selectedRight) || ''}`
           )
-        )}
+        }
         altContent={
           <AnswerAltButtons
             activity={activity}
@@ -2246,6 +2307,7 @@ function MatchPairs({
 
 const styles = StyleSheet.create({
   scrollShell: {
+    flex: 1,
     width: '100%',
     alignSelf: 'stretch',
     backgroundColor: 'transparent'
@@ -2265,12 +2327,12 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    paddingBottom: 36,
+    paddingBottom: 20,
     overflow: 'visible'
   },
 
   bottomSpacer: {
-    height: 120
+    height: 16
   },
 
   cardCorrect: {
@@ -2704,6 +2766,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 8,
     gap: 4
+  },
+
+  answerOriginalText: {
+    color: '#17324D',
+    fontSize: 15,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginTop: 8
   },
 
   answerAltText: {

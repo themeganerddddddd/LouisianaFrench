@@ -4,6 +4,8 @@ import {
 } from 'react';
 
 import {
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,7 +17,6 @@ import ProgressHeader from '../components/ProgressHeader';
 import SafeScreenView from '../components/SafeScreenView';
 
 import { recordActivityOutcome } from '../utils/activityOutcome';
-import { stopLessonAudio } from '../utils/audioPlayer';
 
 import {
   getDailyReviewQueue
@@ -147,7 +148,6 @@ export default function DailyReviewScreen({
     setXp(nextXp);
 
     if (outcome.nextStep === 'advance') {
-      stopLessonAudio();
       setIndex((i) => i + 1);
       return;
     }
@@ -205,6 +205,7 @@ export default function DailyReviewScreen({
         styles.container
       }
     >
+      <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View
         style={
           styles.inner
@@ -253,6 +254,7 @@ export default function DailyReviewScreen({
           }
         />
       </View>
+      </KeyboardAvoidingView>
     </SafeScreenView>
   );
 }
@@ -265,6 +267,7 @@ const styles =
         '#F0F9FF'
     },
 
+    keyboardArea: { flex: 1 },
     inner: {
       flex: 1,
       paddingHorizontal:

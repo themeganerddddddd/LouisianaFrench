@@ -755,7 +755,7 @@ describe('HomeScreen', () => {
       );
     });
 
-    it('caps the Android bug report sheet for the keyboard without double-padding the overlay', async () => {
+    it('lifts the Android bug report sheet above the keyboard when the Modal is not resized', async () => {
       jest.replaceProperty(Platform, 'OS', 'android');
       const overlay = await openBugReport();
       fireEvent(overlay, 'layout', {
@@ -768,10 +768,8 @@ describe('HomeScreen', () => {
 
       emitKeyboard(KEYBOARD_EVENTS.android.show);
       await waitFor(() => {
-        expect(StyleSheet.flatten(overlay.props.style).paddingBottom).toBe(insets.bottom + 14);
-        expect(StyleSheet.flatten(screen.getByTestId('bug-report-sheet').props.style).maxHeight).toBeLessThan(
-          closedMaxHeight
-        );
+        expect(sheetBottomEdge()).toBe(keyboardTop - 14);
+        expect(StyleSheet.flatten(screen.getByTestId('bug-report-sheet').props.style).maxHeight).toBeLessThan(closedMaxHeight);
       });
 
       emitKeyboard(KEYBOARD_EVENTS.android.hide);
@@ -780,7 +778,17 @@ describe('HomeScreen', () => {
       );
     });
 
-    it('keeps the bug report sheet above the inset for a floating Android keyboard', async () => {
+      it('allows the Android Modal to use the resized window without extra keyboard padding', async () => {
+      jest.replaceProperty(Platform, 'OS', 'android');
+      const overlay = await openBugReport();
+      // When the Activity has resized below the keyboard, the remaining overlap is zero.
+      const { height } = StyleSheet.flatten(overlay.props.style);
+      expect(height ?? screenHeight).toBeGreaterThan(0);
+      emitKeyboard(['keyboardDidShow', { screenY: screenHeight + 50, height: 240 }]);
+      expect(overlay).toHaveStyle({ paddingBottom: insets.bottom + 14 });
+    });
+
+  it('keeps the bug report sheet above the inset for a floating Android keyboard', async () => {
       jest.replaceProperty(Platform, 'OS', 'android');
       const overlay = await openBugReport();
 
@@ -2997,6 +3005,32 @@ describe('DailyReviewScreen', () => {
     expect(screen.queryByTestId('review-count')).toBeNull();
   });
 
+  it('clears the yellow Review badge after finishing a typing Card in Daily Review', async () => {
+    await seedAsyncStorage({
+      lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
+      reviewState: {
+        'fixture:cajun:greeting:typing': buildCardReviewState({
+          nextReviewAt: clock.pastDue().toISOString()
+        })
+      }
+    });
+    const user = setupUser();
+
+    renderApp({
+      initialRouteName: 'Home',
+      initialParams: { language: 'cajun' }
+    });
+    expect(await screen.findByTestId('review-count')).toHaveTextContent('1');
+    await user.press(screen.getByTestId('home-review-control'));
+    await user.type(screen.getByPlaceholderText('Type your answer'), 'Ça va?');
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Next Question'));
+    await user.press(await screen.findByText('Back to Home'));
+
+    await waitFor(() => expect(screen.queryByTestId('review-count')).toBeNull());
+    expect((await getReviewState())['fixture:cajun:greeting:typing'].repetitions).toBeGreaterThan(0);
+  });
+
   it('does not count a Card missed in Daily Review until it is due again', async () => {
     await seedAsyncStorage({
       lessonProgress: homeProjectionProgress.priorLessonsByLanguage,
@@ -3127,6 +3161,20 @@ describe('DictionaryScreen', () => {
     } finally {
       getWordProgress.mockRestore();
     }
+  });
+
+  it('allows the Dictionary title to wrap rather than clipping on narrow screens', async () => {
+    renderApp({
+      initialRouteName: 'Dictionary',
+      initialParams: { language: 'kreole' },
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 320, height: 568 },
+        insets: { top: 20, bottom: 0, left: 0, right: 0 }
+      }
+    });
+    expect(await screen.findByText('Kouri-Vini Dictionary')).toHaveStyle({
+      flexWrap: 'wrap', flexShrink: 1
+    });
   });
 
   it('applies the final top inset on the first render', async () => {
@@ -3279,6 +3327,21 @@ describe('DictionaryScreen', () => {
     expect(screen.getByText('Thank you')).toBeOnTheScreen();
     expect(screen.queryByText('Bonjour')).toBeNull();
   }
+
+  it('provides a Home escape from single-Word speech, alongside Back to Dictionary', async () => {
+    const user = setupUser();
+    const restoreWords = addSecondAudioWord();
+    try {
+      await openSecondWordPractice(user);
+      expect(screen.getByTestId('advanced-back-button')).toBeOnTheScreen();
+      expect(screen.getByTestId('advanced-home-button')).toBeOnTheScreen();
+      expect(within(screen.getByTestId('advanced-practice-scroll')).queryByTestId('advanced-home-button')).toBeNull();
+      await user.press(screen.getByTestId('advanced-home-button'));
+      expect(await screen.findByText('Louisiana French')).toBeOnTheScreen();
+    } finally {
+      restoreWords();
+    }
+  });
 
   it('opens single-Word SpeechPractice and returns to Dictionary on back', async () => {
     const user = setupUser();

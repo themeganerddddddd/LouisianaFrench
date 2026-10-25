@@ -225,15 +225,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: { paddingTop: 20, paddingHorizontal: 18, paddingBottom: 10 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerText: { flex: 1 },
+  headerText: { flex: 1, minWidth: 0 },
   homeButton: {
     width: 44,
     height: 44,
     borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    flexShrink: 0
   },
-  title: { fontSize: 28, fontWeight: '900', color: '#17324D' },
+  title: { fontSize: 24, lineHeight: 30, flexShrink: 1, flexWrap: 'wrap', color: '#17324D', fontWeight: '900' },
   sub: { color: '#64748B', marginTop: 6, fontWeight: '600' },
   searchWrap: { paddingHorizontal: 18, paddingBottom: 10 },
   searchInput: {
@@ -307,6 +308,8 @@ const styles = StyleSheet.create({
   },
   actionsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     marginTop: 12
   },
   audioBtn: {
@@ -326,7 +329,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginLeft: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 999,

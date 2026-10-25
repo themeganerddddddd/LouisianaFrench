@@ -4,6 +4,8 @@ import {
 } from 'react';
 
 import {
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   View
@@ -387,7 +389,8 @@ export default function MistakeReviewScreen({
         styles.container
       }
     >
-      <View
+      <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View
         style={
           styles.inner
         }
@@ -463,6 +466,7 @@ export default function MistakeReviewScreen({
           />
         </View>
       </View>
+      </KeyboardAvoidingView>
     </SafeScreenView>
   );
 }
@@ -475,6 +479,7 @@ const styles =
         '#FFF7ED'
     },
 
+    keyboardArea: { flex: 1 },
     inner: {
       flex: 1,
       padding: 18
