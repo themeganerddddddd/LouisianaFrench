@@ -88,6 +88,30 @@ describe('signInWithProvider', () => {
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
 
+  it('exchanges an Expo Go exp:// redirect for an identity', async () => {
+    const expoRedirect = 'exp://172.16.0.103:8082/--/auth/callback';
+    const storage = createSessionStore({
+      platform: 'ios',
+      secureStore: {
+        setItemAsync: jest.fn(),
+        getItemAsync: jest.fn(async () => null),
+        deleteItemAsync: jest.fn()
+      }
+    });
+    const client = createFakeClient(storage);
+    const connector = createIdentityConnector({
+      client,
+      redirectTo: expoRedirect,
+      openBrowser: async () => ({ url: `${expoRedirect}?code=expo-code` })
+    });
+
+    const result = await connector.signInWithProvider('google');
+
+    expect(result.identity?.id).toBe('learner-1');
+    expect(client.calls[0].options.redirectTo).toBe(expoRedirect);
+    expect(client.calls[1]).toEqual({ method: 'exchange', code: 'expo-code' });
+  });
+
   it('uses the email name when the provider sends no display name', async () => {
     const storage = createSessionStore({
       platform: 'ios',
