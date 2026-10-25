@@ -2097,6 +2097,31 @@ describe('LessonRunner', () => {
     // Device check on Pixel landscape: Continue starts off-screen and must live
     // inside the Activity scroll shell so a swipe can reach it.
     expect(screen.getByTestId('activity-scroll')).toBeOnTheScreen();
+    expect(screen.getByTestId('activity-scroll')).toHaveStyle({ flex: 1 });
+    expect(screen.getByText('Continue')).toBeOnTheScreen();
+  });
+
+  it('bounds the Activity scroll shell on kreole New-word intro so Continue stays reachable', async () => {
+    const lesson = lessonById('fixture_kreole_u01_l01', 'kreole');
+
+    renderApp({
+      initialRouteName: 'Lesson',
+      initialParams: {
+        language: 'kreole',
+        lessonId: lesson.id,
+        // Skip Unit preface so the New-word intro (and its scroll shell) mount.
+        debugJump: true
+      },
+      // Tall-phone frame (Galaxy S24 class): intro content can still exceed the
+      // fold; the scroll shell must be flex-bounded or Continue is unreachable.
+      safeAreaMetrics: {
+        frame: { x: 0, y: 0, width: 360, height: 780 },
+        insets: { top: 32, right: 0, bottom: 24, left: 0 }
+      }
+    });
+
+    expect(await screen.findByText('New word')).toBeOnTheScreen();
+    expect(screen.getByTestId('activity-scroll')).toHaveStyle({ flex: 1 });
     expect(screen.getByText('Continue')).toBeOnTheScreen();
   });
 

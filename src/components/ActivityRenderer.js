@@ -2246,6 +2246,9 @@ function MatchPairs({
 
 const styles = StyleSheet.create({
   scrollShell: {
+    // Bound height in the Lesson/Daily Review flex chain so tall content
+    // (e.g. New-word intro on Galaxy S24) can scroll to Continue.
+    flex: 1,
     width: '100%',
     alignSelf: 'stretch',
     backgroundColor: 'transparent'
