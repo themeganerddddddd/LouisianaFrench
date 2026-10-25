@@ -618,7 +618,7 @@ function FeedbackFooter({
       await handler?.();
     } catch (error) {
       setSubmitted(false);
-      if (__DEV__) {
+      if (__DEV__ && process.env.NODE_ENV !== 'test') {
         console.warn('Activity advance failed; re-enabling footer', error);
       }
     }
