@@ -12,7 +12,7 @@
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { exists, readText, repoRoot, run } from './lib/repo.mjs';
+import { exists, isProductionPath, readText, repoRoot, run } from './lib/repo.mjs';
 
 const SOFT_LOC = 100;
 const HARD_LOC = 250;
@@ -25,9 +25,6 @@ const TEMPLATE_SECTIONS = [
   'Risk',
   'How to revert'
 ];
-
-const EXCLUDE_LOC_RE =
-  /(^|\/)(__tests__\/|docs\/|fixtures?\/|generated\/)|(\.test\.|\.spec\.)|(\/(snapshots|__mocks__)\/)/i;
 
 function usage(code = 1) {
   console.error(
@@ -112,7 +109,8 @@ function productionLocAdded(root, base) {
     if (parts.length < 3) continue;
     const [a, d, file] = parts;
     if (a === '-' || d === '-') continue; // binary
-    if (EXCLUDE_LOC_RE.test(file)) continue;
+    // AGENTS.md production-LOC guideline: app source under src/, not tests/docs/tooling.
+    if (!isProductionPath(file)) continue;
     const addN = Number(a);
     const delN = Number(d);
     if (!Number.isFinite(addN) || !Number.isFinite(delN)) continue;
