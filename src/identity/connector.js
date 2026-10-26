@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { keepSavedLearnerProgressFor } from '../progress/keepSavedLearnerProgress';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -187,6 +188,7 @@ export function createIdentityConnector({
     const next = remember(data?.session);
     identity = next.identity;
     accessToken = next.accessToken;
+    if (identity?.id) await keepSavedLearnerProgressFor(identity.id, async () => accessToken);
   }
 
   async function apply(session, email) {
@@ -194,6 +196,7 @@ export function createIdentityConnector({
     const next = remember(session, email);
     identity = next.identity;
     accessToken = next.accessToken;
+    if (identity?.id) await keepSavedLearnerProgressFor(identity.id, async () => accessToken);
     emit();
     return { identity, message: identity ? null : FAILED };
   }
@@ -347,6 +350,7 @@ export function createIdentityConnector({
       await client.auth.signOut({ scope: 'local' });
       identity = null;
       accessToken = null;
+      await keepSavedLearnerProgressFor(null, async () => null);
       emit();
       return { identity: null };
     }
