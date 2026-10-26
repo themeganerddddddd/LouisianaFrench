@@ -2,6 +2,18 @@
 
 ## Agent skills
 
+Project skills (Cursor and OpenCode) live under **`.agents/skills/<name>/SKILL.md`**. That folder is the shared source of truth. Thin stubs under `.cursor/skills/` only point here. Gate scripts stay in `.opencode/scripts/` and are invoked via `npm run …`.
+
+**Cursor subagents** (Task / `/name`) live under **`.cursor/agents/`**, ported from `.opencode/agents/` with Cursor models (`grok-4.7-high` for reasoning-heavy roles; `composer-2.5` for implementation; `composer-2.5-fast` for quick explore/ops). OpenCode keeps its own agent files under `.opencode/agents/` (OpenCode model ids and permissions).
+
+Current skills:
+
+- `clear-thinking` — Decision Brief before planning (`/clear-thinking`)
+- `local-review` — dual-axis review against `REVIEW.md`
+- `pr-ui-evidence` — UI evidence under `docs/evidence/<issue>/`
+
+Cursor subagents: `coordinator`, `plan`, `coding-specialist`, `review`, `explore`, `general`, `validator`, `drift-detector`. See `docs/agents/skills.md`.
+
 ### Large project coordination
 
 - Use the repository-wide `coordinator` for multi-stage or multi-ticket work where delegation conserves the primary context.
@@ -39,7 +51,8 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 - Follow the gate order in `docs/agents/validation.md`: ticket-context → authority → plan-validate → implement → drift-check → review → pr-ready.
 - Use npm scripts: `ticket:context`, `validate:authority`, `validate:plan`, `validate:drift`, `validate:ledger`, `validate:fixture-sep`, `check:ui-evidence`, `capture:ui-evidence`, `pr-ready`, `agent:worktree`, `worktree:gc`, `test:changed`.
 - Stable package ids and evidence paths: `docs/agents/session-facts.md`.
-- Local review entrypoint: `.cursor/skills/local-review` (loads `REVIEW.md`). Before `gh pr create`, run `npm run pr-ready`.
+- Local review entrypoint: `.agents/skills/local-review` (loads `REVIEW.md`). Before `gh pr create`, run `npm run pr-ready`.
+- Before planning large or ambiguous work, run `/clear-thinking` (`.agents/skills/clear-thinking`) for a Decision Brief.
 
 ## Code quality
 
