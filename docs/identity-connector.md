@@ -76,10 +76,10 @@ XP in Learner Progress can stay on the device until that service exists. Sign-in
 
 Chat uses the same two calls, plus the subscription. When an Identity appears, chat connects with `id` and the access token. When the learner signs out, the subscription fires and chat drops. A Guest is not in chat. Chat does not import Supabase, and it does not keep its own copy of the session.
 
-### Backup and retrieval of Learner Progress
+### Saved Learner Progress
 
-A later backup will save Learner Progress for an Identity and bring that progress back onto a device. A Guest keeps progress only on the device they are using. The backup will ask the connector for `id` and `getAccessToken()`, then talk to its own service. This sign-in work does not upload Learner Progress. How backup and retrieval work is not decided yet.
+Saved Learner Progress is one record per Identity per Language. The words are in `CONTEXT.md`. The decision is [ADR 0006](adr/0006-saved-learner-progress.md) and the spec is GitHub issue 348. A Guest keeps Learner Progress only on the device they are using. A Claim or Restore asks the connector for `id` and `getAccessToken()`, then talks to its own service. This sign-in work does not save Learner Progress.
 
 ## What this work does not build
 
-The connector does not upload Learner Progress, replace the local leaderboard, open a chat, or back up progress. Those stay future callers. Because they are limited to the id, the Display name, the access token, and the subscription, adding them does not mean opening Supabase, the keystore, or the password path again.
+The connector does not keep Saved Learner Progress, replace the local leaderboard, or open a chat. Those stay future callers. Because they are limited to the id, the Display name, the access token, and the subscription, adding them does not mean opening Supabase, the keystore, or the password path again.
