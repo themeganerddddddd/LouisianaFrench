@@ -139,7 +139,7 @@ describe('Home email sign-in', () => {
     await openAccount(user);
     expect(screen.getByTestId('sign-in-tboy')).toBeOnTheScreen();
     expect(screen.getByLabelText('Sign in with Google')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Sign in with Facebook')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Sign in with Facebook')).toBeNull();
     expect(screen.queryByTestId('sign-in-reset-mode')).toBeNull();
     await user.press(screen.getByTestId('sign-in-create-mode'));
     expect(screen.getByText(/A name, an email, and a password/)).toBeOnTheScreen();
@@ -237,29 +237,6 @@ describe('Home email sign-in', () => {
     expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
     expect(mockConnector.provider).toBe('google');
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
-  });
-
-  it('continues with Facebook and shows the display name', async () => {
-    const user = setupUser();
-    await openHome();
-    await openAccount(user);
-    expect(screen.getByTestId('sign-in-google')).toBeOnTheScreen();
-    await user.press(screen.getByTestId('sign-in-facebook'));
-    await user.press(screen.getByLabelText('About menu'));
-    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
-    expect(mockConnector.provider).toBe('facebook');
-    expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
-  });
-
-  it('stays a guest when Facebook is cancelled', async () => {
-    const user = setupUser();
-    mockConnector.failure = 'cancel';
-    await openHome();
-    await openAccount(user);
-    await user.press(screen.getByTestId('sign-in-facebook'));
-    expect(screen.getByTestId('sign-in-modal')).toBeOnTheScreen();
-    expect(screen.queryByTestId('sign-in-message')).toBeNull();
-    expect(screen.queryByLabelText('Account, Ada')).toBeNull();
   });
 
   it('stays a guest when Google is cancelled', async () => {

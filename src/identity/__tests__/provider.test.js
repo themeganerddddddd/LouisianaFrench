@@ -178,33 +178,6 @@ describe('signInWithProvider', () => {
     expect(result.message).not.toContain(REDIRECT);
   });
 
-  it('exchanges a Facebook redirect for an identity and an access token', async () => {
-    const { connector, client } = await harness(async () => ({
-      url: `${REDIRECT}?code=facebook-code`
-    }));
-
-    const result = await connector.signInWithProvider('facebook');
-
-    expect(result.identity.displayName).toBe('Ada');
-    expect(await connector.getAccessToken()).toBe('access-token-value');
-    expect(client.calls[0].provider).toBe('facebook');
-    expect(client.calls[0].options.redirectTo).toBe(REDIRECT);
-    const stored = JSON.stringify(await AsyncStorage.getItem('sb-auth-token'));
-    expect(stored).not.toContain('access-token-value');
-    expect(stored).not.toContain('refresh-token-value');
-    expect(stored).not.toContain('facebook-code');
-    expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
-  });
-
-  it('leaves a guest when the Facebook browser is closed', async () => {
-    const { connector, client } = await harness(async () => null);
-    const result = await connector.signInWithProvider('facebook');
-    expect(result).toEqual({ identity: null, message: null });
-    expect(await connector.getIdentity()).toBeNull();
-    expect(await connector.getAccessToken()).toBeNull();
-    expect(client.calls.some((call) => call.method === 'exchange')).toBe(false);
-  });
-
   it('hides a code that the exchange error repeats', async () => {
     const { connector } = await harness(async () => ({ url: `${REDIRECT}?code=leaked` }), {
       exchangeError: {
