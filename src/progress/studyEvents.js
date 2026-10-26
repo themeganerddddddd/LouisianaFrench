@@ -81,6 +81,7 @@ function merged(events) {
 
 function startPump() {
   if (pumping) return;
+  let paused = false;
   pumping = (async () => {
     while (jobs.length && session) {
       const job = jobs[0];
@@ -95,8 +96,12 @@ function startPump() {
         store: session.store,
         record: job.payload
       });
-      if (result.retry) return;
-      jobs.shift();
+      if (!session || session.identityId !== job.identityId) return;
+      if (result.retry) {
+        paused = true;
+        return;
+      }
+      if (jobs[0] === job) jobs.shift();
       if (!result.ok) {
         jobs.length = 0;
         return;
@@ -104,6 +109,7 @@ function startPump() {
     }
   })().finally(() => {
     pumping = null;
+    if (!paused && jobs.length && session) startPump();
   });
   pumping.catch(() => {});
 }

@@ -107,4 +107,40 @@ describe('study events', () => {
     await savedProgressSettled();
     expect(store.writes).toHaveLength(2);
   });
+
+  it('keeps a new study row when an older save finishes after sign-out', async () => {
+    const store = memoryStore();
+    await AsyncStorage.setItem(
+      KEYS.PROFILE_CAJUN,
+      JSON.stringify({ username: 'Ada', xp: 2, streak: 1, lastStudyDate: null })
+    );
+    await onIdentityForLanguage({ identityId: 'ada', language: 'cajun', store });
+    bindSavedProgressSession('ada', store);
+    let releaseWrite;
+    const gate = new Promise((resolve) => {
+      releaseWrite = resolve;
+    });
+    const succeed = store.write.bind(store);
+    let calls = 0;
+    const started = new Promise((resolve) => {
+      store.write = async (...args) => {
+        calls += 1;
+        if (calls === 1) {
+          resolve();
+          await gate;
+        }
+        return succeed(...args);
+      };
+    });
+
+    await updateCardReview('cajun:card-1', 4);
+    await started;
+    bindSavedProgressSession(null, null);
+    bindSavedProgressSession('ada', store);
+    await updateWordProgress('cajun', 'row-1', true);
+    releaseWrite();
+    await savedProgressSettled();
+
+    expect(store.writes.map((write) => write.ops)).toEqual([['card_review'], ['word_mastery']]);
+  });
 });
