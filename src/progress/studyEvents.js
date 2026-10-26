@@ -1,14 +1,20 @@
+const pending = [];
 const jobs = [];
 let session = null;
 let pumping = null;
+let scheduled = null;
 
 export function bindSavedProgressSession(identityId, store) {
   session = identityId && store ? { identityId, store } : null;
-  if (!session) jobs.length = 0;
+  if (!session) {
+    pending.length = 0;
+    jobs.length = 0;
+    scheduled = null;
+  }
 }
 
 export function savedProgressSettled() {
-  return pumping || Promise.resolve();
+  return scheduled || pumping || Promise.resolve();
 }
 
 function payload(record, event) {
@@ -50,6 +56,29 @@ function payload(record, event) {
   };
 }
 
+function merged(events) {
+  const groups = new Map();
+  for (const item of events) {
+    if (!session || item.identityId !== session.identityId) continue;
+    const event = item.event;
+    const group = groups.get(event.language) || {
+      language: event.language,
+      identityId: item.identityId,
+      ops: []
+    };
+    for (const op of event.ops) {
+      if (!group.ops.includes(op)) group.ops.push(op);
+    }
+    group.lessonId = event.lessonId || group.lessonId;
+    group.wordRowId = event.wordRowId || group.wordRowId;
+    group.cardId = event.cardId || group.cardId;
+    group.day = event.day || group.day;
+    group.practiceType = event.practiceType || group.practiceType;
+    groups.set(event.language, group);
+  }
+  return [...groups.values()];
+}
+
 function startPump() {
   if (pumping) return;
   pumping = (async () => {
@@ -79,21 +108,38 @@ function startPump() {
   pumping.catch(() => {});
 }
 
+function schedule() {
+  if (scheduled) return;
+  scheduled = new Promise((resolve) => {
+    setTimeout(async () => {
+      const events = pending.splice(0);
+      scheduled = null;
+      try {
+        if (session && events.length) {
+          const { readSavedLearnerProgress } = require('./savedLearnerProgress');
+          for (const event of merged(events)) {
+            if (!session || session.identityId !== event.identityId) continue;
+            const record = await readSavedLearnerProgress(event.language);
+            if (!session || session.identityId !== event.identityId) continue;
+            jobs.push({
+              identityId: event.identityId,
+              language: event.language,
+              payload: payload(record, event)
+            });
+          }
+          startPump();
+          if (pumping) await pumping;
+        }
+      } finally {
+        resolve();
+      }
+    }, 0);
+  });
+}
+
 export async function keepStudyEvent(event) {
-  try {
-    if (!session) return;
-    if (event.language !== 'cajun' && event.language !== 'kreole') return;
-    const identityId = session.identityId;
-    const { readSavedLearnerProgress } = require('./savedLearnerProgress');
-    const record = await readSavedLearnerProgress(event.language);
-    if (!session || session.identityId !== identityId) return;
-    jobs.push({
-      identityId,
-      language: event.language,
-      payload: payload(record, event)
-    });
-    startPump();
-  } catch {
-    // A failed save must not stop the lesson. The rows stay on the device.
-  }
+  if (!session) return;
+  if (event.language !== 'cajun' && event.language !== 'kreole') return;
+  pending.push({ identityId: session.identityId, event });
+  schedule();
 }

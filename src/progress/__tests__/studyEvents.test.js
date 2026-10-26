@@ -65,13 +65,13 @@ describe('study events', () => {
     });
     await savedProgressSettled();
 
-    expect(store.writes.map((write) => write.revision)).toEqual([1, 2, 3]);
-    expect(store.writes.map((write) => write.ops)).toEqual([
-      ['card_review'],
-      ['word_mastery'],
-      ['pending_mistake']
+    expect(store.writes).toEqual([
+      {
+        revision: 1,
+        ops: ['card_review', 'word_mastery', 'pending_mistake'],
+        cardId: 'cajun:card-1'
+      }
     ]);
-    expect(store.writes[0].cardId).toBe('cajun:card-1');
   });
 
   it('retries the same rows on the next write and drops them on sign-out', async () => {
