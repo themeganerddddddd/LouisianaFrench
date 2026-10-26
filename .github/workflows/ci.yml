@@ -40,3 +40,26 @@ jobs:
       - run: npm ci
       - name: Export the iOS and Android bundles
         run: npm run build
+
+  pr-gates:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Write PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+      - name: Check PR UI evidence
+        run: >
+          node .opencode/scripts/check-pr-ui-evidence.mjs
+          --base origin/main
+          --body-file "$RUNNER_TEMP/pr-body.md"
