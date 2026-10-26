@@ -3,7 +3,7 @@
  * Local PR readiness gates: lint → test → UI evidence → template sections → LOC.
  *
  * Usage:
- *   node .opencode/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path]
+ *   node .opencode/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path] [--base origin/ref]
  *
  * Exit 0 only if all gates pass.
  * Soft warn at 100 production LOC added; hard fail above 250 unless ALLOW_LARGE_PR=1.
@@ -11,7 +11,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { exists, isProductionPath, readText, repoRoot, run } from './lib/repo.mjs';
 
 const SOFT_LOC = 100;
@@ -28,25 +28,36 @@ const TEMPLATE_SECTIONS = [
 
 function usage(code = 1) {
   console.error(
-    'Usage: node .opencode/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path]'
+    'Usage: node .opencode/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path] [--base origin/ref]'
   );
   process.exit(code);
 }
 
 function parseArgs(argv) {
-  const out = { skipTest: false, issue: null, bodyFile: null };
+  const out = { skipTest: false, issue: null, bodyFile: null, base: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--skip-test') out.skipTest = true;
     else if (a === '--issue') out.issue = argv[++i];
     else if (a === '--body-file') out.bodyFile = argv[++i];
-    else if (a === '-h' || a === '--help') usage(0);
+    else if (a === '--base') {
+      out.base = argv[++i];
+      if (!out.base) usage(1);
+    } else if (a === '-h' || a === '--help') usage(0);
     else usage(1);
   }
   return out;
 }
 
-function resolveBase(root) {
+function resolveBase(root, requested) {
+  if (requested) {
+    try {
+      run('git', ['rev-parse', '--verify', requested], { cwd: root });
+      return requested;
+    } catch {
+      throw new Error(`Base ref not found: ${requested}`);
+    }
+  }
   for (const candidate of ['origin/main', 'main']) {
     try {
       run('git', ['rev-parse', '--verify', candidate], { cwd: root });
@@ -71,9 +82,9 @@ function npmRun(root, script) {
   return { ok: true };
 }
 
-function runUiEvidenceCheck(root, args) {
+function runUiEvidenceCheck(root, args, base) {
   const script = join(dirname(fileURLToPath(import.meta.url)), 'check-pr-ui-evidence.mjs');
-  const cmdArgs = [script];
+  const cmdArgs = [script, '--base', base];
   if (args.issue != null) cmdArgs.push('--issue', String(args.issue));
   if (args.bodyFile) cmdArgs.push('--body-file', args.bodyFile);
   console.error('→ check-pr-ui-evidence');
@@ -137,8 +148,18 @@ function main() {
     console.error('→ skipping tests (--skip-test)');
   }
 
-  const ui = runUiEvidenceCheck(root, args);
-  if (!ui.ok) failures.push('ui-evidence');
+  let base = null;
+  try {
+    base = resolveBase(root, args.base);
+  } catch (err) {
+    console.error(err.message);
+    failures.push('loc-check');
+  }
+
+  if (base) {
+    const ui = runUiEvidenceCheck(root, args, base);
+    if (!ui.ok) failures.push('ui-evidence');
+  }
 
   let body = '';
   if (args.bodyFile) {
@@ -160,31 +181,32 @@ function main() {
   }
 
   let loc;
-  try {
-    const base = resolveBase(root);
-    loc = productionLocAdded(root, base);
-    console.error(
-      `→ production LOC added: ${loc.added} (soft ${SOFT_LOC} / hard ${HARD_LOC}); deleted ${loc.deleted}`
-    );
-    if (loc.added > HARD_LOC) {
-      if (process.env.ALLOW_LARGE_PR === '1') {
-        warnings.push(
-          `production LOC added ${loc.added} exceeds hard guideline ${HARD_LOC} (ALLOW_LARGE_PR=1)`
-        );
-      } else {
-        console.error(
-          `Production LOC added (${loc.added}) exceeds hard guideline ${HARD_LOC}. Set ALLOW_LARGE_PR=1 to override.`
-        );
-        failures.push('production-loc');
-      }
-    } else if (loc.added > SOFT_LOC) {
-      warnings.push(
-        `production LOC added ${loc.added} exceeds soft guideline ${SOFT_LOC}`
+  if (base) {
+    try {
+      loc = productionLocAdded(root, base);
+      console.error(
+        `→ production LOC added: ${loc.added} (soft ${SOFT_LOC} / hard ${HARD_LOC}); deleted ${loc.deleted}`
       );
+      if (loc.added > HARD_LOC) {
+        if (process.env.ALLOW_LARGE_PR === '1') {
+          warnings.push(
+            `production LOC added ${loc.added} exceeds hard guideline ${HARD_LOC} (ALLOW_LARGE_PR=1)`
+          );
+        } else {
+          console.error(
+            `Production LOC added (${loc.added}) exceeds hard guideline ${HARD_LOC}. Set ALLOW_LARGE_PR=1 to override.`
+          );
+          failures.push('production-loc');
+        }
+      } else if (loc.added > SOFT_LOC) {
+        warnings.push(
+          `production LOC added ${loc.added} exceeds soft guideline ${SOFT_LOC}`
+        );
+      }
+    } catch (err) {
+      console.error(err.message);
+      failures.push('loc-check');
     }
-  } catch (err) {
-    console.error(err.message);
-    failures.push('loc-check');
   }
 
   const summary = {
@@ -199,4 +221,12 @@ function main() {
   process.exit(failures.length === 0 ? 0 : 1);
 }
 
-main();
+function invokedAsCli() {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return import.meta.url === pathToFileURL(entry).href;
+}
+
+export { parseArgs, resolveBase };
+
+if (invokedAsCli()) main();
