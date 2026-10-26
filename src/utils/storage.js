@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNow } from './clock';
 
-const KEYS = {
+export const KEYS = {
   PROFILE: 'lf_profile',
   PROFILE_CAJUN: 'lf_profile_cajun',
   PROFILE_KREOLE: 'lf_profile_kreole',
@@ -101,11 +101,15 @@ async function migrateSharedProfile() {
   await AsyncStorage.setItem(KEYS.PROFILE_MIGRATED, 'true');
 }
 
-export async function getProfile(language) {
+export async function getStoredProfile(language) {
   const key = getLanguageProfileKey(language);
   await migrateSharedProfile();
   const raw = await AsyncStorage.getItem(key);
-  return raw ? JSON.parse(raw) : defaultProfile;
+  return raw ? JSON.parse(raw) : null;
+}
+
+export async function getProfile(language) {
+  return (await getStoredProfile(language)) || defaultProfile;
 }
 
 export async function saveProfile(language, profile) {
