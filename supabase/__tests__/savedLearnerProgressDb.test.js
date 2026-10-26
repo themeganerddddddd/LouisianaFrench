@@ -1,5 +1,5 @@
 const { execFileSync, spawnSync } = require('node:child_process');
-const { readFileSync } = require('node:fs');
+const { readdirSync, readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
@@ -62,12 +62,14 @@ describe('Saved Learner Progress tables', () => {
   });
 
   test('a learner cannot read another learner, a stale revision writes nothing, and Claim does not overwrite', () => {
-    const migration = readFileSync(
-      join(root, 'supabase/migrations/20261026000000_saved_learner_progress.sql'),
-      'utf8'
-    );
-    expect(migration).not.toMatch(/service_role key|SUPABASE_SERVICE/i);
-    expect(migration).not.toMatch(/jsonb/i);
+    const migrations = readdirSync(join(root, 'supabase/migrations'))
+      .filter((name) => name.endsWith('.sql'))
+      .sort()
+      .map((name) => readFileSync(join(root, 'supabase/migrations', name), 'utf8'));
+    for (const migration of migrations) {
+      expect(migration).not.toMatch(/service_role key|SUPABASE_SERVICE/i);
+      expect(migration).not.toMatch(/jsonb/i);
+    }
     psql(
       bin,
       name,
@@ -89,8 +91,12 @@ describe('Saved Learner Progress tables', () => {
       alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
       `
     );
-    psql(bin, name, migration);
-    const proof = readFileSync(join(root, 'supabase/tests/saved_learner_progress_proof.sql'), 'utf8');
-    psql(bin, name, proof);
+    for (const migration of migrations) psql(bin, name, migration);
+    const proofs = readdirSync(join(root, 'supabase/tests'))
+      .filter((file) => file.endsWith('.sql'))
+      .sort();
+    for (const file of proofs) {
+      psql(bin, name, readFileSync(join(root, 'supabase/tests', file), 'utf8'));
+    }
   }, 60000);
 });

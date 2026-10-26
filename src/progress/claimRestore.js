@@ -29,9 +29,24 @@ function held(note, identityId) {
   return Boolean(note.ownerId && note.ownerId !== identityId);
 }
 
+export async function keepLocalLearnerProgress(identityId, language) {
+  const local = await readSavedLearnerProgress(language);
+  const note = await readNote(language);
+  if (held(note, identityId)) {
+    await writeNote(language, { ownerId: note.ownerId, revision: null });
+    return { action: 'clash', mayUpdate: false };
+  }
+  if (!isLanguageEmpty(local) && !note.ownerId) {
+    await writeNote(language, { ownerId: identityId, revision: null });
+  }
+  return {
+    action: 'none',
+    mayUpdate: note.ownerId === identityId && note.revision != null
+  };
+}
+
 export async function onIdentityForLanguage({ identityId, language, store }) {
   const local = await readSavedLearnerProgress(language);
-  const saved = await store.read(identityId, language);
   const note = await readNote(language);
   const localEmpty = isLanguageEmpty(local);
 
@@ -40,10 +55,22 @@ export async function onIdentityForLanguage({ identityId, language, store }) {
     return { action: 'clash', mayUpdate: false };
   }
 
+  let saved;
+  try {
+    saved = await store.read(identityId, language);
+  } catch {
+    return keepLocalLearnerProgress(identityId, language);
+  }
+
   if (!saved && localEmpty) return { action: 'none', mayUpdate: false };
 
   if (!saved && !localEmpty) {
-    const claimed = await store.claim(identityId, language, local);
+    let claimed;
+    try {
+      claimed = await store.claim(identityId, language, local);
+    } catch {
+      return keepLocalLearnerProgress(identityId, language);
+    }
     if (!claimed.ok) {
       // A record appeared before Claim. Do not overwrite it, and do not hand this progress to a later Identity.
       await writeNote(language, { ownerId: identityId, revision: null });
@@ -82,11 +109,19 @@ export async function writeSavedUpdate({ identityId, language, store, record }) 
   return { ok: true, mayUpdate: true, revision: result.revision };
 }
 
-export async function noteSignOut() {
+export async function noteSignOut(leavingId) {
   const notes = await readNotes();
   for (const language of LANGUAGES) {
-    if (!notes[language]?.ownerId) continue;
-    notes[language] = { ownerId: notes[language].ownerId, revision: null };
+    const ownerId = notes[language]?.ownerId || null;
+    if (!ownerId && leavingId) {
+      const local = await readSavedLearnerProgress(language);
+      if (!isLanguageEmpty(local)) {
+        notes[language] = { ownerId: leavingId, revision: null };
+      }
+      continue;
+    }
+    if (!ownerId) continue;
+    notes[language] = { ownerId, revision: null };
   }
   await AsyncStorage.setItem(NOTE_KEY, JSON.stringify(notes));
 }

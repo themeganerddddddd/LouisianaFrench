@@ -27,22 +27,22 @@ flowchart LR
   subgraph now [Now]
     SignIn["Sign-in modal"]
     Progress["Learner Progress"]
+    Saved["Saved Learner Progress"]
   end
   subgraph later [Later]
     Leaderboard
     Chat
-    Backup["Learner Progress backup"]
   end
   Connector["Identity connector"]
   Supabase["Supabase Auth"]
   SignIn --> Connector
+  Connector --> Saved
   Leaderboard -.-> Connector
   Chat -.-> Connector
-  Backup -.-> Connector
   Connector --> Supabase
 ```
 
-Solid arrows are this sign-in work. Dashed arrows are later callers. They stop at the connector. Learner Progress stays beside Home and is not sent through the connector in this work.
+Solid arrows are this sign-in work. Dashed arrows are later callers. They stop at the connector. Home still keeps Learner Progress on the device. When an Identity appears or clears, the connector tells Saved Learner Progress to Claim, Restore, or stop updates. Screens do not talk to Supabase.
 
 ### What a caller may ask
 
@@ -70,7 +70,7 @@ The board does not learn Supabase, and it does not key rows by Display name. Dis
 
 When the leaderboard is built, it asks `getIdentity()`. A Guest sees the local board, as today. An Identity sends `id`, the Display name, and `getAccessToken()` to the leaderboard’s own service. That service checks the token. The connector has already refreshed it. The board never sees the refresh token, the password, or the keystore.
 
-XP in Learner Progress can stay on the device until that service exists. Sign-in does not upload it.
+XP on the leaderboard can stay on the device until that service exists. Sign-in does not send XP to the leaderboard. Saved Learner Progress is a different record and is described below.
 
 ### Chat
 
@@ -78,8 +78,8 @@ Chat uses the same two calls, plus the subscription. When an Identity appears, c
 
 ### Saved Learner Progress
 
-Saved Learner Progress is one record per Identity per Language. The words are in `CONTEXT.md`. The decision is [ADR 0006](adr/0006-saved-learner-progress.md) and the spec is GitHub issue 348. A Guest keeps Learner Progress only on the device they are using. A Claim or Restore asks the connector for `id` and `getAccessToken()`, then talks to its own service. This sign-in work does not save Learner Progress.
+Saved Learner Progress is one record per Identity per Language. The words are in `CONTEXT.md`. The decision is [ADR 0006](adr/0006-saved-learner-progress.md) and the spec is GitHub issue 348. A Guest keeps Learner Progress only on the device they are using. When an Identity appears, the connector calls `keepSavedLearnerProgressFor` with that id and `getAccessToken()`. That module Claims, Restores, resumes, or records a Progress clash for each Language. It talks to its own service. Screens do not. Sign-out keeps on-device Learner Progress with the Identity who just left, including progress made after an empty sign-in, and stops updates so the next Identity cannot Claim it. A failed read does not Claim. Study events that write new rows are still a separate change.
 
 ## What this work does not build
 
-The connector does not keep Saved Learner Progress, replace the local leaderboard, or open a chat. Those stay future callers. Because they are limited to the id, the Display name, the access token, and the subscription, adding them does not mean opening Supabase, the keystore, or the password path again.
+The connector does not replace the local leaderboard or open a chat. Those stay future callers. Saved Learner Progress is called from the connector and keeps its own service. Screens still do not open Supabase, the keystore, or the password path.
