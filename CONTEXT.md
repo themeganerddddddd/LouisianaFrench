@@ -75,6 +75,22 @@ _Avoid_: Sound when referring to language pronunciation
 The learner-owned history of Lesson completion, Word mastery, Card review state, XP, streaks, and Daily Review completion. Each Language keeps its own XP and streak.
 _Avoid_: Catalog data, app state, Identity
 
+**Saved Learner Progress**:
+Learner Progress kept for one Identity and one Language, apart from any device. Removing the app does not remove it.
+_Avoid_: backup, sync, cloud save, snapshot, archive, saved copy
+
+**Claim**:
+On-device Learner Progress for a Language becoming that Identity's Saved Learner Progress, when that Identity has none for that Language yet.
+_Avoid_: upload, first sync
+
+**Restore**:
+Saved Learner Progress for one Language placed on a device that has no Learner Progress for that Language.
+_Avoid_: download, sync
+
+**Progress clash**:
+On-device Learner Progress and Saved Learner Progress for the same Identity and Language both exist and are not the same. Neither replaces the other.
+_Avoid_: merge, conflict, sync conflict
+
 **Identity**:
 A signed-in learner, distinct from Learner Progress. It has a stable id, an email, and a Display name. The same Identity may be present on one device and absent on another.
 _Avoid_: Account, user, player, Community identity
