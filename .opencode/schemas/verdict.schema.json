@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://louisianafrench.local/schemas/verdict.schema.json",
+  "title": "Agent gate verdict",
+  "type": "object",
+  "required": ["verdict"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "BLOCKED",
+        "NO_DRIFT",
+        "REPLAN",
+        "REVIEW_PASS",
+        "REVIEW_FAIL"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "blocking": { "type": "integer", "minimum": 0 },
+        "hardening": { "type": "integer", "minimum": 0 },
+        "preExisting": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "advisory": { "type": "boolean" },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  },
+  "additionalProperties": true
+}

@@ -50,3 +50,6 @@ app-example
 
 # Temporary mirrors and working directories
 tmp/
+
+# Agent local dumps (issue pack / authority fingerprints)
+.agent/

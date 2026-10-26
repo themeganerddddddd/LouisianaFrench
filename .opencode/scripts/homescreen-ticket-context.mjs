@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Deprecated: prefer .opencode/scripts/ticket-context.mjs for any issue.
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
