@@ -1,6 +1,45 @@
 -- Proves the Saved Learner Progress rules as the authenticated role.
 \set ON_ERROR_STOP on
 
+do $$
+declare
+  role_name text;
+begin
+  foreach role_name in array array['authenticated', 'anon', 'service_role']
+  loop
+    if exists (select 1 from pg_roles where rolname = role_name)
+       and exists (
+         select 1
+         from information_schema.role_table_grants
+         where grantee = role_name
+           and table_schema = 'public'
+           and privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
+       ) then
+      raise exception '% can write Saved Learner Progress tables directly', role_name;
+    end if;
+  end loop;
+  if not has_table_privilege('authenticated', 'public.language_progress', 'SELECT') then
+    raise exception 'authenticated cannot read language_progress';
+  end if;
+  if has_table_privilege('authenticated', 'public.language_progress', 'INSERT')
+     or has_table_privilege('authenticated', 'public.language_progress', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.language_progress', 'DELETE')
+     or has_table_privilege('authenticated', 'public.pending_mistake', 'INSERT')
+     or has_table_privilege('authenticated', 'public.card_review', 'INSERT')
+     or has_table_privilege('authenticated', 'public.completed_lesson', 'DELETE')
+     or has_table_privilege('authenticated', 'public.word_mastery', 'INSERT') then
+    raise exception 'authenticated can change Saved Learner Progress tables directly';
+  end if;
+  if has_function_privilege(
+    'authenticated',
+    'public.saved_learner_progress_change(text,integer,text,text,integer,integer,timestamptz,text,text[],text,timestamptz,text,integer,integer,integer,text,integer,integer,numeric,timestamptz,integer,text,text,text,timestamptz,date,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'authenticated can call the inner writer';
+  end if;
+end
+$$;
+
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', false);
 set role authenticated;
 
@@ -130,8 +169,16 @@ select apply_saved_learner_progress(
   p_streak => 1,
   p_last_study_at => '2026-10-25T13:00:00Z',
   p_last_worked_unit => 'U1',
-  p_op => 'pending_mistake',
+  p_ops => array['card_review', 'word_mastery', 'pending_mistake'],
   p_card_id => 'cajun:m1',
+  p_repetitions => 1,
+  p_review_interval => 1,
+  p_ease => 2.5,
+  p_lapses => 0,
+  p_word_row_id => 'row-1',
+  p_seen => 1,
+  p_correct => 0,
+  p_wrong => 1,
   p_answer => 'no',
   p_source => 'lesson',
   p_source_id => 'lesson-1',
@@ -141,15 +188,23 @@ select apply_saved_learner_progress(
 do $$
 declare
   profile language_progress%rowtype;
-  mistake_count integer;
+  row_count integer;
 begin
   select * into profile from language_progress where language = 'cajun';
   if profile.revision is distinct from 2 or profile.xp is distinct from 3 then
-    raise exception 'apply did not advance revision, saw % xp %', profile.revision, profile.xp;
+    raise exception 'apply did not advance revision once, saw % xp %', profile.revision, profile.xp;
   end if;
-  select count(*) into mistake_count from pending_mistake where card_id = 'cajun:m1';
-  if mistake_count is distinct from 1 then
+  select count(*) into row_count from pending_mistake where card_id = 'cajun:m1';
+  if row_count is distinct from 1 then
     raise exception 'apply did not write the pending mistake';
+  end if;
+  select count(*) into row_count from card_review where card_id = 'cajun:m1';
+  if row_count is distinct from 1 then
+    raise exception 'apply did not write the card review';
+  end if;
+  select count(*) into row_count from word_mastery where word_row_id = 'row-1';
+  if row_count is distinct from 1 then
+    raise exception 'apply did not write the word mastery';
   end if;
 end
 $$;
@@ -164,7 +219,7 @@ begin
     p_streak => 1,
     p_last_study_at => '2026-10-25T14:00:00Z',
     p_last_worked_unit => 'U1',
-    p_op => 'pending_mistake',
+    p_ops => array['pending_mistake'],
     p_card_id => 'cajun:m2',
     p_answer => 'no',
     p_source => 'lesson',
@@ -214,7 +269,7 @@ $$;
 do $$
 begin
   perform saved_learner_progress_change(
-    'claim', null, 'cajun', 'Ada', 1, 1, null, null, 'profile',
+    'claim', null, 'cajun', 'Ada', 1, 1, null, null, array['profile']::text[],
     null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null
   );
   raise exception 'learner called the inner write';

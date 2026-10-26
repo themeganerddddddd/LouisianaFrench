@@ -155,7 +155,10 @@ begin
   loop
     execute format('alter table %I enable row level security', table_name);
     execute format('alter table %I force row level security', table_name);
+    -- Supabase grants all table privileges to authenticated, anon, and service_role
+    -- on new public tables. Revoke those too, or a learner token can skip the revision gate.
     execute format('revoke all on table %I from public', table_name);
+    execute format('revoke all on table %I from authenticated', table_name);
     execute format('grant select on table %I to authenticated', table_name);
     execute format(
       'create policy %I on %I for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id)',
@@ -164,6 +167,9 @@ begin
     );
     if exists (select 1 from pg_roles where rolname = 'anon') then
       execute format('revoke all on table %I from anon', table_name);
+    end if;
+    if exists (select 1 from pg_roles where rolname = 'service_role') then
+      execute format('revoke all on table %I from service_role', table_name);
     end if;
   end loop;
 end
@@ -180,7 +186,7 @@ create function saved_learner_progress_change(
   p_streak integer,
   p_last_study_at timestamptz,
   p_last_worked_unit text,
-  p_op text,
+  p_ops text[],
   p_lesson_id text,
   p_completed_at timestamptz,
   p_word_row_id text,
@@ -207,6 +213,7 @@ as $$
 declare
   token text;
   new_revision integer;
+  op text;
 begin
   if auth.uid() is null then
     raise exception 'Saved Learner Progress requires an Identity' using errcode = '42501';
@@ -214,22 +221,27 @@ begin
   if p_language not in ('cajun', 'kreole') then
     raise exception 'Unknown Language' using errcode = '22023';
   end if;
-  if p_op in ('card_review', 'pending_mistake', 'pending_mistake_delete')
-     and (p_card_id is null or left(p_card_id, char_length(p_language) + 1) is distinct from p_language || ':') then
-    raise exception 'Card id must start with the Language' using errcode = '22023';
+  if p_ops is null or cardinality(p_ops) = 0 then
+    p_ops := array['profile'];
   end if;
-  if p_op not in (
-    'profile',
-    'completed_lesson',
-    'word_mastery',
-    'card_review',
-    'pending_mistake',
-    'pending_mistake_delete',
-    'daily_review_day',
-    'practice_day'
-  ) then
-    raise exception 'Unknown Saved Learner Progress write' using errcode = '22023';
-  end if;
+  foreach op in array p_ops loop
+    if op not in (
+      'profile',
+      'completed_lesson',
+      'word_mastery',
+      'card_review',
+      'pending_mistake',
+      'pending_mistake_delete',
+      'daily_review_day',
+      'practice_day'
+    ) then
+      raise exception 'Unknown Saved Learner Progress write' using errcode = '22023';
+    end if;
+    if op in ('card_review', 'pending_mistake', 'pending_mistake_delete')
+       and (p_card_id is null or left(p_card_id, char_length(p_language) + 1) is distinct from p_language || ':') then
+      raise exception 'Card id must start with the Language' using errcode = '22023';
+    end if;
+  end loop;
 
   if p_mode = 'claim' then
     -- Transaction-local. A later statement in another transaction does not see it,
@@ -266,56 +278,58 @@ begin
     raise exception 'Unknown Saved Learner Progress mode' using errcode = '22023';
   end if;
 
-  if p_op = 'profile' then
-    null;
-  elsif p_op = 'completed_lesson' then
-    insert into completed_lesson (user_id, language, lesson_id, completed_at)
-    values (auth.uid(), p_language, p_lesson_id, p_completed_at)
-    on conflict (user_id, language, lesson_id)
-    do update set completed_at = excluded.completed_at;
-  elsif p_op = 'word_mastery' then
-    insert into word_mastery (user_id, language, word_row_id, seen, correct, wrong)
-    values (auth.uid(), p_language, p_word_row_id, p_seen, p_correct, p_wrong)
-    on conflict (user_id, language, word_row_id)
-    do update set seen = excluded.seen, correct = excluded.correct, wrong = excluded.wrong;
-  elsif p_op = 'card_review' then
-    insert into card_review (
-      user_id, card_id, repetitions, review_interval, ease, next_review_at, lapses
-    ) values (
-      auth.uid(), p_card_id, p_repetitions, p_review_interval, p_ease, p_next_review_at, p_lapses
-    )
-    on conflict (user_id, card_id)
-    do update set
-      repetitions = excluded.repetitions,
-      review_interval = excluded.review_interval,
-      ease = excluded.ease,
-      next_review_at = excluded.next_review_at,
-      lapses = excluded.lapses;
-  elsif p_op = 'pending_mistake' then
-    insert into pending_mistake (
-      user_id, language, card_id, answer, source, source_id, recorded_at
-    ) values (
-      auth.uid(), p_language, p_card_id, p_answer, p_source, p_source_id, p_recorded_at
-    )
-    on conflict (user_id, language, card_id)
-    do update set
-      answer = excluded.answer,
-      source = excluded.source,
-      source_id = excluded.source_id,
-      recorded_at = excluded.recorded_at;
-  elsif p_op = 'pending_mistake_delete' then
-    delete from pending_mistake
-    where user_id = auth.uid() and language = p_language and card_id = p_card_id;
-  elsif p_op = 'daily_review_day' then
-    insert into daily_review_day (user_id, language, day)
-    values (auth.uid(), p_language, p_day)
-    on conflict (user_id, language, day) do nothing;
-  elsif p_op = 'practice_day' then
-    insert into practice_day (user_id, language, day, practice_type, completed_at)
-    values (auth.uid(), p_language, p_day, p_practice_type, p_completed_at)
-    on conflict (user_id, language, day, practice_type)
-    do update set completed_at = excluded.completed_at;
-  end if;
+  foreach op in array p_ops loop
+    if op = 'profile' then
+      null;
+    elsif op = 'completed_lesson' then
+      insert into completed_lesson (user_id, language, lesson_id, completed_at)
+      values (auth.uid(), p_language, p_lesson_id, p_completed_at)
+      on conflict (user_id, language, lesson_id)
+      do update set completed_at = excluded.completed_at;
+    elsif op = 'word_mastery' then
+      insert into word_mastery (user_id, language, word_row_id, seen, correct, wrong)
+      values (auth.uid(), p_language, p_word_row_id, p_seen, p_correct, p_wrong)
+      on conflict (user_id, language, word_row_id)
+      do update set seen = excluded.seen, correct = excluded.correct, wrong = excluded.wrong;
+    elsif op = 'card_review' then
+      insert into card_review (
+        user_id, card_id, repetitions, review_interval, ease, next_review_at, lapses
+      ) values (
+        auth.uid(), p_card_id, p_repetitions, p_review_interval, p_ease, p_next_review_at, p_lapses
+      )
+      on conflict (user_id, card_id)
+      do update set
+        repetitions = excluded.repetitions,
+        review_interval = excluded.review_interval,
+        ease = excluded.ease,
+        next_review_at = excluded.next_review_at,
+        lapses = excluded.lapses;
+    elsif op = 'pending_mistake' then
+      insert into pending_mistake (
+        user_id, language, card_id, answer, source, source_id, recorded_at
+      ) values (
+        auth.uid(), p_language, p_card_id, p_answer, p_source, p_source_id, p_recorded_at
+      )
+      on conflict (user_id, language, card_id)
+      do update set
+        answer = excluded.answer,
+        source = excluded.source,
+        source_id = excluded.source_id,
+        recorded_at = excluded.recorded_at;
+    elsif op = 'pending_mistake_delete' then
+      delete from pending_mistake
+      where user_id = auth.uid() and language = p_language and card_id = p_card_id;
+    elsif op = 'daily_review_day' then
+      insert into daily_review_day (user_id, language, day)
+      values (auth.uid(), p_language, p_day)
+      on conflict (user_id, language, day) do nothing;
+    elsif op = 'practice_day' then
+      insert into practice_day (user_id, language, day, practice_type, completed_at)
+      values (auth.uid(), p_language, p_day, p_practice_type, p_completed_at)
+      on conflict (user_id, language, day, practice_type)
+      do update set completed_at = excluded.completed_at;
+    end if;
+  end loop;
 
   return new_revision;
 end;
@@ -362,7 +376,7 @@ begin
     p_streak => p_streak,
     p_last_study_at => p_last_study_at,
     p_last_worked_unit => p_last_worked_unit,
-    p_op => p_op,
+    p_ops => array[p_op],
     p_lesson_id => p_lesson_id,
     p_completed_at => p_completed_at,
     p_word_row_id => p_word_row_id,
@@ -393,7 +407,7 @@ create function apply_saved_learner_progress(
   p_streak integer,
   p_last_study_at timestamptz,
   p_last_worked_unit text,
-  p_op text,
+  p_ops text[],
   p_lesson_id text default null,
   p_completed_at timestamptz default null,
   p_word_row_id text default null,
@@ -427,7 +441,7 @@ begin
     p_streak => p_streak,
     p_last_study_at => p_last_study_at,
     p_last_worked_unit => p_last_worked_unit,
-    p_op => p_op,
+    p_ops => p_ops,
     p_lesson_id => p_lesson_id,
     p_completed_at => p_completed_at,
     p_word_row_id => p_word_row_id,
@@ -450,23 +464,27 @@ begin
 end;
 $$;
 
-revoke all on function saved_learner_progress_change(
-  text, integer, text, text, integer, integer, timestamptz, text, text,
-  text, timestamptz, text, integer, integer, integer, text, integer, integer,
-  numeric, timestamptz, integer, text, text, text, timestamptz, date, text
-) from public;
-
-revoke all on function claim_saved_learner_progress(
-  text, text, integer, integer, timestamptz, text, text,
-  text, timestamptz, text, integer, integer, integer, text, integer, integer,
-  numeric, timestamptz, integer, text, text, text, timestamptz, date, text
-) from public;
-
-revoke all on function apply_saved_learner_progress(
-  integer, text, text, integer, integer, timestamptz, text, text,
-  text, timestamptz, text, integer, integer, integer, text, integer, integer,
-  numeric, timestamptz, integer, text, text, text, timestamptz, date, text
-) from public;
+do $do$
+declare
+  role_name text;
+  signature text;
+begin
+  foreach signature in array array[
+    'saved_learner_progress_change(text, integer, text, text, integer, integer, timestamptz, text, text[], text, timestamptz, text, integer, integer, integer, text, integer, integer, numeric, timestamptz, integer, text, text, text, timestamptz, date, text)',
+    'claim_saved_learner_progress(text, text, integer, integer, timestamptz, text, text, text, timestamptz, text, integer, integer, integer, text, integer, integer, numeric, timestamptz, integer, text, text, text, timestamptz, date, text)',
+    'apply_saved_learner_progress(integer, text, text, integer, integer, timestamptz, text, text[], text, timestamptz, text, integer, integer, integer, text, integer, integer, numeric, timestamptz, integer, text, text, text, timestamptz, date, text)'
+  ]
+  loop
+    execute format('revoke all on function %s from public', signature);
+    foreach role_name in array array['anon', 'authenticated', 'service_role']
+    loop
+      if exists (select 1 from pg_roles where rolname = role_name) then
+        execute format('revoke all on function %s from %I', signature, role_name);
+      end if;
+    end loop;
+  end loop;
+end
+$do$;
 
 grant execute on function claim_saved_learner_progress(
   text, text, integer, integer, timestamptz, text, text,
@@ -475,7 +493,7 @@ grant execute on function claim_saved_learner_progress(
 ) to authenticated;
 
 grant execute on function apply_saved_learner_progress(
-  integer, text, text, integer, integer, timestamptz, text, text,
+  integer, text, text, integer, integer, timestamptz, text, text[],
   text, timestamptz, text, integer, integer, integer, text, integer, integer,
   numeric, timestamptz, integer, text, text, text, timestamptz, date, text
 ) to authenticated;

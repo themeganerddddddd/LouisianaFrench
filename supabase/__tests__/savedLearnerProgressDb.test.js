@@ -62,8 +62,29 @@ describe('Saved Learner Progress tables', () => {
       join(root, 'supabase/migrations/20261026000000_saved_learner_progress.sql'),
       'utf8'
     );
-    expect(migration).not.toMatch(/service_role|SUPABASE_SERVICE/i);
+    expect(migration).not.toMatch(/service_role key|SUPABASE_SERVICE/i);
     expect(migration).not.toMatch(/jsonb/i);
+    psql(
+      bin,
+      name,
+      `
+      do $$
+      begin
+        if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+          create role authenticated nologin;
+        end if;
+        if not exists (select 1 from pg_roles where rolname = 'anon') then
+          create role anon nologin;
+        end if;
+        if not exists (select 1 from pg_roles where rolname = 'service_role') then
+          create role service_role nologin bypassrls;
+        end if;
+      end
+      $$;
+      alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+      alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+      `
+    );
     psql(bin, name, migration);
     const proof = readFileSync(join(root, 'supabase/tests/saved_learner_progress_proof.sql'), 'utf8');
     psql(bin, name, proof);
