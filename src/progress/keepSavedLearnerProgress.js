@@ -1,4 +1,5 @@
 import { keepLocalLearnerProgress, onIdentityForLanguage, noteSignOut } from './claimRestore';
+import { bindSavedProgressSession } from './studyEvents';
 
 const LANGUAGES = ['cajun', 'kreole'];
 
@@ -179,6 +180,7 @@ export async function adoptSavedLearnerProgress(identityId, store) {
 }
 
 export async function releaseSavedLearnerProgress(leavingId) {
+  bindSavedProgressSession(null, null);
   await noteSignOut(leavingId);
 }
 
@@ -188,6 +190,11 @@ export async function keepSavedLearnerProgressFor(identityId, getAccessToken) {
     return null;
   }
   const store = savedProgressStoreFor({ getAccessToken });
-  if (!store) return null;
-  return adoptSavedLearnerProgress(identityId, store);
+  if (!store) {
+    bindSavedProgressSession(null, null);
+    return null;
+  }
+  const adopted = await adoptSavedLearnerProgress(identityId, store);
+  bindSavedProgressSession(identityId, store);
+  return adopted;
 }

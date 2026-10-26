@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNow } from './clock';
+import { keepStudyEvent } from '../progress/studyEvents';
 
 export const KEYS = {
   PROFILE: 'lf_profile',
@@ -159,6 +160,11 @@ export async function markLessonComplete(language, lessonId) {
   };
 
   await saveLessonProgress(progress);
+  await keepStudyEvent({
+    language,
+    ops: ['completed_lesson'],
+    lessonId
+  });
 }
 
 function wordMasteryStatus({ seen, correct, wrong }) {
@@ -216,6 +222,11 @@ export async function updateWordProgress(
   progress[key] = current;
 
   await saveWordProgress(progress);
+  await keepStudyEvent({
+    language,
+    ops: ['word_mastery'],
+    wordRowId: rowId
+  });
 }
 
 export async function getReviewState() {
@@ -319,6 +330,11 @@ export async function markLanguageDailyReviewDone(
   );
 
   await markDailyReviewDone(dateKey);
+  await keepStudyEvent({
+    language,
+    ops: ['daily_review_day'],
+    day: dateKey
+  });
 }
 
 export function getTodayKey() {
@@ -370,6 +386,11 @@ export async function upsertPendingMistake(
     KEYS.PENDING_MISTAKES,
     JSON.stringify(data)
   );
+  await keepStudyEvent({
+    language,
+    ops: ['pending_mistake'],
+    cardId
+  });
 }
 
 export async function removePendingMistake(
@@ -396,6 +417,11 @@ export async function removePendingMistake(
     KEYS.PENDING_MISTAKES,
     JSON.stringify(data)
   );
+  await keepStudyEvent({
+    language,
+    ops: ['pending_mistake_delete'],
+    cardId
+  });
 }
 
 export async function recordPracticeCompletion(
@@ -410,7 +436,8 @@ export async function recordPracticeCompletion(
 
   data[language] = data[language] || {};
 
-  data[language][getTodayKey()] = {
+  const day = getTodayKey();
+  data[language][day] = {
     type,
     completedAt: getNow().toISOString()
   };
@@ -419,6 +446,12 @@ export async function recordPracticeCompletion(
     KEYS.PRACTICE_LOG,
     JSON.stringify(data)
   );
+  await keepStudyEvent({
+    language,
+    ops: ['practice_day'],
+    day,
+    practiceType: type
+  });
 }
 
 export async function getTodayPractice(language) {
@@ -526,6 +559,7 @@ export function recordStudyAndXp(language, xpEarned) {
     };
 
     await saveProfile(language, updated);
+    await keepStudyEvent({ language, ops: ['profile'] });
 
     await upsertLeaderboard(
       updated.username || 'Player',
