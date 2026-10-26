@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { keepSavedLearnerProgressFor } from '../progress/keepSavedLearnerProgress';
+import {
+  keepSavedLearnerProgressFor,
+  releaseSavedLearnerProgress
+} from '../progress/keepSavedLearnerProgress';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -347,10 +350,11 @@ export function createIdentityConnector({
       return apply(exchanged.data.session);
     },
     async signOut() {
+      const leavingId = identity?.id ?? null;
       await client.auth.signOut({ scope: 'local' });
       identity = null;
       accessToken = null;
-      await keepSavedLearnerProgressFor(null, async () => null);
+      await releaseSavedLearnerProgress(leavingId);
       emit();
       return { identity: null };
     }

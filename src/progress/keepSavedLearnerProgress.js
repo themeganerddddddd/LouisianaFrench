@@ -178,8 +178,8 @@ export async function adoptSavedLearnerProgress(identityId, store) {
   return results;
 }
 
-export async function releaseSavedLearnerProgress() {
-  await noteSignOut();
+export async function releaseSavedLearnerProgress(leavingId) {
+  await noteSignOut(leavingId);
 }
 
 export async function keepSavedLearnerProgressFor(identityId, getAccessToken) {

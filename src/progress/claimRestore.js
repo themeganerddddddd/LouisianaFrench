@@ -109,11 +109,19 @@ export async function writeSavedUpdate({ identityId, language, store, record }) 
   return { ok: true, mayUpdate: true, revision: result.revision };
 }
 
-export async function noteSignOut() {
+export async function noteSignOut(leavingId) {
   const notes = await readNotes();
   for (const language of LANGUAGES) {
-    if (!notes[language]?.ownerId) continue;
-    notes[language] = { ownerId: notes[language].ownerId, revision: null };
+    const ownerId = notes[language]?.ownerId || null;
+    if (!ownerId && leavingId) {
+      const local = await readSavedLearnerProgress(language);
+      if (!isLanguageEmpty(local)) {
+        notes[language] = { ownerId: leavingId, revision: null };
+      }
+      continue;
+    }
+    if (!ownerId) continue;
+    notes[language] = { ownerId, revision: null };
   }
   await AsyncStorage.setItem(NOTE_KEY, JSON.stringify(notes));
 }

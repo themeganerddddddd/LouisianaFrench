@@ -78,6 +78,39 @@ describe('Saved Learner Progress on sign-in', () => {
     expect((await readSavedLearnerProgress('cajun')).profile.username).toBe('Ada');
   });
 
+  it('lets the next Identity Claim progress the first Identity never made', async () => {
+    const store = memoryStore();
+    await adoptSavedLearnerProgress('ada', store);
+    await releaseSavedLearnerProgress('ada');
+    await AsyncStorage.setItem(
+      KEYS.PROFILE_CAJUN,
+      JSON.stringify({ username: 'Bea', xp: 2, streak: 1, lastStudyDate: null })
+    );
+
+    const next = await adoptSavedLearnerProgress('bea', store);
+    expect(next.cajun).toEqual({ action: 'claim', mayUpdate: true });
+    expect((await store.read('bea', 'cajun')).record.profile.username).toBe('Bea');
+  });
+
+  it('keeps progress studied after an empty sign-in from the next Identity', async () => {
+    const store = memoryStore();
+    await adoptSavedLearnerProgress('ada', store);
+    await AsyncStorage.setItem(
+      KEYS.PROFILE_CAJUN,
+      JSON.stringify({ username: 'Ada', xp: 2, streak: 1, lastStudyDate: null })
+    );
+    await releaseSavedLearnerProgress('ada');
+
+    const next = await adoptSavedLearnerProgress('bea', store);
+    expect(next.cajun).toEqual({ action: 'clash', mayUpdate: false });
+    expect(await store.read('bea', 'cajun')).toBeNull();
+    expect((await readSavedLearnerProgress('cajun')).profile.username).toBe('Ada');
+
+    const again = await adoptSavedLearnerProgress('ada', store);
+    expect(again.cajun).toEqual({ action: 'claim', mayUpdate: true });
+    expect((await store.read('ada', 'cajun')).record.profile.username).toBe('Ada');
+  });
+
   it('does not Claim when the saved rows cannot be read', async () => {
     const store = {
       async read() {

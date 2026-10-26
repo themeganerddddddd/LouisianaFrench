@@ -78,7 +78,7 @@ Chat uses the same two calls, plus the subscription. When an Identity appears, c
 
 ### Saved Learner Progress
 
-Saved Learner Progress is one record per Identity per Language. The words are in `CONTEXT.md`. The decision is [ADR 0006](adr/0006-saved-learner-progress.md) and the spec is GitHub issue 348. A Guest keeps Learner Progress only on the device they are using. When an Identity appears, the connector calls `keepSavedLearnerProgressFor` with that id and `getAccessToken()`. That module Claims, Restores, resumes, or records a Progress clash for each Language. It talks to its own service. Screens do not. Sign-out calls the same function with no Identity. On-device Learner Progress stays, and this device stops updating the saved record so the next Identity cannot Claim it. A failed read does not Claim. Study events that write new rows are still a separate change.
+Saved Learner Progress is one record per Identity per Language. The words are in `CONTEXT.md`. The decision is [ADR 0006](adr/0006-saved-learner-progress.md) and the spec is GitHub issue 348. A Guest keeps Learner Progress only on the device they are using. When an Identity appears, the connector calls `keepSavedLearnerProgressFor` with that id and `getAccessToken()`. That module Claims, Restores, resumes, or records a Progress clash for each Language. It talks to its own service. Screens do not. Sign-out keeps on-device Learner Progress with the Identity who just left, including progress made after an empty sign-in, and stops updates so the next Identity cannot Claim it. A failed read does not Claim. Study events that write new rows are still a separate change.
 
 ## What this work does not build
 
