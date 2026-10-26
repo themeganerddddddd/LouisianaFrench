@@ -346,7 +346,7 @@ describe('HomeScreen', () => {
       await user.press(screen.getByTestId(`about-menu-leaf-${kind}`));
       expect(await screen.findByText(title)).toBeOnTheScreen();
       if (kind === 'privacy') {
-        expect(screen.getByText('Progress on this device')).toBeOnTheScreen();
+        expect(screen.getByText('Saved Learner Progress')).toBeOnTheScreen();
       }
       if (kind === 'faq') {
         expect(screen.getByText('Which languages can I learn?')).toBeOnTheScreen();

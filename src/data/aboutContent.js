@@ -50,9 +50,11 @@ export const ABOUT_TEXT = {
     title: 'Privacy',
     sections: [
       {
-        heading: 'Progress on this device',
+        heading: 'Saved Learner Progress',
         paragraphs: [
-          'Learning stays on this phone or tablet. We do not create an account. Uninstalling the app removes that stored progress.'
+          'You can study as a guest. That Learner Progress stays on this phone or tablet. Uninstalling the app removes it.',
+          'If you sign in, Saved Learner Progress is kept for each language, apart from this device. Removing the app does not remove it. Sign in on a new phone to Restore a language that has no progress there yet.',
+          'If this phone already has different progress for that same sign-in and language, that is a Progress clash. Neither side replaces the other.'
         ]
       },
       {
@@ -93,13 +95,13 @@ export const ABOUT_TEXT = {
       {
         heading: 'Do I need an account?',
         paragraphs: [
-          'Nope. No password, no sign-up. Your progress just lives on this device.'
+          'You can study as a guest, and that progress stays on this device. Sign in if you want Saved Learner Progress kept after you remove the app.'
         ]
       },
       {
         heading: 'Will progress show up on another phone?',
         paragraphs: [
-          'It stays put. Each phone or tablet keeps its own Learner Progress, so a new device starts fresh.'
+          'A guest\'s progress stays on the device they use. After you sign in, a language with no progress on a new phone can Restore Saved Learner Progress.'
         ]
       },
       {
@@ -111,7 +113,7 @@ export const ABOUT_TEXT = {
       {
         heading: 'Can kids use this?',
         paragraphs: [
-          'Yes. A parent or teacher nearby is even better. There is no account, and progress stays on the device they use.'
+          'Yes. A parent or teacher nearby is even better. A guest\'s progress stays on the device they use. Saved Learner Progress is kept only after someone signs in.'
         ]
       },
       {
