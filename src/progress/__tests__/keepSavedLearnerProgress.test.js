@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KEYS } from '../../utils/storage';
-import { readSavedLearnerProgress } from '../savedLearnerProgress';
+import { readSavedLearnerProgress, sameSavedLearnerProgress } from '../savedLearnerProgress';
 import {
   adoptSavedLearnerProgress,
   createRemoteSavedProgressStore,
@@ -94,6 +94,10 @@ describe('Saved Learner Progress on sign-in', () => {
     const result = await adoptSavedLearnerProgress('ada', store);
     expect(result.cajun).toEqual({ action: 'none', mayUpdate: false });
     expect((await readSavedLearnerProgress('cajun')).profile.username).toBe('Ada');
+
+    const next = await adoptSavedLearnerProgress('bea', store);
+    expect(next.cajun).toEqual({ action: 'clash', mayUpdate: false });
+    expect((await readSavedLearnerProgress('cajun')).profile.username).toBe('Ada');
   });
 
   it('does not open a store without the public Identity configuration', () => {
@@ -132,13 +136,13 @@ describe('remote Saved Learner Progress store', () => {
             username: 'Ada',
             xp: 2,
             streak: 1,
-            last_study_at: null,
+            last_study_at: '2026-10-25T12:00:00+00:00',
             last_worked_unit: 'U1'
           }
         ]);
       }
       if (String(url).includes('completed_lesson')) {
-        return jsonResponse([{ lesson_id: 'l1', completed_at: '2026-10-25T12:00:00.000Z' }]);
+        return jsonResponse([{ lesson_id: 'l1', completed_at: '2026-10-25T12:00:00+00:00' }]);
       }
       return jsonResponse([]);
     });
@@ -149,9 +153,16 @@ describe('remote Saved Learner Progress store', () => {
       username: 'Ada',
       xp: 2,
       streak: 1,
-      lastStudyDate: null
+      lastStudyDate: '2026-10-25T12:00:00.000Z'
     });
     expect(saved.record.completedLessons['cajun:l1'].completedAt).toBe('2026-10-25T12:00:00.000Z');
+    expect(sameSavedLearnerProgress(saved.record, {
+      ...saved.record,
+      profile: { ...saved.record.profile, lastStudyDate: '2026-10-25T12:00:00.000Z' },
+      completedLessons: {
+        'cajun:l1': { completed: true, completedAt: '2026-10-25T12:00:00.000Z' }
+      }
+    })).toBe(true);
     expect(global.fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer learner-token');
     expect(global.fetch.mock.calls[0][1].headers.apikey).toBe('anon-key');
   });

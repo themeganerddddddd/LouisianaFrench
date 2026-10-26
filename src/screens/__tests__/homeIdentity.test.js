@@ -157,6 +157,34 @@ describe('Home email sign-in', () => {
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
 
+  it('reloads Home when an Identity appears on this screen', async () => {
+    const user = setupUser();
+    await openHome();
+    expect(screen.getByText("Welcome! Let's learn new words.")).toBeOnTheScreen();
+    expect(screen.getByText('Start your new lesson')).toBeOnTheScreen();
+
+    await AsyncStorage.setItem(
+      'lf_profile_cajun',
+      JSON.stringify({ username: 'Ada', xp: 40, streak: 3, lastStudyDate: '2020-01-02T00:00:00.000Z' })
+    );
+    await AsyncStorage.setItem(
+      'lf_lesson_progress',
+      JSON.stringify({
+        'cajun:fixture-lesson': { completed: true, completedAt: '2020-01-01T00:00:00.000Z' }
+      })
+    );
+    mockConnector.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+    await act(async () => {
+      mockConnector.emit();
+    });
+
+    expect(await screen.findByText(/⚡ 40 · 🔥 3/)).toBeOnTheScreen();
+    expect(screen.queryByText("Welcome! Let's learn new words.")).toBeNull();
+    expect(screen.getByText('Continue to lesson')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
+  });
+
   it('signs in with email and password', async () => {
     const user = setupUser();
     await openHome();

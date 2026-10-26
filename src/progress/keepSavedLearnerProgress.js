@@ -1,4 +1,4 @@
-import { onIdentityForLanguage, noteSignOut } from './claimRestore';
+import { keepLocalLearnerProgress, onIdentityForLanguage, noteSignOut } from './claimRestore';
 
 const LANGUAGES = ['cajun', 'kreole'];
 
@@ -9,6 +9,13 @@ function tail(language, key) {
 
 function pairs(record, field) {
   return Object.entries(record[field] || {});
+}
+
+function instant(value) {
+  if (value == null) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString();
 }
 
 export function createRemoteSavedProgressStore({ url, anonKey, getAccessToken }) {
@@ -56,12 +63,12 @@ export function createRemoteSavedProgressStore({ url, anonKey, getAccessToken })
             username: profile.username,
             xp: Number(profile.xp),
             streak: Number(profile.streak),
-            lastStudyDate: profile.last_study_at
+            lastStudyDate: instant(profile.last_study_at)
           },
           lastWorkedUnit: profile.last_worked_unit,
           completedLessons: by(lessons, (row) => `${language}:${row.lesson_id}`, (row) => ({
             completed: true,
-            completedAt: row.completed_at
+            completedAt: instant(row.completed_at)
           })),
           wordMastery: by(words, (row) => `${language}:${row.word_row_id}`, (row) => ({
             seen: Number(row.seen),
@@ -72,7 +79,7 @@ export function createRemoteSavedProgressStore({ url, anonKey, getAccessToken })
             repetitions: Number(row.repetitions),
             interval: Number(row.review_interval),
             easeFactor: Number(row.ease),
-            nextReviewAt: row.next_review_at,
+            nextReviewAt: instant(row.next_review_at),
             lapses: Number(row.lapses)
           })),
           pendingMistakes: by(mistakes, (row) => row.card_id, (row) => ({
@@ -80,12 +87,12 @@ export function createRemoteSavedProgressStore({ url, anonKey, getAccessToken })
             answer: row.answer,
             source: row.source,
             sourceId: row.source_id,
-            timestamp: row.recorded_at
+            timestamp: instant(row.recorded_at)
           })),
           dailyReviewDays: by(days, (row) => row.day, () => true),
           practiceDays: by(practice, (row) => row.day, (row) => ({
             type: row.practice_type,
-            completedAt: row.completed_at
+            completedAt: instant(row.completed_at)
           }))
         }
       };
@@ -165,7 +172,7 @@ export async function adoptSavedLearnerProgress(identityId, store) {
     try {
       results[language] = await onIdentityForLanguage({ identityId, language, store });
     } catch {
-      results[language] = { action: 'none', mayUpdate: false };
+      results[language] = await keepLocalLearnerProgress(identityId, language);
     }
   }
   return results;

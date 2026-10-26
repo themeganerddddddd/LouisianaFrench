@@ -29,9 +29,24 @@ function held(note, identityId) {
   return Boolean(note.ownerId && note.ownerId !== identityId);
 }
 
+export async function keepLocalLearnerProgress(identityId, language) {
+  const local = await readSavedLearnerProgress(language);
+  const note = await readNote(language);
+  if (held(note, identityId)) {
+    await writeNote(language, { ownerId: note.ownerId, revision: null });
+    return { action: 'clash', mayUpdate: false };
+  }
+  if (!isLanguageEmpty(local) && !note.ownerId) {
+    await writeNote(language, { ownerId: identityId, revision: null });
+  }
+  return {
+    action: 'none',
+    mayUpdate: note.ownerId === identityId && note.revision != null
+  };
+}
+
 export async function onIdentityForLanguage({ identityId, language, store }) {
   const local = await readSavedLearnerProgress(language);
-  const saved = await store.read(identityId, language);
   const note = await readNote(language);
   const localEmpty = isLanguageEmpty(local);
 
@@ -40,10 +55,22 @@ export async function onIdentityForLanguage({ identityId, language, store }) {
     return { action: 'clash', mayUpdate: false };
   }
 
+  let saved;
+  try {
+    saved = await store.read(identityId, language);
+  } catch {
+    return keepLocalLearnerProgress(identityId, language);
+  }
+
   if (!saved && localEmpty) return { action: 'none', mayUpdate: false };
 
   if (!saved && !localEmpty) {
-    const claimed = await store.claim(identityId, language, local);
+    let claimed;
+    try {
+      claimed = await store.claim(identityId, language, local);
+    } catch {
+      return keepLocalLearnerProgress(identityId, language);
+    }
     if (!claimed.ok) {
       // A record appeared before Claim. Do not overwrite it, and do not hand this progress to a later Identity.
       await writeNote(language, { ownerId: identityId, revision: null });
