@@ -37,18 +37,22 @@ describe('Saved Learner Progress tables', () => {
       'POSTGRES_HOST_AUTH_METHOD=trust',
       image
     ]);
-    let ready = false;
-    for (let attempt = 0; attempt < 40; attempt += 1) {
-      const probe = spawnSync(bin, ['exec', name, 'pg_isready', '-U', 'postgres'], { stdio: 'ignore' });
-      if (probe.status === 0) {
-        ready = true;
-        break;
+    let readyStreak = 0;
+    let lastError = '';
+    for (let attempt = 0; attempt < 60 && readyStreak < 2; attempt += 1) {
+      const probe = spawnSync(bin, ['exec', name, 'psql', '-U', 'postgres', '-c', 'select 1'], {
+        encoding: 'utf8'
+      });
+      if (probe.status === 0) readyStreak += 1;
+      else {
+        readyStreak = 0;
+        lastError = `${probe.stdout || ''}${probe.stderr || ''}`;
       }
       execFileSync('sleep', ['1']);
     }
-    if (!ready) {
+    if (readyStreak < 2) {
       const logs = spawnSync(bin, ['logs', name], { encoding: 'utf8' });
-      throw new Error(`Postgres did not become ready\n${logs.stdout || ''}${logs.stderr || ''}`);
+      throw new Error(`Postgres did not accept queries\n${lastError}\n${logs.stdout || ''}${logs.stderr || ''}`);
     }
   }, 240000);
 
