@@ -109,6 +109,35 @@ describe('Claim and Restore against a fake store', () => {
     expect((await readSavedLearnerProgress('cajun')).profile.username).toBe('Ada');
   });
 
+  it('retries a failed write and keeps the revision', async () => {
+    const store = memoryStore();
+    await saveCajunProfile('Ada');
+    await onIdentityForLanguage({ identityId: 'ada', language: 'cajun', store });
+    const local = await readSavedLearnerProgress('cajun');
+    store.write = async () => ({ ok: false, retry: true });
+
+    const failed = await writeSavedUpdate({
+      identityId: 'ada',
+      language: 'cajun',
+      store,
+      record: local
+    });
+    expect(failed).toEqual({ ok: false, mayUpdate: true, retry: true });
+
+    store.write = async (_identityId, _language, revision) => ({
+      ok: true,
+      revision: revision + 1
+    });
+    const again = await writeSavedUpdate({
+      identityId: 'ada',
+      language: 'cajun',
+      store,
+      record: local
+    });
+    expect(again.ok).toBe(true);
+    expect(again.revision).toBe(2);
+  });
+
   it('stops updates after a stale revision and keeps the phone progress', async () => {
     const store = memoryStore();
     await saveCajunProfile('Ada');

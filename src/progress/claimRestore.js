@@ -100,8 +100,14 @@ export async function writeSavedUpdate({ identityId, language, store, record }) 
   if (note.ownerId !== identityId || note.revision == null) {
     return { ok: false, mayUpdate: false };
   }
-  const result = await store.write(identityId, language, note.revision, record);
+  let result;
+  try {
+    result = await store.write(identityId, language, note.revision, record);
+  } catch {
+    return { ok: false, mayUpdate: true, retry: true };
+  }
   if (!result.ok) {
+    if (result.retry) return { ok: false, mayUpdate: true, retry: true };
     await writeNote(language, { ownerId: note.ownerId, revision: null });
     return { ok: false, mayUpdate: false };
   }
