@@ -2,13 +2,17 @@
 
 ## Agent skills
 
-Project skills (Cursor and OpenCode) live under **`.agents/skills/<name>/SKILL.md`**. That folder is the shared source of truth. Thin stubs under `.cursor/skills/` only point here. OpenCode-only agent personas stay in `.opencode/agents/`. Gate scripts stay in `.opencode/scripts/` and are invoked via `npm run …`.
+Project skills (Cursor and OpenCode) live under **`.agents/skills/<name>/SKILL.md`**. That folder is the shared source of truth. Thin stubs under `.cursor/skills/` only point here. Gate scripts stay in `.opencode/scripts/` and are invoked via `npm run …`.
+
+**Cursor subagents** (Task / `/name`) live under **`.cursor/agents/`**, ported from `.opencode/agents/` with Cursor models (`composer-2.5` for heavy roles; `grok-4.7-high-fast` for fast read-only gates). OpenCode keeps its own agent files under `.opencode/agents/` (OpenCode model ids and permissions).
 
 Current skills:
 
 - `clear-thinking` — Decision Brief before planning (`/clear-thinking`)
 - `local-review` — dual-axis review against `REVIEW.md`
 - `pr-ui-evidence` — UI evidence under `docs/evidence/<issue>/`
+
+Cursor subagents: `coordinator`, `plan`, `coding-specialist`, `review`, `explore`, `general`, `validator`, `drift-detector`. See `docs/agents/skills.md`.
 
 ### Large project coordination
 
