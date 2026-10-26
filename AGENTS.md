@@ -4,7 +4,7 @@
 
 Project skills (Cursor and OpenCode) live under **`.agents/skills/<name>/SKILL.md`**. That folder is the shared source of truth. Thin stubs under `.cursor/skills/` only point here. Gate scripts stay in `.opencode/scripts/` and are invoked via `npm run …`.
 
-**Cursor subagents** (Task / `/name`) live under **`.cursor/agents/`**, ported from `.opencode/agents/` with Cursor models (`composer-2.5` for heavy roles; `grok-4.7-high-fast` for fast read-only gates). OpenCode keeps its own agent files under `.opencode/agents/` (OpenCode model ids and permissions).
+**Cursor subagents** (Task / `/name`) live under **`.cursor/agents/`**, ported from `.opencode/agents/` with Cursor models (`grok-4.7-high` for reasoning-heavy roles; `composer-2.5` for implementation; `composer-2.5-fast` for quick explore/ops). OpenCode keeps its own agent files under `.opencode/agents/` (OpenCode model ids and permissions).
 
 Current skills:
 

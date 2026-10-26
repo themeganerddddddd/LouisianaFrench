@@ -4,7 +4,7 @@ description: >-
   Adversarial dual-axis review against REVIEW.md (Standards and Spec). Use
   proactively before marking a draft PR ready. Read-only; findings are the
   product.
-model: composer-2.5
+model: grok-4.7-high
 readonly: true
 ---
 

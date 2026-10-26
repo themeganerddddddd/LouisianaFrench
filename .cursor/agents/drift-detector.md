@@ -4,7 +4,7 @@ description: >-
   Detect whether validated authority, assumptions, dependencies, or
   implementation have drifted before work continues. Use after pauses, rebases,
   or before coding resumes. Read-only; returns NO DRIFT, REPLAN, or BLOCKED.
-model: grok-4.7-high-fast
+model: grok-4.7-high
 readonly: true
 ---
 

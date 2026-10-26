@@ -12,14 +12,14 @@
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| `coordinator` | `composer-2.5` | Delegate-only orchestration |
-| `plan` | `composer-2.5` | Read-only implementation map |
+| `coordinator` | `grok-4.7-high` | Delegate-only orchestration |
+| `plan` | `grok-4.7-high` | Read-only implementation map |
+| `review` | `grok-4.7-high` | Dual-axis REVIEW.md review |
+| `validator` | `grok-4.7-high` | Plan/output PASS\|BLOCKED |
+| `drift-detector` | `grok-4.7-high` | NO DRIFT\|REPLAN\|BLOCKED |
 | `coding-specialist` | `composer-2.5` | Test-first slice implementation |
-| `review` | `composer-2.5` | Dual-axis REVIEW.md review |
-| `explore` | `grok-4.7-high-fast` | Read-only reconnaissance |
-| `general` | `grok-4.7-high-fast` | Bounded ops / leftover work |
-| `validator` | `grok-4.7-high-fast` | Plan/output PASS\|BLOCKED |
-| `drift-detector` | `grok-4.7-high-fast` | NO DRIFT\|REPLAN\|BLOCKED |
+| `explore` | `composer-2.5-fast` | Read-only reconnaissance |
+| `general` | `composer-2.5-fast` | Bounded ops / leftover work |
 
 Keep prompts aligned with `.opencode/agents/` when behavior changes; only frontmatter/models differ.
 
@@ -34,4 +34,4 @@ Keep prompts aligned with `.opencode/agents/` when behavior changes; only frontm
 
 1. Add `.cursor/agents/<name>.md` with Cursor frontmatter: `name`, `description`, `model`, optional `readonly`.
 2. Mirror the prompt body from `.opencode/agents/<name>.md` when the role is shared.
-3. Prefer `composer-2.5` for heavy reasoning; `grok-4.7-high-fast` (or `composer-2.5-fast`) for fast read-only gates.
+3. Prefer `grok-4.7-high` (or `grok-4.7-xhigh`) for judgment-heavy roles; `composer-2.5` for implementation; `composer-2.5-fast` for quick explore/ops.

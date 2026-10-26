@@ -4,7 +4,7 @@ description: >-
   Independently validate a plan, spec, or delegated output against authority.
   Use after planning or before accepting delivered work. Read-only; returns
   PASS or BLOCKED.
-model: grok-4.7-high-fast
+model: grok-4.7-high
 readonly: true
 ---
 

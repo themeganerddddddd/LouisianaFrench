@@ -4,7 +4,7 @@ description: >-
   Coordinate large repository projects by delegating all investigation,
   implementation, operations, and review. Use proactively for multi-ticket or
   multi-stage work. Does not implement or inspect the repo itself.
-model: composer-2.5
+model: grok-4.7-high
 readonly: true
 ---
 

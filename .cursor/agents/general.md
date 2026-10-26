@@ -4,7 +4,7 @@ description: >-
   Execute bounded repository work when no narrower specialist owns it (git/gh
   ops, small fixes, verification). Use for operations the coding-specialist
   should not own.
-model: grok-4.7-high-fast
+model: composer-2.5-fast
 readonly: false
 ---
 

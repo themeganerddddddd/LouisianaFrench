@@ -4,7 +4,7 @@ description: >-
   Map a bounded repository change from primary authority to a testable tracer
   bullet. Use before coding when a ticket needs an evidence-backed
   implementation map. Read-only.
-model: composer-2.5
+model: grok-4.7-high
 readonly: true
 ---
 

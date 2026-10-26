@@ -4,7 +4,7 @@ description: >-
   Read-only reconnaissance of repository structure, behavior, and authority
   with cited evidence. Use for locating code, tracing modules, or answering
   codebase questions. Prefer over the parent for large searches.
-model: grok-4.7-high-fast
+model: composer-2.5-fast
 readonly: true
 ---
 
