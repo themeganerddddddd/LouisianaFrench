@@ -262,7 +262,7 @@ describe('HomeScreen', () => {
       left: 20,
       width: 236,
       backgroundColor: '#FFFFFF',
-      borderColor: '#2771CB'
+      borderColor: '#E2E8F0'
     });
     expect(screen.getByTestId('about-menu-section')).toHaveStyle({
       backgroundColor: '#FFFFFF'

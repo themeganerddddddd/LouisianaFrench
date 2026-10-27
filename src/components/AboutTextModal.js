@@ -10,6 +10,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+function headingColor(heading) {
+  if (heading === 'Louisiana French') return '#2771CB';
+  if (heading === 'Kouri-Vini') return '#08834C';
+  return '#64748B';
+}
+
 export default function AboutTextModal({
   visible,
   content,
@@ -52,17 +58,16 @@ export default function AboutTextModal({
           accessibilityViewIsModal
           style={styles.card}
         >
-          <View style={styles.header}>
-            <Text accessibilityRole="header" style={styles.title}>{content.title}</Text>
+          <View style={[styles.header, { backgroundColor: accentColor }]}>
             <Pressable
               testID="about-text-close"
               accessibilityRole="button"
               accessibilityLabel="Close"
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: accentColor }]}
             >
-              <Text style={styles.closeText}>×</Text>
+              <Text style={styles.closeText}>Close</Text>
             </Pressable>
+            <Text accessibilityRole="header" style={styles.title}>{content.title}</Text>
           </View>
           <ScrollView
             testID="about-text-scroll"
@@ -73,7 +78,10 @@ export default function AboutTextModal({
             {content.sections
               ? content.sections.map((section) => (
                 <View key={section.heading} style={styles.section}>
-                  <Text accessibilityRole="header" style={styles.sectionHeading}>
+                  <Text
+                    accessibilityRole="header"
+                    style={[styles.sectionHeading, { color: headingColor(section.heading) }]}
+                  >
                     {section.heading}
                   </Text>
                   {section.names?.map((name) => (
@@ -107,38 +115,28 @@ const styles = StyleSheet.create({
     maxWidth: 460,
     maxHeight: '88%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E2E8F0'
   },
   header: {
-    minHeight: 64,
-    paddingLeft: 20,
-    paddingRight: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0'
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 16
   },
   title: {
-    flex: 1,
-    color: '#102A43',
-    fontSize: 20,
-    fontWeight: '900'
-  },
-  closeButton: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center'
+    marginTop: 8,
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+    lineHeight: 26
   },
   closeText: {
+    alignSelf: 'flex-end',
     color: '#FFFFFF',
-    fontSize: 28,
-    lineHeight: 30,
-    fontWeight: '700'
+    fontSize: 13,
+    fontWeight: '600'
   },
   scroll: {
     flexShrink: 1
@@ -151,17 +149,18 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   sectionHeading: {
-    color: '#102A43',
-    fontSize: 16,
-    fontWeight: '900',
-    marginBottom: 8
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 6
   },
   name: {
-    color: '#486581',
-    fontSize: 15,
-    lineHeight: 22,
+    color: '#102A43',
+    fontSize: 13,
+    lineHeight: 20,
     fontWeight: '600',
-    marginBottom: 4
+    marginBottom: 2
   },
   paragraph: {
     color: '#486581',

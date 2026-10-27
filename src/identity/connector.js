@@ -172,6 +172,9 @@ export function createIdentityConnector({
       },
       async signOut() {
         return { identity: null };
+      },
+      async deleteAccount() {
+        return { identity: null, message: UNAVAILABLE };
       }
     };
   }
@@ -202,6 +205,16 @@ export function createIdentityConnector({
     if (identity?.id) await keepSavedLearnerProgressFor(identity.id, async () => accessToken);
     emit();
     return { identity, message: identity ? null : FAILED };
+  }
+
+  async function clearLocalIdentity() {
+    const leavingId = identity?.id ?? null;
+    await client.auth.signOut({ scope: 'local' });
+    identity = null;
+    accessToken = null;
+    await releaseSavedLearnerProgress(leavingId);
+    emit();
+    return { identity: null, message: null };
   }
 
   return {
@@ -350,13 +363,16 @@ export function createIdentityConnector({
       return apply(exchanged.data.session);
     },
     async signOut() {
-      const leavingId = identity?.id ?? null;
-      await client.auth.signOut({ scope: 'local' });
-      identity = null;
-      accessToken = null;
-      await releaseSavedLearnerProgress(leavingId);
-      emit();
-      return { identity: null };
+      const cleared = await clearLocalIdentity();
+      return { identity: cleared.identity };
+    },
+    async deleteAccount() {
+      if (!identity) return { identity: null, message: UNAVAILABLE };
+      const { error } = await client.rpc('delete_own_identity');
+      if (error) {
+        return { identity, message: 'The account could not be deleted. Try again.' };
+      }
+      return clearLocalIdentity();
     }
   };
 }

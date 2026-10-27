@@ -853,6 +853,8 @@ export default function HomeScreen() {
         visible={signInVisible}
         identity={identity}
         connector={connectorRef.current}
+        accentColor={theme.accent}
+        subtitleColor={theme.subtitle}
         recoveryActive={recoveryActive}
         onRecoveryFinished={() => setRecoveryActive(false)}
         onClose={() => {

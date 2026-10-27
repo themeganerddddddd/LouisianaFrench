@@ -43,7 +43,7 @@ export default function HomeAboutMenu({
           accessibilityViewIsModal
           style={[
             styles.menu,
-            { top: anchorTop, left: anchorLeft, borderColor: accentColor }
+            { top: anchorTop, left: anchorLeft }
           ]}
         >
           {SHOW_ACCOUNT_MENU_ENTRY ? (
@@ -54,13 +54,11 @@ export default function HomeAboutMenu({
               onPress={onAccount}
               style={styles.sectionButton}
             >
-              <View style={styles.accountCopy}>
-                <Text style={styles.sectionLabel}>Account</Text>
-                {accountDetail ? (
-                  <Text style={styles.accountDetail} numberOfLines={1}>
-                    {accountDetail}
-                  </Text>
-                ) : null}
+              <View style={[styles.accountRow, { borderLeftColor: accentColor }]}>
+                <Text style={styles.eyebrow}>{accountDetail ? 'Signed in' : 'Account'}</Text>
+                <Text style={styles.who} numberOfLines={1}>
+                  {accountDetail || 'Sign in'}
+                </Text>
               </View>
             </Pressable>
           ) : null}
@@ -81,7 +79,7 @@ export default function HomeAboutMenu({
               testID="about-menu-disclosure"
               name={expanded ? 'chevron-up' : 'chevron-down'}
               size={18}
-              color={accentColor}
+              color="#102A43"
             />
           </Pressable>
 
@@ -125,14 +123,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 236,
     backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderRadius: 14,
-    overflow: 'hidden',
-    elevation: 24,
-    shadowColor: '#102A43',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 }
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    overflow: 'hidden'
   },
   sectionButton: {
     minHeight: 48,
@@ -146,34 +140,45 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0'
   },
-  accountCopy: {
+  accountRow: {
     flex: 1,
-    minWidth: 0
+    minWidth: 0,
+    borderLeftWidth: 3,
+    paddingLeft: 10,
+    marginLeft: -10
   },
-  accountDetail: {
+  eyebrow: {
     color: '#64748B',
     fontSize: 12,
-    fontWeight: '700'
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase'
+  },
+  who: {
+    color: '#102A43',
+    fontSize: 15,
+    fontWeight: '800'
   },
   sectionLabel: {
     color: '#102A43',
     fontSize: 15,
-    fontWeight: '900'
+    fontWeight: '800'
   },
   leaves: {
     paddingVertical: 4,
     backgroundColor: '#FFFFFF'
   },
   leafButton: {
-    minHeight: 48,
+    minHeight: 40,
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingLeft: 28,
+    paddingRight: 16,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0'
   },
   leafLabel: {
     color: '#102A43',
-    fontSize: 14,
-    fontWeight: '700'
+    fontSize: 13,
+    fontWeight: '600'
   }
 });
