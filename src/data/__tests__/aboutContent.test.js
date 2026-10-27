@@ -12,13 +12,17 @@ function paragraphs(group, heading) {
 }
 
 describe('ABOUT_TEXT privacy and FAQ', () => {
-  it('tells a signed-in learner that Saved Learner Progress survives uninstall', () => {
+  it('names the data used to save and restore Learner Progress', () => {
     const progress = paragraphs('privacy', 'Saved Learner Progress').join(' ');
-    expect(progress).toMatch(/Saved Learner Progress/);
-    expect(progress).toMatch(/Restore/);
+    expect(progress).toMatch(/email you sign in with/);
+    expect(progress).toMatch(/username already stored/);
+    expect(progress).toMatch(/XP/);
+    expect(progress).toMatch(/password is not kept/);
     expect(progress).toMatch(/guest/i);
+    expect(progress).not.toMatch(/Sign in on a new phone/);
+    expect(progress).not.toMatch(/Delete the account/);
+    expect(progress).not.toMatch(/Progress clash/);
     expect(progress).not.toMatch(/We do not create an account/);
-    expect(progress).not.toMatch(/Uninstalling the app removes that stored progress/);
     expect(paragraphs('privacy', 'Voice practice').join(' ')).toMatch(/Recordings stay on the device/);
   });
 
