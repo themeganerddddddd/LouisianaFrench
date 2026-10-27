@@ -6,7 +6,7 @@ export const ABOUT_TEXT = {
         heading: 'Core team',
         names: [
           'Westley Sturham',
-          'Marguerite Justus, CODOFIL',
+          'Marguerite Justus - CODOFIL',
           'Taalib Pierre-Auguste',
           'Logan Delafosse'
         ]
@@ -26,7 +26,7 @@ export const ABOUT_TEXT = {
           'Wil Fontenot',
           'Zachary Fusilier',
           'Lester Gauthier',
-          'Maggie Justus',
+          'Marguerite Justus - CODOFIL',
           'Ryan Langley',
           'Burnell Lemoine',
           'Blake Miller'
