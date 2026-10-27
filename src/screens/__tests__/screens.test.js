@@ -334,8 +334,8 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Gail DuBois Broussard')).toBeOnTheScreen();
     expect(screen.getByText('Wil Fontenot')).toBeOnTheScreen();
     expect(screen.getByText('Lester Gauthier')).toBeOnTheScreen();
-    expect(screen.getByText('Maggie Justus')).toBeOnTheScreen();
-    expect(screen.getByText('Marguerite Justus, CODOFIL')).toBeOnTheScreen();
+    expect(screen.getAllByText('Marguerite Justus - CODOFIL')).toHaveLength(2);
+    expect(screen.queryByText('Maggie Justus')).toBeNull();
     await user.press(screen.getByTestId('about-text-close'));
 
     for (const [kind, title] of [

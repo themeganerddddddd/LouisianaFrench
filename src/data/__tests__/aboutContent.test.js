@@ -40,7 +40,7 @@ describe('ABOUT_TEXT acknowledgements', () => {
   it('lists Core team, Louisiana French, and Kouri-Vini in the provided order', () => {
     expect(sectionNames('Core team')).toEqual([
       'Westley Sturham',
-      'Marguerite Justus, CODOFIL',
+      'Marguerite Justus - CODOFIL',
       'Taalib Pierre-Auguste',
       'Logan Delafosse'
     ]);
@@ -57,7 +57,7 @@ describe('ABOUT_TEXT acknowledgements', () => {
       'Wil Fontenot',
       'Zachary Fusilier',
       'Lester Gauthier',
-      'Maggie Justus',
+      'Marguerite Justus - CODOFIL',
       'Ryan Langley',
       'Burnell Lemoine',
       'Blake Miller'
