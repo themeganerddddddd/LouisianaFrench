@@ -18,7 +18,7 @@ export const ABOUT_TEXT = {
           'Daniel Blanchard',
           'Marlene Breaux Toups',
           'Valerie Broussard Boston',
-          'Megan Constantin, CODOFIL',
+          'Megan Constantin - CODOFIL',
           'Sam Craft',
           'Sherman Cravins',
           'Logan Delafosse',

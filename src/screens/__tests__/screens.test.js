@@ -329,7 +329,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Kouri-Vini')).toBeOnTheScreen();
     expect(screen.getByText('Zachary Fusilier')).toBeOnTheScreen();
     expect(screen.getByText('Jermaine Butler')).toBeOnTheScreen();
-    expect(screen.getByText('Megan Constantin, CODOFIL')).toBeOnTheScreen();
+    expect(screen.getByText('Megan Constantin - CODOFIL')).toBeOnTheScreen();
     expect(screen.getByText('Sherman Cravins')).toBeOnTheScreen();
     expect(screen.getByText('Gail DuBois Broussard')).toBeOnTheScreen();
     expect(screen.getByText('Wil Fontenot')).toBeOnTheScreen();
