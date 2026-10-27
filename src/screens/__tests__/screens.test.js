@@ -262,7 +262,7 @@ describe('HomeScreen', () => {
       left: 20,
       width: 236,
       backgroundColor: '#FFFFFF',
-      borderColor: '#2771CB'
+      borderColor: '#E2E8F0'
     });
     expect(screen.getByTestId('about-menu-section')).toHaveStyle({
       backgroundColor: '#FFFFFF'
@@ -371,7 +371,7 @@ describe('HomeScreen', () => {
     await user.press(screen.getByLabelText('Louisiana French flag'));
     expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
     await user.press(screen.getByLabelText('About menu'));
-    expect(screen.getByTestId('home-about-menu')).toHaveStyle({ borderColor: '#08834C' });
+    expect(screen.getByTestId('home-about-menu')).toHaveStyle({ borderColor: '#E2E8F0' });
   });
 
   it.each([

@@ -53,7 +53,7 @@ export const ABOUT_TEXT = {
         heading: 'Saved Learner Progress',
         paragraphs: [
           'You can study as a guest. That Learner Progress stays on this phone or tablet. Uninstalling the app removes it.',
-          'If you sign in, Saved Learner Progress is kept for each language, apart from this device. Removing the app does not remove it. Sign in on a new phone to Restore a language that has no progress there yet.',
+          'If you sign in, Saved Learner Progress is kept for each language, apart from this device. Removing the app does not remove it. Sign in on a new phone to Restore a language that has no progress there yet. Delete the account from Account to remove that Saved Learner Progress. Progress already on this phone stays.',
           'If this phone already has different progress for that same sign-in and language, that is a Progress clash. Neither side replaces the other.'
         ]
       },

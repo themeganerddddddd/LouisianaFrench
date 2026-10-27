@@ -73,6 +73,15 @@ const mockConnector = {
     this.identity = null;
     this.emit();
     return { identity: null };
+  },
+  async deleteAccount() {
+    if (this.failure === 'delete') {
+      return { identity: this.identity, message: 'The account could not be deleted. Try again.' };
+    }
+    this.deleted = true;
+    this.identity = null;
+    this.emit();
+    return { identity: null, message: null };
   }
 };
 
@@ -98,6 +107,7 @@ describe('Home email sign-in', () => {
     mockConnector.identity = null;
     mockConnector.listeners = new Set();
     mockConnector.signOutScope = null;
+    mockConnector.deleted = false;
     mockConnector.failure = null;
     await AsyncStorage.setItem(
       'lf_profile',
@@ -295,11 +305,45 @@ describe('Home email sign-in', () => {
     await user.press(screen.getByLabelText('About menu'));
     expect(screen.getByLabelText('Account')).toBeOnTheScreen();
     expect(mockConnector.signOutScope).toBe('local');
+    expect(screen.queryByLabelText('Log out')).toBeNull();
 
     mockConnector.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
     await screen.findByLabelText('About menu');
     await user.press(screen.getByLabelText('About menu'));
     expect(await screen.findByLabelText('Account, Ada')).toBeOnTheScreen();
+  });
+
+  it('asks before deleting the account and leaves the identity when delete fails', async () => {
+    const user = setupUser();
+    await openHome();
+    await openAccount(user);
+    await user.type(screen.getByTestId('sign-in-email'), 'ada@example.com');
+    await user.type(screen.getByTestId('sign-in-password'), 'secret');
+    await user.press(screen.getByTestId('sign-in-submit'));
+
+    await user.press(screen.getByLabelText('About menu'));
+    await user.press(screen.getByLabelText('Account, Ada'));
+    expect(screen.getByLabelText('Log out')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Delete account')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('delete-account'));
+    expect(screen.getByTestId('delete-account-note')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('Keep account'));
+    expect(screen.getByLabelText('Log out')).toBeOnTheScreen();
+    expect(mockConnector.deleted).toBe(false);
+
+    mockConnector.failure = 'delete';
+    await user.press(screen.getByTestId('delete-account'));
+    await user.press(screen.getByTestId('delete-account-confirm'));
+    expect(await screen.findByText('The account could not be deleted. Try again.')).toBeOnTheScreen();
+    expect(mockConnector.deleted).toBe(false);
+    expect(screen.getByTestId('delete-account-confirm')).toBeOnTheScreen();
+
+    mockConnector.failure = null;
+    await user.press(screen.getByTestId('delete-account-confirm'));
+    expect(screen.queryByTestId('sign-in-modal')).toBeNull();
+    expect(mockConnector.deleted).toBe(true);
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account')).toBeOnTheScreen();
   });
 });

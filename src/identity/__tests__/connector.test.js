@@ -31,7 +31,7 @@ function memorySecureStore() {
   };
 }
 
-function createFakeClient(storage) {
+function createFakeClient(storage, { failDelete = false } = {}) {
   const calls = [];
   let session = null;
 
@@ -93,6 +93,11 @@ function createFakeClient(storage) {
         await persist(null);
         return { error: null };
       }
+    },
+    async rpc(name) {
+      calls.push({ method: 'rpc', name });
+      if (failDelete) return { error: { message: 'delete failed' } };
+      return { error: null };
     }
   };
 }
@@ -242,6 +247,50 @@ describe('identity connector', () => {
     );
   });
 
+  it('deletes the identity before signing out on this device', async () => {
+    const { connector, client } = await harness();
+    await connector.signInWithPassword({
+      email: 'ada@example.com',
+      password: PASSWORD
+    });
+
+    const result = await connector.deleteAccount();
+
+    expect(result).toEqual({ identity: null, message: null });
+    const rpcAt = client.calls.findIndex((call) => call.method === 'rpc');
+    const signOutAt = client.calls.findIndex((call) => call.method === 'signOut');
+    expect(client.calls[rpcAt]).toEqual({ method: 'rpc', name: 'delete_own_identity' });
+    expect(client.calls[signOutAt]).toEqual({ method: 'signOut', options: { scope: 'local' } });
+    expect(rpcAt).toBeLessThan(signOutAt);
+    expect(await connector.getIdentity()).toBeNull();
+    expect(await AsyncStorage.getItem('lf_profile')).toBe(
+      JSON.stringify({ username: 'Player', xp: 3 })
+    );
+  });
+
+  it('keeps the identity when the account cannot be deleted', async () => {
+    const storage = createSessionStore({ secureStore: memorySecureStore() });
+    const client = createFakeClient(storage, { failDelete: true });
+    const connector = createIdentityConnector({ client });
+    await connector.signInWithPassword({
+      email: 'ada@example.com',
+      password: PASSWORD
+    });
+
+    const result = await connector.deleteAccount();
+
+    expect(result).toEqual({
+      identity: {
+        id: 'learner-1',
+        email: 'ada@example.com',
+        displayName: 'Ada'
+      },
+      message: 'The account could not be deleted. Try again.'
+    });
+    expect(client.calls.some((call) => call.method === 'signOut')).toBe(false);
+    expect(await connector.getIdentity()).not.toBeNull();
+  });
+
   it('uses a safe message for a duplicate email and a network failure', async () => {
     const client = {
       auth: {
@@ -303,5 +352,9 @@ describe('identity connector', () => {
         password: PASSWORD
       })
     ).toEqual({ identity: null, message: 'Sign-in is unavailable.' });
+    expect(await connector.deleteAccount()).toEqual({
+      identity: null,
+      message: 'Sign-in is unavailable.'
+    });
   });
 });

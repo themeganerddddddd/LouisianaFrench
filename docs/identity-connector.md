@@ -50,7 +50,7 @@ Solid arrows are this sign-in work. Dashed arrows are later callers. They stop a
 - **May I call another service?** `getAccessToken()` returns the current access token in memory, or nothing. The caller sends it as a bearer token on its own request. The refresh token stays inside the connector.
 - **Did that change?** A subscription fires when an Identity appears or clears.
 
-Sign-up, email sign-in, Google, password reset, and sign-out are the write side of that same connector. Sign-out clears this device only. Another device keeps its Identity. Lessons, XP, and the local username stay where they are.
+Sign-up, email sign-in, Google, password reset, sign-out, and deleting the account are the write side of that same connector. A signed-in Account screen shows Log out and Delete account. Sign-out clears this device only. Another device keeps its Identity. Delete account removes that Identity and its Saved Learner Progress, then clears this device the same way. Lessons, XP, and the local username stay where they are.
 
 ## Where the session lives
 

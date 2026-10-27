@@ -56,13 +56,13 @@ describe('HomeAboutMenu', () => {
 
     expect(screen.getByTestId('home-about-menu')).toHaveStyle({
       backgroundColor: '#FFFFFF',
-      borderColor: '#2771CB'
+      borderColor: '#E2E8F0'
     });
     expect(screen.getByTestId('about-menu-section')).toHaveStyle({
       backgroundColor: '#FFFFFF'
     });
     expect(screen.getByText('About Us')).toHaveStyle({ color: '#102A43' });
-    expect(screen.getByTestId('about-menu-disclosure').props.color).toBe('#2771CB');
+    expect(screen.getByTestId('about-menu-disclosure').props.color).toBe('#102A43');
   });
 
   it('orders Account, About Us, then Support at the top level', () => {
@@ -115,6 +115,7 @@ describe('HomeAboutMenu', () => {
     );
 
     expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
+    expect(screen.getByText('Signed in')).toBeOnTheScreen();
     expect(screen.getByText('Ada')).toBeOnTheScreen();
   });
 
