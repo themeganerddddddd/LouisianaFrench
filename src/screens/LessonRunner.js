@@ -8,6 +8,8 @@ import {
 
 import {
   Animated,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   View
 } from 'react-native';
@@ -23,7 +25,6 @@ import {
 } from '../data/lessonLoader';
 
 import { recordActivityOutcome } from '../utils/activityOutcome';
-import { stopLessonAudio } from '../utils/audioPlayer';
 
 import { getDueReviewItems } from '../utils/spacedRepetition';
 
@@ -260,10 +261,6 @@ export default function LessonRunner({
   ]);
 
   function animateToNext(cb) {
-    // Safety net for #335: stop any Word Audio still holding the native
-    // player before the transition keeps the old Activity mounted.
-    stopLessonAudio();
-
     Animated.parallel([
       Animated.timing(
         fadeAnim,
@@ -503,6 +500,7 @@ export default function LessonRunner({
         styles.container
       }
     >
+      <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View
         style={
           styles.inner
@@ -582,6 +580,7 @@ export default function LessonRunner({
           </Animated.View>
         ) : null}
       </View>
+      </KeyboardAvoidingView>
 
       <LessonPrefaceModal
         preface={
@@ -615,6 +614,7 @@ const styles =
         '#F7FAFC'
     },
 
+    keyboardArea: { flex: 1 },
     inner: {
       flex: 1,
       paddingHorizontal:

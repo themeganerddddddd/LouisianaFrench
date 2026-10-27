@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { createAudioPlayer } from 'expo-audio';
-import ActivityRenderer from '../ActivityRenderer';
+import ActivityRenderer, { getFeedbackScrollTarget } from '../ActivityRenderer';
 import { chooseAndCheck, retry } from '../../test/activityInteractions';
 import { fixtureActivities } from '../../test/fixtures/catalog/activities';
 
@@ -537,5 +537,80 @@ describe('ActivityRenderer Word Audio playback', () => {
     unmount();
 
     expect(players()).toEqual([expect.objectContaining({ playing: false, registered: false, released: true })]);
+  });
+});
+describe('Typing alternatives and mobile progression', () => {
+  it('reveals both answers without an Original label only for typing activities', async () => {
+    const user = userEvent.setup();
+    renderActivity({
+      ...fixtureActivities.typing,
+      variantAltResponse: 'Comment ça va?',
+      englishAltResponse: 'How are you doing?'
+    });
+
+    await user.type(screen.getByPlaceholderText('Type your answer'), 'Ça va?');
+    await user.press(screen.getByText('Check'));
+    expect(screen.queryByText('Original: Ça va?')).toBeNull();
+    await user.press(screen.getByText('Louisiana French Alternative'));
+    expect(screen.getByText('Ça va?')).toBeOnTheScreen();
+    expect(screen.queryByText('Original: Ça va?')).toBeNull();
+    expect(screen.getByText('Comment ça va?')).toBeOnTheScreen();
+    await user.press(screen.getByText('Translation alternative'));
+    expect(screen.getByText('How’s it going?')).toBeOnTheScreen();
+    expect(screen.queryByText('Original: How’s it going?')).toBeNull();
+    expect(screen.getByText('How are you doing?')).toBeOnTheScreen();
+  });
+
+  it('keeps original answer hidden in non-typing alternatives', async () => {
+    const user = userEvent.setup();
+    renderActivity({
+      ...fixtureActivities.multipleChoice,
+      variantAltResponse: 'Comment ça va?'
+    });
+    await user.press(screen.getByText('Ça va?'));
+    await user.press(screen.getByText('Check'));
+    await user.press(screen.getByText('Louisiana French Alternative'));
+    expect(screen.getByText('Comment ça va?')).toBeOnTheScreen();
+    expect(screen.queryByText('Original: Ça va?')).toBeNull();
+  });
+
+  it('dismisses the keyboard and preserves a scrollable feedback area on typing', async () => {
+    const { Keyboard, StyleSheet } = require('react-native');
+    const dismiss = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    try {
+      const user = userEvent.setup();
+      renderActivity(fixtureActivities.typing);
+      await user.type(screen.getByPlaceholderText('Type your answer'), 'Ça va?');
+      await user.press(screen.getByText('Check'));
+      expect(dismiss).toHaveBeenCalled();
+      expect(StyleSheet.flatten(screen.getByTestId('activity-scroll').props.style)).toMatchObject({ flex: 1 });
+      expect(screen.getByText('Next Question')).toBeOnTheScreen();
+    } finally {
+      dismiss.mockRestore();
+    }
+  });
+});
+
+
+describe('Minimal feedback scrolling', () => {
+  it('does not scroll if the entire feedback card fits on screen', () => {
+    expect(getFeedbackScrollTarget({ cardBottom: 480, viewportHeight: 600, scrollY: 0 })).toBeNull();
+  });
+
+  it('scrolls only far enough to show the bottom button on short screens', () => {
+    expect(getFeedbackScrollTarget({ cardBottom: 700, viewportHeight: 600, scrollY: 0 })).toBe(112);
+  });
+
+  it('does not move when the card extends only a few pixels below the screen', () => {
+    expect(getFeedbackScrollTarget({ cardBottom: 606, viewportHeight: 600, scrollY: 0 })).toBeNull();
+  });
+
+  it('does not force an extra scroll if the button is already visible', () => {
+    expect(getFeedbackScrollTarget({ cardBottom: 700, viewportHeight: 600, scrollY: 108 })).toBeNull();
+  });
+
+  it('does not attempt scrolling until layout has measurable dimensions', () => {
+    expect(getFeedbackScrollTarget({ cardBottom: 0, viewportHeight: 600, scrollY: 0 })).toBeNull();
+    expect(getFeedbackScrollTarget({ cardBottom: 700, viewportHeight: 0, scrollY: 0 })).toBeNull();
   });
 });

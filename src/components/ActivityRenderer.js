@@ -3,6 +3,7 @@ import { createAudioPlayer } from 'expo-audio';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -162,9 +163,14 @@ function useAudio(language) {
         if (!source) return false;
 
         stopAudio();
+
         const player = createAudioPlayer(source);
         soundRef.current = player;
+
+        // Track active lesson audio so it can be stopped
+        // before the next activity starts.
         trackLessonWordPlayer(player);
+
         player.play();
         return true;
       } catch {
@@ -178,24 +184,32 @@ function useAudio(language) {
     async (kind) => {
       try {
         stopFx();
-        const uri = kind === 'correct' ? CORRECT_TONE_URI : WRONG_TONE_URI;
+
+        const uri =
+          kind === 'correct'
+            ? CORRECT_TONE_URI
+            : WRONG_TONE_URI;
+
         const player = createAudioPlayer({ uri });
         fxRef.current = player;
+
+        // Track feedback audio separately.
         trackLessonFxPlayer(player);
+
         player.play();
       } catch {}
     },
     [stopFx]
   );
 
+  // Stop all active lesson audio.
   const stopAll = useCallback(() => {
     stopAudio();
     stopFx();
     stopLessonAudio();
   }, [stopAudio, stopFx]);
 
-  // Wrap Continue / Next so Word Audio stops before LessonRunner's async
-  // outcome + transition keep the old Activity mounted (#335).
+  // Stop audio before running Continue or Next Question.
   const stopThen = useCallback(
     (handler) =>
       (...args) => {
@@ -205,13 +219,19 @@ function useAudio(language) {
     [stopAll]
   );
 
+  // Clean up if the activity unmounts.
   useEffect(() => {
     return () => {
       stopAll();
     };
   }, [stopAll]);
 
-  return { playAudioKey, playFeedback, stopAll, stopThen };
+  return {
+    playAudioKey,
+    playFeedback,
+    stopAll,
+    stopThen
+  };
 }
 
 function getHintText(activity) {
@@ -309,17 +329,87 @@ function isTextAnswerCorrect(value, activity) {
   );
 }
 
+// Show the feedback button only if it falls below the visible area.
+// Unlike scrollToEnd, this never scrolls into the blank bottom spacer.
+export function getFeedbackScrollTarget({ cardBottom, viewportHeight, scrollY }) {
+  if (cardBottom <= 0 || viewportHeight <= 0) return null;
+
+  const currentY = Math.max(0, scrollY);
+  const hiddenPixels = cardBottom - (currentY + viewportHeight);
+  if (hiddenPixels <= 8) return null;
+
+  return currentY + hiddenPixels + 12;
+}
+
 function QuestionScrollView({ state, children }) {
+  const scrollRef = useRef(null);
+  const previousState = useRef(state);
+  const layoutRef = useRef({ cardBottom: 0, viewportHeight: 0, scrollY: 0 });
+  const feedbackPendingRef = useRef(false);
+  const feedbackReadyRef = useRef(false);
+
+  const revealFeedbackIfNeeded = useCallback(() => {
+    if (!feedbackPendingRef.current || !feedbackReadyRef.current) return;
+
+    const metrics = layoutRef.current;
+    if (!metrics.viewportHeight || !metrics.cardBottom) return;
+
+    const targetY = getFeedbackScrollTarget(metrics);
+    if (targetY !== null) {
+      scrollRef.current?.scrollTo?.({ y: targetY, animated: true });
+    }
+    feedbackPendingRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (previousState.current === state) return undefined;
+    previousState.current = state;
+    feedbackPendingRef.current = state !== 'idle';
+    feedbackReadyRef.current = false;
+
+    if (state === 'idle') {
+      // For Try Again, return to the answer field.
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+      return undefined;
+    }
+
+    // Allow feedback to finish laying out and the typing keyboard to close.
+    // Short questions do not scroll at all; taller questions move only enough
+    // to make their bottom action button accessible.
+    const timer = setTimeout(() => {
+      feedbackReadyRef.current = true;
+      revealFeedbackIfNeeded();
+    }, 260);
+    return () => clearTimeout(timer);
+  }, [state, revealFeedbackIfNeeded]);
+
   return (
     <ScrollView
+      ref={scrollRef}
       testID="activity-scroll"
       style={styles.scrollShell}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       nestedScrollEnabled
+      scrollEventThrottle={16}
+      onScroll={(event) => {
+        layoutRef.current.scrollY = event.nativeEvent.contentOffset.y;
+      }}
+      onLayout={(event) => {
+        layoutRef.current.viewportHeight = event.nativeEvent.layout.height;
+        revealFeedbackIfNeeded();
+      }}
       contentContainerStyle={styles.scrollContent}
     >
-      <View style={[styles.card, getCardStatusStyle(state)]}>
+      <View
+        style={[styles.card, getCardStatusStyle(state)]}
+        onLayout={(event) => {
+          const { y, height } = event.nativeEvent.layout;
+          layoutRef.current.cardBottom = y + height;
+          revealFeedbackIfNeeded();
+        }}
+      >
         {children}
       </View>
 
@@ -336,6 +426,7 @@ function getVariantAlternativeLabel(language) {
 
 function AlternativeList({
   text,
+  responses,
   textStyle,
   containerStyle,
   language,
@@ -343,7 +434,7 @@ function AlternativeList({
   onPlayAudioKey,
   playableColor
 }) {
-  const items = splitAlternativeResponses(text);
+  const items = responses || splitAlternativeResponses(text);
 
   if (items.length === 0) return null;
 
@@ -436,13 +527,15 @@ function AnswerAltButtons({
   visible,
   theme,
   language,
-  onPlayAudioKey
+  onPlayAudioKey,
+  showOriginalWithAlternatives = false
 }) {
   const [showEnglishAlt, setShowEnglishAlt] = useState(false);
   const [showVariantAlt, setShowVariantAlt] = useState(false);
 
   const hasEnglishAlt = !!activity?.englishAltResponse;
-  const hasVariantAlt = !!activity?.variantAltResponse;
+  const variantAlternatives = getAcceptedVariantAlts(activity);
+  const hasVariantAlt = variantAlternatives.length > 0;
 
   if (!visible || (!hasEnglishAlt && !hasVariantAlt)) return null;
 
@@ -460,11 +553,14 @@ function AnswerAltButtons({
           </TouchableOpacity>
 
           {showEnglishAlt ? (
+            <>{showOriginalWithAlternatives ? (
+              <Text style={styles.answerOriginalText}>{getPrimaryEnglish(activity)}</Text>
+            ) : null}
             <AlternativeList
               text={activity.englishAltResponse}
               textStyle={styles.answerAltText}
               containerStyle={styles.answerAltList}
-            />
+            /></>
           ) : null}
         </View>
       ) : null}
@@ -481,15 +577,18 @@ function AnswerAltButtons({
           </TouchableOpacity>
 
           {showVariantAlt ? (
+            <>{showOriginalWithAlternatives ? (
+              <Text style={styles.answerOriginalText}>{getPrimaryTarget(activity)}</Text>
+            ) : null}
             <AlternativeList
-              text={activity.variantAltResponse}
+              responses={variantAlternatives}
               textStyle={styles.answerAltText}
               containerStyle={styles.answerAltList}
               language={language}
               activity={activity}
               onPlayAudioKey={onPlayAudioKey}
               playableColor={theme.text}
-            />
+            /></>
           ) : null}
         </View>
       ) : null}
@@ -1523,6 +1622,7 @@ function Typing({
 
   function checkAnswer() {
     if (!value.trim()) return;
+    Keyboard.dismiss();
 
     if (isTextAnswerCorrect(value, activity)) {
       playFeedback('correct');
@@ -1539,6 +1639,7 @@ function Typing({
   }
 
   function skipQuestion() {
+    Keyboard.dismiss();
     playFeedback('wrong');
     setState('skipped');
   }
@@ -1597,6 +1698,8 @@ function Typing({
         onChangeText={setValue}
         style={styles.input}
         autoCapitalize="none"
+        returnKeyType="done"
+        onSubmitEditing={Keyboard.dismiss}
         editable={!isLocked(state)}
       />
 
@@ -1726,6 +1829,7 @@ function Typing({
             visible={revealAddOns}
             theme={theme}
             onPlayAudioKey={playAudioKey}
+            showOriginalWithAlternatives
           />
         }
       />
@@ -2274,8 +2378,6 @@ function MatchPairs({
 
 const styles = StyleSheet.create({
   scrollShell: {
-    // Bound height in the Lesson/Daily Review flex chain so tall content
-    // (e.g. New-word intro on Galaxy S24) can scroll to Continue.
     flex: 1,
     width: '100%',
     alignSelf: 'stretch',
@@ -2296,12 +2398,12 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    paddingBottom: 36,
+    paddingBottom: 20,
     overflow: 'visible'
   },
 
   bottomSpacer: {
-    height: 120
+    height: 16
   },
 
   cardCorrect: {
@@ -2735,6 +2837,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 8,
     gap: 4
+  },
+
+  answerOriginalText: {
+    color: '#17324D',
+    fontSize: 15,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginTop: 8
   },
 
   answerAltText: {

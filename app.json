@@ -2,7 +2,7 @@
   "expo": {
     "name": "Louisiana Languages",
     "slug": "louisiana-french",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "default",
     "icon": "./assets/images/pelicanicon.png",
     "userInterfaceStyle": "light",
@@ -23,6 +23,7 @@
       }
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "package": "com.louisianalanguages.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/pelicanicon.png",

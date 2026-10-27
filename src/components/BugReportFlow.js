@@ -13,7 +13,7 @@ import {
   useWindowDimensions,
   View
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openBugReportEmail, validateBugReportForm } from '../utils/bugReport';
 import { collectDeviceInfo } from '../utils/deviceInfo';
 
@@ -43,7 +43,8 @@ export function bugReportSheetMaxHeight({
   if (keyboardOffset <= 0) return Math.max(uncapped, MIN_SHEET_HEIGHT);
   const aboveKeyboard =
     windowHeight - Math.max(topInset, padding) - bottomInset - padding - keyboardOffset;
-  return Math.max(Math.min(uncapped, aboveKeyboard), MIN_SHEET_HEIGHT);
+  // Never force a minimum height taller than the space left on a small phone.
+  return Math.max(0, Math.min(uncapped, aboveKeyboard));
 }
 
 /** Prefer the smaller credible height so an inflated Android `height` cannot park the sheet at the top. */
@@ -61,6 +62,7 @@ export function keyboardHeightFromEvent(endCoordinates, windowHeight) {
 
 export default function BugReportFlow({ visible, onClose, screenName, language, accentColor }) {
   const insets = useSafeAreaInsets();
+  const safeAreaFrame = useSafeAreaFrame();
   const { height: windowHeight } = useWindowDimensions();
   const [stage, setStage] = useState('form');
   const [name, setName] = useState('');
@@ -75,21 +77,37 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
   const swayAnim = useRef(new Animated.Value(0)).current;
   const submittingRef = useRef(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [keyboardScreenY, setKeyboardScreenY] = useState(null);
+  const formScrollRef = useRef(null);
 
   useEffect(() => {
     if (!visible) return undefined;
     const [showEvent, hideEvent] = Platform.OS === 'ios'
       ? ['keyboardWillShow', 'keyboardWillHide']
       : ['keyboardDidShow', 'keyboardDidHide'];
+    const onKeyboardShow = (event) => {
+      const coordinates = event?.endCoordinates;
+      // Some Android devices report a negative height for a floating keyboard.
+      const height = Platform.OS === 'android' && coordinates?.height <= 0
+        ? 0 : keyboardHeightFromEvent(coordinates, windowHeight);
+      setKeyboardHeight(height);
+      setKeyboardScreenY(typeof coordinates?.screenY === 'number' ? coordinates.screenY : null);
+    };
+    const onKeyboardHide = () => {
+      setKeyboardHeight(0);
+      setKeyboardScreenY(null);
+    };
     const subscriptions = [
-      Keyboard.addListener(showEvent, (event) => {
-        setKeyboardHeight(keyboardHeightFromEvent(event?.endCoordinates, windowHeight));
-      }),
-      Keyboard.addListener(hideEvent, () => setKeyboardHeight(0)),
+      Keyboard.addListener(showEvent, onKeyboardShow),
+      Keyboard.addListener(hideEvent, onKeyboardHide),
     ];
+    if (Platform.OS === 'ios') subscriptions.push(
+      Keyboard.addListener('keyboardWillChangeFrame', onKeyboardShow)
+    );
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
       setKeyboardHeight(0);
+      setKeyboardScreenY(null);
     };
   }, [visible, windowHeight]);
   useEffect(() => {
@@ -147,22 +165,29 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
     }
   }
 
-  // Occlusion used to cap the sheet so Name/Email/What happened? stay in the visible band.
-  const keyboardOcclusion = Math.max(
-    Platform.OS === 'ios' ? keyboardHeight - insets.bottom : keyboardHeight,
-    0
-  );
-  // iOS Modal does not move for the keyboard — pad by the occlusion.
-  // Android/Expo Go already pans the Modal; padding again parks the sheet at the top with a gap.
-  const keyboardPad = Platform.OS === 'ios' ? keyboardOcclusion : 0;
+  // Match keyboard screen coordinates to the visible safe-area frame.
+  // In resized Android windows, screenY can be below the viewport: zero overlap.
+  // Avoid double-counting the iOS bottom inset when the keyboard is visible.
+  const viewportHeight = safeAreaFrame?.height ?? windowHeight;
+  const keyboardPad = keyboardHeight > 0
+    ? keyboardScreenY === null
+      ? Math.max(0, keyboardHeight - insets.bottom)
+      : Math.min(keyboardHeight, Math.max(0, viewportHeight - keyboardScreenY - insets.bottom))
+    : 0;
   const sheetMaxHeight = bugReportSheetMaxHeight({
-    windowHeight,
-    keyboardOffset: keyboardOcclusion,
+    windowHeight: viewportHeight,
+    keyboardOffset: keyboardPad,
     topInset: insets.top,
     bottomInset: insets.bottom,
   });
-  const formScrollMaxHeight = Math.max(sheetMaxHeight - ACTION_BAR_HEIGHT, 120);
+  const formScrollMaxHeight = Math.max(sheetMaxHeight - ACTION_BAR_HEIGHT, 40);
+  const keyboardOcclusion = keyboardPad;
   const keyboardOpen = keyboardOcclusion > 0;
+  useEffect(() => {
+    if (keyboardOpen && stage === 'form' && descInputRef.current?.isFocused?.()) {
+      requestAnimationFrame(() => formScrollRef.current?.scrollToEnd?.({ animated: true }));
+    }
+  }, [keyboardOpen, stage]);
   const swayRotation = swayAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['-2deg', '2.5deg', '-2deg'] });
   const swayTranslateY = swayAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -8, 0] });
   function ActionButton({ label, primary, onPress, disabled, accessibilityLabel }) {
@@ -188,6 +213,7 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
           {stage === 'form' && (
             <>
               <ScrollView
+                ref={formScrollRef}
                 testID="bug-report-form-scroll"
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
@@ -232,6 +258,9 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
                   value={description}
                   onChangeText={setDescription}
                   multiline
+                  onFocus={() => {
+                    if (keyboardOpen) formScrollRef.current?.scrollToEnd?.({ animated: true });
+                  }}
                   accessibilityLabel="Bug report description"
                 />
                 {errors.description && <Text style={styles.fieldError}>{errors.description}</Text>}
