@@ -13,7 +13,7 @@ import {
   useWindowDimensions,
   View
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openBugReportEmail, validateBugReportForm } from '../utils/bugReport';
 import { collectDeviceInfo } from '../utils/deviceInfo';
 
@@ -62,6 +62,7 @@ export function keyboardHeightFromEvent(endCoordinates, windowHeight) {
 
 export default function BugReportFlow({ visible, onClose, screenName, language, accentColor }) {
   const insets = useSafeAreaInsets();
+  const safeAreaFrame = useSafeAreaFrame();
   const { height: windowHeight } = useWindowDimensions();
   const [stage, setStage] = useState('form');
   const [name, setName] = useState('');
@@ -164,15 +165,17 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
     }
   }
 
-  // A Modal can cover the full window on Android even when the Activity resizes.
-  // Pad only for keyboard overlap with the *current* viewport, on either OS.
+  // Match keyboard screen coordinates to the visible safe-area frame.
+  // In resized Android windows, screenY can be below the viewport: zero overlap.
+  // Avoid double-counting the iOS bottom inset when the keyboard is visible.
+  const viewportHeight = safeAreaFrame?.height ?? windowHeight;
   const keyboardPad = keyboardHeight > 0
     ? keyboardScreenY === null
       ? Math.max(0, keyboardHeight - insets.bottom)
-      : Math.min(keyboardHeight, Math.max(0, windowHeight - keyboardScreenY - insets.bottom))
+      : Math.min(keyboardHeight, Math.max(0, viewportHeight - keyboardScreenY - insets.bottom))
     : 0;
   const sheetMaxHeight = bugReportSheetMaxHeight({
-    windowHeight,
+    windowHeight: viewportHeight,
     keyboardOffset: keyboardPad,
     topInset: insets.top,
     bottomInset: insets.bottom,
