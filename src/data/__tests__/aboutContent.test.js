@@ -53,7 +53,7 @@ describe('ABOUT_TEXT acknowledgements', () => {
       'Daniel Blanchard',
       'Marlene Breaux Toups',
       'Valerie Broussard Boston',
-      'Megan Constantin, CODOFIL',
+      'Megan Constantin - CODOFIL',
       'Sam Craft',
       'Sherman Cravins',
       'Logan Delafosse',
