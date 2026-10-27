@@ -22,7 +22,8 @@ export const KEYS = {
   PENDING_MISTAKES: 'lf_pending_mistakes',
   PRACTICE_LOG: 'lf_practice_log',
   INFO_BIRD_SEEN: 'lf_info_bird_seen',
-  INFO_CONTEXT_SEEN: 'lf_info_context_seen'
+  INFO_CONTEXT_SEEN: 'lf_info_context_seen',
+  ACCOUNT_INTRO_SEEN: 'lf_account_intro_seen'
 };
 
 const defaultProfile = {
@@ -48,6 +49,14 @@ export async function hasSelectedLanguage() {
 
 export async function markLanguageSelected() {
   await AsyncStorage.setItem(KEYS.HAS_SELECTED_LANGUAGE, 'true');
+}
+
+export async function hasSeenAccountIntro() {
+  return (await AsyncStorage.getItem(KEYS.ACCOUNT_INTRO_SEEN)) === 'true';
+}
+
+export async function markAccountIntroSeen() {
+  await AsyncStorage.setItem(KEYS.ACCOUNT_INTRO_SEEN, 'true');
 }
 
 export async function hasSeenInfoBird() {
