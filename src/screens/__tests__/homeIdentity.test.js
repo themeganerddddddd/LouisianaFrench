@@ -102,6 +102,30 @@ async function openAccount(user) {
   await user.press(screen.getByLabelText(/^Account/));
 }
 
+describe('Home account intro', () => {
+  beforeEach(async () => {
+    mockConnector.identity = null;
+    mockConnector.listeners = new Set();
+  });
+
+  it('explains accounts and saved progress once, then stays dismissed', async () => {
+    const user = setupUser();
+    const first = renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+    expect(await screen.findByTestId('account-intro-modal')).toBeOnTheScreen();
+    expect(screen.getByText(/Learner Progress stays on this phone/)).toBeOnTheScreen();
+    expect(screen.getByText(/Saved Learner Progress for each language/)).toBeOnTheScreen();
+
+    await user.press(screen.getByTestId('account-intro-dismiss'));
+    expect(screen.queryByTestId('account-intro-modal')).toBeNull();
+    expect(await AsyncStorage.getItem('lf_account_intro_seen')).toBe('true');
+    first.unmount();
+
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+    expect(await screen.findByLabelText('About menu')).toBeOnTheScreen();
+    expect(screen.queryByTestId('account-intro-modal')).toBeNull();
+  });
+});
+
 describe('Home email sign-in', () => {
   beforeEach(async () => {
     mockConnector.identity = null;
@@ -109,6 +133,7 @@ describe('Home email sign-in', () => {
     mockConnector.signOutScope = null;
     mockConnector.deleted = false;
     mockConnector.failure = null;
+    await AsyncStorage.setItem('lf_account_intro_seen', 'true');
     await AsyncStorage.setItem(
       'lf_profile',
       JSON.stringify({ username: 'Player', xp: 4, streak: 1, lastStudyDate: null })
