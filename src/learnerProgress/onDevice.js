@@ -1,0 +1,472 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getNow } from '../utils/clock';
+import { keepStudyEvent } from '../progress/studyEvents';
+import { getDefaultLanguage } from '../utils/devicePreferences';
+import { upsertLeaderboard } from '../utils/leaderboard';
+import { KEYS } from './keys';
+
+const defaultProfile = {
+  username: 'Player',
+  xp: 0,
+  streak: 0,
+  lastStudyDate: null
+};
+
+function getLanguageProfileKey(language) {
+  const key = KEYS[`PROFILE_${String(language).toUpperCase()}`];
+  if (!key) throw new Error(`Unknown Language: ${language}`);
+  return key;
+}
+
+async function migrateSharedProfile() {
+  if ((await AsyncStorage.getItem(KEYS.PROFILE_MIGRATED)) === 'true') return;
+
+  // Never left pending, so a default Language saved later cannot receive another Language's data.
+  // Without a saved default Language, Home opens Louisiana French.
+  const defaultKey = getLanguageProfileKey((await getDefaultLanguage()) || 'cajun');
+  const shared = await AsyncStorage.getItem(KEYS.PROFILE);
+
+  if (shared && !(await AsyncStorage.getItem(defaultKey))) {
+    await AsyncStorage.setItem(defaultKey, shared);
+  }
+
+  await AsyncStorage.setItem(KEYS.PROFILE_MIGRATED, 'true');
+}
+
+export async function getStoredProfile(language) {
+  const key = getLanguageProfileKey(language);
+  await migrateSharedProfile();
+  const raw = await AsyncStorage.getItem(key);
+  return raw ? JSON.parse(raw) : null;
+}
+
+export async function getProfile(language) {
+  return (await getStoredProfile(language)) || defaultProfile;
+}
+
+export async function saveProfile(language, profile) {
+  await AsyncStorage.setItem(
+    getLanguageProfileKey(language),
+    JSON.stringify(profile)
+  );
+}
+
+export async function getLessonProgress() {
+  const raw = await AsyncStorage.getItem(KEYS.LESSON_PROGRESS);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function saveLessonProgress(progress) {
+  await AsyncStorage.setItem(
+    KEYS.LESSON_PROGRESS,
+    JSON.stringify(progress)
+  );
+}
+
+export async function getLastWorkedUnit(language) {
+  const raw = await AsyncStorage.getItem(KEYS.LAST_WORKED_UNIT);
+  const data = raw ? JSON.parse(raw) : {};
+
+  return data[language] || null;
+}
+
+export async function setLastWorkedUnit(language, unitCode) {
+  const raw = await AsyncStorage.getItem(KEYS.LAST_WORKED_UNIT);
+  const data = raw ? JSON.parse(raw) : {};
+
+  data[language] = unitCode;
+
+  await AsyncStorage.setItem(
+    KEYS.LAST_WORKED_UNIT,
+    JSON.stringify(data)
+  );
+}
+
+export async function markLessonComplete(language, lessonId) {
+  const progress = await getLessonProgress();
+
+  progress[`${language}:${lessonId}`] = {
+    completed: true,
+    completedAt: getNow().toISOString()
+  };
+
+  await saveLessonProgress(progress);
+  await keepStudyEvent({
+    language,
+    ops: ['completed_lesson'],
+    lessonId
+  });
+}
+
+function wordMasteryStatus({ seen, correct, wrong }) {
+  if (correct >= 4 && correct > wrong) return 'mastered';
+  if (correct >= 2 && correct > wrong) return 'strong';
+  if (seen >= 1) return 'learning';
+  return 'new';
+}
+
+// A saved status is not authoritative: it is recalculated from the answer counts on every read.
+export async function getWordProgress() {
+  const raw = await AsyncStorage.getItem(KEYS.WORD_PROGRESS);
+  const progress = raw ? JSON.parse(raw) : {};
+
+  for (const record of Object.values(progress)) {
+    if (!record) continue;
+    record.status = wordMasteryStatus(record);
+  }
+
+  return progress;
+}
+
+export async function saveWordProgress(progress) {
+  await AsyncStorage.setItem(
+    KEYS.WORD_PROGRESS,
+    JSON.stringify(progress)
+  );
+}
+
+export async function updateWordProgress(
+  language,
+  rowId,
+  wasCorrect
+) {
+  const progress = await getWordProgress();
+  const key = `${language}:${rowId}`;
+
+  const current = progress[key] || {
+    seen: 0,
+    correct: 0,
+    wrong: 0,
+    status: 'new'
+  };
+
+  current.seen += 1;
+
+  if (wasCorrect) {
+    current.correct += 1;
+  } else {
+    current.wrong += 1;
+  }
+
+  current.status = wordMasteryStatus(current);
+
+  progress[key] = current;
+
+  await saveWordProgress(progress);
+  await keepStudyEvent({
+    language,
+    ops: ['word_mastery'],
+    wordRowId: rowId
+  });
+}
+
+export async function getReviewState() {
+  const raw = await AsyncStorage.getItem(KEYS.REVIEW_STATE);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function saveReviewState(state) {
+  await AsyncStorage.setItem(
+    KEYS.REVIEW_STATE,
+    JSON.stringify(state)
+  );
+}
+
+export async function getDailyReviewLog() {
+  const raw = await AsyncStorage.getItem(KEYS.DAILY_REVIEW_LOG);
+  return raw ? JSON.parse(raw) : {};
+}
+
+export async function markDailyReviewDone(dateKey) {
+  const log = await getDailyReviewLog();
+
+  log[dateKey] = true;
+
+  await AsyncStorage.setItem(
+    KEYS.DAILY_REVIEW_LOG,
+    JSON.stringify(log)
+  );
+}
+
+function getLanguageDailyReviewKey(language) {
+  return KEYS[
+    `DAILY_REVIEW_LOG_V2_${language.toUpperCase()}`
+  ];
+}
+
+export async function getLanguageDailyReviewLog(language) {
+  const key = getLanguageDailyReviewKey(language);
+
+  const raw = await AsyncStorage.getItem(key);
+  const current = raw ? JSON.parse(raw) : {};
+
+  if (
+    (await AsyncStorage.getItem(
+      KEYS.DAILY_REVIEW_MIGRATED
+    )) === 'true'
+  ) {
+    return current;
+  }
+
+  // Never left pending, so a default Language saved later cannot receive another Language's data.
+  // Without a saved default Language, Home opens Louisiana French.
+  const defaultLanguage = (await getDefaultLanguage()) || 'cajun';
+
+  const legacy = await getDailyReviewLog();
+
+  const defaultKey =
+    getLanguageDailyReviewKey(defaultLanguage);
+
+  const defaultRaw =
+    defaultLanguage === language
+      ? raw
+      : await AsyncStorage.getItem(defaultKey);
+
+  const defaultLog = defaultRaw
+    ? JSON.parse(defaultRaw)
+    : {};
+
+  const shouldImport =
+    !Object.keys(defaultLog).length &&
+    Object.keys(legacy).length;
+
+  if (shouldImport) {
+    await AsyncStorage.setItem(
+      defaultKey,
+      JSON.stringify(legacy)
+    );
+  }
+
+  await AsyncStorage.setItem(
+    KEYS.DAILY_REVIEW_MIGRATED,
+    'true'
+  );
+
+  return shouldImport && defaultLanguage === language
+    ? JSON.parse(await AsyncStorage.getItem(key))
+    : current;
+}
+
+export async function markLanguageDailyReviewDone(
+  language,
+  dateKey
+) {
+  const log = await getLanguageDailyReviewLog(language);
+
+  log[dateKey] = true;
+
+  await AsyncStorage.setItem(
+    getLanguageDailyReviewKey(language),
+    JSON.stringify(log)
+  );
+
+  await markDailyReviewDone(dateKey);
+  await keepStudyEvent({
+    language,
+    ops: ['daily_review_day'],
+    day: dateKey
+  });
+}
+
+export function getTodayKey() {
+  const d = getNow();
+
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0')
+  ].join('-');
+}
+
+export async function getPendingMistakes(language) {
+  const raw = await AsyncStorage.getItem(
+    KEYS.PENDING_MISTAKES
+  );
+
+  const data = raw ? JSON.parse(raw) : {};
+
+  return Object.values(data[language] || {});
+}
+
+export async function upsertPendingMistake(
+  language,
+  cardId,
+  {
+    answer,
+    source,
+    sourceId
+  }
+) {
+  const raw = await AsyncStorage.getItem(
+    KEYS.PENDING_MISTAKES
+  );
+
+  const data = raw ? JSON.parse(raw) : {};
+
+  data[language] = data[language] || {};
+
+  data[language][cardId] = {
+    cardId,
+    answer,
+    source,
+    sourceId,
+    timestamp: getNow().toISOString()
+  };
+
+  await AsyncStorage.setItem(
+    KEYS.PENDING_MISTAKES,
+    JSON.stringify(data)
+  );
+  await keepStudyEvent({
+    language,
+    ops: ['pending_mistake'],
+    cardId
+  });
+}
+
+export async function removePendingMistake(
+  language,
+  cardId
+) {
+  const raw = await AsyncStorage.getItem(
+    KEYS.PENDING_MISTAKES
+  );
+
+  const data = raw ? JSON.parse(raw) : {};
+
+  if (!data[language]?.[cardId]) {
+    return;
+  }
+
+  delete data[language][cardId];
+
+  if (!Object.keys(data[language]).length) {
+    delete data[language];
+  }
+
+  await AsyncStorage.setItem(
+    KEYS.PENDING_MISTAKES,
+    JSON.stringify(data)
+  );
+  await keepStudyEvent({
+    language,
+    ops: ['pending_mistake_delete'],
+    cardId
+  });
+}
+
+export async function recordPracticeCompletion(
+  language,
+  type
+) {
+  const raw = await AsyncStorage.getItem(
+    KEYS.PRACTICE_LOG
+  );
+
+  const data = raw ? JSON.parse(raw) : {};
+
+  data[language] = data[language] || {};
+
+  const day = getTodayKey();
+  data[language][day] = {
+    type,
+    completedAt: getNow().toISOString()
+  };
+
+  await AsyncStorage.setItem(
+    KEYS.PRACTICE_LOG,
+    JSON.stringify(data)
+  );
+  await keepStudyEvent({
+    language,
+    ops: ['practice_day'],
+    day,
+    practiceType: type
+  });
+}
+
+export async function getTodayPractice(language) {
+  const raw = await AsyncStorage.getItem(
+    KEYS.PRACTICE_LOG
+  );
+
+  const data = raw ? JSON.parse(raw) : {};
+
+  return data[language]?.[getTodayKey()] || null;
+}
+
+// One Language's Profile at a time: overlapping recordStudyAndXp calls
+// used to read the same XP and overwrite each other (#249).
+const recordStudyAndXpByLanguage = new Map();
+
+function enqueueRecordStudyAndXp(language, task) {
+  const previous = recordStudyAndXpByLanguage.get(language) || Promise.resolve();
+  const next = previous.then(task, task);
+  // Keep the chain alive after a rejected task so later awards still run.
+  recordStudyAndXpByLanguage.set(
+    language,
+    next.then(
+      () => undefined,
+      () => undefined
+    )
+  );
+  return next;
+}
+
+export function recordStudyAndXp(language, xpEarned) {
+  return enqueueRecordStudyAndXp(language, async () => {
+    const profile = await getProfile(language);
+
+    const now = getNow();
+
+    const today = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+
+    let streak = profile.streak || 0;
+
+    if (!profile.lastStudyDate) {
+      streak = 1;
+    } else {
+      const last = new Date(
+        profile.lastStudyDate
+      );
+
+      const lastDay = new Date(
+        last.getFullYear(),
+        last.getMonth(),
+        last.getDate()
+      );
+
+      const diffDays = Math.floor(
+        (today - lastDay) / 86400000
+      );
+
+      if (diffDays === 1) {
+        streak += 1;
+      } else if (diffDays > 1) {
+        streak = 1;
+      }
+    }
+
+    const updated = {
+      ...profile,
+      xp: (profile.xp || 0) + xpEarned,
+      streak,
+      lastStudyDate: getNow().toISOString()
+    };
+
+    await saveProfile(language, updated);
+    await keepStudyEvent({ language, ops: ['profile'] });
+
+    await upsertLeaderboard(
+      updated.username || 'Player',
+      updated.xp
+    );
+
+    return updated;
+  });
+}
+
