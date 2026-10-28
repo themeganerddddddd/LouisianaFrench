@@ -1,4 +1,5 @@
 import { getUnitTitle } from '../constants/unitTitles';
+import { getBundledAudioSource } from './audioManifest';
 
 export function createCatalog(source) {
   function getLessonsByLanguage(language) {
@@ -87,12 +88,17 @@ export function createCatalog(source) {
     return source.getUnitPreface?.(language, unitCode);
   }
 
+  function resolveAudio(language, audioKey) {
+    return getBundledAudioSource(language, audioKey);
+  }
+
   return {
     getLessonsByLanguage,
     getLessonById,
     getUnits,
     getAllActivities,
     getAllWords,
-    getUnitPreface
+    getUnitPreface,
+    resolveAudio
   };
 }

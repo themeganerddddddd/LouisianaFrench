@@ -2,8 +2,7 @@ import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
 import path from 'path';
 
-import { getAllWords } from '../lessonLoader';
-import { audioManifest } from '../audioManifest';
+import { getAllWords, resolveAudio } from '../lessonLoader';
 
 /**
  * Independent content fingerprints for the Unit 5 LF cards/dog pair (#198).
@@ -54,9 +53,9 @@ describe('Unit 5 LF cards/dog Audio asset mapping (#198)', () => {
   );
 
   it.each(Object.keys(EXPECTED_ASSET_SHA256))(
-    'audioManifest resolves %s under Louisiana French',
+    'Catalog resolveAudio resolves %s under Louisiana French',
     (audioKey) => {
-      expect(audioManifest.cajun[audioKey]).toBeTruthy();
+      expect(resolveAudio('cajun', audioKey)).toBeTruthy();
     }
   );
 

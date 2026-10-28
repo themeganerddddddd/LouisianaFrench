@@ -3,9 +3,13 @@ import ActivityRenderer from '../ActivityRenderer';
 import { fixtureActivities } from '../../test/fixtures/catalog/activities';
 import { chooseAndCheck, press, retry } from '../../test/activityInteractions';
 
-jest.mock('../../data/audioManifest', () => ({
-  getAudioSource: jest.fn(() => ({ uri: 'fixture-audio' }))
-}));
+jest.mock('../../data/lessonLoader', () => {
+  const actual = jest.requireActual('../../data/lessonLoader');
+  return {
+    ...actual,
+    resolveAudio: jest.fn(() => ({ uri: 'fixture-audio' }))
+  };
+});
 
 const EXTRA_DETAILS = 'Helpful context';
 

@@ -1,4 +1,4 @@
-export const audioManifest = {
+const audioManifest = {
   cajun: {
     "u01_w00005_cajun": require("../../assets/audio/cajun/u01_w00005_cajun.mp3"),
     "u01_w00010_cajun": require("../../assets/audio/cajun/u01_w00010_cajun.mp3"),
@@ -365,7 +365,8 @@ export const audioManifest = {
   }
 };
 
-export function getAudioSource(language, audioKey) {
+/** Catalog-internal bundled map lookup; app code uses Catalog `resolveAudio`. */
+export function getBundledAudioSource(language, audioKey) {
   if (!audioKey) return null;
   return audioManifest?.[language]?.[audioKey] || null;
 }

@@ -5,17 +5,14 @@ import { recordPracticeCompletion, recordStudyAndXp } from '../../utils/storage'
 
 import SpeechPracticeScreen from '../SpeechPracticeScreen';
 
-jest.mock('../../data/audioManifest', () => ({
-  getAudioSource: jest.fn(() => 1)
-}));
-
 const TWO_AUDIO_WORDS = [
   { target: 'bonjour', english: 'hello', audioKey: 'bonjour' },
   { target: 'merci', english: 'thank you', audioKey: 'merci' }
 ];
 
 jest.mock('../../data/lessonLoader', () => ({
-  getAllWords: jest.fn(() => TWO_AUDIO_WORDS)
+  getAllWords: jest.fn(() => TWO_AUDIO_WORDS),
+  resolveAudio: jest.fn(() => 1)
 }));
 
 jest.mock('../../utils/storage', () => ({

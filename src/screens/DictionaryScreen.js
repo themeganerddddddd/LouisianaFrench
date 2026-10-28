@@ -13,8 +13,7 @@ import {
 } from 'react-native';
 import BugReportButton from '../components/BugReportButton';
 import SafeScreenView from '../components/SafeScreenView';
-import { getAudioSource } from '../data/audioManifest';
-import { getAllWords } from '../data/lessonLoader';
+import { getAllWords, resolveAudio } from '../data/lessonLoader';
 import { releaseAudioPlayer } from '../utils/audioPlayer';
 import { getWordProgress } from '../utils/storage';
 
@@ -56,7 +55,7 @@ export default function DictionaryScreen({ route, navigation }) {
 
   async function playAudio(audioKey) {
     try {
-      const source = getAudioSource(language, audioKey);
+      const source = resolveAudio(language, audioKey);
       if (!source) {
         Alert.alert('Audio missing', `No local audio found for ${audioKey || 'this word'}.`);
         return;

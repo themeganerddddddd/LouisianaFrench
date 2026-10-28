@@ -32,7 +32,7 @@ def main():
     cajun_keys = collect_audio_keys(CAJUN_CSV)
     kreole_keys = collect_audio_keys(KREOLE_CSV)
 
-    content = f"""export const audioManifest = {{
+    content = f"""const audioManifest = {{
   cajun: {{
 {to_manifest_lines("cajun", cajun_keys)}
   }},
@@ -41,7 +41,8 @@ def main():
   }}
 }};
 
-export function getAudioSource(language, audioKey) {{
+/** Catalog-internal bundled map lookup; app code uses Catalog `resolveAudio`. */
+export function getBundledAudioSource(language, audioKey) {{
   if (!audioKey) return null;
   return audioManifest?.[language]?.[audioKey] || null;
 }}

@@ -1,7 +1,7 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { createAudioPlayer } from 'expo-audio';
 import ActivityRenderer from '../ActivityRenderer';
-import { getAudioSource } from '../../data/audioManifest';
+import { resolveAudio } from '../../data/lessonLoader';
 import { fixtureActivities } from '../../test/fixtures/catalog/activities';
 import {
   finishCorrect,
@@ -142,7 +142,7 @@ describe('ActivityRenderer match_pairs with repeated labels', () => {
     await user.press(rightCellBeside('Hello'));
     expect(createAudioPlayer).toHaveBeenCalledTimes(1);
     expect(createAudioPlayer).toHaveBeenCalledWith(
-      getAudioSource('cajun', 'u01_w0001_lf')
+      resolveAudio('cajun', 'u01_w0001_lf')
     );
   });
 });
