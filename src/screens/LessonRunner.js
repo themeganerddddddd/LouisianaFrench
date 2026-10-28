@@ -24,8 +24,7 @@ import {
 
 import { recordActivityOutcome } from '../utils/activityOutcome';
 import { stopLessonAudio } from '../utils/audioPlayer';
-
-import { getDueReviewItems } from '../utils/spacedRepetition';
+import { assembleLessonActivities } from '../session';
 
 import {
   isPrefaceRead,
@@ -137,31 +136,11 @@ export default function LessonRunner({
         lesson.unit
       );
 
-      const due =
-        await getDueReviewItems(
-          lesson.activities || []
-        );
-
-      const dueIds =
-        new Set(
-          due.map(
-            (d) => d.cardId
-          )
-        );
-
-      const merged =
-        (
-          lesson.activities ||
-          []
-        ).map(
-          (a) => ({
-            ...a,
-            isReview:
-              dueIds.has(
-                a.cardId
-              )
-          })
-        );
+      const { activities: merged } =
+        await assembleLessonActivities({
+          language,
+          lessonId
+        });
 
       setActivities(
         merged
@@ -188,6 +167,7 @@ export default function LessonRunner({
     init();
   }, [
     lesson,
+    lessonId,
     language,
     navigation,
     startActivityIndex

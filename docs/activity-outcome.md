@@ -4,9 +4,9 @@ When a learner settles one Activity, `recordActivityOutcome` records the Learner
 
 ## Callers
 
-- **Lesson screen** (`LessonRunner`): loads the Lesson, shows Unit preface, animates, mounts Activity rendering, then calls `recordActivityOutcome` with session kind `lesson` and animates or navigates from `nextStep`.
+- **Lesson screen** (`LessonRunner`): loads the Lesson Activity queue via `assembleLessonActivities`, shows Unit preface, animates, mounts Activity rendering, then calls `recordActivityOutcome` with session kind `lesson` and animates or navigates from `nextStep`.
 - **Daily Review screen**: loads the due-Card queue and header, mounts Activity rendering, then calls `recordActivityOutcome` with session kind `dailyReview`. On `complete` it marks Daily Review done, records study XP, and opens Session Complete with no score. It never opens in-session Mistake Review.
-- **Mistake Review screen**: loads the missed-Card queue (from Lesson params or Home pending Mistakes), mounts Activity rendering, then calls `recordActivityOutcome` with session kind `mistakeReview`. On `advance` it updates the local queue (including requeue on wrong). On `complete` it still records session-end study XP (+10 Mistake Review award), optional Lesson complete, and navigation in the screen—not in this module.
+- **Mistake Review screen**: loads the missed-Card queue via `assembleMistakeReviewQueue` (from Lesson params or Home pending Mistakes), mounts Activity rendering, then calls `recordActivityOutcome` with session kind `mistakeReview`. On `advance` it updates the local queue (including requeue on wrong). On `complete` it still records session-end study XP (+10 Mistake Review award), optional Lesson complete, and navigation in the screen—not in this module.
 
 ## Advance control (#330)
 
