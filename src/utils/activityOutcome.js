@@ -1,5 +1,11 @@
 import { updateCardReview } from './spacedRepetition';
-import { getPendingMistakes, recordPracticeCompletion, removePendingMistake, updateWordProgress, upsertPendingMistake } from '../learnerProgress';
+import {
+  getPendingMistakes,
+  recordPracticeCompletion,
+  removePendingMistake,
+  updateWordProgress,
+  upsertPendingMistake
+} from '../learnerProgress';
 
 function lessonCardQuality(activity, wasCorrect) {
   if (!wasCorrect) return 2;

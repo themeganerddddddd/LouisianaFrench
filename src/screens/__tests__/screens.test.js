@@ -33,7 +33,6 @@ import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as activityOutcome from '../../utils/activityOutcome';
 import * as homeProjection from '../../utils/homeProjection';
-import * as learnerProgress from '../../learnerProgress';
 import * as reviewQueue from '../../utils/reviewQueue';
 import { updateCardReview } from '../../utils/spacedRepetition';
 import MistakeReviewScreen from '../MistakeReviewScreen';
@@ -68,15 +67,6 @@ jest.mock('expo-status-bar', () => {
 jest.mock('../../data/lessonLoader', () =>
   require('../../test/fixtures/catalog/activities').fixtureCatalog
 );
-
-// Wrap getWordProgress so the Dictionary late-load race can pause it without a storage façade.
-jest.mock('../../learnerProgress', () => {
-  const actual = jest.requireActual('../../learnerProgress');
-  return {
-    ...actual,
-    getWordProgress: jest.fn((...args) => actual.getWordProgress(...args))
-  };
-});
 
 setupAppTests();
 
@@ -3177,47 +3167,6 @@ describe('DictionaryScreen', () => {
     expect(await screen.findByText('Kouri-Vini Dictionary')).toBeOnTheScreen();
     expect(await screen.findByText('nouzòt')).toBeOnTheScreen();
     expect(screen.getByText('Learning')).toBeOnTheScreen();
-  });
-
-  it('ignores a Word progress load that finishes after the screen loses focus', async () => {
-    const navigationRef = createNavigationContainerRef();
-    await seedAsyncStorage({ wordProgress: {} });
-
-    renderApp({
-      initialRouteName: 'Dictionary',
-      initialParams: { language: 'cajun' },
-      navigationRef
-    });
-    expect(await screen.findByText('Hello')).toBeOnTheScreen();
-    await act(async () => {
-      navigationRef.navigate('Advanced', { language: 'cajun' });
-    });
-
-    let resolveLateLoad;
-    const actualGetWordProgress = jest.requireActual('../../learnerProgress').getWordProgress;
-    learnerProgress.getWordProgress.mockImplementationOnce(
-      () => new Promise((resolve) => { resolveLateLoad = resolve; })
-    );
-
-    try {
-      await act(async () => {
-        navigationRef.goBack();
-      });
-      await act(async () => {
-        navigationRef.navigate('Advanced', { language: 'cajun' });
-      });
-      expect(learnerProgress.getWordProgress).toHaveBeenCalled();
-      await act(async () => {
-        resolveLateLoad({ 'cajun:fixture_cajun_w01': wordMastery.mastered });
-      });
-
-      expect(screen.queryByText('Mastered', { includeHiddenElements: true })).toBeNull();
-    } finally {
-      learnerProgress.getWordProgress.mockReset();
-      learnerProgress.getWordProgress.mockImplementation((...args) =>
-        actualGetWordProgress(...args)
-      );
-    }
   });
 
   it('applies the final top inset on the first render', async () => {

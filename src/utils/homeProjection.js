@@ -1,6 +1,15 @@
 import { getAllWords, getUnits } from '../data/lessonLoader';
 import { getDailyReviewQueue } from './reviewQueue';
-import { getLanguageDailyReviewLog, getLessonProgress, getPendingMistakes, getProfile, getTodayKey, getTodayPractice, getWordProgress } from '../learnerProgress';
+import {
+  getLanguageDailyReviewLog,
+  getLessonProgress,
+  getPendingMistakes,
+  getProfile,
+  getTodayKey,
+  getTodayPractice,
+  getWordProgress
+} from '../learnerProgress';
+
 function unitLabel(unitCode) {
   const match = String(unitCode || '').match(/u(\d+)/i);
   return match ? `Unit ${Number(match[1])}` : 'Unit';

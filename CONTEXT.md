@@ -76,11 +76,11 @@ The learner-owned history of Lesson completion, Word mastery, Card review state,
 _Avoid_: Catalog data, app state, Identity, storage, Device Preferences
 
 **Device Preferences**:
-On-device flags that are not Learner Progress: chosen Language, language-selected marker, preface-read marks, account-intro and info-bird/context seen flags.
+On-device choices and one-time marks that are not Learner Progress — which Language is selected, whether a Unit preface was read, and whether account or Extra-details intros were already shown.
 _Avoid_: Learner Progress, storage, app state blob
 
 **Leaderboard**:
-A device-local XP ranking display by Profile username. It is not Learner Progress history and is not Saved Learner Progress.
+A device-local XP ranking display by the learner's stored username. It is not Learner Progress history and is not Saved Learner Progress.
 _Avoid_: storage, Learner Progress
 
 **Saved Learner Progress**:
