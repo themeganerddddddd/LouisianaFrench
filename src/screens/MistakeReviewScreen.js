@@ -14,7 +14,10 @@ import ActivityRenderer from '../components/ActivityRenderer';
 import SafeScreenView from '../components/SafeScreenView';
 
 import { recordActivityOutcome } from '../utils/activityOutcome';
-import { assembleMistakeReviewQueue } from '../session';
+import {
+  assembleLessonMistakeQueue,
+  assembleMistakeReviewQueue
+} from '../session';
 
 import {
   markLessonComplete,
@@ -37,10 +40,16 @@ export default function MistakeReviewScreen({
     route.params?.source ===
     'home';
 
+  const initialQueue = homeMode
+    ? []
+    : assembleLessonMistakeQueue({ mistakes }).activities;
+
   const [
     queue,
     setQueue
-  ] = useState([]);
+  ] = useState(
+    () => initialQueue
+  );
 
   const [
     resolvedCount,
@@ -50,7 +59,9 @@ export default function MistakeReviewScreen({
   const [
     initialTotal,
     setInitialTotal
-  ] = useState(0);
+  ] = useState(
+    initialQueue.length
+  );
 
   const [
     queueRevision,
@@ -60,17 +71,22 @@ export default function MistakeReviewScreen({
   const [
     loading,
     setLoading
-  ] = useState(true);
+  ] = useState(
+    homeMode
+  );
 
   useEffect(() => {
-    async function loadQueue() {
+    if (!homeMode) {
+      return;
+    }
+
+    async function loadPendingQueue() {
       const {
         activities: resolved,
         empty
       } = await assembleMistakeReviewQueue({
         language,
-        source: homeMode ? 'home' : 'lesson',
-        mistakes: homeMode ? undefined : mistakes
+        source: 'home'
       });
 
       setQueue(
@@ -89,7 +105,7 @@ export default function MistakeReviewScreen({
         false
       );
 
-      if (empty && homeMode) {
+      if (empty) {
         navigation.replace(
           'Home',
           { language }
@@ -97,11 +113,10 @@ export default function MistakeReviewScreen({
       }
     }
 
-    loadQueue();
+    loadPendingQueue();
   }, [
     homeMode,
     language,
-    mistakes,
     navigation
   ]);
 

@@ -1,13 +1,17 @@
 import { getAllActivities } from '../data/lessonLoader';
 import { getPendingMistakes, removePendingMistake } from '../utils/storage';
 
+export function assembleLessonMistakeQueue({ mistakes } = {}) {
+  const activities = mistakes || [];
+  return {
+    activities,
+    empty: !activities.length
+  };
+}
+
 export async function assembleMistakeReviewQueue({ language, source, mistakes }) {
   if (source !== 'home') {
-    const activities = mistakes || [];
-    return {
-      activities,
-      empty: !activities.length
-    };
+    return assembleLessonMistakeQueue({ mistakes });
   }
 
   const pending = await getPendingMistakes(language);

@@ -14,6 +14,7 @@ import { setupAppTests } from '../../test/setupAppTest';
 import { getPendingMistakes } from '../../utils/storage';
 import {
   assembleLessonActivities,
+  assembleLessonMistakeQueue,
   assembleMistakeReviewQueue
 } from '../index';
 
@@ -33,6 +34,15 @@ beforeEach(() => {
 });
 
 describe('assembleMistakeReviewQueue', () => {
+  it('returns lesson mistakes unchanged from the sync lesson helper', () => {
+    const mistakes = [{ cardId: 'fixture:cajun:greeting:choice', userAnswer: 'x' }];
+
+    expect(assembleLessonMistakeQueue({ mistakes })).toEqual({
+      activities: mistakes,
+      empty: false
+    });
+  });
+
   it('returns lesson mistakes unchanged when source is not home', async () => {
     const mistakes = [
       { ...fixtureActivities.multipleChoice, userAnswer: 'wrong' }
