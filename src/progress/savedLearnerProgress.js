@@ -6,7 +6,7 @@ import {
   getStoredProfile,
   saveProfile,
   setLastWorkedUnit
-} from '../utils/storage';
+} from '../learnerProgress';
 
 const DAILY_REVIEW_KEYS = {
   cajun: KEYS.DAILY_REVIEW_LOG_V2_CAJUN,
