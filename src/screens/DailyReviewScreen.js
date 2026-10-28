@@ -25,7 +25,7 @@ import {
   getTodayKey,
   markLanguageDailyReviewDone,
   recordStudyAndXp
-} from '../utils/storage';
+} from '../learnerProgress';
 
 export default function DailyReviewScreen({
   route,

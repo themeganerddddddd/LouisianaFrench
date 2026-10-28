@@ -18,7 +18,7 @@ import {
   getTodayKey,
   getTodayPractice,
   getWordProgress
-} from '../storage';
+} from '../../learnerProgress';
 
 jest.mock('../../data/lessonLoader', () => ({
   getAllWords: jest.fn(),
@@ -29,7 +29,7 @@ jest.mock('../reviewQueue', () => ({
   getDailyReviewQueue: jest.fn()
 }));
 
-jest.mock('../storage', () => ({
+jest.mock('../../learnerProgress', () => ({
   getLanguageDailyReviewLog: jest.fn(),
   getLessonProgress: jest.fn(),
   getPendingMistakes: jest.fn(),

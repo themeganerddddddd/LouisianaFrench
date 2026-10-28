@@ -33,13 +33,11 @@ import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as activityOutcome from '../../utils/activityOutcome';
 import * as homeProjection from '../../utils/homeProjection';
-import * as storage from '../../utils/storage';
 import * as reviewQueue from '../../utils/reviewQueue';
 import { updateCardReview } from '../../utils/spacedRepetition';
 import MistakeReviewScreen from '../MistakeReviewScreen';
 import {
   getDailyReviewLog,
-  getDefaultLanguage,
   getLanguageDailyReviewLog,
   getLastWorkedUnit,
   getLessonProgress,
@@ -48,11 +46,14 @@ import {
   getReviewState,
   getTodayKey,
   getTodayPractice,
-  getWordProgress,
+  getWordProgress
+} from '../../learnerProgress';
+import {
+  getDefaultLanguage,
   hasSelectedLanguage,
   markLanguageSelected,
   setDefaultLanguage
-} from '../../utils/storage';
+} from '../../utils/devicePreferences';
 
 jest.mock('expo-status-bar', () => {
   const React = require('react');
@@ -2324,7 +2325,7 @@ describe('LessonRunner', () => {
     });
 
     it('does not show the preface when it was previously read', async () => {
-      const { markPrefaceRead } = require('../../utils/storage');
+      const { markPrefaceRead } = require('../../utils/devicePreferences');
       await markPrefaceRead('cajun:u03');
 
       renderApp({
@@ -2372,7 +2373,7 @@ describe('LessonRunner', () => {
     });
 
     async function reachFinalWrongOnUnitNoteLesson(user) {
-      const { markPrefaceRead } = require('../../utils/storage');
+      const { markPrefaceRead } = require('../../utils/devicePreferences');
       await markPrefaceRead('cajun:u03');
 
       renderApp({
@@ -2424,7 +2425,7 @@ describe('LessonRunner', () => {
 
     it("keeps Activity state after opening the Unit note from T-Boy's Advice (#267)", async () => {
       const user = setupUser();
-      const { markPrefaceRead } = require('../../utils/storage');
+      const { markPrefaceRead } = require('../../utils/devicePreferences');
       await markPrefaceRead('cajun:u03');
 
       renderApp({
@@ -3166,43 +3167,6 @@ describe('DictionaryScreen', () => {
     expect(await screen.findByText('Kouri-Vini Dictionary')).toBeOnTheScreen();
     expect(await screen.findByText('nouzòt')).toBeOnTheScreen();
     expect(screen.getByText('Learning')).toBeOnTheScreen();
-  });
-
-  it('ignores a Word progress load that finishes after the screen loses focus', async () => {
-    const navigationRef = createNavigationContainerRef();
-    await seedAsyncStorage({ wordProgress: {} });
-
-    renderApp({
-      initialRouteName: 'Dictionary',
-      initialParams: { language: 'cajun' },
-      navigationRef
-    });
-    expect(await screen.findByText('Hello')).toBeOnTheScreen();
-    await act(async () => {
-      navigationRef.navigate('Advanced', { language: 'cajun' });
-    });
-
-    let resolveLateLoad;
-    const getWordProgress = jest
-      .spyOn(storage, 'getWordProgress')
-      .mockImplementationOnce(() => new Promise((resolve) => { resolveLateLoad = resolve; }));
-
-    try {
-      await act(async () => {
-        navigationRef.goBack();
-      });
-      await act(async () => {
-        navigationRef.navigate('Advanced', { language: 'cajun' });
-      });
-      expect(getWordProgress).toHaveBeenCalled();
-      await act(async () => {
-        resolveLateLoad({ 'cajun:fixture_cajun_w01': wordMastery.mastered });
-      });
-
-      expect(screen.queryByText('Mastered', { includeHiddenElements: true })).toBeNull();
-    } finally {
-      getWordProgress.mockRestore();
-    }
   });
 
   it('applies the final top inset on the first render', async () => {

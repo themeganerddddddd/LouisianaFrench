@@ -22,7 +22,7 @@ import {
 import {
   markLessonComplete,
   recordStudyAndXp
-} from '../utils/storage';
+} from '../learnerProgress';
 
 export default function MistakeReviewScreen({
   route,

@@ -15,7 +15,7 @@ import BugReportButton from '../components/BugReportButton';
 import SafeScreenView from '../components/SafeScreenView';
 import { getAllWords, resolveAudio } from '../data/lessonLoader';
 import { releaseAudioPlayer } from '../utils/audioPlayer';
-import { getWordProgress } from '../utils/storage';
+import { getWordProgress } from '../learnerProgress';
 
 function statusLabel(status) {
   if (status === 'mastered') return 'Mastered';

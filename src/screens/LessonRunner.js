@@ -27,12 +27,14 @@ import { stopLessonAudio } from '../utils/audioPlayer';
 import { assembleLessonActivities } from '../session';
 
 import {
-  isPrefaceRead,
   markLessonComplete,
-  markPrefaceRead,
   recordStudyAndXp,
   setLastWorkedUnit
-} from '../utils/storage';
+} from '../learnerProgress';
+import {
+  isPrefaceRead,
+  markPrefaceRead
+} from '../utils/devicePreferences';
 
 export default function LessonRunner({
   route,

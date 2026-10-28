@@ -14,7 +14,7 @@ import {
   getPendingMistakes,
   getTodayPractice,
   getWordProgress
-} from '../storage';
+} from '../../learnerProgress';
 
 setupAppTests();
 

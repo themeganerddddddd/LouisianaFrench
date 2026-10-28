@@ -8,7 +8,8 @@ import {
   getTodayKey,
   getTodayPractice,
   getWordProgress
-} from './storage';
+} from '../learnerProgress';
+
 function unitLabel(unitCode) {
   const match = String(unitCode || '').match(/u(\d+)/i);
   return match ? `Unit ${Number(match[1])}` : 'Unit';

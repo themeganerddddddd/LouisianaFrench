@@ -4,8 +4,6 @@ import {
   completedLessons,
   dailyReviewLogs,
   dailyReviewMigration,
-  leaderboardEntries,
-  leaderboards,
   lastWorkedUnits,
   pendingMistakes,
   practiceLogs,
@@ -17,10 +15,6 @@ import {
   seedRawAsyncStorage
 } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import {
-  getDefaultLanguage,
-  setDefaultLanguage,
-  hasSelectedLanguage,
-  markLanguageSelected,
   getProfile,
   saveProfile,
   getLessonProgress,
@@ -40,18 +34,13 @@ import {
   removePendingMistake,
   recordPracticeCompletion,
   getTodayPractice,
-  getLeaderboard,
-  upsertLeaderboard,
-  recordStudyAndXp,
-  isPrefaceRead,
-  markPrefaceRead
-} from '../storage';
+  recordStudyAndXp
+} from '../index';
+import { setDefaultLanguage } from '../../utils/devicePreferences';
+import { getLeaderboard } from '../../utils/leaderboard';
 
-// Characterizes the current Learner Progress storage interface
-// (`src/utils/storage.js`) against the real AsyncStorage jest mock.
-//
-// Screens (DailyReviewScreen, MistakeReviewScreen) are explicitly out of
-// scope. The resolved Daily Review defect and Issue #30 are not exercised here.
+// Characterizes on-device Learner Progress persistence against the real AsyncStorage jest mock.
+// Screens are out of scope.
 
 beforeEach(async () => {
   await AsyncStorage.clear();
@@ -60,21 +49,6 @@ beforeEach(async () => {
 
 afterEach(() => {
   jest.useRealTimers();
-});
-
-describe('Language selection', () => {
-  it('defaults to no selected Language', async () => {
-    expect(await getDefaultLanguage()).toBeNull();
-    expect(await hasSelectedLanguage()).toBe(false);
-  });
-
-  it('persists the selected Language and selection flag', async () => {
-    await setDefaultLanguage('kreole');
-    await markLanguageSelected();
-
-    expect(await getDefaultLanguage()).toBe('kreole');
-    expect(await hasSelectedLanguage()).toBe(true);
-  });
 });
 
 describe('Profile', () => {
@@ -492,27 +466,6 @@ describe('Pending Mistake Review and Practice persistence', () => {
   });
 });
 
-describe('Leaderboard', () => {
-  it('defaults to an empty Leaderboard', async () => {
-    expect(await getLeaderboard()).toEqual([]);
-  });
-
-  it('inserts a new entry and keeps the Leaderboard sorted descending by xp', async () => {
-    await upsertLeaderboard(leaderboardEntries.marie.name, leaderboardEntries.marie.xp);
-    await upsertLeaderboard(leaderboardEntries.beau.name, leaderboardEntries.beau.xp);
-
-    expect(await getLeaderboard()).toEqual(leaderboards.sorted);
-  });
-
-  it('updates an existing entry\'s xp in place rather than duplicating it', async () => {
-    await upsertLeaderboard(leaderboardEntries.marie.name, leaderboardEntries.marie.xp);
-    await upsertLeaderboard(leaderboardEntries.marie.name, 100);
-
-    const board = await getLeaderboard();
-    expect(board).toEqual([{ name: 'Marie', xp: 100 }]);
-  });
-});
-
 describe('XP and streak recording', () => {
   it('starts a streak at 1 on the first recorded study session', async () => {
     jest.setSystemTime(clock.studyDay());
@@ -636,28 +589,3 @@ describe('XP and streak recording', () => {
   });
 });
 
-describe('Preface read tracking', () => {
-  it('returns false for an unmarked id', async () => {
-    expect(await isPrefaceRead('cajun:u03')).toBe(false);
-  });
-
-  it('returns true after markPrefaceRead', async () => {
-    await markPrefaceRead('cajun:u03');
-    expect(await isPrefaceRead('cajun:u03')).toBe(true);
-  });
-
-  it('treats different ids independently', async () => {
-    await markPrefaceRead('cajun:u03');
-    expect(await isPrefaceRead('cajun:u03')).toBe(true);
-    expect(await isPrefaceRead('kreole:u01')).toBe(false);
-  });
-
-  it('persists the read state across calls', async () => {
-    await markPrefaceRead('cajun:u03');
-    await markPrefaceRead('kreole:u01');
-
-    expect(await isPrefaceRead('cajun:u03')).toBe(true);
-    expect(await isPrefaceRead('kreole:u01')).toBe(true);
-    expect(await isPrefaceRead('kreole:u02')).toBe(false);
-  });
-});

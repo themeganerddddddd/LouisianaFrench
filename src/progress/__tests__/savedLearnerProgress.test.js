@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { KEYS } from '../../utils/storage';
+import { KEYS } from '../../learnerProgress';
+import { KEYS as preferenceKeys } from '../../utils/devicePreferences';
+import { KEYS as leaderboardKeys } from '../../utils/leaderboard';
 import {
   isLanguageEmpty,
   readSavedLearnerProgress,
@@ -92,8 +94,8 @@ async function seedCajun() {
     KEYS.DAILY_REVIEW_LOG_V2_KREOLE,
     JSON.stringify({ '2026-10-20': true })
   );
-  await AsyncStorage.setItem(KEYS.LEADERBOARD, JSON.stringify([{ name: 'Ada', xp: 9 }]));
-  await AsyncStorage.setItem(KEYS.HAS_SELECTED_LANGUAGE, 'true');
+  await AsyncStorage.setItem(leaderboardKeys.LEADERBOARD, JSON.stringify([{ name: 'Ada', xp: 9 }]));
+  await AsyncStorage.setItem(preferenceKeys.HAS_SELECTED_LANGUAGE, 'true');
 }
 
 async function clearCajun() {
@@ -179,8 +181,8 @@ describe('Saved Learner Progress for one Language', () => {
     expect(sameSavedLearnerProgress(await readSavedLearnerProgress('kreole'), kreoleBefore)).toBe(
       true
     );
-    expect(JSON.parse(await AsyncStorage.getItem(KEYS.LEADERBOARD))).toEqual([{ name: 'Ada', xp: 9 }]);
-    expect(await AsyncStorage.getItem(KEYS.HAS_SELECTED_LANGUAGE)).toBe('true');
+    expect(JSON.parse(await AsyncStorage.getItem(leaderboardKeys.LEADERBOARD))).toEqual([{ name: 'Ada', xp: 9 }]);
+    expect(await AsyncStorage.getItem(preferenceKeys.HAS_SELECTED_LANGUAGE)).toBe('true');
   });
 
   it('does not restore onto a Language that already has Learner Progress', async () => {

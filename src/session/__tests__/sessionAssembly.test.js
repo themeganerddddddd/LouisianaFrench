@@ -11,7 +11,7 @@ import {
 } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { setupAppTests } from '../../test/setupAppTest';
-import { getPendingMistakes } from '../../utils/storage';
+import { getPendingMistakes } from '../../learnerProgress';
 import {
   assembleLessonActivities,
   assembleLessonMistakeQueue,

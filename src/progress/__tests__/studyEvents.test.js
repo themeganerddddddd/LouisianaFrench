@@ -6,7 +6,7 @@ import {
   savedProgressSettled
 } from '../studyEvents';
 import { releaseSavedLearnerProgress } from '../keepSavedLearnerProgress';
-import { KEYS, updateWordProgress, upsertPendingMistake } from '../../utils/storage';
+import { KEYS, updateWordProgress, upsertPendingMistake } from '../../learnerProgress';
 import { updateCardReview } from '../../utils/spacedRepetition';
 
 function memoryStore() {

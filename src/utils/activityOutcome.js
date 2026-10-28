@@ -5,7 +5,7 @@ import {
   removePendingMistake,
   updateWordProgress,
   upsertPendingMistake
-} from './storage';
+} from '../learnerProgress';
 
 function lessonCardQuality(activity, wasCorrect) {
   if (!wasCorrect) return 2;

@@ -31,13 +31,13 @@ import {
 } from '../home';
 import { registerTBoyTap } from '../utils/debugCatalogUnlock';
 import { getHomeProjection } from '../utils/homeProjection';
+import { getLastWorkedUnit } from '../learnerProgress';
 import {
   getDefaultLanguage,
-  getLastWorkedUnit,
   hasSeenAccountIntro,
   markAccountIntroSeen,
   setDefaultLanguage
-} from '../utils/storage';
+} from '../utils/devicePreferences';
 
 // About menu uses a fade Modal. Opening the bug-report sheet in the same turn can
 // leave Android's mail app with a bare address and no subject or Device block.

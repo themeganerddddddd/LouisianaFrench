@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { KEYS } from '../../utils/storage';
+import { KEYS } from '../../learnerProgress';
 import {
   noteSignOut,
   onIdentityForLanguage,
