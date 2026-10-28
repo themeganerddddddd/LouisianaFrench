@@ -1,6 +1,6 @@
 # Lesson Audio
 
-Word Audio and feedback tones during a Lesson (or Daily Review) use `expo-audio` players created in `ActivityRenderer`'s `useAudio` hook.
+Word Audio and feedback tones during a Lesson (or Daily Review) use `expo-audio` players created in `activityTypes/useAudio.js` (mounted from ActivityRenderer).
 
 Each Word's `audioKey` resolves through `audioManifest` to one bundled mp3 under `assets/audio/<language>/`. Catalog row text and the spoken body must stay paired: a correct key with a swapped recording still plays the wrong phrase. Unit 5 Louisiana French `u05_w0010_lf` (cards) and `u05_w0012_lf` (dog) were corrected that way in #198; `src/data/__tests__/unit5LfAudioAssets.test.js` pins Catalog mapping and the file-body SHA-256 for that pair.
 
