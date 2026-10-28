@@ -35,3 +35,7 @@ export function getAllWords(language) {
 export function getUnitPreface(language, unitCode) {
   return bundledCatalog.getUnitPreface(language, unitCode);
 }
+
+export function resolveAudio(language, audioKey) {
+  return bundledCatalog.resolveAudio(language, audioKey);
+}

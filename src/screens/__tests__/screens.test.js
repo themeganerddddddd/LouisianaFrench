@@ -11,7 +11,6 @@ import {
   StyleSheet
 } from 'react-native';
 
-import * as audioManifest from '../../data/audioManifest';
 import {
   activityByCardId,
   lessonById
@@ -3277,7 +3276,8 @@ describe('DictionaryScreen', () => {
 
     beforeEach(() => {
       createAudioPlayer.mockClear();
-      jest.spyOn(audioManifest, 'getAudioSource').mockReturnValue(1);
+      const catalog = require('../../test/fixtures/catalog/activities').fixtureCatalog;
+      jest.spyOn(catalog, 'resolveAudio').mockReturnValue(1);
     });
 
     afterEach(() => {

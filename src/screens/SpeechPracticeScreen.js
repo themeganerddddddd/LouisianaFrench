@@ -8,8 +8,7 @@ import {
 } from 'expo-audio';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { getAudioSource } from '../data/audioManifest';
-import { getAllWords } from '../data/lessonLoader';
+import { getAllWords, resolveAudio } from '../data/lessonLoader';
 import { releaseAudioPlayer } from '../utils/audioPlayer';
 import { recordPracticeCompletion, recordStudyAndXp } from '../utils/storage';
 
@@ -187,7 +186,7 @@ export default function SpeechPracticeScreen({
 
       <TouchableOpacity
         style={[styles.secondaryButton, { borderColor: accent }]}
-        onPress={() => play(getAudioSource(language, practiceWord.audioKey))}
+        onPress={() => play(resolveAudio(language, practiceWord.audioKey))}
         disabled={busy || isRecording}
       >
         <Text style={[styles.secondaryButtonText, { color: accent }]}>Play Audio</Text>

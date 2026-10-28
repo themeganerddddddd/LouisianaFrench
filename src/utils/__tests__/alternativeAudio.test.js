@@ -1,13 +1,17 @@
-import { getAudioSource } from '../../data/audioManifest';
+import { resolveAudio } from '../../data/lessonLoader';
 import {
   clearTargetAudioLookupCache,
   getTargetAudioLookup,
   resolveAlternativeAudioKey
 } from '../alternativeAudio';
 
-jest.mock('../../data/audioManifest', () => ({
-  getAudioSource: jest.fn()
-}));
+jest.mock('../../data/lessonLoader', () => {
+  const actual = jest.requireActual('../../data/lessonLoader');
+  return {
+    ...actual,
+    resolveAudio: jest.fn()
+  };
+});
 
 describe('alternativeAudio', () => {
   beforeEach(() => {
@@ -16,7 +20,7 @@ describe('alternativeAudio', () => {
   });
 
   it('maps catalog targets to playable audio keys', () => {
-    getAudioSource.mockImplementation((_language, key) =>
+    resolveAudio.mockImplementation((_language, key) =>
       key ? { uri: key } : null
     );
 
@@ -27,7 +31,7 @@ describe('alternativeAudio', () => {
   });
 
   it('resolves an alternative phrase from another catalog row', () => {
-    getAudioSource.mockImplementation((_language, key) =>
+    resolveAudio.mockImplementation((_language, key) =>
       key ? { uri: key } : null
     );
 
@@ -50,7 +54,7 @@ describe('alternativeAudio', () => {
   });
 
   it('falls back to the activity primary audio when the phrase matches', () => {
-    getAudioSource.mockImplementation((_language, key) =>
+    resolveAudio.mockImplementation((_language, key) =>
       key === 'fixture_audio' ? { uri: 'fixture_audio' } : null
     );
 
@@ -63,7 +67,7 @@ describe('alternativeAudio', () => {
   });
 
   it('returns null when no playable audio exists for the phrase', () => {
-    getAudioSource.mockReturnValue(null);
+    resolveAudio.mockReturnValue(null);
 
     expect(
       resolveAlternativeAudioKey('cajun', 'Unknown phrase', {

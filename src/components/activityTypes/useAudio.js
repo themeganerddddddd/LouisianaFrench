@@ -1,6 +1,6 @@
 import { createAudioPlayer } from 'expo-audio';
 import { useCallback, useEffect, useRef } from 'react';
-import { getAudioSource } from '../../data/audioManifest';
+import { resolveAudio } from '../../data/lessonLoader';
 import {
   releaseAudioPlayer,
   stopLessonAudio,
@@ -29,7 +29,7 @@ export function useAudio(language) {
   const playAudioKey = useCallback(
     async (audioKey) => {
       try {
-        const source = getAudioSource(language, audioKey);
+        const source = resolveAudio(language, audioKey);
         if (!source) return false;
 
         stopAudio();

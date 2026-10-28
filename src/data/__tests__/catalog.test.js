@@ -149,4 +149,16 @@ describe('createCatalog', () => {
       expect(catalog.getUnitPreface('nonexistent', 'u03')).toBeUndefined();
     });
   });
+
+  describe('resolveAudio', () => {
+    it('returns null for a missing or falsy audio key', () => {
+      expect(catalog.resolveAudio('cajun', null)).toBeNull();
+      expect(catalog.resolveAudio('cajun', '')).toBeNull();
+      expect(catalog.resolveAudio('cajun', 'missing_key')).toBeNull();
+    });
+
+    it('resolves a shipped Louisiana French Word Audio key', () => {
+      expect(catalog.resolveAudio('cajun', 'u01_w0001_lf')).toBeTruthy();
+    });
+  });
 });

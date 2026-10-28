@@ -1,5 +1,4 @@
-import { getAudioSource } from '../data/audioManifest';
-import { getAllActivities, getAllWords } from '../data/lessonLoader';
+import { getAllActivities, getAllWords, resolveAudio } from '../data/lessonLoader';
 
 const targetAudioLookups = new Map();
 
@@ -9,7 +8,7 @@ function registerTargetAudio(map, language, target, audioKey) {
     return;
   }
 
-  if (getAudioSource(language, audioKey)) {
+  if (resolveAudio(language, audioKey)) {
     map.set(phrase, audioKey);
   }
 }
@@ -58,7 +57,7 @@ export function resolveAlternativeAudioKey(language, phrase, activity) {
   if (
     normalized === primaryTarget &&
     activity?.audioKey &&
-    getAudioSource(language, activity.audioKey)
+    resolveAudio(language, activity.audioKey)
   ) {
     return activity.audioKey;
   }

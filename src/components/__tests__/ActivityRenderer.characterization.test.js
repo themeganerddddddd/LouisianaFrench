@@ -13,11 +13,15 @@ import {
 } from '../../test/activityInteractions';
 import { fixtureActivities } from '../../test/fixtures/catalog/activities';
 
-jest.mock('../../data/audioManifest', () => ({
-  getAudioSource: jest.fn(() => ({
-    uri: 'fixture-audio'
-  }))
-}));
+jest.mock('../../data/lessonLoader', () => {
+  const actual = jest.requireActual('../../data/lessonLoader');
+  return {
+    ...actual,
+    resolveAudio: jest.fn(() => ({
+      uri: 'fixture-audio'
+    }))
+  };
+});
 
 const VARIANT_ALT_LABEL = 'Louisiana French Alternative';
 
