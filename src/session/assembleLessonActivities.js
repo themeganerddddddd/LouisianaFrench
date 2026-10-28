@@ -1,8 +1,8 @@
 import { getLessonById } from '../data/lessonLoader';
 import { getDueReviewItems } from '../utils/spacedRepetition';
 
-export async function assembleLessonActivities({ language, lessonId }) {
-  const lesson = getLessonById(language, lessonId);
+export async function assembleLessonActivities({ language, lessonId, lesson: providedLesson }) {
+  const lesson = providedLesson ?? getLessonById(language, lessonId);
 
   if (!lesson) {
     return {

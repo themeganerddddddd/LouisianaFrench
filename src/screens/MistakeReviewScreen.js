@@ -37,17 +37,10 @@ export default function MistakeReviewScreen({
     route.params?.source ===
     'home';
 
-  const initialQueue =
-    homeMode
-      ? []
-      : mistakes || [];
-
   const [
     queue,
     setQueue
-  ] = useState(
-    () => initialQueue
-  );
+  ] = useState([]);
 
   const [
     resolvedCount,
@@ -57,9 +50,7 @@ export default function MistakeReviewScreen({
   const [
     initialTotal,
     setInitialTotal
-  ] = useState(
-    initialQueue.length
-  );
+  ] = useState(0);
 
   const [
     queueRevision,
@@ -69,22 +60,17 @@ export default function MistakeReviewScreen({
   const [
     loading,
     setLoading
-  ] = useState(
-    homeMode
-  );
+  ] = useState(true);
 
   useEffect(() => {
-    if (!homeMode) {
-      return;
-    }
-
-    async function loadPendingQueue() {
+    async function loadQueue() {
       const {
         activities: resolved,
         empty
       } = await assembleMistakeReviewQueue({
         language,
-        source: 'home'
+        source: homeMode ? 'home' : 'lesson',
+        mistakes: homeMode ? undefined : mistakes
       });
 
       setQueue(
@@ -103,7 +89,7 @@ export default function MistakeReviewScreen({
         false
       );
 
-      if (empty) {
+      if (empty && homeMode) {
         navigation.replace(
           'Home',
           { language }
@@ -111,10 +97,11 @@ export default function MistakeReviewScreen({
       }
     }
 
-    loadPendingQueue();
+    loadQueue();
   }, [
     homeMode,
     language,
+    mistakes,
     navigation
   ]);
 

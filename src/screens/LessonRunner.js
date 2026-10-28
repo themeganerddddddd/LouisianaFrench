@@ -139,7 +139,8 @@ export default function LessonRunner({
       const { activities: merged } =
         await assembleLessonActivities({
           language,
-          lessonId
+          lessonId,
+          lesson
         });
 
       setActivities(

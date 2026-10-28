@@ -164,4 +164,20 @@ describe('assembleLessonActivities', () => {
       { cardId: 'fixture:cajun:greeting:typing', isReview: false }
     ]);
   });
+
+  it('uses a provided Lesson without calling getLessonById again', async () => {
+    await seedAsyncStorage({ reviewState: reviewStates.dueAndWeak });
+    const lesson = lessonById('fixture_cajun_u01_l01');
+    getLessonById.mockClear();
+
+    const result = await assembleLessonActivities({
+      language: 'cajun',
+      lessonId: lesson.id,
+      lesson
+    });
+
+    expect(getLessonById).not.toHaveBeenCalled();
+    expect(result.lesson).toBe(lesson);
+    expect(result.activities[0].isReview).toBe(true);
+  });
 });
