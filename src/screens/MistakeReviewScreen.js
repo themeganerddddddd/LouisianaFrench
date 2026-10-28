@@ -17,17 +17,13 @@ import {
 
 import SafeScreenView from '../components/SafeScreenView';
 
-import {
-  updateCardReview
-} from '../utils/spacedRepetition';
+import { recordActivityOutcome } from '../utils/activityOutcome';
 
 import {
   getPendingMistakes,
   markLessonComplete,
-  recordPracticeCompletion,
   recordStudyAndXp,
-  removePendingMistake,
-  updateWordProgress
+  removePendingMistake
 } from '../utils/storage';
 
 export default function MistakeReviewScreen({
@@ -237,43 +233,19 @@ export default function MistakeReviewScreen({
       : 0;
 
   async function handleCorrect() {
-    await updateCardReview(
-      current.cardId,
-      4
-    );
-
-    if (current.rowId) {
-      await updateWordProgress(
-        language,
-        current.rowId,
-        true
-      );
-    }
-
-    await removePendingMistake(
-      language,
-      current.cardId
-    );
-
-    if (
-      !(
-        await getPendingMistakes(
-          language
-        )
-      ).length
-    ) {
-      await recordPracticeCompletion(
-        language,
-        'mistakeReview'
-      );
-    }
-
     const remaining =
       queue.slice(1);
 
-    if (
-      remaining.length > 0
-    ) {
+    const outcome =
+      await recordActivityOutcome({
+        sessionKind: 'mistakeReview',
+        language,
+        activity: current,
+        wasCorrect: true,
+        isLastActivity: remaining.length === 0
+      });
+
+    if (outcome.nextStep === 'advance') {
       setQueue(
         remaining
       );
@@ -288,6 +260,10 @@ export default function MistakeReviewScreen({
           revision + 1
       );
 
+      return;
+    }
+
+    if (outcome.nextStep !== 'complete') {
       return;
     }
 
@@ -344,6 +320,14 @@ export default function MistakeReviewScreen({
   async function handleWrong(
     userAnswer
   ) {
+    await recordActivityOutcome({
+      sessionKind: 'mistakeReview',
+      language,
+      activity: current,
+      wasCorrect: false,
+      isLastActivity: false
+    });
+
     /*
      * Keep the card unresolved, but move it
      * to the back of the queue.

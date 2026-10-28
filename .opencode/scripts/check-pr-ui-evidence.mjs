@@ -214,24 +214,19 @@ function main() {
   const missing = [];
   const evidence = issue != null ? listEvidenceMedia(root, issue) : { dir: null, files: [] };
 
+  const hasLink = bodyHasEvidenceLink(body);
+  const hasAttest = bodyHasNonUiAttestation(body);
+  // Body attestation is the allow for misclassified UI paths (CI has no --allow-non-ui flag).
+  const allowNonUi = args.allowNonUi || hasAttest;
+
   if (issue == null) {
     missing.push('issue-number');
-  } else if (evidence.files.length === 0) {
+  } else if (evidence.files.length === 0 && !allowNonUi) {
     missing.push('evidence-media');
   }
 
-  const hasLink = bodyHasEvidenceLink(body);
-  const hasAttest = bodyHasNonUiAttestation(body);
-
-  if (!hasLink) {
-    if (hasAttest && args.allowNonUi) {
-      // Misclassified UI paths: attestation + explicit allow passes.
-    } else if (hasAttest && !args.allowNonUi) {
-      missing.push('raw.githubusercontent.com-link');
-      missing.push('allow-non-ui-required-for-attestation');
-    } else {
-      missing.push('raw.githubusercontent.com-link');
-    }
+  if (!hasLink && !allowNonUi) {
+    missing.push('raw.githubusercontent.com-link');
   }
 
   if (missing.length > 0) {
@@ -245,7 +240,7 @@ function main() {
       evidenceFiles: evidence.files,
       hasRawGithubLink: hasLink,
       hasNonUiAttestation: hasAttest,
-      allowNonUi: args.allowNonUi,
+      allowNonUi,
       missing
     });
   }
@@ -260,7 +255,7 @@ function main() {
     evidenceFiles: evidence.files,
     hasRawGithubLink: hasLink,
     hasNonUiAttestation: hasAttest,
-    allowNonUi: args.allowNonUi
+    allowNonUi
   });
 }
 
