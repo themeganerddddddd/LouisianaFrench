@@ -6,9 +6,7 @@ import { MatchPairs } from './activityTypes/matchPairs';
 import { MultipleChoice } from './activityTypes/multipleChoice';
 import { SelectMultiple } from './activityTypes/selectMultiple';
 import { SentenceBuild } from './activityTypes/sentenceBuild';
-import {
-  getTheme
-} from './activityTypes/shell';
+import { getTheme } from './activityTypes/shell';
 import styles from './activityTypes/styles';
 import { Typing } from './activityTypes/typing';
 

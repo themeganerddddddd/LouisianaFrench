@@ -14,7 +14,7 @@ import {
   shouldRevealAfterAnswer
 } from './shell';
 import styles from './styles';
-import { isTextAnswerCorrect, shuffle } from './typeHelpers';
+import { isTextAnswerCorrect, shuffle } from './textAnswer';
 import { useAudio } from './useAudio';
 
 export function SentenceBuild({

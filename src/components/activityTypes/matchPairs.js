@@ -12,7 +12,7 @@ import {
   shouldRevealAfterAnswer
 } from './shell';
 import styles from './styles';
-import { shuffle } from './typeHelpers';
+import { shuffle } from './textAnswer';
 import { useAudio } from './useAudio';
 
 function makeMatchColumns(pairs = []) {
