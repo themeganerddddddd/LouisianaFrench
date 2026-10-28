@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BugReportButton from '../components/BugReportButton';
-import { markLanguageSelected, setDefaultLanguage } from '../utils/storage';
+import { markLanguageSelected, setDefaultLanguage } from '../utils/devicePreferences';
 
 export default function LanguageSelectScreen({ navigation }) {
   const insets = useSafeAreaInsets();

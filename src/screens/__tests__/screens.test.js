@@ -33,13 +33,12 @@ import { renderApp } from '../../test/renderApp';
 import { setupAppTests, setupUser } from '../../test/setupAppTest';
 import * as activityOutcome from '../../utils/activityOutcome';
 import * as homeProjection from '../../utils/homeProjection';
-import * as storage from '../../utils/storage';
+import * as learnerProgress from '../../learnerProgress';
 import * as reviewQueue from '../../utils/reviewQueue';
 import { updateCardReview } from '../../utils/spacedRepetition';
 import MistakeReviewScreen from '../MistakeReviewScreen';
 import {
   getDailyReviewLog,
-  getDefaultLanguage,
   getLanguageDailyReviewLog,
   getLastWorkedUnit,
   getLessonProgress,
@@ -48,11 +47,14 @@ import {
   getReviewState,
   getTodayKey,
   getTodayPractice,
-  getWordProgress,
+  getWordProgress
+} from '../../learnerProgress';
+import {
+  getDefaultLanguage,
   hasSelectedLanguage,
   markLanguageSelected,
   setDefaultLanguage
-} from '../../utils/storage';
+} from '../../utils/devicePreferences';
 
 jest.mock('expo-status-bar', () => {
   const React = require('react');
@@ -66,6 +68,15 @@ jest.mock('expo-status-bar', () => {
 jest.mock('../../data/lessonLoader', () =>
   require('../../test/fixtures/catalog/activities').fixtureCatalog
 );
+
+// Wrap getWordProgress so the Dictionary late-load race can pause it without a storage façade.
+jest.mock('../../learnerProgress', () => {
+  const actual = jest.requireActual('../../learnerProgress');
+  return {
+    ...actual,
+    getWordProgress: jest.fn((...args) => actual.getWordProgress(...args))
+  };
+});
 
 setupAppTests();
 
@@ -2324,7 +2335,7 @@ describe('LessonRunner', () => {
     });
 
     it('does not show the preface when it was previously read', async () => {
-      const { markPrefaceRead } = require('../../utils/storage');
+      const { markPrefaceRead } = require('../../utils/devicePreferences');
       await markPrefaceRead('cajun:u03');
 
       renderApp({
@@ -2372,7 +2383,7 @@ describe('LessonRunner', () => {
     });
 
     async function reachFinalWrongOnUnitNoteLesson(user) {
-      const { markPrefaceRead } = require('../../utils/storage');
+      const { markPrefaceRead } = require('../../utils/devicePreferences');
       await markPrefaceRead('cajun:u03');
 
       renderApp({
@@ -2424,7 +2435,7 @@ describe('LessonRunner', () => {
 
     it("keeps Activity state after opening the Unit note from T-Boy's Advice (#267)", async () => {
       const user = setupUser();
-      const { markPrefaceRead } = require('../../utils/storage');
+      const { markPrefaceRead } = require('../../utils/devicePreferences');
       await markPrefaceRead('cajun:u03');
 
       renderApp({
@@ -3183,9 +3194,10 @@ describe('DictionaryScreen', () => {
     });
 
     let resolveLateLoad;
-    const getWordProgress = jest
-      .spyOn(storage, 'getWordProgress')
-      .mockImplementationOnce(() => new Promise((resolve) => { resolveLateLoad = resolve; }));
+    const actualGetWordProgress = jest.requireActual('../../learnerProgress').getWordProgress;
+    learnerProgress.getWordProgress.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveLateLoad = resolve; })
+    );
 
     try {
       await act(async () => {
@@ -3194,14 +3206,17 @@ describe('DictionaryScreen', () => {
       await act(async () => {
         navigationRef.navigate('Advanced', { language: 'cajun' });
       });
-      expect(getWordProgress).toHaveBeenCalled();
+      expect(learnerProgress.getWordProgress).toHaveBeenCalled();
       await act(async () => {
         resolveLateLoad({ 'cajun:fixture_cajun_w01': wordMastery.mastered });
       });
 
       expect(screen.queryByText('Mastered', { includeHiddenElements: true })).toBeNull();
     } finally {
-      getWordProgress.mockRestore();
+      learnerProgress.getWordProgress.mockReset();
+      learnerProgress.getWordProgress.mockImplementation((...args) =>
+        actualGetWordProgress(...args)
+      );
     }
   });
 

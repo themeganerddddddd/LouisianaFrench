@@ -1,5 +1,5 @@
 import { getAllActivities } from '../data/lessonLoader';
-import { getPendingMistakes, removePendingMistake } from '../utils/storage';
+import { getPendingMistakes, removePendingMistake } from '../learnerProgress';
 
 export function assembleLessonMistakeQueue({ mistakes } = {}) {
   const activities = mistakes || [];

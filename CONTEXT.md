@@ -73,7 +73,15 @@ _Avoid_: Sound when referring to language pronunciation
 
 **Learner Progress**:
 The learner-owned history of Lesson completion, Word mastery, Card review state, XP, streaks, and Daily Review completion. Each Language keeps its own XP and streak.
-_Avoid_: Catalog data, app state, Identity
+_Avoid_: Catalog data, app state, Identity, storage, Device Preferences
+
+**Device Preferences**:
+On-device flags that are not Learner Progress: chosen Language, language-selected marker, preface-read marks, account-intro and info-bird/context seen flags.
+_Avoid_: Learner Progress, storage, app state blob
+
+**Leaderboard**:
+A device-local XP ranking display by Profile username. It is not Learner Progress history and is not Saved Learner Progress.
+_Avoid_: storage, Learner Progress
 
 **Saved Learner Progress**:
 Learner Progress kept for one Identity and one Language, apart from any device. Removing the app does not remove it.

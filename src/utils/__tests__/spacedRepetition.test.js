@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { clock } from '../../test/fixtures/clock';
 import { buildCardReviewState } from '../../test/fixtures/learnerProgress/cardBuilder';
 import { updateCardReview, getDueReviewItems, getWeakItems } from '../spacedRepetition';
-import { saveReviewState } from '../storage';
+import { saveReviewState } from '../../learnerProgress';
 
 // Characterizes the current spaced-repetition Card scheduling interface
 // (`src/utils/spacedRepetition.js`) backed by the real AsyncStorage jest

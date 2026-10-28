@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { getDefaultLanguage, hasSelectedLanguage } from '../utils/storage';
+import { getDefaultLanguage, hasSelectedLanguage } from '../utils/devicePreferences';
 
 export default function LoadingScreen({ navigation }) {
   const opacity = useRef(new Animated.Value(1)).current;

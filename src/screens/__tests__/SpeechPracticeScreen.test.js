@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { createAudioPlayer, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { getAllWords } from '../../data/lessonLoader';
-import { recordPracticeCompletion, recordStudyAndXp } from '../../utils/storage';
+import { recordPracticeCompletion, recordStudyAndXp } from '../../learnerProgress';
 
 import SpeechPracticeScreen from '../SpeechPracticeScreen';
 
@@ -15,7 +15,7 @@ jest.mock('../../data/lessonLoader', () => ({
   resolveAudio: jest.fn(() => 1)
 }));
 
-jest.mock('../../utils/storage', () => ({
+jest.mock('../../learnerProgress', () => ({
   recordPracticeCompletion: jest.fn(async () => {}),
   recordStudyAndXp: jest.fn(async () => {})
 }));

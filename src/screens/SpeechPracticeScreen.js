@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getAllWords, resolveAudio } from '../data/lessonLoader';
 import { releaseAudioPlayer } from '../utils/audioPlayer';
-import { recordPracticeCompletion, recordStudyAndXp } from '../utils/storage';
+import { recordPracticeCompletion, recordStudyAndXp } from '../learnerProgress';
 
 const MIN_ATTEMPT_MS = 600;
 export const SPEECH_WORD_LIMIT = 5;

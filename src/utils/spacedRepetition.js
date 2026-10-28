@@ -1,6 +1,6 @@
 import { getNow } from './clock';
 import { keepStudyEvent } from '../progress/studyEvents';
-import { getReviewState, saveReviewState } from './storage';
+import { getReviewState, saveReviewState } from '../learnerProgress';
 
 function defaultCardState() {
   return {
