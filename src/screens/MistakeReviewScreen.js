@@ -11,19 +11,17 @@ import {
 
 import ActivityRenderer from '../components/ActivityRenderer';
 
-import {
-  getAllActivities
-} from '../data/lessonLoader';
-
 import SafeScreenView from '../components/SafeScreenView';
 
 import { recordActivityOutcome } from '../utils/activityOutcome';
+import {
+  assembleLessonMistakeQueue,
+  assembleMistakeReviewQueue
+} from '../session';
 
 import {
-  getPendingMistakes,
   markLessonComplete,
-  recordStudyAndXp,
-  removePendingMistake
+  recordStudyAndXp
 } from '../utils/storage';
 
 export default function MistakeReviewScreen({
@@ -42,10 +40,9 @@ export default function MistakeReviewScreen({
     route.params?.source ===
     'home';
 
-  const initialQueue =
-    homeMode
-      ? []
-      : mistakes || [];
+  const initialQueue = homeMode
+    ? []
+    : assembleLessonMistakeQueue({ mistakes }).activities;
 
   const [
     queue,
@@ -84,47 +81,13 @@ export default function MistakeReviewScreen({
     }
 
     async function loadPendingQueue() {
-      const pending =
-        await getPendingMistakes(
-          language
-        );
-
-      const activities =
-        new Map(
-          getAllActivities(
-            language
-          ).map(
-            (activity) => [
-              activity.cardId,
-              activity
-            ]
-          )
-        );
-
-      const resolved = [];
-
-      for (
-        const record
-        of pending
-      ) {
-        const activity =
-          activities.get(
-            record.cardId
-          );
-
-        if (activity) {
-          resolved.push({
-            ...activity,
-            userAnswer:
-              record.answer
-          });
-        } else {
-          await removePendingMistake(
-            language,
-            record.cardId
-          );
-        }
-      }
+      const {
+        activities: resolved,
+        empty
+      } = await assembleMistakeReviewQueue({
+        language,
+        source: 'home'
+      });
 
       setQueue(
         resolved
@@ -142,9 +105,7 @@ export default function MistakeReviewScreen({
         false
       );
 
-      if (
-        !resolved.length
-      ) {
+      if (empty) {
         navigation.replace(
           'Home',
           { language }
