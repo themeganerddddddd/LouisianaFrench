@@ -1,4 +1,5 @@
 import { getNow } from './clock';
+import { keepStudyEvent } from '../progress/studyEvents';
 import { getReviewState, saveReviewState } from './storage';
 
 function defaultCardState() {
@@ -38,6 +39,10 @@ export async function updateCardReview(cardId, quality) {
 
   state[cardId] = card;
   await saveReviewState(state);
+  const language = String(cardId).split(':')[0];
+  if (language === 'cajun' || language === 'kreole') {
+    await keepStudyEvent({ language, ops: ['card_review'], cardId });
+  }
   return card;
 }
 

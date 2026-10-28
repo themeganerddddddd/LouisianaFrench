@@ -1,5 +1,7 @@
 import { updateCardReview } from './spacedRepetition';
 import {
+  getPendingMistakes,
+  recordPracticeCompletion,
   removePendingMistake,
   updateWordProgress,
   upsertPendingMistake
@@ -37,8 +39,41 @@ function dailyReviewXpDelta(wasCorrect) {
   return wasCorrect ? 8 : 0;
 }
 
-function dailyReviewNextStep(isLastActivity) {
+function advanceOrComplete(isLastActivity) {
   return isLastActivity ? 'complete' : 'advance';
+}
+
+async function recordMistakeReviewOutcome({
+  language,
+  activity,
+  wasCorrect,
+  isLastActivity
+}) {
+  if (!wasCorrect) {
+    return {
+      xpDelta: 0,
+      countsTowardScore: false,
+      nextStep: 'advance'
+    };
+  }
+
+  await updateCardReview(activity.cardId, 4);
+
+  if (activity.rowId) {
+    await updateWordProgress(language, activity.rowId, true);
+  }
+
+  await removePendingMistake(language, activity.cardId);
+
+  if (!(await getPendingMistakes(language)).length) {
+    await recordPracticeCompletion(language, 'mistakeReview');
+  }
+
+  return {
+    xpDelta: 0,
+    countsTowardScore: false,
+    nextStep: advanceOrComplete(isLastActivity)
+  };
 }
 
 async function recordLessonOutcome({
@@ -104,7 +139,7 @@ async function recordDailyReviewOutcome({
   return {
     xpDelta: dailyReviewXpDelta(wasCorrect),
     countsTowardScore: false,
-    nextStep: dailyReviewNextStep(isLastActivity)
+    nextStep: advanceOrComplete(isLastActivity)
   };
 }
 
@@ -143,6 +178,15 @@ export async function recordActivityOutcome({
       activity,
       wasCorrect,
       userAnswer,
+      isLastActivity
+    });
+  }
+
+  if (sessionKind === 'mistakeReview') {
+    return recordMistakeReviewOutcome({
+      language,
+      activity,
+      wasCorrect,
       isLastActivity
     });
   }

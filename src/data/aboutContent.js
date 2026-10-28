@@ -6,7 +6,7 @@ export const ABOUT_TEXT = {
         heading: 'Core team',
         names: [
           'Westley Sturham',
-          'Marguerite Justus, CODOFIL',
+          'Marguerite Justus - CODOFIL',
           'Taalib Pierre-Auguste',
           'Logan Delafosse'
         ]
@@ -18,7 +18,7 @@ export const ABOUT_TEXT = {
           'Daniel Blanchard',
           'Marlene Breaux Toups',
           'Valerie Broussard Boston',
-          'Megan Constantin, CODOFIL',
+          'Megan Constantin - CODOFIL',
           'Sam Craft',
           'Sherman Cravins',
           'Logan Delafosse',
@@ -26,7 +26,7 @@ export const ABOUT_TEXT = {
           'Wil Fontenot',
           'Zachary Fusilier',
           'Lester Gauthier',
-          'Maggie Justus',
+          'Marguerite Justus - CODOFIL',
           'Ryan Langley',
           'Burnell Lemoine',
           'Blake Miller'
@@ -50,9 +50,11 @@ export const ABOUT_TEXT = {
     title: 'Privacy',
     sections: [
       {
-        heading: 'Progress on this device',
+        heading: 'Saved Learner Progress',
         paragraphs: [
-          'Learning stays on this phone or tablet. We do not create an account. Uninstalling the app removes that stored progress.'
+          'Saving and restoring Learner Progress uses the email you sign in with and the id for that sign-in. Your password is not kept in that record.',
+          'With that id we keep the username already stored with your Learner Progress. For each language we also keep the lessons you finished, words you practiced, cards, mistakes and the answer you gave, review days, XP, and streak. That record is kept apart from this device.',
+          'A guest has no sign-in. Learner Progress on this device is not part of that record.'
         ]
       },
       {
@@ -93,13 +95,13 @@ export const ABOUT_TEXT = {
       {
         heading: 'Do I need an account?',
         paragraphs: [
-          'Nope. No password, no sign-up. Your progress just lives on this device.'
+          'You can study as a guest, and that progress stays on this device. Sign in if you want Saved Learner Progress kept after you remove the app.'
         ]
       },
       {
         heading: 'Will progress show up on another phone?',
         paragraphs: [
-          'It stays put. Each phone or tablet keeps its own Learner Progress, so a new device starts fresh.'
+          'A guest\'s progress stays on the device they use. After you sign in, a language with no progress on a new phone can Restore Saved Learner Progress.'
         ]
       },
       {
@@ -111,7 +113,7 @@ export const ABOUT_TEXT = {
       {
         heading: 'Can kids use this?',
         paragraphs: [
-          'Yes. A parent or teacher nearby is even better. There is no account, and progress stays on the device they use.'
+          'Yes. A parent or teacher nearby is even better. A guest\'s progress stays on the device they use. Saved Learner Progress is kept only after someone signs in.'
         ]
       },
       {
@@ -123,7 +125,7 @@ export const ABOUT_TEXT = {
       {
         heading: 'Something not working?',
         paragraphs: [
-          'Open Support in this menu (next to About Us), or Report a bug on the screen where it happened. Both open the same report form. The form sits just above the keyboard so you can see every field, with Cancel and Submit pinned while you type. On Advanced speech practice, use Home (or Back) at the top left to leave.'
+          'Open Support in this menu (next to Account and About Us), or Report a bug on the screen where it happened. Both open the same report form. The form sits just above the keyboard so you can see every field, with Cancel and Submit pinned while you type. On Advanced speech practice, use Home (or Back) at the top left to leave.'
         ]
       },
       {

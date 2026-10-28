@@ -7,11 +7,44 @@ function sectionNames(heading) {
   );
 }
 
+function paragraphs(group, heading) {
+  return ABOUT_TEXT[group].sections.find((entry) => entry.heading === heading)?.paragraphs ?? [];
+}
+
+describe('ABOUT_TEXT privacy and FAQ', () => {
+  it('names the data used to save and restore Learner Progress', () => {
+    const progress = paragraphs('privacy', 'Saved Learner Progress').join(' ');
+    expect(progress).toMatch(/email you sign in with/);
+    expect(progress).toMatch(/username already stored/);
+    expect(progress).toMatch(/XP/);
+    expect(progress).toMatch(/password is not kept/);
+    expect(progress).toMatch(/guest/i);
+    expect(progress).not.toMatch(/Sign in on a new phone/);
+    expect(progress).not.toMatch(/Delete the account/);
+    expect(progress).not.toMatch(/Progress clash/);
+    expect(progress).not.toMatch(/We do not create an account/);
+    expect(paragraphs('privacy', 'Voice practice').join(' ')).toMatch(/Recordings stay on the device/);
+  });
+
+  it('stops saying there is no account and that progress never leaves the device', () => {
+    const account = paragraphs('faq', 'Do I need an account?').join(' ');
+    const otherPhone = paragraphs('faq', 'Will progress show up on another phone?').join(' ');
+    const kids = paragraphs('faq', 'Can kids use this?').join(' ');
+    expect(account).toMatch(/Saved Learner Progress/);
+    expect(account).toMatch(/guest/i);
+    expect(otherPhone).toMatch(/Restore/);
+    expect(kids).toMatch(/guest/i);
+    expect(`${account} ${otherPhone} ${kids}`).not.toMatch(/Nope\. No password/);
+    expect(`${account} ${otherPhone} ${kids}`).not.toMatch(/new device starts fresh/);
+    expect(`${account} ${otherPhone} ${kids}`).not.toMatch(/There is no account/);
+  });
+});
+
 describe('ABOUT_TEXT acknowledgements', () => {
   it('lists Core team, Louisiana French, and Kouri-Vini in the provided order', () => {
     expect(sectionNames('Core team')).toEqual([
       'Westley Sturham',
-      'Marguerite Justus, CODOFIL',
+      'Marguerite Justus - CODOFIL',
       'Taalib Pierre-Auguste',
       'Logan Delafosse'
     ]);
@@ -20,7 +53,7 @@ describe('ABOUT_TEXT acknowledgements', () => {
       'Daniel Blanchard',
       'Marlene Breaux Toups',
       'Valerie Broussard Boston',
-      'Megan Constantin, CODOFIL',
+      'Megan Constantin - CODOFIL',
       'Sam Craft',
       'Sherman Cravins',
       'Logan Delafosse',
@@ -28,7 +61,7 @@ describe('ABOUT_TEXT acknowledgements', () => {
       'Wil Fontenot',
       'Zachary Fusilier',
       'Lester Gauthier',
-      'Maggie Justus',
+      'Marguerite Justus - CODOFIL',
       'Ryan Langley',
       'Burnell Lemoine',
       'Blake Miller'

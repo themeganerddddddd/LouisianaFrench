@@ -1,3 +1,4 @@
+import './src/identity/webCryptoPolyfill';
 import { registerRootComponent } from 'expo';
 import App from './App';
 

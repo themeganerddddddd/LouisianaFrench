@@ -1,12 +1,18 @@
+import { clock } from '../../test/fixtures/clock';
 import { dailyReviewActivityOutcomes } from '../../test/fixtures/learnerProgress/dailyReviewActivityOutcomes';
 import { lessonActivityOutcomes } from '../../test/fixtures/learnerProgress/lessonActivityOutcomes';
-import { pendingMistakes } from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
+import {
+  pendingMistakes,
+  practiceLogs
+} from '../../test/fixtures/learnerProgress/learnerProgressFixtures';
+import { mistakeReviewActivityOutcomes } from '../../test/fixtures/learnerProgress/mistakeReviewActivityOutcomes';
 import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncStorage';
 import { setupAppTests } from '../../test/setupAppTest';
 import { recordActivityOutcome } from '../activityOutcome';
 import * as spacedRepetition from '../spacedRepetition';
 import {
   getPendingMistakes,
+  getTodayPractice,
   getWordProgress
 } from '../storage';
 
@@ -310,5 +316,100 @@ describe('recordActivityOutcome (Daily Review)', () => {
         answer: case_.userAnswer
       })
     ]);
+  });
+});
+
+describe('recordActivityOutcome (Mistake Review)', () => {
+  it('records quality 4 and Word progress on a correct mid-queue Card, then advances', async () => {
+    const case_ = mistakeReviewActivityOutcomes.correctMidQueue;
+    const { cardId } = pendingMistakes.cajun.greetingChoice;
+    const listenCardId = pendingMistakes.cajun.greetingListen.cardId;
+    await seedAsyncStorage({
+      pendingMistakes: {
+        cajun: {
+          [cardId]: pendingMistakes.cajun.greetingChoice,
+          [listenCardId]: pendingMistakes.cajun.greetingListen
+        }
+      },
+      wordProgress: { 'cajun:fixture_cajun_w02': { seen: 1, correct: 0, wrong: 1, status: 'learning' } }
+    });
+    const updateCardReview = jest.spyOn(spacedRepetition, 'updateCardReview');
+
+    const outcome = await recordCase(case_);
+
+    expect(outcome).toEqual({
+      xpDelta: case_.expected.xpDelta,
+      countsTowardScore: case_.expected.countsTowardScore,
+      nextStep: case_.expected.nextStep
+    });
+    expect(updateCardReview).toHaveBeenCalledWith(
+      case_.activity.cardId,
+      case_.expected.cardQuality
+    );
+    expect((await getWordProgress())[`cajun:${case_.activity.rowId}`]).toEqual(
+      expect.objectContaining({ correct: 1, wrong: 1 })
+    );
+    expect(await getPendingMistakes('cajun')).toEqual([pendingMistakes.cajun.greetingListen]);
+    expect(await getTodayPractice('cajun')).toBeNull();
+  });
+
+  it('records practice completion when the last correct answer clears pending Mistakes', async () => {
+    jest.setSystemTime(clock.localCalendarLateEvening());
+    const case_ = mistakeReviewActivityOutcomes.correctLastClearsPending;
+    const { cardId } = pendingMistakes.cajun.greetingChoice;
+    await seedAsyncStorage({
+      pendingMistakes: { cajun: { [cardId]: pendingMistakes.cajun.greetingChoice } }
+    });
+    const updateCardReview = jest.spyOn(spacedRepetition, 'updateCardReview');
+
+    const outcome = await recordCase(case_);
+
+    expect(outcome).toEqual({
+      xpDelta: case_.expected.xpDelta,
+      countsTowardScore: case_.expected.countsTowardScore,
+      nextStep: case_.expected.nextStep
+    });
+    expect(updateCardReview).toHaveBeenCalledWith(
+      case_.activity.cardId,
+      case_.expected.cardQuality
+    );
+    expect(await getPendingMistakes('cajun')).toEqual([]);
+    expect(await getTodayPractice('cajun')).toEqual(
+      practiceLogs.todayMistakeReview['2026-03-05']
+    );
+  });
+
+  it('writes no Learner Progress on a wrong answer and advances for requeue', async () => {
+    const case_ = mistakeReviewActivityOutcomes.wrongRequeueOnly;
+    const { cardId } = pendingMistakes.cajun.greetingChoice;
+    await seedAsyncStorage({
+      pendingMistakes: { cajun: { [cardId]: pendingMistakes.cajun.greetingChoice } }
+    });
+    const updateCardReview = jest.spyOn(spacedRepetition, 'updateCardReview');
+
+    const outcome = await recordCase(case_);
+
+    expect(outcome).toEqual({
+      xpDelta: case_.expected.xpDelta,
+      countsTowardScore: case_.expected.countsTowardScore,
+      nextStep: case_.expected.nextStep
+    });
+    expect(updateCardReview).not.toHaveBeenCalled();
+    expect(await getPendingMistakes('cajun')).toEqual([pendingMistakes.cajun.greetingChoice]);
+    expect((await getWordProgress())[`cajun:${case_.activity.rowId}`]).toBeUndefined();
+  });
+});
+
+describe('recordActivityOutcome (dispatch)', () => {
+  it('rejects unsupported session kinds', async () => {
+    await expect(
+      recordActivityOutcome({
+        sessionKind: 'speechPractice',
+        language: 'cajun',
+        activity: { cardId: 'x' },
+        wasCorrect: true,
+        isLastActivity: true
+      })
+    ).rejects.toThrow(/unsupported sessionKind/);
   });
 });

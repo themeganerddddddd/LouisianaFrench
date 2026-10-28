@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, cursor/identity-account-continue]
 
 jobs:
   lint:
@@ -61,5 +61,5 @@ jobs:
       - name: Check PR UI evidence
         run: >
           node .opencode/scripts/check-pr-ui-evidence.mjs
-          --base origin/main
+          --base origin/${{ github.base_ref }}
           --body-file "$RUNNER_TEMP/pr-body.md"

@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AboutTextModal from '../components/AboutTextModal';
+import AccountIntroModal from '../components/AccountIntroModal';
 import SignInModal from '../components/SignInModal';
 import { createSupabaseIdentityConnector } from '../identity/connector';
 import BugReportButton from '../components/BugReportButton';
@@ -29,6 +30,8 @@ import { getHomeProjection } from '../utils/homeProjection';
 import {
   getDefaultLanguage,
   getLastWorkedUnit,
+  hasSeenAccountIntro,
+  markAccountIntroSeen,
   setDefaultLanguage
 } from '../utils/storage';
 
@@ -318,6 +321,7 @@ export default function HomeScreen() {
   const bugReportOpenTimerRef = useRef(null);
   const [identity, setIdentity] = useState(null);
   const [signInVisible, setSignInVisible] = useState(false);
+  const [accountIntroVisible, setAccountIntroVisible] = useState(false);
   const [recoveryActive, setRecoveryActive] = useState(false);
   const connectorRef = useRef(null);
   if (!connectorRef.current) {
@@ -325,6 +329,21 @@ export default function HomeScreen() {
   }
   const initialExpansionLanguage = useRef(null);
   const tboyTapRef = useRef({ count: 0, lastTapAt: 0 });
+
+  useEffect(() => {
+    let live = true;
+    hasSeenAccountIntro().then((seen) => {
+      if (live && !seen) setAccountIntroVisible(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  async function dismissAccountIntro() {
+    await markAccountIntroSeen();
+    setAccountIntroVisible(false);
+  }
 
   useEffect(() => {
     let live = true;
@@ -381,10 +400,12 @@ export default function HomeScreen() {
     bootstrapLanguage();
   }, [route.params?.language]);
 
+  const identityId = identity?.id ?? null;
   useFocusEffect(useCallback(() => {
     let cancelled = false;
     async function loadHome() {
-      const needsInitialExpansion = initialExpansionLanguage.current !== language;
+      const expansionKey = `${language}:${identityId || 'guest'}`;
+      const needsInitialExpansion = initialExpansionLanguage.current !== expansionKey;
       const [loadedProjection, lastWorkedUnit] = await Promise.all([
         getHomeProjection(language),
         needsInitialExpansion ? getLastWorkedUnit(language) : Promise.resolve(null)
@@ -394,7 +415,7 @@ export default function HomeScreen() {
 
       setProjection(loadedProjection);
       if (needsInitialExpansion) {
-        initialExpansionLanguage.current = language;
+        initialExpansionLanguage.current = expansionKey;
         setExpandedUnit(
           loadedProjection.units.some((unit) => unit.unitCode === lastWorkedUnit)
             ? lastWorkedUnit
@@ -405,7 +426,7 @@ export default function HomeScreen() {
 
     loadHome();
     return () => { cancelled = true; };
-  }, [language]));
+  }, [language, identityId]));
 
   useEffect(() => {
     const preference = AccessibilityInfo.isReduceMotionEnabled?.();
@@ -847,10 +868,19 @@ export default function HomeScreen() {
         />
       ) : null}
 
+      <AccountIntroModal
+        visible={accountIntroVisible}
+        accentColor={theme.accent}
+        subtitleColor={theme.subtitle}
+        onDismiss={dismissAccountIntro}
+      />
+
       <SignInModal
         visible={signInVisible}
         identity={identity}
         connector={connectorRef.current}
+        accentColor={theme.accent}
+        subtitleColor={theme.subtitle}
         recoveryActive={recoveryActive}
         onRecoveryFinished={() => setRecoveryActive(false)}
         onClose={() => {

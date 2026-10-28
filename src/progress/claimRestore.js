@@ -1,0 +1,133 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  isLanguageEmpty,
+  readSavedLearnerProgress,
+  restoreSavedLearnerProgress,
+  sameSavedLearnerProgress
+} from './savedLearnerProgress';
+
+const NOTE_KEY = 'lf_saved_progress_note';
+const LANGUAGES = ['cajun', 'kreole'];
+
+async function readNotes() {
+  const raw = await AsyncStorage.getItem(NOTE_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
+async function readNote(language) {
+  const notes = await readNotes();
+  return notes[language] || { ownerId: null, revision: null };
+}
+
+async function writeNote(language, note) {
+  const notes = await readNotes();
+  notes[language] = { ownerId: note.ownerId || null, revision: note.revision ?? null };
+  await AsyncStorage.setItem(NOTE_KEY, JSON.stringify(notes));
+}
+
+function held(note, identityId) {
+  return Boolean(note.ownerId && note.ownerId !== identityId);
+}
+
+export async function keepLocalLearnerProgress(identityId, language) {
+  const local = await readSavedLearnerProgress(language);
+  const note = await readNote(language);
+  if (held(note, identityId)) {
+    await writeNote(language, { ownerId: note.ownerId, revision: null });
+    return { action: 'clash', mayUpdate: false };
+  }
+  if (!isLanguageEmpty(local) && !note.ownerId) {
+    await writeNote(language, { ownerId: identityId, revision: null });
+  }
+  return {
+    action: 'none',
+    mayUpdate: note.ownerId === identityId && note.revision != null
+  };
+}
+
+export async function onIdentityForLanguage({ identityId, language, store }) {
+  const local = await readSavedLearnerProgress(language);
+  const note = await readNote(language);
+  const localEmpty = isLanguageEmpty(local);
+
+  if (held(note, identityId)) {
+    await writeNote(language, { ownerId: note.ownerId, revision: null });
+    return { action: 'clash', mayUpdate: false };
+  }
+
+  let saved;
+  try {
+    saved = await store.read(identityId, language);
+  } catch {
+    return keepLocalLearnerProgress(identityId, language);
+  }
+
+  if (!saved && localEmpty) return { action: 'none', mayUpdate: false };
+
+  if (!saved && !localEmpty) {
+    let claimed;
+    try {
+      claimed = await store.claim(identityId, language, local);
+    } catch {
+      return keepLocalLearnerProgress(identityId, language);
+    }
+    if (!claimed.ok) {
+      // A record appeared before Claim. Do not overwrite it, and do not hand this progress to a later Identity.
+      await writeNote(language, { ownerId: identityId, revision: null });
+      return { action: 'clash', mayUpdate: false };
+    }
+    await writeNote(language, { ownerId: identityId, revision: claimed.revision });
+    return { action: 'claim', mayUpdate: true };
+  }
+
+  if (saved && localEmpty) {
+    await restoreSavedLearnerProgress(language, saved.record);
+    await writeNote(language, { ownerId: identityId, revision: saved.revision });
+    return { action: 'restore', mayUpdate: true };
+  }
+
+  if (saved && sameSavedLearnerProgress(local, saved.record)) {
+    await writeNote(language, { ownerId: identityId, revision: saved.revision });
+    return { action: 'resume', mayUpdate: true };
+  }
+
+  await writeNote(language, { ownerId: note.ownerId || identityId, revision: null });
+  return { action: 'clash', mayUpdate: false };
+}
+
+export async function writeSavedUpdate({ identityId, language, store, record }) {
+  const note = await readNote(language);
+  if (note.ownerId !== identityId || note.revision == null) {
+    return { ok: false, mayUpdate: false };
+  }
+  let result;
+  try {
+    result = await store.write(identityId, language, note.revision, record);
+  } catch {
+    return { ok: false, mayUpdate: true, retry: true };
+  }
+  if (!result.ok) {
+    if (result.retry) return { ok: false, mayUpdate: true, retry: true };
+    await writeNote(language, { ownerId: note.ownerId, revision: null });
+    return { ok: false, mayUpdate: false };
+  }
+  await writeNote(language, { ownerId: identityId, revision: result.revision });
+  return { ok: true, mayUpdate: true, revision: result.revision };
+}
+
+export async function noteSignOut(leavingId) {
+  const notes = await readNotes();
+  for (const language of LANGUAGES) {
+    const ownerId = notes[language]?.ownerId || null;
+    if (!ownerId && leavingId) {
+      const local = await readSavedLearnerProgress(language);
+      if (!isLanguageEmpty(local)) {
+        notes[language] = { ownerId: leavingId, revision: null };
+      }
+      continue;
+    }
+    if (!ownerId) continue;
+    notes[language] = { ownerId, revision: null };
+  }
+  await AsyncStorage.setItem(NOTE_KEY, JSON.stringify(notes));
+}

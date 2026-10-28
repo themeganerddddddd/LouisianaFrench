@@ -1,12 +1,105 @@
 import { createClient } from '@supabase/supabase-js';
+import {
+  keepSavedLearnerProgressFor,
+  releaseSavedLearnerProgress
+} from '../progress/keepSavedLearnerProgress';
+import Constants from 'expo-constants';
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 
 import { createSessionStore } from './sessionStore';
 
 const UNAVAILABLE = 'Sign-in is unavailable.';
 const FAILED = 'Sign-in failed.';
 const WRONG_PASSWORD = 'That email or password is not right.';
-const AUTH_REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback';
+export const STANDALONE_AUTH_REDIRECT =
+  'com.westleysturhan.louisianafrench://auth/callback';
+const STANDALONE_SCHEME = 'com.westleysturhan.louisianafrench';
+
+function metroHostUri(constants = Constants) {
+  return (
+    constants.expoConfig?.hostUri ||
+    constants.manifest2?.extra?.expoClient?.hostUri ||
+    constants.manifest?.debuggerHost ||
+    null
+  );
+}
+
+/** Supabase Auth rejects redirect URLs whose host is a raw IPv4 (github.com/supabase/auth/issues/2039). */
+export function redirectHostIsBlockedIp(redirectTo) {
+  const withoutScheme = String(redirectTo).replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+  const host = withoutScheme.split('/')[0]?.split(':')[0] || '';
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+}
+
+/**
+ * OAuth return URL. Linking.createURL should yield exp:// in Expo Go, but with a
+ * native android/ tree it often returns the app scheme instead — and Expo Go
+ * cannot open that scheme. When createURL gives the standalone scheme while a
+ * Metro host is present, force exp://<host>/--/auth/callback.
+ */
+export function resolveAuthRedirect({
+  createURL = Linking.createURL,
+  constants = Constants
+} = {}) {
+  const created = createURL('auth/callback');
+  const host = metroHostUri(constants);
+  if (created.startsWith(`${STANDALONE_SCHEME}:`) && host) {
+    return `exp://${String(host).replace(/\/$/, '')}/--/auth/callback`;
+  }
+  return created;
+}
+
+function matchesAuthRedirect(url, redirectTo = STANDALONE_AUTH_REDIRECT) {
+  if (!url) return false;
+  const value = String(url);
+  if (redirectTo && value.startsWith(redirectTo)) return true;
+  if (value.startsWith(STANDALONE_AUTH_REDIRECT)) return true;
+  return /\/(--\/)?auth\/callback(?:[?#]|$)/.test(value);
+}
+
+/**
+ * Android Expo Go often fails to finish openAuthSessionAsync for custom schemes.
+ * Race the auth-session API with a Linking listener so a deep-link return still wins.
+ */
+function openAuthBrowser(oauthUrl, redirectTo) {
+  if (Platform.OS !== 'android') {
+    return WebBrowser.openAuthSessionAsync(oauthUrl, redirectTo).then((result) => {
+      if (result.type !== 'success' || !result.url) return null;
+      return { url: result.url };
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      subscription.remove();
+      try {
+        WebBrowser.dismissBrowser();
+      } catch {
+        /* browser may already be gone */
+      }
+      resolve(value);
+    };
+
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      if (matchesAuthRedirect(url, redirectTo)) finish({ url });
+    });
+
+    WebBrowser.openAuthSessionAsync(oauthUrl, redirectTo)
+      .then((result) => {
+        if (result?.type === 'success' && result.url) {
+          finish({ url: result.url });
+          return;
+        }
+        finish(null);
+      })
+      .catch(reject);
+  });
+}
 
 function displayNameFrom(user, fallbackEmail) {
   const metadata = user?.user_metadata ?? {};
@@ -43,7 +136,11 @@ function remember(session, email) {
   };
 }
 
-export function createIdentityConnector({ client, openBrowser } = {}) {
+export function createIdentityConnector({
+  client,
+  openBrowser,
+  redirectTo = STANDALONE_AUTH_REDIRECT
+} = {}) {
   if (!client) {
     return {
       async getIdentity() {
@@ -75,6 +172,9 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       },
       async signOut() {
         return { identity: null };
+      },
+      async deleteAccount() {
+        return { identity: null, message: UNAVAILABLE };
       }
     };
   }
@@ -94,6 +194,7 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
     const next = remember(data?.session);
     identity = next.identity;
     accessToken = next.accessToken;
+    if (identity?.id) await keepSavedLearnerProgressFor(identity.id, async () => accessToken);
   }
 
   async function apply(session, email) {
@@ -101,8 +202,19 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
     const next = remember(session, email);
     identity = next.identity;
     accessToken = next.accessToken;
+    if (identity?.id) await keepSavedLearnerProgressFor(identity.id, async () => accessToken);
     emit();
     return { identity, message: identity ? null : FAILED };
+  }
+
+  async function clearLocalIdentity() {
+    const leavingId = identity?.id ?? null;
+    await client.auth.signOut({ scope: 'local' });
+    identity = null;
+    accessToken = null;
+    await releaseSavedLearnerProgress(leavingId);
+    emit();
+    return { identity: null, message: null };
   }
 
   return {
@@ -144,7 +256,8 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
     },
     async sendPasswordReset(email) {
       const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: AUTH_REDIRECT
+        // Email links need the stable standalone scheme, not an Expo Go host URL.
+        redirectTo: STANDALONE_AUTH_REDIRECT
       });
       if (error) {
         return { identity: null, message: learnerMessage(error) };
@@ -155,7 +268,7 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       let code = null;
       let type = null;
       try {
-        if (!url || !String(url).startsWith(AUTH_REDIRECT)) return { kind: null };
+        if (!matchesAuthRedirect(url, redirectTo)) return { kind: null };
         const parsed = new URL(url);
         if (parsed.searchParams.get('error')) {
           return { kind: null, message: FAILED };
@@ -190,10 +303,29 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
     },
     async signInWithProvider(provider) {
       const attempt = ++providerAttempt;
+      if (__DEV__) {
+        console.log('[identity] OAuth redirectTo', redirectTo);
+        console.log('[identity] Constants', {
+          executionEnvironment: Constants.executionEnvironment,
+          appOwnership: Constants.appOwnership,
+          hostUri: metroHostUri(),
+          expoGoConfig: Boolean(Constants.expoGoConfig)
+        });
+        if (redirectHostIsBlockedIp(redirectTo)) {
+          console.warn(
+            '[identity] Supabase blocks OAuth redirects to raw IP hosts (expo Go LAN URL). ' +
+              'Use `npx expo start --tunnel`, or a dev/release build with the app scheme. ' +
+              'See https://github.com/supabase/auth/issues/2039'
+          );
+        }
+      }
       const { data, error } = await client.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: AUTH_REDIRECT, skipBrowserRedirect: true }
+        options: { redirectTo, skipBrowserRedirect: true }
       });
+      if (__DEV__ && data?.url) {
+        console.log('[identity] OAuth authorize', data.url);
+      }
       if (error || !data?.url || !openBrowser) {
         return { identity: null, message: error ? learnerMessage(error) : UNAVAILABLE };
       }
@@ -211,7 +343,7 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       let code = null;
       try {
         const parsed = new URL(returned.url);
-        if (!returned.url.startsWith(AUTH_REDIRECT) || parsed.searchParams.get('error')) {
+        if (!matchesAuthRedirect(returned.url, redirectTo) || parsed.searchParams.get('error')) {
           return { identity: null, message: FAILED };
         }
         code = parsed.searchParams.get('code');
@@ -231,11 +363,16 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       return apply(exchanged.data.session);
     },
     async signOut() {
-      await client.auth.signOut({ scope: 'local' });
-      identity = null;
-      accessToken = null;
-      emit();
-      return { identity: null };
+      const cleared = await clearLocalIdentity();
+      return { identity: cleared.identity };
+    },
+    async deleteAccount() {
+      if (!identity) return { identity: null, message: UNAVAILABLE };
+      const { error } = await client.rpc('delete_own_identity');
+      if (error) {
+        return { identity, message: 'The account could not be deleted. Try again.' };
+      }
+      return clearLocalIdentity();
     }
   };
 }
@@ -250,6 +387,7 @@ export function createSupabaseIdentityConnector(env = {
     return createIdentityConnector({ client: null });
   }
 
+  const redirectTo = resolveAuthRedirect();
   const client = createClient(url, key, {
     auth: {
       storage: createSessionStore(),
@@ -262,10 +400,7 @@ export function createSupabaseIdentityConnector(env = {
 
   return createIdentityConnector({
     client,
-    openBrowser: async (url) => {
-      const result = await WebBrowser.openAuthSessionAsync(url, AUTH_REDIRECT);
-      if (result.type !== 'success' || !result.url) return null;
-      return { url: result.url };
-    }
+    redirectTo,
+    openBrowser: (oauthUrl) => openAuthBrowser(oauthUrl, redirectTo)
   });
 }

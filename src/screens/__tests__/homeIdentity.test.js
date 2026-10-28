@@ -73,6 +73,15 @@ const mockConnector = {
     this.identity = null;
     this.emit();
     return { identity: null };
+  },
+  async deleteAccount() {
+    if (this.failure === 'delete') {
+      return { identity: this.identity, message: 'The account could not be deleted. Try again.' };
+    }
+    this.deleted = true;
+    this.identity = null;
+    this.emit();
+    return { identity: null, message: null };
   }
 };
 
@@ -93,13 +102,38 @@ async function openAccount(user) {
   await user.press(screen.getByLabelText(/^Account/));
 }
 
-// Account menu entry is hidden until Identity ships (SHOW_ACCOUNT_MENU_ENTRY).
-describe.skip('Home email sign-in', () => {
+describe('Home account intro', () => {
+  beforeEach(async () => {
+    mockConnector.identity = null;
+    mockConnector.listeners = new Set();
+  });
+
+  it('explains accounts and saved progress once, then stays dismissed', async () => {
+    const user = setupUser();
+    const first = renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+    expect(await screen.findByTestId('account-intro-modal')).toBeOnTheScreen();
+    expect(screen.getByText(/Learner Progress stays on this phone/)).toBeOnTheScreen();
+    expect(screen.getByText(/Saved Learner Progress for each language/)).toBeOnTheScreen();
+
+    await user.press(screen.getByTestId('account-intro-dismiss'));
+    expect(screen.queryByTestId('account-intro-modal')).toBeNull();
+    expect(await AsyncStorage.getItem('lf_account_intro_seen')).toBe('true');
+    first.unmount();
+
+    renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+    expect(await screen.findByLabelText('About menu')).toBeOnTheScreen();
+    expect(screen.queryByTestId('account-intro-modal')).toBeNull();
+  });
+});
+
+describe('Home email sign-in', () => {
   beforeEach(async () => {
     mockConnector.identity = null;
     mockConnector.listeners = new Set();
     mockConnector.signOutScope = null;
+    mockConnector.deleted = false;
     mockConnector.failure = null;
+    await AsyncStorage.setItem('lf_account_intro_seen', 'true');
     await AsyncStorage.setItem(
       'lf_profile',
       JSON.stringify({ username: 'Player', xp: 4, streak: 1, lastStudyDate: null })
@@ -140,7 +174,7 @@ describe.skip('Home email sign-in', () => {
     await openAccount(user);
     expect(screen.getByTestId('sign-in-tboy')).toBeOnTheScreen();
     expect(screen.getByLabelText('Sign in with Google')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Sign in with Facebook')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Sign in with Facebook')).toBeNull();
     expect(screen.queryByTestId('sign-in-reset-mode')).toBeNull();
     await user.press(screen.getByTestId('sign-in-create-mode'));
     expect(screen.getByText(/A name, an email, and a password/)).toBeOnTheScreen();
@@ -156,6 +190,34 @@ describe.skip('Home email sign-in', () => {
       displayName: 'Ada'
     });
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
+  });
+
+  it('reloads Home when an Identity appears on this screen', async () => {
+    const user = setupUser();
+    await openHome();
+    expect(screen.getByText("Welcome! Let's learn new words.")).toBeOnTheScreen();
+    expect(screen.getByText('Start your new lesson')).toBeOnTheScreen();
+
+    await AsyncStorage.setItem(
+      'lf_profile_cajun',
+      JSON.stringify({ username: 'Ada', xp: 40, streak: 3, lastStudyDate: '2020-01-02T00:00:00.000Z' })
+    );
+    await AsyncStorage.setItem(
+      'lf_lesson_progress',
+      JSON.stringify({
+        'cajun:fixture-lesson': { completed: true, completedAt: '2020-01-01T00:00:00.000Z' }
+      })
+    );
+    mockConnector.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+    await act(async () => {
+      mockConnector.emit();
+    });
+
+    expect(await screen.findByText(/⚡ 40 · 🔥 3/)).toBeOnTheScreen();
+    expect(screen.queryByText("Welcome! Let's learn new words.")).toBeNull();
+    expect(screen.getByText('Continue to lesson')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
   });
 
   it('signs in with email and password', async () => {
@@ -240,29 +302,6 @@ describe.skip('Home email sign-in', () => {
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
 
-  it('continues with Facebook and shows the display name', async () => {
-    const user = setupUser();
-    await openHome();
-    await openAccount(user);
-    expect(screen.getByTestId('sign-in-google')).toBeOnTheScreen();
-    await user.press(screen.getByTestId('sign-in-facebook'));
-    await user.press(screen.getByLabelText('About menu'));
-    expect(screen.getByLabelText('Account, Ada')).toBeOnTheScreen();
-    expect(mockConnector.provider).toBe('facebook');
-    expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
-  });
-
-  it('stays a guest when Facebook is cancelled', async () => {
-    const user = setupUser();
-    mockConnector.failure = 'cancel';
-    await openHome();
-    await openAccount(user);
-    await user.press(screen.getByTestId('sign-in-facebook'));
-    expect(screen.getByTestId('sign-in-modal')).toBeOnTheScreen();
-    expect(screen.queryByTestId('sign-in-message')).toBeNull();
-    expect(screen.queryByLabelText('Account, Ada')).toBeNull();
-  });
-
   it('stays a guest when Google is cancelled', async () => {
     const user = setupUser();
     mockConnector.failure = 'cancel';
@@ -291,11 +330,45 @@ describe.skip('Home email sign-in', () => {
     await user.press(screen.getByLabelText('About menu'));
     expect(screen.getByLabelText('Account')).toBeOnTheScreen();
     expect(mockConnector.signOutScope).toBe('local');
+    expect(screen.queryByLabelText('Log out')).toBeNull();
 
     mockConnector.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
     await screen.findByLabelText('About menu');
     await user.press(screen.getByLabelText('About menu'));
     expect(await screen.findByLabelText('Account, Ada')).toBeOnTheScreen();
+  });
+
+  it('asks before deleting the account and leaves the identity when delete fails', async () => {
+    const user = setupUser();
+    await openHome();
+    await openAccount(user);
+    await user.type(screen.getByTestId('sign-in-email'), 'ada@example.com');
+    await user.type(screen.getByTestId('sign-in-password'), 'secret');
+    await user.press(screen.getByTestId('sign-in-submit'));
+
+    await user.press(screen.getByLabelText('About menu'));
+    await user.press(screen.getByLabelText('Account, Ada'));
+    expect(screen.getByLabelText('Log out')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Delete account')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('delete-account'));
+    expect(screen.getByTestId('delete-account-note')).toBeOnTheScreen();
+    await user.press(screen.getByLabelText('Keep account'));
+    expect(screen.getByLabelText('Log out')).toBeOnTheScreen();
+    expect(mockConnector.deleted).toBe(false);
+
+    mockConnector.failure = 'delete';
+    await user.press(screen.getByTestId('delete-account'));
+    await user.press(screen.getByTestId('delete-account-confirm'));
+    expect(await screen.findByText('The account could not be deleted. Try again.')).toBeOnTheScreen();
+    expect(mockConnector.deleted).toBe(false);
+    expect(screen.getByTestId('delete-account-confirm')).toBeOnTheScreen();
+
+    mockConnector.failure = null;
+    await user.press(screen.getByTestId('delete-account-confirm'));
+    expect(screen.queryByTestId('sign-in-modal')).toBeNull();
+    expect(mockConnector.deleted).toBe(true);
+    await user.press(screen.getByLabelText('About menu'));
+    expect(screen.getByLabelText('Account')).toBeOnTheScreen();
   });
 });

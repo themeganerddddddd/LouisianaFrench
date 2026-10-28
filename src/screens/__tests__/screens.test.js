@@ -262,7 +262,7 @@ describe('HomeScreen', () => {
       left: 20,
       width: 236,
       backgroundColor: '#FFFFFF',
-      borderColor: '#2771CB'
+      borderColor: '#E2E8F0'
     });
     expect(screen.getByTestId('about-menu-section')).toHaveStyle({
       backgroundColor: '#FFFFFF'
@@ -308,8 +308,8 @@ describe('HomeScreen', () => {
       .toEqual(['Acknowledgements', 'Privacy', 'FAQ']);
     expect(screen.getByTestId('about-menu-support')).toBeOnTheScreen();
     expect(screen.queryByTestId('about-menu-leaf-support')).toBeNull();
-    expect(screen.queryByTestId('about-menu-account')).toBeNull();
-    expect(screen.queryByLabelText(/^Account/)).toBeNull();
+    expect(screen.getByTestId('about-menu-account')).toBeOnTheScreen();
+    expect(screen.getByLabelText(/^Account/)).toBeOnTheScreen();
     expect(screen.queryByText('Account settings')).toBeNull();
     expect(screen.queryByText('Why make this app')).toBeNull();
     expect(screen.queryByText('Remerciements')).toBeNull();
@@ -329,13 +329,13 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Kouri-Vini')).toBeOnTheScreen();
     expect(screen.getByText('Zachary Fusilier')).toBeOnTheScreen();
     expect(screen.getByText('Jermaine Butler')).toBeOnTheScreen();
-    expect(screen.getByText('Megan Constantin, CODOFIL')).toBeOnTheScreen();
+    expect(screen.getByText('Megan Constantin - CODOFIL')).toBeOnTheScreen();
     expect(screen.getByText('Sherman Cravins')).toBeOnTheScreen();
     expect(screen.getByText('Gail DuBois Broussard')).toBeOnTheScreen();
     expect(screen.getByText('Wil Fontenot')).toBeOnTheScreen();
     expect(screen.getByText('Lester Gauthier')).toBeOnTheScreen();
-    expect(screen.getByText('Maggie Justus')).toBeOnTheScreen();
-    expect(screen.getByText('Marguerite Justus, CODOFIL')).toBeOnTheScreen();
+    expect(screen.getAllByText('Marguerite Justus - CODOFIL')).toHaveLength(2);
+    expect(screen.queryByText('Maggie Justus')).toBeNull();
     await user.press(screen.getByTestId('about-text-close'));
 
     for (const [kind, title] of [
@@ -346,7 +346,7 @@ describe('HomeScreen', () => {
       await user.press(screen.getByTestId(`about-menu-leaf-${kind}`));
       expect(await screen.findByText(title)).toBeOnTheScreen();
       if (kind === 'privacy') {
-        expect(screen.getByText('Progress on this device')).toBeOnTheScreen();
+        expect(screen.getByText('Saved Learner Progress')).toBeOnTheScreen();
       }
       if (kind === 'faq') {
         expect(screen.getByText('Which languages can I learn?')).toBeOnTheScreen();
@@ -371,7 +371,7 @@ describe('HomeScreen', () => {
     await user.press(screen.getByLabelText('Louisiana French flag'));
     expect(await screen.findByText('Kouri-Vini')).toBeOnTheScreen();
     await user.press(screen.getByLabelText('About menu'));
-    expect(screen.getByTestId('home-about-menu')).toHaveStyle({ borderColor: '#08834C' });
+    expect(screen.getByTestId('home-about-menu')).toHaveStyle({ borderColor: '#E2E8F0' });
   });
 
   it.each([
