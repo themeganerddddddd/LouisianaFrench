@@ -2,7 +2,7 @@
 
 Update this file in the same change when Identity behavior or this design changes. Words used here are defined in `CONTEXT.md`. The storage decision is [ADR 0005](adr/0005-supabase-auth-for-identity.md). The current spec is GitHub issue 275. A diagrammed copy of this explainer is `docs/identity-connector.html`.
 
-Home signs a learner in through one connector. Later features use that same connector for the learner’s id and a token. They never talk to Supabase themselves.
+Home signs a learner in through one connector. Later features use that same connector for the learner’s id and a token. They never talk to Supabase themselves. Home composes Learner Progress presentation from `src/home/`; Identity, About, and navigation stay on `HomeScreen`.
 
 ## The learner, today
 
