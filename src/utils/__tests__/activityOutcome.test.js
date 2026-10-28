@@ -292,18 +292,6 @@ describe('recordActivityOutcome (Daily Review)', () => {
     );
   });
 
-  it('rejects unsupported session kinds', async () => {
-    await expect(
-      recordActivityOutcome({
-        sessionKind: 'speechPractice',
-        language: 'cajun',
-        activity: { cardId: 'x' },
-        wasCorrect: true,
-        isLastActivity: true
-      })
-    ).rejects.toThrow(/unsupported sessionKind/);
-  });
-
   it('completes after a wrong final Daily Review Activity without Mistake Review', async () => {
     const case_ = dailyReviewActivityOutcomes.lastWrongComplete;
     const updateCardReview = jest.spyOn(spacedRepetition, 'updateCardReview');
@@ -409,5 +397,19 @@ describe('recordActivityOutcome (Mistake Review)', () => {
     expect(updateCardReview).not.toHaveBeenCalled();
     expect(await getPendingMistakes('cajun')).toEqual([pendingMistakes.cajun.greetingChoice]);
     expect((await getWordProgress())[`cajun:${case_.activity.rowId}`]).toBeUndefined();
+  });
+});
+
+describe('recordActivityOutcome (dispatch)', () => {
+  it('rejects unsupported session kinds', async () => {
+    await expect(
+      recordActivityOutcome({
+        sessionKind: 'speechPractice',
+        language: 'cajun',
+        activity: { cardId: 'x' },
+        wasCorrect: true,
+        isLastActivity: true
+      })
+    ).rejects.toThrow(/unsupported sessionKind/);
   });
 });

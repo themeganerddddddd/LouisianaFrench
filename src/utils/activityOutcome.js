@@ -39,11 +39,7 @@ function dailyReviewXpDelta(wasCorrect) {
   return wasCorrect ? 8 : 0;
 }
 
-function dailyReviewNextStep(isLastActivity) {
-  return isLastActivity ? 'complete' : 'advance';
-}
-
-function mistakeReviewNextStep(isLastActivity) {
+function advanceOrComplete(isLastActivity) {
   return isLastActivity ? 'complete' : 'advance';
 }
 
@@ -76,7 +72,7 @@ async function recordMistakeReviewOutcome({
   return {
     xpDelta: 0,
     countsTowardScore: false,
-    nextStep: mistakeReviewNextStep(isLastActivity)
+    nextStep: advanceOrComplete(isLastActivity)
   };
 }
 
@@ -143,7 +139,7 @@ async function recordDailyReviewOutcome({
   return {
     xpDelta: dailyReviewXpDelta(wasCorrect),
     countsTowardScore: false,
-    nextStep: dailyReviewNextStep(isLastActivity)
+    nextStep: advanceOrComplete(isLastActivity)
   };
 }
 
