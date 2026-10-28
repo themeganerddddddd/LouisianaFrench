@@ -88,6 +88,8 @@ export function createCatalog(source) {
     return source.getUnitPreface?.(language, unitCode);
   }
 
+  // Bundled mp3 map is the only Audio adapter today; a second source
+  // (e.g. SQLite Catalog) would supply its own resolve when needed.
   function resolveAudio(language, audioKey) {
     return getBundledAudioSource(language, audioKey);
   }
