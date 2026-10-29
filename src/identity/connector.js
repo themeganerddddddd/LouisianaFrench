@@ -234,7 +234,12 @@ export function createIdentityConnector({
       const { data, error } = await client.auth.signUp({
         email,
         password,
-        options: { data: { display_name: displayName } }
+        options: {
+          data: { display_name: displayName },
+          // Confirmation links must use the stable app scheme. Without this,
+          // Supabase falls back to Auth Site URL (often http://localhost:3000).
+          emailRedirectTo: STANDALONE_AUTH_REDIRECT
+        }
       });
       if (error) {
         return { identity: null, message: learnerMessage(error) };

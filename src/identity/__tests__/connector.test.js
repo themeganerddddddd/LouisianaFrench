@@ -136,6 +136,9 @@ describe('identity connector', () => {
       displayName: 'Ada'
     });
     expect(client.calls[0].options.data.display_name).toBe('Ada');
+    expect(client.calls[0].options.emailRedirectTo).toBe(
+      'com.westleysturhan.louisianafrench://auth/callback'
+    );
     expect(seen.at(-1)).toEqual(result.identity);
     expect(client.calls[0].password).toBe(PASSWORD);
     expect(JSON.stringify(await AsyncStorage.getItem('sb-auth-token'))).not.toContain(
@@ -322,13 +325,17 @@ describe('identity connector', () => {
   });
 
   it('asks the learner to check email when sign-up waits for confirmation', async () => {
+    const calls = [];
     const client = {
       auth: {
         getSession: async () => ({ data: { session: null } }),
-        signUp: async () => ({
-          data: { session: null, user: USER },
-          error: null
-        })
+        signUp: async (args) => {
+          calls.push(args);
+          return {
+            data: { session: null, user: USER },
+            error: null
+          };
+        }
       }
     };
     const connector = createIdentityConnector({ client });
@@ -340,6 +347,9 @@ describe('identity connector', () => {
       })
     ).toEqual({ identity: null, message: 'Check your email.' });
     expect(await connector.getIdentity()).toBeNull();
+    expect(calls[0].options.emailRedirectTo).toBe(
+      'com.westleysturhan.louisianafrench://auth/callback'
+    );
   });
 
   it('stays a guest when sign-in is not configured', async () => {
