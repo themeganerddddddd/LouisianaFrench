@@ -5520,14 +5520,14 @@
         "rowId": "u03_w0001",
         "english": "to be",
         "target": "être",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "extraDetails": "The infinitive form - to (verb) - is generally how you learn new verbs or look verbs up in a dictionary."
       },
       {
         "rowId": "u03_w0002",
         "english": "I am",
         "target": "j’sus",
-        "audioKey": "u03_w0002_cajun",
+        "audioKey": "u03_w0001_cajun",
         "extraDetails": "Notice: **je** is not automatically capitalized in French, unlike \"I\" in English. Also, even when people chose to write **je sus** they still generally pronounce it more like \"shoo\" (with a higher vowel than an English \"oo\")",
         "variantAltResponse": "\"je sus\""
       },
@@ -5557,7 +5557,7 @@
       {
         "cardId": "cajun:u03_w0001:intro:step01",
         "rowId": "u03_w0001",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "type": "intro_card",
         "prompt": "Listen and learn",
         "english": "to be",
@@ -5571,7 +5571,7 @@
       {
         "cardId": "cajun:u03_w0001:mc:step02",
         "rowId": "u03_w0001",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "type": "multiple_choice",
         "prompt": "Choose the match for 'to be'",
         "options": [
@@ -5582,7 +5582,7 @@
         ],
         "optionAudioMap": {
           "il est": "u03_w0013_lf",
-          "être": "u03_w0001_cajun",
+          "être": "u03_w0001_lf",
           "Il est content d’être ici.": "u03_w0018_lf",
           "On est cousins.": "u03_w0026_lf"
         },
@@ -5597,7 +5597,7 @@
       {
         "cardId": "cajun:u03_w0002:intro:step03",
         "rowId": "u03_w0002",
-        "audioKey": "u03_w0002_cajun",
+        "audioKey": "u03_w0001_cajun",
         "type": "intro_card",
         "prompt": "Listen and learn",
         "english": "I am",
@@ -5612,7 +5612,7 @@
       {
         "cardId": "cajun:u03_w0001:mc:step04",
         "rowId": "u03_w0001",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "type": "multiple_choice",
         "prompt": "Choose the match for 'to be'",
         "options": [
@@ -5623,7 +5623,7 @@
         ],
         "optionAudioMap": {
           "c’est": "u03_w0005_lf",
-          "être": "u03_w0001_cajun",
+          "être": "u03_w0001_lf",
           "Elle est parée.": "u03_w0028_lf",
           "J’sus libre samedi.": "u03_w0012_lf"
         },
@@ -5638,7 +5638,7 @@
       {
         "cardId": "cajun:u03_w0002:mc:step05",
         "rowId": "u03_w0002",
-        "audioKey": "u03_w0002_cajun",
+        "audioKey": "u03_w0001_cajun",
         "type": "multiple_choice",
         "prompt": "Choose the match for 'I am'",
         "options": [
@@ -5650,7 +5650,7 @@
         "optionAudioMap": {
           "On est contents d’être ensemble.": "u03_w0030_lf",
           "On est cousins.": "u03_w0026_lf",
-          "j’sus": "u03_w0002_cajun",
+          "j’sus": "u03_w0001_cajun",
           "ça": "u03_w0004_lf"
         },
         "answer": "j’sus",
@@ -5703,7 +5703,7 @@
       {
         "cardId": "cajun:u03_w0001:mc:step08",
         "rowId": "u03_w0001",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "type": "multiple_choice",
         "prompt": "Choose the match for 'to be'",
         "options": [
@@ -5716,7 +5716,7 @@
           "Il est beau.": "u03_w0015_lf",
           "On est cousins.": "u03_w0026_lf",
           "il est": "u03_w0013_lf",
-          "être": "u03_w0001_cajun"
+          "être": "u03_w0001_lf"
         },
         "answer": "être",
         "answerDisplay": "être",
@@ -5769,7 +5769,7 @@
       {
         "cardId": "cajun:u03_w0002:mc:step11",
         "rowId": "u03_w0002",
-        "audioKey": "u03_w0002_cajun",
+        "audioKey": "u03_w0001_cajun",
         "type": "multiple_choice",
         "prompt": "Choose the match for 'I am'",
         "options": [
@@ -5780,7 +5780,7 @@
         ],
         "optionAudioMap": {
           "Elle est belle.": "u03_w0016_lf",
-          "j’sus": "u03_w0002_cajun",
+          "j’sus": "u03_w0001_cajun",
           "elle est": "u03_w0014_lf",
           "il est": "u03_w0013_lf"
         },
@@ -5868,12 +5868,12 @@
           {
             "left": "to be",
             "right": "être",
-            "audioKey": "u03_w0001_cajun"
+            "audioKey": "u03_w0001_lf"
           },
           {
             "left": "I am",
             "right": "j’sus",
-            "audioKey": "u03_w0002_cajun"
+            "audioKey": "u03_w0001_cajun"
           },
           {
             "left": "it/that",
@@ -6337,7 +6337,7 @@
           "Il est content d’être ici.": "u03_w0018_lf",
           "Elle est nerveuse.": "u03_w0022_lf",
           "J’sus libre samedi.": "u03_w0012_lf",
-          "être": "u03_w0001_cajun"
+          "être": "u03_w0001_lf"
         },
         "answer": "J’sus libre samedi.",
         "answerDisplay": "J’sus libre samedi.",
@@ -6413,7 +6413,7 @@
       {
         "cardId": "cajun:u03_w0002:mc:step09",
         "rowId": "u03_w0002",
-        "audioKey": "u03_w0002_cajun",
+        "audioKey": "u03_w0001_cajun",
         "type": "multiple_choice",
         "prompt": "Choose the match for 'I am'",
         "options": [
@@ -6424,7 +6424,7 @@
         ],
         "optionAudioMap": {
           "il est": "u03_w0013_lf",
-          "j’sus": "u03_w0002_cajun",
+          "j’sus": "u03_w0001_cajun",
           "C’est une gazette.": "u03_w0009_lf",
           "Elle est contente d’être ici": "u03_w0019_lf"
         },
@@ -6724,7 +6724,7 @@
           "Quoi c’est ça?"
         ],
         "optionAudioMap": {
-          "être": "u03_w0001_cajun",
+          "être": "u03_w0001_lf",
           "Il est nerveux.": "u03_w0021_lf",
           "t’es": "u03_w0003_lf",
           "Quoi c’est ça?": "u03_w0006_lf"
@@ -6781,7 +6781,7 @@
       {
         "cardId": "cajun:u03_w0001:mc:step09",
         "rowId": "u03_w0001",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "type": "multiple_choice",
         "prompt": "Choose the match for 'to be'",
         "options": [
@@ -6791,7 +6791,7 @@
           "ça"
         ],
         "optionAudioMap": {
-          "être": "u03_w0001_cajun",
+          "être": "u03_w0001_lf",
           "J’sus libre samedi.": "u03_w0012_lf",
           "Il est content d’être ici.": "u03_w0018_lf",
           "ça": "u03_w0004_lf"
@@ -6833,8 +6833,8 @@
         "optionAudioMap": {
           "On est contents d’être ensemble.": "u03_w0030_lf",
           "Il est content d’être ici.": "u03_w0018_lf",
-          "j’sus": "u03_w0002_cajun",
-          "être": "u03_w0001_cajun"
+          "j’sus": "u03_w0001_cajun",
+          "être": "u03_w0001_lf"
         },
         "answer": "Il est content d’être ici.",
         "answerDisplay": "Il est content d’être ici.",
@@ -7111,7 +7111,7 @@
       {
         "cardId": "cajun:u03_w0002:mc:step09",
         "rowId": "u03_w0002",
-        "audioKey": "u03_w0002_cajun",
+        "audioKey": "u03_w0001_cajun",
         "type": "multiple_choice",
         "prompt": "Choose the match for 'I am'",
         "options": [
@@ -7123,7 +7123,7 @@
         "optionAudioMap": {
           "J’sus libre samedi.": "u03_w0012_lf",
           "c’est": "u03_w0005_lf",
-          "j’sus": "u03_w0002_cajun",
+          "j’sus": "u03_w0001_cajun",
           "nerveux, nerveuse": "u03_w0020_lf"
         },
         "answer": "j’sus",
@@ -7188,7 +7188,7 @@
         "optionAudioMap": {
           "C'est triste.": "u03_w0010_lf",
           "Il est content d’être ici.": "u03_w0018_lf",
-          "j’sus": "u03_w0002_cajun",
+          "j’sus": "u03_w0001_cajun",
           "Vous-autres est parés?": "u03_w0029_lf"
         },
         "answer": "C'est triste.",
@@ -7354,7 +7354,7 @@
           "Elle est contente d’être ici"
         ],
         "optionAudioMap": {
-          "être": "u03_w0001_cajun",
+          "être": "u03_w0001_lf",
           "ça": "u03_w0004_lf",
           "T’es libre?": "u03_w0011_lf",
           "Elle est contente d’être ici": "u03_w0019_lf"
@@ -7666,9 +7666,9 @@
         ],
         "optionAudioMap": {
           "On est cousins.": "u03_w0026_lf",
-          "être": "u03_w0001_cajun",
+          "être": "u03_w0001_lf",
           "On est contents d’être ensemble.": "u03_w0030_lf",
-          "j’sus": "u03_w0002_cajun"
+          "j’sus": "u03_w0001_cajun"
         },
         "answer": "On est cousins.",
         "answerDisplay": "On est cousins.",
@@ -7819,7 +7819,7 @@
           "Quoi c’est ça?"
         ],
         "optionAudioMap": {
-          "j’sus": "u03_w0002_cajun",
+          "j’sus": "u03_w0001_cajun",
           "J’sus libre samedi.": "u03_w0012_lf",
           "Elle est belle.": "u03_w0016_lf",
           "Quoi c’est ça?": "u03_w0006_lf"
@@ -7836,7 +7836,7 @@
       {
         "cardId": "cajun:u03_w0001:typing:step11",
         "rowId": "u03_w0001",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "type": "typing",
         "prompt": "Type: 'to be'",
         "answer": "être",
@@ -7947,7 +7947,7 @@
           {
             "left": "I am",
             "right": "j’sus",
-            "audioKey": "u03_w0002_cajun"
+            "audioKey": "u03_w0001_cajun"
           }
         ],
         "answer": "All matched",
@@ -7974,14 +7974,14 @@
         "rowId": "u03_w0001",
         "english": "to be",
         "target": "être",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "extraDetails": "The infinitive form - to (verb) - is generally how you learn new verbs or look verbs up in a dictionary."
       },
       {
         "rowId": "u03_w0002",
         "english": "I am",
         "target": "j’sus",
-        "audioKey": "u03_w0002_cajun",
+        "audioKey": "u03_w0001_cajun",
         "extraDetails": "Notice: **je** is not automatically capitalized in French, unlike \"I\" in English. Also, even when people chose to write **je sus** they still generally pronounce it more like \"shoo\" (with a higher vowel than an English \"oo\")",
         "variantAltResponse": "\"je sus\""
       },
@@ -8185,7 +8185,7 @@
       {
         "cardId": "cajun:u03_w0001:listening_target:step01",
         "rowId": "u03_w0001",
-        "audioKey": "u03_w0001_cajun",
+        "audioKey": "u03_w0001_lf",
         "type": "listening_target_choice",
         "prompt": "Listen and choose the word",
         "options": [
@@ -8195,7 +8195,7 @@
           "content, contente"
         ],
         "optionAudioMap": {
-          "être": "u03_w0001_cajun",
+          "être": "u03_w0001_lf",
           "il est": "u03_w0013_lf",
           "c’est": "u03_w0005_lf",
           "content, contente": "u03_w0017_lf"
@@ -8273,7 +8273,7 @@
         ],
         "optionAudioMap": {
           "Elle est belle.": "u03_w0016_lf",
-          "être": "u03_w0001_cajun",
+          "être": "u03_w0001_lf",
           "On est parés!": "u03_w0031_lf",
           "Il est beau.": "u03_w0015_lf"
         },
@@ -8487,7 +8487,7 @@
       {
         "cardId": "cajun:u03_w0002:typing:step14",
         "rowId": "u03_w0002",
-        "audioKey": "u03_w0002_cajun",
+        "audioKey": "u03_w0001_cajun",
         "type": "typing",
         "prompt": "Type: 'I am'",
         "answer": "j’sus",
@@ -8512,7 +8512,7 @@
           {
             "left": "to be",
             "right": "être",
-            "audioKey": "u03_w0001_cajun"
+            "audioKey": "u03_w0001_lf"
           },
           {
             "left": "We're ready!",

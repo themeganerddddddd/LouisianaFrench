@@ -56,7 +56,7 @@ export const audioManifest = {
     "u02_w0029_lf": require("../../assets/audio/cajun/u02_w0029_lf.mp3"),
     "u02_w0030_lf": require("../../assets/audio/cajun/u02_w0030_lf.mp3"),
     "u03_w0001_cajun": require("../../assets/audio/cajun/u03_w0001_cajun.mp3"),
-    "u03_w0002_cajun": require("../../assets/audio/cajun/u03_w0002_cajun.mp3"),
+    "u03_w0001_lf": require("../../assets/audio/cajun/u03_w0001_lf.mp3"),
     "u03_w0003_lf": require("../../assets/audio/cajun/u03_w0003_lf.mp3"),
     "u03_w0004_lf": require("../../assets/audio/cajun/u03_w0004_lf.mp3"),
     "u03_w0005_lf": require("../../assets/audio/cajun/u03_w0005_lf.mp3"),
