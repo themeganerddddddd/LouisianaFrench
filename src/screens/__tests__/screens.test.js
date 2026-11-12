@@ -361,9 +361,12 @@ describe('HomeScreen', () => {
     await act(async () => {
       jest.advanceTimersByTime(200);
     });
-    expect(await screen.findByText('Tell us what went wrong.')).toBeOnTheScreen();
-    await user.press(screen.getByLabelText('Cancel bug report'));
+    expect(
+      await screen.findByLabelText('Pelican with Mardi Gras umbrella')
+    ).toBeOnTheScreen();
     expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
+    await user.press(screen.getByLabelText('Cancel bug report'));
+    expect(screen.queryByLabelText('Cancel bug report')).toBeNull();
     expect(screen.getByText('Louisiana French')).toBeOnTheScreen();
 
     expect(screen.getByTestId('home-plan')).toBeOnTheScreen();

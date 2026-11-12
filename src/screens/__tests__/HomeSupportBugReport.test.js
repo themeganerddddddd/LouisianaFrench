@@ -49,7 +49,9 @@ describe('Home About Support mailto parity', () => {
     await act(async () => {
       jest.advanceTimersByTime(200);
     });
-    expect(await screen.findByText('Tell us what went wrong.')).toBeOnTheScreen();
+    expect(
+      await screen.findByLabelText('Pelican with Mardi Gras umbrella')
+    ).toBeOnTheScreen();
   }
 
   it('opens the shared Report a bug sheet from Support after the About menu closes', async () => {
@@ -57,8 +59,11 @@ describe('Home About Support mailto parity', () => {
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
 
     await openSupportSheet(user);
-    expect(screen.getByText('Tell us what went wrong.')).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText('Pelican with Mardi Gras umbrella')
+    ).toBeOnTheScreen();
     expect(screen.getByLabelText('Submit bug report')).toBeOnTheScreen();
+    expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
   });
 
   it('Accept from Support attaches device info like Report a bug', async () => {

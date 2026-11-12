@@ -220,10 +220,15 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
                 style={{ maxHeight: formScrollMaxHeight }}
                 contentContainerStyle={styles.content}
               >
-                <Text style={styles.heading}>Report a bug</Text>
-                <Text style={[styles.subtitle, keyboardOpen && styles.subtitleCompact]}>
-                  Tell us what went wrong.
-                </Text>
+                <View style={[styles.formHeader, keyboardOpen && styles.formHeaderCompact]}>
+                  <Animated.Image
+                    source={require('../../assets/images/secondline.png')}
+                    style={[styles.formHero, keyboardOpen && styles.formHeroCompact]}
+                    resizeMode="contain"
+                    accessibilityLabel="Pelican with Mardi Gras umbrella"
+                  />
+                  <Text style={[styles.heading, styles.formHeading]}>Report a bug</Text>
+                </View>
                 <Text style={styles.label}>Name</Text>
                 <TextInput
                   ref={nameInputRef}
@@ -326,9 +331,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden'
   },
   content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
+  formHeader: {
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  formHeaderCompact: { marginBottom: 0 },
+  formHeading: { marginBottom: 0, marginTop: 4, textAlign: 'center' },
+  formHero: { width: 140, height: 140 },
+  formHeroCompact: { width: 56, height: 56 },
   heading: { fontSize: 20, fontWeight: '900', color: '#17324D', marginBottom: 4 },
   subtitle: { fontSize: 14, fontWeight: '600', color: '#64748B', marginBottom: 16 },
-  subtitleCompact: { marginBottom: 8 },
   label: { fontSize: 13, fontWeight: '800', color: '#486581', marginBottom: 6, marginTop: 12 },
   input: { borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14, padding: 12, fontSize: 15, fontWeight: '600', color: '#17324D', backgroundColor: '#F8FAFC' },
   inputError: { borderColor: '#B91C1C' },
