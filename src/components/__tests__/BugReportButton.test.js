@@ -17,7 +17,10 @@ describe('BugReportButton', () => {
     );
 
     await user.press(screen.getByLabelText('Report a bug'));
-    expect(screen.getByText('Tell us what went wrong.')).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText('Pelican with Mardi Gras umbrella')
+    ).toBeOnTheScreen();
+    expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
   });
 
   it('defers visibility to the parent in controlled mode', async () => {
@@ -37,10 +40,10 @@ describe('BugReportButton', () => {
       />
     );
 
-    expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
+    expect(screen.queryByLabelText('Pelican with Mardi Gras umbrella')).toBeNull();
     await user.press(screen.getByLabelText('Report a bug'));
     expect(onFlowOpen).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
+    expect(screen.queryByLabelText('Pelican with Mardi Gras umbrella')).toBeNull();
 
     rerender(
       <BugReportButton
@@ -53,7 +56,9 @@ describe('BugReportButton', () => {
         onFlowClose={onFlowClose}
       />
     );
-    expect(screen.getByText('Tell us what went wrong.')).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText('Pelican with Mardi Gras umbrella')
+    ).toBeOnTheScreen();
 
     await user.press(screen.getByLabelText('Cancel bug report'));
     expect(onFlowClose).toHaveBeenCalledTimes(1);
