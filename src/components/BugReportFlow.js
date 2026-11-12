@@ -221,13 +221,13 @@ export default function BugReportFlow({ visible, onClose, screenName, language, 
                 contentContainerStyle={styles.content}
               >
                 <View style={[styles.formHeader, keyboardOpen && styles.formHeaderCompact]}>
-                  <Text style={[styles.heading, styles.formHeading]}>Report a bug</Text>
                   <Animated.Image
                     source={require('../../assets/images/secondline.png')}
                     style={[styles.formHero, keyboardOpen && styles.formHeroCompact]}
                     resizeMode="contain"
                     accessibilityLabel="Pelican with Mardi Gras umbrella"
                   />
+                  <Text style={[styles.heading, styles.formHeading]}>Report a bug</Text>
                 </View>
                 <Text style={styles.label}>Name</Text>
                 <TextInput
@@ -332,16 +332,13 @@ const styles = StyleSheet.create({
   },
   content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
   formHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 4,
   },
-  formHeaderCompact: { marginBottom: 6 },
-  formHeading: { flex: 1, marginBottom: 0, marginTop: 4 },
-  formHero: { width: 64, height: 64 },
-  formHeroCompact: { width: 40, height: 40 },
+  formHeaderCompact: { marginBottom: 0 },
+  formHeading: { marginBottom: 0, marginTop: 4, textAlign: 'center' },
+  formHero: { width: 140, height: 140 },
+  formHeroCompact: { width: 56, height: 56 },
   heading: { fontSize: 20, fontWeight: '900', color: '#17324D', marginBottom: 4 },
   subtitle: { fontSize: 14, fontWeight: '600', color: '#64748B', marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '800', color: '#486581', marginBottom: 6, marginTop: 12 },
