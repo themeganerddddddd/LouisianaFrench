@@ -29,7 +29,7 @@ function resolveIssueNumber(root, positional) {
   if (positional[0]) {
     const number = Number(positional[0]);
     if (!Number.isInteger(number) || number <= 0) {
-      console.error('Usage: node .opencode/scripts/validate-authority.mjs [<issue>]');
+      console.error('Usage: node .agents/scripts/validate-authority.mjs [<issue>]');
       process.exit(1);
     }
     return number;
@@ -44,7 +44,7 @@ function resolveIssueNumber(root, positional) {
     if (fromFile) return fromFile;
   }
   console.error(
-    'Usage: node .opencode/scripts/validate-authority.mjs [<issue>]\n' +
+    'Usage: node .agents/scripts/validate-authority.mjs [<issue>]\n' +
       'Provide an issue number, AUTHORITY_ISSUE, or .agent/issue.md with issue front matter.'
   );
   process.exit(1);

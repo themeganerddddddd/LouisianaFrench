@@ -128,7 +128,7 @@ function main() {
 
   if (!opts.fixedPoint) {
     console.error(
-      'Usage: node .opencode/scripts/validate-drift.mjs --fixed-point <ref> [--budget 250] [--expect-paths path1,path2]'
+      'Usage: node .agents/scripts/validate-drift.mjs --fixed-point <ref> [--budget 250] [--expect-paths path1,path2]'
     );
     process.exit(1);
   }

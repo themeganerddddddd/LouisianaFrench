@@ -17,7 +17,7 @@ permission:
     "git ls-files*": allow
     "gh issue view*": allow
     "gh pr view*": allow
-    "node .opencode/scripts/*": allow
+    "node .agents/scripts/*": allow
 ---
 
 Build an evidence-backed implementation map and keep the repository unchanged.

@@ -24,7 +24,7 @@ Owner/repo for raw links: `themeganerddddddd/LouisianaFrench`.
    ```bash
    npm run capture:ui-evidence -- <issue> [--url http://localhost:8081]
    ```
-   Or: `node .opencode/scripts/capture-ui-evidence.mjs <issue> …`
+   Or: `node .agents/scripts/capture-ui-evidence.mjs <issue> …`
 2. Commit evidence under `docs/evidence/<issue>/` on the PR branch (not `docs/pr-evidence/`).
 3. Paste the script’s markdown into **What a learner sees**, using `raw.githubusercontent.com` URLs after the evidence commit exists on the remote.
 4. Run readiness gates before opening the PR:

@@ -3,7 +3,7 @@
  * Local PR readiness gates: lint → test → UI evidence → template sections → LOC.
  *
  * Usage:
- *   node .opencode/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path]
+ *   node .agents/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path]
  *
  * Exit 0 only if all gates pass.
  * Soft warn at 100 production LOC added; hard fail above 250 unless ALLOW_LARGE_PR=1.
@@ -28,7 +28,7 @@ const TEMPLATE_SECTIONS = [
 
 function usage(code = 1) {
   console.error(
-    'Usage: node .opencode/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path]'
+    'Usage: node .agents/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path]'
   );
   process.exit(code);
 }

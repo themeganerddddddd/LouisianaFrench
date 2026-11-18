@@ -21,7 +21,7 @@ Draft PRs stay draft until these local reviews pass.
 
 ## Commands
 
-Prefer the repo scripts when present (under `.opencode/scripts/`, via npm):
+Prefer the repo scripts when present (under `.agents/scripts/`, via npm):
 
 ```bash
 npm run pr-ready

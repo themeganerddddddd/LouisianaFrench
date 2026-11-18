@@ -4,7 +4,7 @@
  * Prints paste-ready markdown for the PR **What a learner sees** section.
  *
  * Usage:
- *   node .opencode/scripts/capture-ui-evidence.mjs <issue>
+ *   node .agents/scripts/capture-ui-evidence.mjs <issue>
  *     [--url http://localhost:8081] [--out-name 00-shot.png]
  *
  */
@@ -26,7 +26,7 @@ Capture files in this folder (png/jpg/webp/gif/mp4/webm/mov), resize to 50% befo
 
 function usage(code = 1) {
   console.error(
-    'Usage: node .opencode/scripts/capture-ui-evidence.mjs <issue> [--url http://localhost:8081] [--out-name 00-shot.png]'
+    'Usage: node .agents/scripts/capture-ui-evidence.mjs <issue> [--url http://localhost:8081] [--out-name 00-shot.png]'
   );
   process.exit(code);
 }

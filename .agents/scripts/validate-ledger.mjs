@@ -58,7 +58,7 @@ function main() {
 
   if (!Number.isInteger(parentNumber) || parentNumber <= 0) {
     console.error(
-      'Usage: node .opencode/scripts/validate-ledger.mjs --parent <n> [--children a,b,c]'
+      'Usage: node .agents/scripts/validate-ledger.mjs --parent <n> [--children a,b,c]'
     );
     process.exit(1);
   }
