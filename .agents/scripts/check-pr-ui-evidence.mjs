@@ -3,7 +3,7 @@
  * Gate: UI diffs require docs/evidence/<issue>/ media + PR body raw links.
  *
  * Usage:
- *   node .opencode/scripts/check-pr-ui-evidence.mjs [--base origin/main]
+ *   node .agents/scripts/check-pr-ui-evidence.mjs [--base origin/main]
  *     [--body-file path] [--issue N] [--allow-non-ui] [--stdin]
  *
  * Always prints JSON to stdout. Exit 0 on pass, 2 on fail, 1 on usage/error.
@@ -28,7 +28,7 @@ const UI_ROOT_FILES = new Set(['App.js', 'App.tsx']);
 
 function usage(code = 1) {
   console.error(
-    'Usage: node .opencode/scripts/check-pr-ui-evidence.mjs [--base origin/main] [--body-file path] [--issue N] [--allow-non-ui] [--stdin]'
+    'Usage: node .agents/scripts/check-pr-ui-evidence.mjs [--base origin/main] [--body-file path] [--issue N] [--allow-non-ui] [--stdin]'
   );
   process.exit(code);
 }

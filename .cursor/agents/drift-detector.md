@@ -10,7 +10,7 @@ readonly: true
 
 Validate drift without editing or repairing anything.
 
-- Run `node .opencode/scripts/validate-drift.mjs --fixed-point <ref> [...]` first and treat its JSON verdict as the mechanical baseline before narrative comparison. See `docs/agents/validation.md`.
+- Run `node .agents/scripts/validate-drift.mjs --fixed-point <ref> [...]` first and treat its JSON verdict as the mechanical baseline before narrative comparison. See `docs/agents/validation.md`.
 
 1. **Baseline.** Identify the exact target worktree, supplied validated plan, authority sources and fingerprints, dependency state, fixed point, branch, expected diff scope and production-line budget, and unresolved human decisions. State what cannot be checked.
 2. **Refresh.** Run repository reads in the exact target worktree. Inspect `git status` and `git diff <fixed-point> --`, including untracked files; never use `HEAD == fixed-point` as evidence that implementation is absent. Independently read current issue or specification authority, relevant repository instructions and decisions, dependencies, referenced design or data artifacts, affected module interfaces, and current diff. Do not trust a prior agent's summary when primary evidence is available.

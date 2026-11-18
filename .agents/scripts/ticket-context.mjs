@@ -71,7 +71,7 @@ function adrHashes(root) {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!Number.isInteger(opts.issue) || opts.issue <= 0) {
-    console.error('Usage: node .opencode/scripts/ticket-context.mjs <issue> [--write] [--allow-dirty]');
+    console.error('Usage: node .agents/scripts/ticket-context.mjs <issue> [--write] [--allow-dirty]');
     process.exit(1);
   }
 

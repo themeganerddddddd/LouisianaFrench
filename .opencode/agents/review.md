@@ -18,7 +18,7 @@ permission:
     "git ls-files*": allow
     "gh issue view*": allow
     "gh pr view*": allow
-    "node .opencode/scripts/*": allow
+    "node .agents/scripts/*": allow
 ---
 
 Conduct an adversarial, read-only review. Findings are the product.

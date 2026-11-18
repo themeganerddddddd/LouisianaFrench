@@ -17,12 +17,12 @@ permission:
     "git ls-files*": allow
     "gh issue view*": allow
     "gh pr view*": allow
-    "node .opencode/scripts/*": allow
+    "node .agents/scripts/*": allow
 ---
 
 Validate without editing, planning, coding, or delegating.
 
-- Run the matching `node .opencode/scripts/validate-*.mjs` gate first (plan, authority, ledger, or fixture-sep) and treat its JSON verdict as the mechanical baseline before narrative assessment.
+- Run the matching `node .agents/scripts/validate-*.mjs` gate first (plan, authority, ledger, or fixture-sep) and treat its JSON verdict as the mechanical baseline before narrative assessment.
 
 1. **Receive.** Identify the validated claim or plan under review, the authority sources it cites, the dependency and base assertions, the expected scope, and any human decisions it defers. Record what cannot be verified from available evidence.
 2. **Evidence.** Independently read primary authority (issues, specifications, ADRs, repo instructions, design artifacts), current implementation and diff, dependency and base state, and any external references. Do not trust a secondhand summary when the source is reachable.

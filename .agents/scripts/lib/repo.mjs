@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Shared helpers for .opencode/scripts (Node ESM, builtins only).
+ * Shared helpers for .agents/scripts (Node ESM, builtins only).
  */
 
 import { execFileSync } from 'node:child_process';

@@ -56,7 +56,7 @@ function humanDecisionsOk(body) {
 function main() {
   const planPath = process.argv[2];
   if (!planPath) {
-    console.error('Usage: node .opencode/scripts/validate-plan.mjs <plan.md>');
+    console.error('Usage: node .agents/scripts/validate-plan.mjs <plan.md>');
     process.exit(1);
   }
   if (!exists(planPath)) {

@@ -2,7 +2,13 @@
 
 ## Agent skills
 
-Project skills (Cursor and OpenCode) live under **`.agents/skills/<name>/SKILL.md`**. That folder is the shared source of truth. Thin stubs under `.cursor/skills/` only point here. Gate scripts stay in `.opencode/scripts/` and are invoked via `npm run …`.
+`.agents/` is the tool-agnostic home for agent tooling. Any LLM agent (Claude Code, Cursor, OpenCode, Codex, …) should look there first:
+
+- **Skills:** `.agents/skills/<name>/SKILL.md` (with optional `references/` and `scripts/` beside it).
+- **Gate scripts:** `.agents/scripts/*.mjs`, run via `npm run …` (see Validation below).
+- **Verdict schemas:** `.agents/schemas/`.
+
+Tool-specific folders hold only what that tool needs to run: subagent personas and model ids (`.cursor/agents/`, `.opencode/agents/`) and tool config (`.opencode/opencode.json`). Do not put skills or scripts there; `.cursor/skills/` holds only thin stubs that point back to `.agents/skills/`.
 
 **Cursor subagents** (Task / `/name`) live under **`.cursor/agents/`**, ported from `.opencode/agents/` with Cursor models (`grok-4.7-high` for reasoning-heavy roles; `composer-2.5` for implementation; `composer-2.5-fast` for quick explore/ops). OpenCode keeps its own agent files under `.opencode/agents/` (OpenCode model ids and permissions).
 

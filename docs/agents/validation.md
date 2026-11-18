@@ -21,7 +21,7 @@ Machine-checkable gates for coordinators and implementers. Agents must run these
 
 ## Verdict shapes
 
-See `.opencode/schemas/verdict.schema.json`. Legal `verdict` values: `PASS`, `BLOCKED`, `NO_DRIFT`, `REPLAN`, `REVIEW_PASS`, `REVIEW_FAIL`.
+See `.agents/schemas/verdict.schema.json`. Legal `verdict` values: `PASS`, `BLOCKED`, `NO_DRIFT`, `REPLAN`, `REVIEW_PASS`, `REVIEW_FAIL`.
 
 ## Related
 

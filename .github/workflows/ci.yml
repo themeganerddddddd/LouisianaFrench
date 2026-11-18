@@ -60,6 +60,6 @@ jobs:
           printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
       - name: Check PR UI evidence
         run: >
-          node .opencode/scripts/check-pr-ui-evidence.mjs
+          node .agents/scripts/check-pr-ui-evidence.mjs
           --base origin/main
           --body-file "$RUNNER_TEMP/pr-body.md"

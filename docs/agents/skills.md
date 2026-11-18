@@ -2,11 +2,12 @@
 
 | Path | Who loads it |
 | --- | --- |
-| `.agents/skills/<name>/SKILL.md` | Cursor and OpenCode (canonical skills) |
+| `.agents/skills/<name>/SKILL.md` | Every agent tool (canonical skills) |
 | `.cursor/skills/<name>/SKILL.md` | Cursor only — stubs that point at `.agents/skills/` |
 | `.cursor/agents/<name>.md` | Cursor subagents (Task / `/name`) |
 | `.opencode/agents/*.md` | OpenCode agent personas (OpenCode models/permissions) |
-| `.opencode/scripts/*.mjs` | Both — via `npm run` / `node` |
+| `.agents/scripts/*.mjs` | Every agent tool — via `npm run` / `node` |
+| `.agents/schemas/*.json` | Every agent tool — gate verdict shape |
 
 ## Cursor subagents (from OpenCode ports)
 
@@ -28,7 +29,7 @@ Keep prompts aligned with `.opencode/agents/` when behavior changes; only frontm
 1. Create `.agents/skills/<name>/SKILL.md` with `name` + `description` frontmatter.
 2. Optional: `references/`, `scripts/` beside `SKILL.md`.
 3. Mention it in `AGENTS.md` if agents should know it exists.
-4. Do not duplicate the full skill under `.cursor/skills/` — a one-line stub is enough during transition.
+4. Do not copy the full skill into tool-specific folders; a one-line stub under `.cursor/skills/` is enough.
 
 ## Adding a Cursor subagent
 
