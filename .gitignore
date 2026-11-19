@@ -53,3 +53,6 @@ tmp/
 
 # Agent local dumps (issue pack / authority fingerprints)
 .agent/
+
+# Google Play service account key (secret)
+eas-googleplay.json
