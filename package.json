@@ -17,6 +17,7 @@
     "check:ui-evidence": "node .agents/scripts/check-pr-ui-evidence.mjs",
     "capture:ui-evidence": "node .agents/scripts/capture-ui-evidence.mjs",
     "pr-ready": "node .agents/scripts/pr-ready.mjs",
+    "release": "node scripts/release/release.js",
     "ticket:context": "node .agents/scripts/ticket-context.mjs",
     "validate:authority": "node .agents/scripts/validate-authority.mjs",
     "validate:drift": "node .agents/scripts/validate-drift.mjs",
