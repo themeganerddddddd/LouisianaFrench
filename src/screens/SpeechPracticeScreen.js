@@ -9,9 +9,15 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
-import { getAllWords } from '../data/lessonLoader';
+import { getAllWords, getLessonsByLanguage } from '../data/lessonLoader';
+import { pickSpeechWords } from '../speechPractice/pickSpeechWords';
 import { releaseAudioPlayer } from '../utils/audioPlayer';
-import { recordPracticeCompletion, recordStudyAndXp } from '../utils/storage';
+import {
+  getLessonProgress,
+  getWordProgress,
+  recordPracticeCompletion,
+  recordStudyAndXp
+} from '../utils/storage';
 
 const MIN_ATTEMPT_MS = 600;
 export const SPEECH_WORD_LIMIT = 5;
@@ -24,13 +30,16 @@ export default function SpeechPracticeScreen({
   word,
   onComplete
 }) {
-  const practiceWords = useMemo(
+  const isDailySpeechPractice = scored && !word;
+  const freePracticeWords = useMemo(
     () => (word ? [word] : getAllWords(language).filter((w) => w.audioKey)),
     [language, word]
   );
+  const [dailyPracticeWords, setDailyPracticeWords] = useState(null);
+  const practiceWords = isDailySpeechPractice ? dailyPracticeWords : freePracticeWords;
   const [wordIndex, setWordIndex] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
-  const practiceWord = practiceWords[wordIndex % practiceWords.length];
+  const practiceWord = practiceWords?.[wordIndex % practiceWords.length];
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(recorder, 100);
   const isRecording = recorderState.isRecording;
@@ -52,6 +61,21 @@ export default function SpeechPracticeScreen({
   useEffect(() => {
     return () => releaseAudioPlayer(soundRef);
   }, []);
+
+  useEffect(() => {
+    if (!isDailySpeechPractice) return undefined;
+    let cancelled = false;
+    Promise.all([getLessonProgress(), getWordProgress()]).then(([lessonProgress, wordProgress]) => {
+      if (cancelled) return;
+      setDailyPracticeWords(pickSpeechWords({
+        lessons: getLessonsByLanguage(language),
+        lessonProgress,
+        wordProgress,
+        limit: wordLimit
+      }));
+    });
+    return () => { cancelled = true; };
+  }, [isDailySpeechPractice, language, wordLimit]);
 
   async function play(source) {
     if (!source) return;
@@ -164,6 +188,8 @@ export default function SpeechPracticeScreen({
   }
 
   const accent = language === 'kreole' ? '#08834c' : '#2771CB';
+
+  if (!practiceWords) return null;
 
   if (!practiceWord) {
     return <Text style={styles.status}>No Word with Audio is available for this language.</Text>;

@@ -1954,6 +1954,91 @@ describe('HomeScreen', () => {
     }
   });
 
+  it('opens Daily Speech Practice on the most recent Unit 3 Word for a Unit 3 learner', async () => {
+    const user = setupUser();
+    const catalog = require('../../test/fixtures/catalog/activities').fixtureCatalog;
+    const realGetLessons = catalog.getLessonsByLanguage;
+    const getLessons = jest.spyOn(catalog, 'getLessonsByLanguage').mockImplementation((language) =>
+      realGetLessons.call(catalog, language).map((lesson) => (lesson.id === 'fixture_cajun_u03_l01'
+        ? { ...lesson, words: [{ ...lesson.words[0], audioKey: 'fixture_cajun_bonjour_audio' }] }
+        : lesson))
+    );
+    const getProjection = jest.spyOn(homeProjection, 'getHomeProjection')
+      .mockResolvedValue(planProjectionFixture({
+        language: 'cajun',
+        steps: [
+          { id: 'review', label: 'Review', complete: true },
+          { id: 'lesson', label: 'Lesson', complete: true },
+          { id: 'practice', label: 'Speech', complete: false }
+        ],
+        activeAction: {
+          kind: 'speech',
+          label: 'Practice Speech',
+          destination: 'Advanced',
+          params: { language: 'cajun', scored: true }
+        },
+        helperText: 'No mistakes to fix — speech practice instead.'
+      }));
+    const unitThreeCompletedAt = new Date(clock.lessonCompletion().getTime() + 86400000);
+
+    try {
+      await seedAsyncStorage({
+        lessonProgress: {
+          'cajun:fixture_cajun_u01_l01': completedLessons.cajunFirst,
+          'cajun:fixture_cajun_u03_l01': {
+            completed: true,
+            completedAt: unitThreeCompletedAt.toISOString()
+          }
+        }
+      });
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+      await user.press(await screen.findByTestId('home-plan-cta'));
+
+      expect(await screen.findByText('être')).toBeOnTheScreen();
+      expect(screen.getByText('Attempt 1/5')).toBeOnTheScreen();
+      expect(screen.queryByText('Bonjour')).toBeNull();
+    } finally {
+      getProjection.mockRestore();
+      getLessons.mockRestore();
+    }
+  });
+
+  it('opens Free Speech Practice from Home on every Catalog Word with Audio for a Unit 3 learner', async () => {
+    const user = setupUser();
+    const catalog = require('../../test/fixtures/catalog/activities').fixtureCatalog;
+    const realGetLessons = catalog.getLessonsByLanguage;
+    const getLessons = jest.spyOn(catalog, 'getLessonsByLanguage').mockImplementation((language) =>
+      realGetLessons.call(catalog, language).map((lesson) => (lesson.id === 'fixture_cajun_u03_l01'
+        ? { ...lesson, words: [{ ...lesson.words[0], audioKey: 'fixture_cajun_bonjour_audio' }] }
+        : lesson))
+    );
+    const audioWords = catalog.getAllWords('cajun').filter((w) => w.audioKey);
+    const unitThreeCompletedAt = new Date(clock.lessonCompletion().getTime() + 86400000);
+
+    try {
+      await seedAsyncStorage({
+        lessonProgress: {
+          'cajun:fixture_cajun_u01_l01': completedLessons.cajunFirst,
+          'cajun:fixture_cajun_u03_l01': {
+            completed: true,
+            completedAt: unitThreeCompletedAt.toISOString()
+          }
+        }
+      });
+      renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
+
+      await user.press(await screen.findByTestId('home-hub-control'));
+
+      expect(await screen.findByText(audioWords[0].target)).toBeOnTheScreen();
+      expect(audioWords[0].target).toBe('Bonjour');
+      expect(screen.getByText(`Phrase 1/${audioWords.length}`)).toBeOnTheScreen();
+      expect(screen.queryByText('être')).toBeNull();
+    } finally {
+      getLessons.mockRestore();
+    }
+  });
+
   it.each([
     ['cajun', '#102A43', '#2771CB', '#7DD3FC'],
     ['kreole', '#064E32', '#08834C', '#6EE7B7']

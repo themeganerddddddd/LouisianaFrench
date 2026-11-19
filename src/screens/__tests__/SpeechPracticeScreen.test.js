@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { createAudioPlayer, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { getAllWords } from '../../data/lessonLoader';
+import { getAllWords, getLessonsByLanguage } from '../../data/lessonLoader';
 import { recordPracticeCompletion, recordStudyAndXp } from '../../utils/storage';
 
 import SpeechPracticeScreen from '../SpeechPracticeScreen';
@@ -14,11 +14,23 @@ const TWO_AUDIO_WORDS = [
   { target: 'merci', english: 'thank you', audioKey: 'merci' }
 ];
 
+function lessonWith(words) {
+  return [{ id: 'cajun_u01_l01', language: 'cajun', words }];
+}
+
+const TWO_AUDIO_WORD_LESSONS = lessonWith([
+  { rowId: 'w01', target: 'bonjour', english: 'hello', audioKey: 'bonjour' },
+  { rowId: 'w02', target: 'merci', english: 'thank you', audioKey: 'merci' }
+]);
+
 jest.mock('../../data/lessonLoader', () => ({
-  getAllWords: jest.fn(() => TWO_AUDIO_WORDS)
+  getAllWords: jest.fn(() => TWO_AUDIO_WORDS),
+  getLessonsByLanguage: jest.fn()
 }));
 
 jest.mock('../../utils/storage', () => ({
+  getLessonProgress: jest.fn(async () => ({})),
+  getWordProgress: jest.fn(async () => ({})),
   recordPracticeCompletion: jest.fn(async () => {}),
   recordStudyAndXp: jest.fn(async () => {})
 }));
@@ -40,7 +52,7 @@ function makeRecorder() {
 }
 
 async function completeOneAttempt({ expectReset = true } = {}) {
-  fireEvent.press(screen.getByText('Record'));
+  fireEvent.press(await screen.findByText('Record'));
   await waitFor(() => expect(screen.getByText('Stop recording (1.2s)')).toBeOnTheScreen());
   fireEvent.press(screen.getByText('Stop recording (1.2s)'));
   await waitFor(() => expect(screen.getByText('Play my recording')).toBeOnTheScreen());
@@ -55,11 +67,12 @@ async function completeOneAttempt({ expectReset = true } = {}) {
 describe('speech practice screen', () => {
   beforeEach(() => {
     getAllWords.mockImplementation(() => TWO_AUDIO_WORDS);
+    getLessonsByLanguage.mockImplementation(() => TWO_AUDIO_WORD_LESSONS);
     recordPracticeCompletion.mockClear();
     recordStudyAndXp.mockClear();
   });
 
-  describe('scored mode', () => {
+  describe('Daily Speech Practice', () => {
     it('awards 1 XP per accepted attempt and stops after 5 accepts', async () => {
       makeRecorder();
       const onComplete = jest.fn();
@@ -82,15 +95,15 @@ describe('speech practice screen', () => {
     });
 
     it('cycles a single audio word through 5 accepts', async () => {
-      getAllWords.mockReturnValue([
-        { target: 'bonjour', english: 'hello', audioKey: 'bonjour' }
-      ]);
+      getLessonsByLanguage.mockReturnValue(lessonWith([
+        { rowId: 'w01', target: 'bonjour', english: 'hello', audioKey: 'bonjour' }
+      ]));
 
       makeRecorder();
       const onComplete = jest.fn();
       render(<SpeechPracticeScreen language="cajun" scored wordLimit={5} onComplete={onComplete} />);
 
-      expect(screen.getByText('bonjour')).toBeOnTheScreen();
+      expect(await screen.findByText('bonjour')).toBeOnTheScreen();
 
       for (let i = 0; i < 4; i += 1) {
         await completeOneAttempt();
@@ -104,17 +117,19 @@ describe('speech practice screen', () => {
       expect(recordPracticeCompletion).toHaveBeenCalledWith('cajun', 'speech');
     });
 
-    it('shows a message when no audio words exist', () => {
-      getAllWords.mockReturnValue([]);
+    it('shows a message when no audio words exist', async () => {
+      getLessonsByLanguage.mockReturnValue(lessonWith([
+        { rowId: 'w01', target: 'bonjour', english: 'hello' }
+      ]));
 
       render(<SpeechPracticeScreen language="cajun" scored />);
 
-      expect(screen.getByText(/No Word with Audio is available/i)).toBeOnTheScreen();
+      expect(await screen.findByText(/No Word with Audio is available/i)).toBeOnTheScreen();
       expect(recordStudyAndXp).not.toHaveBeenCalled();
     });
   });
 
-  describe('free mode (default)', () => {
+  describe('Free Speech Practice', () => {
     it('calls recordPracticeCompletion on each accept without calling recordStudyAndXp', async () => {
       makeRecorder();
       render(<SpeechPracticeScreen language="cajun" />);

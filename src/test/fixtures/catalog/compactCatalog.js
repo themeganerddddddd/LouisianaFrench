@@ -12,6 +12,7 @@ export const compactCatalogLessons = deepFreeze({
   cajun: [
     {
       id: 'fixture_cajun_u02_l01',
+      language: 'cajun',
       unit: 'u02',
       lessonNumberInUnit: 1,
       lessonTitle: 'Everyday phrases',
@@ -40,6 +41,7 @@ export const compactCatalogLessons = deepFreeze({
     },
     {
       id: 'fixture_cajun_u01_review',
+      language: 'cajun',
       unit: 'u01',
       lessonNumberInUnit: 2,
       lessonTitle: 'Greetings review',
@@ -72,6 +74,7 @@ export const compactCatalogLessons = deepFreeze({
     },
     {
       id: 'fixture_cajun_u01_l01',
+      language: 'cajun',
       unit: 'u01',
       lessonNumberInUnit: 1,
       lessonTitle: 'First greetings',
@@ -138,6 +141,7 @@ export const compactCatalogLessons = deepFreeze({
     },
     {
       id: 'fixture_cajun_u03_l01',
+      language: 'cajun',
       unit: 'u03',
       lessonNumberInUnit: 1,
       lessonTitle: 'To Be & To Have',
@@ -179,6 +183,7 @@ export const compactCatalogLessons = deepFreeze({
   kreole: [
     {
       id: 'fixture_kreole_u02_l01',
+      language: 'kreole',
       unit: 'u02',
       lessonNumberInUnit: 1,
       lessonTitle: 'Checking in',
@@ -205,6 +210,7 @@ export const compactCatalogLessons = deepFreeze({
     },
     {
       id: 'fixture_kreole_u01_review',
+      language: 'kreole',
       unit: 'u01',
       lessonNumberInUnit: 2,
       lessonTitle: 'Pronouns review',
@@ -234,6 +240,7 @@ export const compactCatalogLessons = deepFreeze({
     },
     {
       id: 'fixture_kreole_u01_l01',
+      language: 'kreole',
       unit: 'u01',
       lessonNumberInUnit: 1,
       lessonTitle: 'First pronouns',
