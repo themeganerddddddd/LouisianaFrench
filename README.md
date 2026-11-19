@@ -144,8 +144,33 @@ python scripts/normalize_audio.py
 
 Use `--dry-run` to measure first. The script leaves files already within 1 LU of -16 LUFS unchanged. Very short clips can be too brief for LUFS measurement; those are peak-normalized instead. A few peaky recordings cannot reach -16 LUFS without clipping and may stay a little quieter.
 
+## Releasing Test Builds
+
+Releases are built and submitted by EAS. Run them from a clean, up-to-date `main` with `npm run release`.
+
+One-time setup: install the EAS CLI (`npm install -g eas-cli`), run `eas login`, and ask for access to the `louisiana-languages` Expo organization. Apple and Google credentials are stored in EAS, so nothing secret is needed on your machine.
+
+```bash
+npm run release -- --dry-run                       # show the plan, run nothing
+npm run release                                    # production build, iOS + Android, to TestFlight + Play internal testing
+npm run release -- --platform android --track closed
+npm run release -- --build preview --platform android
+```
+
+| Flag | Values | Meaning |
+|---|---|---|
+| `--platform` | `ios`, `android`, `all` (default) | Which apps to build |
+| `--build` | `production` (default), `preview` | Production uses the prod database and goes to the stores. Preview uses the dev database and gives install links only |
+| `--track` | `internal` (default), `closed`, `open` | Play testing track. Android production builds only; iOS always goes to TestFlight |
+| `--no-submit` | | Build only, skip the store upload |
+| `--submit-only` | | Submit the latest production build without rebuilding |
+| `--dry-run`, `--yes` | | Show the plan only, or skip the confirmation prompt |
+
+`npm run release -- preflight` checks your setup, and `npm run release -- status` lists recent builds and submissions. The command stops if the branch, the working tree or the EAS database settings look wrong. See `docs/releasing.md` for the full runbook.
+
 ## Further Documentation
 
 - `CONTEXT.md` defines the project language for Languages, Units, Lessons, Activities, Words, Cards, Audio, Catalog, and Learner Progress.
 - `docs/adr/` records accepted architecture decisions.
+- `docs/releasing.md` is the runbook for test builds on iOS and Android.
 - GitHub Issues contain current specifications and planned work.
