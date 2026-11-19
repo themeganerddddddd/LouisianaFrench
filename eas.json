@@ -23,6 +23,22 @@
       "ios": {
         "ascAppId": "6760776940"
       }
+    },
+    "production-closed": {
+      "android": {
+        "track": "alpha"
+      },
+      "ios": {
+        "ascAppId": "6760776940"
+      }
+    },
+    "production-open": {
+      "android": {
+        "track": "beta"
+      },
+      "ios": {
+        "ascAppId": "6760776940"
+      }
     }
   }
 }
