@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { createAudioPlayer, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { getAllWords } from '../../data/lessonLoader';
+import { getLessonsByLanguage } from '../../data/lessonLoader';
 import { recordPracticeCompletion, recordStudyAndXp } from '../../utils/storage';
 
 import SpeechPracticeScreen from '../SpeechPracticeScreen';
@@ -9,16 +9,22 @@ jest.mock('../../data/audioManifest', () => ({
   getAudioSource: jest.fn(() => 1)
 }));
 
-const TWO_AUDIO_WORDS = [
-  { target: 'bonjour', english: 'hello', audioKey: 'bonjour' },
-  { target: 'merci', english: 'thank you', audioKey: 'merci' }
-];
+function lessonWith(words) {
+  return [{ id: 'cajun_u01_l01', language: 'cajun', words }];
+}
+
+const TWO_AUDIO_WORD_LESSONS = lessonWith([
+  { rowId: 'w01', target: 'bonjour', english: 'hello', audioKey: 'bonjour' },
+  { rowId: 'w02', target: 'merci', english: 'thank you', audioKey: 'merci' }
+]);
 
 jest.mock('../../data/lessonLoader', () => ({
-  getAllWords: jest.fn(() => TWO_AUDIO_WORDS)
+  getLessonsByLanguage: jest.fn()
 }));
 
 jest.mock('../../utils/storage', () => ({
+  getLessonProgress: jest.fn(async () => ({})),
+  getWordProgress: jest.fn(async () => ({})),
   recordPracticeCompletion: jest.fn(async () => {}),
   recordStudyAndXp: jest.fn(async () => {})
 }));
@@ -40,7 +46,7 @@ function makeRecorder() {
 }
 
 async function completeOneAttempt({ expectReset = true } = {}) {
-  fireEvent.press(screen.getByText('Record'));
+  fireEvent.press(await screen.findByText('Record'));
   await waitFor(() => expect(screen.getByText('Stop recording (1.2s)')).toBeOnTheScreen());
   fireEvent.press(screen.getByText('Stop recording (1.2s)'));
   await waitFor(() => expect(screen.getByText('Play my recording')).toBeOnTheScreen());
@@ -54,7 +60,7 @@ async function completeOneAttempt({ expectReset = true } = {}) {
 
 describe('speech practice screen', () => {
   beforeEach(() => {
-    getAllWords.mockImplementation(() => TWO_AUDIO_WORDS);
+    getLessonsByLanguage.mockImplementation(() => TWO_AUDIO_WORD_LESSONS);
     recordPracticeCompletion.mockClear();
     recordStudyAndXp.mockClear();
   });
@@ -82,15 +88,15 @@ describe('speech practice screen', () => {
     });
 
     it('cycles a single audio word through 5 accepts', async () => {
-      getAllWords.mockReturnValue([
-        { target: 'bonjour', english: 'hello', audioKey: 'bonjour' }
-      ]);
+      getLessonsByLanguage.mockReturnValue(lessonWith([
+        { rowId: 'w01', target: 'bonjour', english: 'hello', audioKey: 'bonjour' }
+      ]));
 
       makeRecorder();
       const onComplete = jest.fn();
       render(<SpeechPracticeScreen language="cajun" scored wordLimit={5} onComplete={onComplete} />);
 
-      expect(screen.getByText('bonjour')).toBeOnTheScreen();
+      expect(await screen.findByText('bonjour')).toBeOnTheScreen();
 
       for (let i = 0; i < 4; i += 1) {
         await completeOneAttempt();
@@ -104,12 +110,14 @@ describe('speech practice screen', () => {
       expect(recordPracticeCompletion).toHaveBeenCalledWith('cajun', 'speech');
     });
 
-    it('shows a message when no audio words exist', () => {
-      getAllWords.mockReturnValue([]);
+    it('shows a message when no audio words exist', async () => {
+      getLessonsByLanguage.mockReturnValue(lessonWith([
+        { rowId: 'w01', target: 'bonjour', english: 'hello' }
+      ]));
 
       render(<SpeechPracticeScreen language="cajun" scored />);
 
-      expect(screen.getByText(/No Word with Audio is available/i)).toBeOnTheScreen();
+      expect(await screen.findByText(/No Word with Audio is available/i)).toBeOnTheScreen();
       expect(recordStudyAndXp).not.toHaveBeenCalled();
     });
   });
@@ -166,10 +174,10 @@ describe('speech practice screen', () => {
       makeRecorder();
     });
 
-    it('stops and releases the previous Audio when the learner plays it again', () => {
+    it('stops and releases the previous Audio when the learner plays it again', async () => {
       render(<SpeechPracticeScreen language="cajun" />);
 
-      fireEvent.press(screen.getByText('Play Audio'));
+      fireEvent.press(await screen.findByText('Play Audio'));
       fireEvent.press(screen.getByText('Play Audio'));
 
       const [first, second] = players();
@@ -177,9 +185,9 @@ describe('speech practice screen', () => {
       expect(second).toMatchObject({ playing: true, released: false });
     });
 
-    it('stops and releases the Audio when the screen unmounts', () => {
+    it('stops and releases the Audio when the screen unmounts', async () => {
       const { unmount } = render(<SpeechPracticeScreen language="cajun" />);
-      fireEvent.press(screen.getByText('Play Audio'));
+      fireEvent.press(await screen.findByText('Play Audio'));
 
       unmount();
 
