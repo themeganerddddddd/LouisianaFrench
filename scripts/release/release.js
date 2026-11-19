@@ -35,13 +35,13 @@ function environmentHost(name) {
 }
 
 function gatherContext() {
-  capture('git', ['fetch', 'origin', 'main', '--quiet']);
+  const fetched = capture('git', ['fetch', 'origin', 'main', '--quiet']) !== null;
   const appJson = require(path.join(ROOT, 'app.json'));
   return {
     appVersion: appJson.expo.version,
     branch: capture('git', ['branch', '--show-current']),
     hasTrackedChanges: Boolean(capture('git', ['status', '--porcelain', '--untracked-files=no'])),
-    matchesOrigin: capture('git', ['rev-parse', 'HEAD']) === capture('git', ['rev-parse', 'origin/main']),
+    matchesOrigin: fetched && capture('git', ['rev-parse', 'HEAD']) === capture('git', ['rev-parse', 'origin/main']),
     environments: { production: environmentHost('production'), preview: environmentHost('preview') }
   };
 }
@@ -60,7 +60,7 @@ function confirm(question) {
 function eas(args) {
   const result = spawnSync('eas', args, { cwd: ROOT, stdio: 'inherit' });
   if (result.error) throw new Error(`Could not run eas (${result.error.message}). Install it with: npm install -g eas-cli`);
-  return result.status;
+  return result.status ?? 1;
 }
 
 async function main() {
@@ -90,7 +90,7 @@ async function main() {
 
   for (const args of plan.steps) {
     const status = eas(args);
-    if (status !== 0) return status || 1;
+    if (status !== 0) return status;
   }
   if (options.build === 'production' && options.submit && !options.submitOnly) {
     console.log('Done. TestFlight processing takes ~10-30 min; Play testers must opt in. Check: npm run release -- status');

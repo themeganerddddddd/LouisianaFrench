@@ -91,6 +91,9 @@ function optionErrors(options) {
   if (options.track && options.platform === 'ios') {
     errors.push('--track only applies to Android; iOS builds always go to TestFlight.');
   }
+  if (options.track && !options.submit) {
+    errors.push('--track has no effect with --no-submit.');
+  }
   if (options.submitOnly && !options.submit) {
     errors.push('--submit-only and --no-submit cannot be used together.');
   }
@@ -109,7 +112,7 @@ function guardResults(options, ctx) {
   if (buildsProduction) {
     if (ctx.branch !== 'main') errors.push(`Production builds must run from main (current branch: ${ctx.branch || 'detached'}).`);
     if (ctx.hasTrackedChanges) errors.push('Working tree has uncommitted changes to tracked files.');
-    if (!ctx.matchesOrigin) errors.push('Local main does not match origin/main. Pull (or push) first.');
+    if (!ctx.matchesOrigin) errors.push('Local main does not match origin/main (or origin could not be reached). Pull, push or check your connection first.');
   } else if (options.build === 'preview' && ctx.hasTrackedChanges) {
     warnings.push('Working tree has uncommitted changes; this preview build will include them.');
   }

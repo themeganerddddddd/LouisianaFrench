@@ -81,6 +81,7 @@ describe('planRelease guards', () => {
     expect(plan(['--build', 'preview', '--submit-only']).errors[0]).toMatch(/--submit-only/);
     expect(plan(['--platform', 'ios', '--track', 'open']).errors[0]).toMatch(/Android/);
     expect(plan(['--submit-only', '--no-submit']).errors[0]).toMatch(/cannot be used together/);
+    expect(plan(['--track', 'open', '--no-submit']).errors[0]).toMatch(/no effect with --no-submit/);
   });
 
   it('requires production builds to come from an up-to-date, clean main', () => {
