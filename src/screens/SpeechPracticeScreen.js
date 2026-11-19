@@ -6,10 +6,10 @@ import {
   useAudioRecorder,
   useAudioRecorderState
 } from 'expo-audio';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getAudioSource } from '../data/audioManifest';
-import { getLessonsByLanguage } from '../data/lessonLoader';
+import { getAllWords, getLessonsByLanguage } from '../data/lessonLoader';
 import { pickSpeechWords } from '../speechPractice/pickSpeechWords';
 import { releaseAudioPlayer } from '../utils/audioPlayer';
 import {
@@ -30,7 +30,13 @@ export default function SpeechPracticeScreen({
   word,
   onComplete
 }) {
-  const [practiceWords, setPracticeWords] = useState(word ? [word] : null);
+  const isDailySpeechPractice = scored && !word;
+  const freePracticeWords = useMemo(
+    () => (word ? [word] : getAllWords(language).filter((w) => w.audioKey)),
+    [language, word]
+  );
+  const [dailyPracticeWords, setDailyPracticeWords] = useState(null);
+  const practiceWords = isDailySpeechPractice ? dailyPracticeWords : freePracticeWords;
   const [wordIndex, setWordIndex] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
   const practiceWord = practiceWords?.[wordIndex % practiceWords.length];
@@ -57,14 +63,11 @@ export default function SpeechPracticeScreen({
   }, []);
 
   useEffect(() => {
-    if (word) {
-      setPracticeWords([word]);
-      return undefined;
-    }
+    if (!isDailySpeechPractice) return undefined;
     let cancelled = false;
     Promise.all([getLessonProgress(), getWordProgress()]).then(([lessonProgress, wordProgress]) => {
       if (cancelled) return;
-      setPracticeWords(pickSpeechWords({
+      setDailyPracticeWords(pickSpeechWords({
         lessons: getLessonsByLanguage(language),
         lessonProgress,
         wordProgress,
@@ -72,7 +75,7 @@ export default function SpeechPracticeScreen({
       }));
     });
     return () => { cancelled = true; };
-  }, [language, word, wordLimit]);
+  }, [isDailySpeechPractice, language, wordLimit]);
 
   async function play(source) {
     if (!source) return;

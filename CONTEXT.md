@@ -35,6 +35,18 @@ _Avoid_: Daily lesson
 The follow-up learner session for Activities missed during a Lesson.
 _Avoid_: Remediation
 
+**Speech Practice**:
+A learner session that plays a Word's Audio and records the learner saying the same Word. It opens from the Home daily plan, from Home, or for one Word from the Dictionary.
+_Avoid_: Advanced, Advanced Hub (those are screen names)
+
+**Daily Speech Practice**:
+The Speech Practice step in the Home daily plan. It uses up to five Words with Audio: first Words from the Lessons the learner completed most recently, then Words from earlier completed Lessons and other Words they have seen, weakest Word mastery first. It never uses a Word from a Lesson the learner has not reached.
+_Avoid_: scored speech
+
+**Free Speech Practice**:
+Speech Practice opened from Home, outside the daily plan. It uses every Word with Audio in the Catalog, has no Word limit, and gives no XP. Each accepted attempt still marks today's practice as done.
+_Avoid_: Advanced practice
+
 **Lesson session**:
 The in-progress Lesson: Activity queue, score, XP, mistakes, and next step.
 _Avoid_: runner, game loop
