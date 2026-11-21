@@ -8,6 +8,9 @@
 | `.opencode/agents/*.md` | OpenCode agent personas (OpenCode models/permissions) |
 | `.agents/scripts/*.mjs` | Every agent tool — via `npm run` / `node` |
 | `.agents/schemas/*.json` | Every agent tool — gate verdict shape |
+| `.claude/settings.json` | Claude Code — adds the `cursor-plugins` marketplace and turns pstack on (install once per clone) |
+
+pstack itself is not copied into this repository. Claude Code installs it from the `cursor-plugins` marketplace, and Cursor users run `/add-plugin pstack`. See the pstack section in `AGENTS.md`.
 
 ## Cursor subagents (from OpenCode ports)
 
