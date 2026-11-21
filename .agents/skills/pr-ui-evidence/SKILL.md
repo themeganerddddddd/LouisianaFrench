@@ -31,6 +31,6 @@ Owner/repo for raw links: `themeganerddddddd/LouisianaFrench`.
    ```bash
    npm run pr-ready -- --issue <N> --body-file /path/to/pr-body.md
    ```
-5. Only then run `gh pr create` (or update).
+5. Only then run `gh pr create --label ai-generated` (or update).
 
 Do **not** store or link evidence under `docs/pr-evidence/`.

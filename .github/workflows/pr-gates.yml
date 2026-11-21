@@ -1,0 +1,48 @@
+name: PR gates
+
+# Agent rules (PR body headings, production line limit, UI evidence) apply only to
+# AI-generated PRs. A human PR passes this check without running them.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: pr-gates-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Write PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+      - name: Run agent PR gates
+        id: gates
+        env:
+          BRANCH: ${{ github.head_ref }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: >
+          node .agents/scripts/pr-gates.mjs
+          --base origin/main
+          --body-file "$RUNNER_TEMP/pr-body.md"
+          --branch "$BRANCH"
+          --labels "$LABELS"
+      - name: Label AI-generated PR
+        if: always() && steps.gates.outputs.add_label == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --add-label ai-generated
