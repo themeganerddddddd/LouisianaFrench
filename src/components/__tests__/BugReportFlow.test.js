@@ -91,8 +91,10 @@ describe('BugReportButton', () => {
 
     await user.press(screen.getByLabelText('Report a bug'));
 
-    // Flow title should now be visible
-    expect(await screen.findByText(/Tell us what went wrong/)).toBeOnTheScreen();
+    expect(
+      await screen.findByLabelText('Pelican with Mardi Gras umbrella')
+    ).toBeOnTheScreen();
+    expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
   });
 
   it('uses a deep Kouri-Vini green accent for kreole language', () => {
@@ -139,6 +141,19 @@ describe('BugReportFlow: validation', () => {
     expect(getByTestId('bug-report-actions')).toBeOnTheScreen();
     expect(getByLabelText('Cancel bug report')).toBeOnTheScreen();
     expect(getByLabelText('Submit bug report')).toBeOnTheScreen();
+  });
+
+  it('shows the T-Boy image on the form stage without the old subtitle', () => {
+    getFlow();
+
+    expect(screen.getByText('Report a bug')).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText('Pelican with Mardi Gras umbrella')
+    ).toBeOnTheScreen();
+    expect(screen.queryByText('Tell us what went wrong.')).toBeNull();
+    expect(screen.getByLabelText('Bug report name')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Bug report email')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Bug report description')).toBeOnTheScreen();
   });
 
   it('caps the sheet to the space above the keyboard so fields are not clipped off the top', () => {
