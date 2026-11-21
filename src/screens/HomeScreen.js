@@ -63,6 +63,7 @@ export default function HomeScreen() {
   const [signInVisible, setSignInVisible] = useState(false);
   const [accountIntroVisible, setAccountIntroVisible] = useState(false);
   const [recoveryActive, setRecoveryActive] = useState(false);
+  const [emailConfirmedActive, setEmailConfirmedActive] = useState(false);
   const connectorRef = useRef(null);
   if (!connectorRef.current) {
     connectorRef.current = createSupabaseIdentityConnector();
@@ -95,18 +96,27 @@ export default function HomeScreen() {
       if (live) setIdentity(next);
     });
 
-    async function openRecovery(url) {
+    async function openAuthReturn(url) {
       const result = await connector.handleAuthUrl(url);
-      if (!live || result.kind !== 'recovery') return;
-      setRecoveryActive(true);
-      setSignInVisible(true);
+      if (!live) return;
+      if (result.kind === 'recovery') {
+        setEmailConfirmedActive(false);
+        setRecoveryActive(true);
+        setSignInVisible(true);
+        return;
+      }
+      if (result.kind === 'confirmed') {
+        setRecoveryActive(false);
+        setEmailConfirmedActive(true);
+        setSignInVisible(true);
+      }
     }
 
     Linking.getInitialURL().then((url) => {
-      if (url) openRecovery(url);
+      if (url) openAuthReturn(url);
     });
     const linking = Linking.addEventListener('url', ({ url }) => {
-      openRecovery(url);
+      openAuthReturn(url);
     });
 
     return () => {
@@ -520,10 +530,12 @@ export default function HomeScreen() {
         accentColor={theme.accent}
         subtitleColor={theme.subtitle}
         recoveryActive={recoveryActive}
+        emailConfirmedActive={emailConfirmedActive}
         onRecoveryFinished={() => setRecoveryActive(false)}
         onClose={() => {
           setSignInVisible(false);
           setRecoveryActive(false);
+          setEmailConfirmedActive(false);
         }}
       />
 

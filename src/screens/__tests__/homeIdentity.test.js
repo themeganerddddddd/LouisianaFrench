@@ -183,8 +183,10 @@ describe('Home email sign-in', () => {
     await user.type(screen.getByTestId('sign-in-password'), 'secret');
     await user.press(screen.getByTestId('sign-in-submit'));
 
-    expect(await screen.findByText('Check your email.')).toBeOnTheScreen();
+    expect(await screen.findByText(/Check that inbox/)).toBeOnTheScreen();
+    expect(screen.queryByText('Check your email.')).toBeNull();
     expect(screen.getByTestId('sign-in-modal')).toBeOnTheScreen();
+    expect(screen.getByTestId('sign-in-email-mode')).toBeOnTheScreen();
     expect(mockConnector.lastSignUp).toEqual({
       email: 'ada@example.com',
       displayName: 'Ada'

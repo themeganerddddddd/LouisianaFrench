@@ -62,4 +62,39 @@ describe('SignInModal password recovery', () => {
     await user.press(screen.getByTestId('sign-in-done'));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('shows sign-in after an email confirmation return when no session was restored', async () => {
+    const user = userEvent.setup();
+    const connector = {
+      async signInWithPassword({ email, password }) {
+        if (email === 'ada@example.com' && password === 'secret') {
+          return {
+            identity: { id: 'learner-1', email, displayName: 'Ada' },
+            message: null
+          };
+        }
+        return { identity: null, message: 'That email or password is not right.' };
+      }
+    };
+    const onClose = jest.fn();
+
+    render(
+      <SignInModal
+        visible
+        identity={null}
+        connector={connector}
+        emailConfirmedActive
+        onClose={onClose}
+      />
+    );
+
+    expect(screen.getByText(/Email confirmed\. Sign in with your password/)).toBeOnTheScreen();
+    expect(screen.getByTestId('sign-in-email')).toBeOnTheScreen();
+    expect(screen.getByTestId('sign-in-password')).toBeOnTheScreen();
+
+    await user.type(screen.getByTestId('sign-in-email'), 'ada@example.com');
+    await user.type(screen.getByTestId('sign-in-password'), 'secret');
+    await user.press(screen.getByTestId('sign-in-submit'));
+    expect(onClose).toHaveBeenCalled();
+  });
 });

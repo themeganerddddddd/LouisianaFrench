@@ -122,6 +122,9 @@ function learnerMessage(error) {
   const raw = String(error?.message || '');
   if (/com\.westleysturhan\.louisianafrench|code=|error_description/i.test(raw)) return FAILED;
   if (/invalid login credentials/i.test(raw)) return WRONG_PASSWORD;
+  if (/email not confirmed/i.test(raw)) {
+    return 'Confirm your email first. Check your inbox.';
+  }
   if (/already registered|already exists/i.test(raw)) {
     return 'That email is already registered.';
   }
@@ -182,6 +185,9 @@ export function createIdentityConnector({
   let identity = null;
   let accessToken = null;
   let providerAttempt = 0;
+  // While Google OAuth is waiting on the browser, bare ?code= callbacks belong to
+  // that flow — not to an email-confirm deep link (PKCE confirm redirects omit type=).
+  let oauthInFlight = false;
   const listeners = new Set();
   let ready = hydrate();
 
@@ -283,17 +289,35 @@ export function createIdentityConnector({
       } catch {
         return { kind: null, message: FAILED };
       }
-      if (!code || type !== 'recovery') return { kind: null };
+      if (!code) return { kind: null };
+
+      if (type === 'recovery') {
+        const exchanged = await client.auth.exchangeCodeForSession(code);
+        if (exchanged.error || !exchanged.data?.session) {
+          return {
+            kind: null,
+            message: exchanged.error ? learnerMessage(exchanged.error) : FAILED
+          };
+        }
+        await apply(exchanged.data.session);
+        return { kind: 'recovery' };
+      }
+
+      // Signup/email confirm PKCE redirects are often bare ?code= (no type=). Leave
+      // bare codes alone while OAuth owns the browser return.
+      if (oauthInFlight && !type) return { kind: null };
+      if (type && type !== 'signup' && type !== 'email' && type !== 'invite') {
+        return { kind: null };
+      }
 
       const exchanged = await client.auth.exchangeCodeForSession(code);
       if (exchanged.error || !exchanged.data?.session) {
-        return {
-          kind: null,
-          message: exchanged.error ? learnerMessage(exchanged.error) : FAILED
-        };
+        // Verify may have confirmed the email even when the one-time code cannot
+        // be exchanged (for example the PKCE flow state is gone). Let them sign in.
+        return { kind: 'confirmed' };
       }
       await apply(exchanged.data.session);
-      return { kind: 'recovery' };
+      return { kind: 'confirmed' };
     },
     async updatePassword(password) {
       const { data, error } = await client.auth.updateUser({ password });
@@ -336,11 +360,14 @@ export function createIdentityConnector({
       }
 
       let returned = null;
+      oauthInFlight = true;
       try {
         returned = await openBrowser(data.url);
       } catch (browserError) {
+        oauthInFlight = false;
         return { identity: null, message: learnerMessage(browserError) };
       }
+      oauthInFlight = false;
       if (attempt !== providerAttempt || !returned?.url) {
         return { identity: null, message: null };
       }

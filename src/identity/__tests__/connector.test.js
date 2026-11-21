@@ -76,6 +76,10 @@ function createFakeClient(storage, { failDelete = false } = {}) {
         calls.push({ method: 'reset', email, options });
         return { error: null };
       },
+      async signInWithOAuth({ provider, options }) {
+        calls.push({ method: 'oauth', provider, options });
+        return { data: { url: 'https://accounts.example/authorize' }, error: null };
+      },
       async exchangeCodeForSession(code) {
         calls.push({ method: 'exchange', code });
         await persist(sessionFor());
@@ -102,11 +106,11 @@ function createFakeClient(storage, { failDelete = false } = {}) {
   };
 }
 
-async function harness() {
+async function harness({ openBrowser } = {}) {
   const secureStore = memorySecureStore();
   const storage = createSessionStore({ platform: 'ios', secureStore });
   const client = createFakeClient(storage);
-  const connector = createIdentityConnector({ client });
+  const connector = createIdentityConnector({ client, openBrowser });
   return { connector, client, secureStore };
 }
 
@@ -199,7 +203,7 @@ describe('identity connector', () => {
     );
   });
 
-  it('opens a recovery return for a new password and ignores a provider-style return', async () => {
+  it('opens a recovery return for a new password and treats a bare code as email confirm', async () => {
     const { connector, client } = await harness();
     const recovery = await connector.handleAuthUrl(
       'com.westleysturhan.louisianafrench://auth/callback?code=recover-code&type=recovery'
@@ -212,10 +216,19 @@ describe('identity connector', () => {
     });
     expect(client.calls[0]).toEqual({ method: 'exchange', code: 'recover-code' });
 
-    const providerStyle = await connector.handleAuthUrl(
-      'com.westleysturhan.louisianafrench://auth/callback?code=oauth-code'
+    await connector.signOut();
+    const confirmed = await connector.handleAuthUrl(
+      'com.westleysturhan.louisianafrench://auth/callback?code=signup-code'
     );
-    expect(providerStyle).toEqual({ kind: null });
+    expect(confirmed).toEqual({ kind: 'confirmed' });
+    expect(await connector.getIdentity()).toEqual({
+      id: 'learner-1',
+      email: 'ada@example.com',
+      displayName: 'Ada'
+    });
+    expect(client.calls.some((call) => call.method === 'exchange' && call.code === 'signup-code')).toBe(
+      true
+    );
 
     const saved = await connector.updatePassword('new-secret');
     expect(saved.identity.displayName).toBe('Ada');
@@ -223,6 +236,34 @@ describe('identity connector', () => {
     expect(JSON.stringify(await AsyncStorage.getItem('sb-auth-token'))).not.toContain(
       'recover-code'
     );
+  });
+
+  it('leaves a bare code alone while Google OAuth owns the browser return', async () => {
+    let resolveBrowser;
+    const openBrowser = () =>
+      new Promise((resolve) => {
+        resolveBrowser = resolve;
+      });
+    const { connector, client } = await harness({ openBrowser });
+    const pending = connector.signInWithProvider('google');
+    await Promise.resolve();
+    expect(
+      await connector.handleAuthUrl(
+        'com.westleysturhan.louisianafrench://auth/callback?code=oauth-code'
+      )
+    ).toEqual({ kind: null });
+    resolveBrowser({
+      url: 'com.westleysturhan.louisianafrench://auth/callback?code=oauth-code'
+    });
+    expect(await pending).toEqual({
+      identity: {
+        id: 'learner-1',
+        email: 'ada@example.com',
+        displayName: 'Ada'
+      },
+      message: null
+    });
+    expect(client.calls.filter((call) => call.method === 'exchange')).toHaveLength(1);
   });
 
   it('signs out on this device only', async () => {

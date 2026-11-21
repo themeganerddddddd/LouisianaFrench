@@ -22,6 +22,7 @@ const TBOY_LINES = {
   inbox: 'Check that inbox. I give the same reply for every address.',
   replace: 'Choose a new password. Home stays closed until it is saved.',
   done: 'You’re in. That link is finished.',
+  confirmed: 'Email confirmed. Sign in with your password.',
   deleteAccount:
     'Delete this account? The Saved Learner Progress kept for it goes away. Progress already on this phone stays.'
 };
@@ -32,6 +33,7 @@ export default function SignInModal({
   identity,
   connector,
   recoveryActive,
+  emailConfirmedActive,
   onRecoveryFinished,
   onClose,
   accentColor = '#2771CB',
@@ -60,6 +62,19 @@ export default function SignInModal({
     }
   }, [recoveryActive]);
 
+  useEffect(() => {
+    if (!emailConfirmedActive || recoveryActive) return;
+    if (identity) {
+      setMode('done');
+      setMessage('');
+      setFields(EMPTY);
+      return;
+    }
+    setMode('confirmed');
+    setMessage('');
+    setFields((current) => ({ ...current, password: '', displayName: '' }));
+  }, [emailConfirmedActive, identity, recoveryActive]);
+
   function close() {
     if (locked) return;
     setFields(EMPTY);
@@ -77,6 +92,19 @@ export default function SignInModal({
         password,
         displayName: fields.displayName.trim()
       });
+      if (result.identity) {
+        close();
+        return;
+      }
+      if (result.message === 'Check your email.') {
+        setMode('inbox');
+        setMessage('');
+        setFields((current) => ({ ...current, password: '', displayName: '' }));
+        return;
+      }
+      setMessage(result.message || 'Sign-in failed.');
+      setFields((current) => ({ ...current, password: '' }));
+      return;
     } else if (mode === 'forgot') {
       result = await connector.sendPasswordReset(email);
       if (result.message) {
@@ -143,7 +171,7 @@ export default function SignInModal({
   const note = TBOY_LINES[mode] || TBOY_LINES.signIn;
   const showSignedIn =
     identity && mode !== 'replace' && mode !== 'done' && mode !== 'deleteAccount';
-  const showLogos = mode === 'signIn' || mode === 'create';
+  const showLogos = mode === 'signIn' || mode === 'create' || mode === 'confirmed';
   const showEmail = showLogos || mode === 'forgot';
   const showPassword = showLogos || mode === 'replace';
   const showSubmit = mode !== 'inbox' && mode !== 'done';
