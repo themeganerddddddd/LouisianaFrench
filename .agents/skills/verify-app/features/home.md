@@ -21,6 +21,7 @@ Preconditions:
 - Louisiana French chosen (see `language-select.md`).
 
 - **Read the plan.** Run `$L wait id:home-plan` and `$L dump`. On day 1, `id:home-plan-status` reads `Day 1`, the steps are Lesson, Lesson, No review, and `id:home-plan-cta` reads `Start your new lesson`.
+- **Kouri-Vini.** After choosing Kouri-Vini, the plan is the same (Day 1, Lesson, Lesson, No review). The Unit card reads `text:Greetings & Check-ins`, `text:0 / 12 words · 0 / 3 lessons`, and `text:Part 1 — Hello, How is it going?, How goes it?`.
 - **Start from the plan.** Run `$L tap id:home-plan-cta`. A Lesson opens at `text:1 / 15` (see `lesson.md`).
 - **Start from the Unit card.** Run `$L tap id:home-current-unit-continue`. The same Lesson opens.
 - **Open a control.** Run `$L tap id:home-dictionary-control`. The Dictionary opens (`id:dictionary-screen`). `id:home-review-control`, `id:home-hub-control` and `id:home-mistakes-control` work the same way.

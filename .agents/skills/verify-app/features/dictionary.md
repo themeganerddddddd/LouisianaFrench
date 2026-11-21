@@ -23,6 +23,7 @@ Preconditions:
 - **Search.** Run `$L tap 'text:Search English, target word, or category'`, `$L type merci`, and `$L key BACK` to close the keyboard. The list shows `text:Thank you!` and `text:Merci!` only.
 - **Filter.** Run `$L tap 'desc:Greetings & Politeness'`. Only that category is listed.
 - **Status.** After practising `Bonjour!` in a Lesson, `text:Hello!` shows `text:Learning`, not `text:New`.
+- **Kouri-Vini.** With Kouri-Vini chosen, the title is `text:Kouri-Vini Dictionary`, and the category chips start with `desc:Greetings & Check-ins` and `desc:Pronouns & Feelings`. Search `byin`: the list shows `text:Mo byin` (`I'm good`) and `text:Mo pa byin` (`I'm not good`). After the first Kouri-Vini Lesson's first two Activities, `text:Bonjou` shows `text:Learning`.
 - **Back.** Run `$L tap id:dictionary-home-button`. Home returns.
 - **Proof.** Run `$L shot dict-search` after the search.
 

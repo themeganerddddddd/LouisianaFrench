@@ -12,6 +12,7 @@ This folder is the maintained source for verifying what a learner sees and does.
 
 - Prefer `id:<testID>`, then `desc:<accessibilityLabel>`, then `text:`. Run `$L dump` when a handle is unknown. Never use coordinates.
 - Start each recipe from Home with Louisiana French chosen, unless its preconditions say otherwise.
+- The two Languages have different Catalogs: Units, Words, and Activity order differ. A change that touches Lessons, the Dictionary, Home, or Learner Progress is proven in both Louisiana French and Kouri-Vini. Each recipe has a Kouri-Vini step.
 - Mutations (Lesson answers, Language choice) persist across `$L open`. Run `$L down && $L up` to reset.
 - Android only for now. iOS uses the same handles through Maestro. See the iOS section in `../SKILL.md`.
 
