@@ -26,7 +26,7 @@ This repository uses [pstack](https://github.com/cursor/plugins/tree/main/pstack
 - **Install:** `.claude/settings.json` adds the `cursor-plugins` marketplace and turns pstack on, but does not download it. In Claude Code, run `claude plugin install pstack@cursor-plugins --scope project` once per clone. If it says pstack is not found in `cursor-plugins`, the marketplace is not registered yet (the folder is not trusted, or this is a new machine): run `claude plugin marketplace add cursor/plugins` first. In Cursor, run `/add-plugin pstack`.
 - **Models:** run `/setup-pstack` (`/pstack:setup-pstack` in Claude Code) once per machine. It writes your model choices to your home folder, not to this repository.
 - **Precedence:** when a pstack skill or playbook conflicts with a rule in this file, follow pstack. Where pstack says nothing, follow this file.
-- **Until the tooling is aligned:** CI still checks UI evidence, and `npm run pr-ready` still checks the PR template sections and production line counts. A pull request must pass both until they are changed to match pstack.
+- **Until the tooling is aligned:** the `PR gates` CI check enforces UI evidence, the PR template sections and production line counts on AI-generated pull requests. These are project additions to pstack.
 
 ### Issue tracker
 
@@ -48,16 +48,17 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 - Keep each pull request focused and reviewable. Production changes require tests in the same pull request.
 - Run reviews locally against `REVIEW.md`. Open pull requests ready, not as drafts.
 - Use `.github/pull_request_template.md` for every pull request: pstack's `opening-a-pr` headings, under 40 lines.
+- Tag every pull request an agent opens with the `ai-generated` label (`gh pr create --label ai-generated`). The `PR gates` CI check enforces the agent rules in this file (template headings, line limits, UI evidence) only on labelled pull requests. It also adds the label itself when it finds an agent marker: the Claude Code or Cursor footer in the body, a Claude or Cursor `Co-authored-by` commit trailer, or an `agent/`, `cursor/`, `claude/`, `codex/` or `opencode/` branch. Pull requests a human opens have no label, and these rules do not apply to them; lint, test and build still run for everyone.
 - Never commit or push directly to `main`. Fetch the latest `main`, create a feature branch, and deliver every change through a pull request.
 - Write pull request titles as `type(scope): subject`, and titles and descriptions in clear B2-level English with minimal technical jargon.
 - When a change affects the UI, put screen grabs and/or a short video under `docs/evidence/<issue>/`, embed them in the pull request body’s **Verification** section (use `raw.githubusercontent.com` links on that branch commit), and say what was clicked and what happened. A reviewer checks that evidence after the pull request is open. Follow the `pr-ui-evidence` skill when opening or updating such pull requests. Never use `docs/pr-evidence/`.
-- Before `gh pr create` or updating a pull request for review, run `npm run pr-ready` (lint, test, UI evidence, template, production LOC).
+- Before `gh pr create` or updating a pull request for review, run `npm run pr-ready`. It runs lint and test, then the same agent gates as CI (`.agents/scripts/pr-gates.mjs`: UI evidence, template, production LOC).
 - Run the repository's required checks before marking a ticket complete.
 
 ## Validation
 
-- Follow the `/poteto-mode` playbook for the task. These check scripts are tools a playbook step can run: `pr-ready`, `check:ui-evidence`, `capture:ui-evidence`, `validate:fixture-sep`, `test:changed`.
-- `npm run pr-ready` warns above 100 and fails above 250 production lines added. This is a deliberate project addition to pstack; see Pull request size below.
+- Follow the `/poteto-mode` playbook for the task. These check scripts are tools a playbook step can run: `pr-ready`, `check:ui-evidence`, `capture:ui-evidence`, `validate:fixture-sep`, `test:changed`. `validate:fixture-sep` is advisory and not yet reliable; do not rely on it as a gate.
+- The agent gates warn above 100 and fail above 250 production lines added. This is a deliberate project addition to pstack; see Pull request size below. When the engineer agrees to a larger pull request, add the `large-pr-approved` label (`ALLOW_LARGE_PR=1` for a local `pr-ready`).
 - Stable package ids and evidence paths: `docs/agents/session-facts.md`.
 - Local review entrypoint: `.agents/skills/local-review` (loads `REVIEW.md`). Before `gh pr create`, run `npm run pr-ready`.
 - Before planning large or ambiguous work, run `/clear-thinking` (`.agents/skills/clear-thinking`) for a Decision Brief.
