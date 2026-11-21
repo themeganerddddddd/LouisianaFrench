@@ -25,7 +25,6 @@ Prefer the repo scripts when present (under `.agents/scripts/`, via npm):
 
 ```bash
 npm run pr-ready
-npm run validate:drift -- --fixed-point origin/main
 npm run check:ui-evidence -- --base origin/main
 ```
 

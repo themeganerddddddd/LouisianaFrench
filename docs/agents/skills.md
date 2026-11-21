@@ -7,7 +7,6 @@
 | `.cursor/agents/<name>.md` | Cursor subagents (Task / `/name`) |
 | `.opencode/agents/*.md` | OpenCode agent personas (OpenCode models/permissions) |
 | `.agents/scripts/*.mjs` | Every agent tool — via `npm run` / `node` |
-| `.agents/schemas/*.json` | Every agent tool — gate verdict shape |
 | `.claude/settings.json` | Claude Code — adds the `cursor-plugins` marketplace and turns pstack on (install once per clone) |
 
 pstack itself is not copied into this repository. Claude Code installs it from the `cursor-plugins` marketplace, and Cursor users run `/add-plugin pstack`. See the pstack section in `AGENTS.md`.
@@ -16,11 +15,6 @@ pstack itself is not copied into this repository. Claude Code installs it from t
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| `coordinator` | `grok-4.7-high` | Delegate-only orchestration |
-| `plan` | `grok-4.7-high` | Read-only implementation map |
-| `review` | `grok-4.7-high` | Dual-axis REVIEW.md review |
-| `validator` | `grok-4.7-high` | Plan/output PASS\|BLOCKED |
-| `drift-detector` | `grok-4.7-high` | NO DRIFT\|REPLAN\|BLOCKED |
 | `coding-specialist` | `composer-2.5` | Test-first slice implementation |
 | `explore` | `composer-2.5-fast` | Read-only reconnaissance |
 | `general` | `composer-2.5-fast` | Bounded ops / leftover work |

@@ -5,8 +5,7 @@
 `.agents/` is the tool-agnostic home for agent tooling. Any LLM agent (Claude Code, Cursor, OpenCode, Codex, …) should look there first:
 
 - **Skills:** `.agents/skills/<name>/SKILL.md` (with optional `references/` and `scripts/` beside it).
-- **Gate scripts:** `.agents/scripts/*.mjs`, run via `npm run …` (see Validation below).
-- **Verdict schemas:** `.agents/schemas/`.
+- **Check scripts:** `.agents/scripts/*.mjs`, run via `npm run …` (see Validation below).
 
 Tool-specific folders hold only what that tool needs to run: subagent personas and model ids (`.cursor/agents/`, `.opencode/agents/`) and tool config (`.opencode/opencode.json`). Do not put skills or scripts there; `.cursor/skills/` holds only thin stubs that point back to `.agents/skills/`.
 
@@ -18,7 +17,7 @@ Current skills:
 - `local-review` — dual-axis review against `REVIEW.md`
 - `pr-ui-evidence` — UI evidence under `docs/evidence/<issue>/`
 
-Cursor subagents: `coordinator`, `plan`, `coding-specialist`, `review`, `explore`, `general`, `validator`, `drift-detector`. See `docs/agents/skills.md`.
+Cursor subagents: `coding-specialist`, `explore`, `general`. See `docs/agents/skills.md`. pstack playbooks replace the old coordinator, plan, validator, drift-detector and review subagents.
 
 ### pstack
 
@@ -28,12 +27,6 @@ This repository uses [pstack](https://github.com/cursor/plugins/tree/main/pstack
 - **Models:** run `/setup-pstack` (`/pstack:setup-pstack` in Claude Code) once per machine. It writes your model choices to your home folder, not to this repository.
 - **Precedence:** when a pstack skill or playbook conflicts with a rule in this file, follow pstack. Where pstack says nothing, follow this file.
 - **Until the tooling is aligned:** CI still checks UI evidence, and `npm run pr-ready` still checks the PR template sections and production line counts. A pull request must pass both until they are changed to match pstack.
-
-### Large project coordination
-
-- Use the repository-wide `coordinator` for multi-stage or multi-ticket work where delegation conserves the primary context.
-- The coordinator only sequences work and evaluates delegated gate verdicts. It delegates all investigation, implementation, repository operations, and review.
-- Use `drift-detector` to compare validated authority, dependencies, base assumptions, and implementation scope before work advances.
 
 ### Issue tracker
 
@@ -63,8 +56,8 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 
 ## Validation
 
-- Follow the gate order in `docs/agents/validation.md`: ticket-context → authority → plan-validate → implement → drift-check → review → pr-ready.
-- Use npm scripts: `ticket:context`, `validate:authority`, `validate:plan`, `validate:drift`, `validate:ledger`, `validate:fixture-sep`, `check:ui-evidence`, `capture:ui-evidence`, `pr-ready`, `agent:worktree`, `worktree:gc`, `test:changed`.
+- Follow the `/poteto-mode` playbook for the task. These check scripts are tools a playbook step can run: `pr-ready`, `check:ui-evidence`, `capture:ui-evidence`, `validate:fixture-sep`, `test:changed`.
+- `npm run pr-ready` warns above 100 and fails above 250 production lines added. This is a deliberate project addition to pstack; see Pull request size below.
 - Stable package ids and evidence paths: `docs/agents/session-facts.md`.
 - Local review entrypoint: `.agents/skills/local-review` (loads `REVIEW.md`). Before `gh pr create`, run `npm run pr-ready`.
 - Before planning large or ambiguous work, run `/clear-thinking` (`.agents/skills/clear-thinking`) for a Decision Brief.

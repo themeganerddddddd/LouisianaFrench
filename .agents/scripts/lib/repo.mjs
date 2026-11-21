@@ -4,10 +4,8 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 
 export const OWNER_REPO = 'themeganerddddddd/LouisianaFrench';
 export const EVIDENCE_ROOT = 'docs/evidence';
@@ -75,32 +73,12 @@ export function tryRun(cmd, args = [], opts = {}) {
   }
 }
 
-export function sha256(value) {
-  return createHash('sha256').update(value).digest('hex');
-}
-
 export function readText(path) {
   return readFileSync(path, 'utf8');
 }
 
 export function exists(path) {
   return existsSync(path);
-}
-
-export function hashFile(path) {
-  if (!existsSync(path)) return null;
-  return sha256(readFileSync(path));
-}
-
-export function hashPath(path) {
-  if (!existsSync(path)) return null;
-  const stats = statSync(path);
-  if (stats.isFile()) return hashFile(path);
-  if (!stats.isDirectory()) return sha256(`${path}:${stats.mode}:${stats.size}`);
-  const entries = readdirSync(path, { withFileTypes: true })
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map((entry) => `${entry.name}:${hashPath(join(path, entry.name))}`);
-  return sha256(entries.join('\n'));
 }
 
 export function printJson(value) {
@@ -115,19 +93,3 @@ export function isProductionPath(filePath) {
   return true;
 }
 
-export function isUiPath(filePath) {
-  if (filePath.includes('__tests__/') || /\.test\.[jt]sx?$/.test(filePath)) return false;
-  if (filePath.startsWith('docs/')) return false;
-  return (
-    filePath.startsWith('src/screens/') ||
-    filePath.startsWith('src/components/') ||
-    filePath.startsWith('src/navigation/') ||
-    filePath === 'App.js' ||
-    filePath === 'App.tsx' ||
-    filePath.startsWith('assets/images/')
-  );
-}
-
-export function libDir() {
-  return dirname(fileURLToPath(import.meta.url));
-}

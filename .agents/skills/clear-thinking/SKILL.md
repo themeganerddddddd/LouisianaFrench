@@ -24,7 +24,7 @@ vague idea
 This repo already uses:
 - Always-on agent rules: `AGENTS.md`, domain: `CONTEXT.md`, review: `REVIEW.md`
 - Specs and tickets: GitHub Issues (see `docs/agents/issue-tracker.md`) — no local `.scratch/` plans
-- Validation gates: `docs/agents/validation.md` and `npm run` scripts (`ticket:context`, `validate:*`, `pr-ready`)
+- Workflow: pstack `/poteto-mode` playbooks, with `npm run pr-ready` before a pull request
 - Triage label `ready-for-agent` means AFK-ready to **implement** (after a plan exists) — not the same as ready-for-planning
 - Decision Briefs may be posted as an Issue comment or a short Issue body section; do not create planning files under `.scratch/`
 
