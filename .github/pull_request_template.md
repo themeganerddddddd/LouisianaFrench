@@ -1,29 +1,28 @@
-## Overview
+<!--
+Title: type(scope): subject, for example `fix(audio): play the new être clip`.
+Keep the body under 40 lines. Drop a heading only when it would be empty; Why, What changed, Blast Radius and Verification are required.
+-->
 
-What idea or need led to this work? Explain why it matters for learners or the project.
+## Why
 
-## Changes
+The goal, and why it matters for learners or the project. Link the issue (`Closes #N`).
 
-What are you changing, and why are these changes needed?
-
--
-
-## Testing
-
-What did you test? Explain what each test is meant to check and why those tests give us confidence that the change works.
+## What changed
 
 -
 
-## What a learner sees
+## Scope
 
-If this changes the UI, add screen grabs and/or a short video of the feature working. Put files under `docs/evidence/<issue>/`, link them from this section with `raw.githubusercontent.com` URLs on this branch’s commit, and say what was clicked and what happened. If it does not change the UI, say so.
+What this pull request does not change.
 
--
+## Tradeoffs
 
-## Risk
+Only the rejected alternatives a reviewer would otherwise ask about.
 
-Is this an ordinary change, or does it touch Identity, session storage, auth, CI workflows, or release config? Say which, and who read the latest commit.
+## Blast Radius
 
-## How to revert
+What else this could affect: Identity, session storage, auth, Learner Progress, CI workflows or release config. Say who read the latest commit, and how to revert.
 
-How do we undo this if it breaks something for learners?
+## Verification
+
+What you ran and what it showed. If this changes the UI, link screen grabs or a short video from `docs/evidence/<issue>/` with `raw.githubusercontent.com` URLs on this branch's commit, and say what was clicked and what happened. If it does not change the UI, say so.

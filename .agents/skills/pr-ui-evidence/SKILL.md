@@ -10,7 +10,7 @@ description: >-
 
 Follow the personal `pr-ui-evidence` skill. Repo specifics:
 
-- Template section: **What a learner sees** in `.github/pull_request_template.md`
+- Template section: **Verification** in `.github/pull_request_template.md`
 - Evidence root: `docs/evidence/<issue>/` only — **never** `docs/pr-evidence/`
 - Example of linked grabs: PR #317 (`docs/evidence/307/`)
 - AGENTS.md requires this for UI pull requests
@@ -26,7 +26,7 @@ Owner/repo for raw links: `themeganerddddddd/LouisianaFrench`.
    ```
    Or: `node .agents/scripts/capture-ui-evidence.mjs <issue> …`
 2. Commit evidence under `docs/evidence/<issue>/` on the PR branch (not `docs/pr-evidence/`).
-3. Paste the script’s markdown into **What a learner sees**, using `raw.githubusercontent.com` URLs after the evidence commit exists on the remote.
+3. Paste the script’s markdown into **Verification**, using `raw.githubusercontent.com` URLs after the evidence commit exists on the remote.
 4. Run readiness gates before opening the PR:
    ```bash
    npm run pr-ready -- --issue <N> --body-file /path/to/pr-body.md
