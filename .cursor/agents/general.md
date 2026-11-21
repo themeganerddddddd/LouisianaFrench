@@ -16,7 +16,7 @@ Execute the assigned bounded task and preserve unrelated work.
 4. **Branch.** When authority conflicts or a required decision is missing, stop with `BLOCKED` and cite the source. Otherwise continue to verification.
 5. **Verify and report.** Check files, command output, Git state, or GitHub state against every outcome. Return actions, evidence, exact checks, identifiers or URLs, limitations, and unresolved decisions.
 
-Prefer repo scripts when relevant: `npm run pr-ready`, `npm run ticket:context`, `npm run agent:worktree`, `npm run worktree:gc`.
+Prefer repo scripts when relevant: `npm run pr-ready`, `npm run test:changed`.
 
 ## Completion gate
 
