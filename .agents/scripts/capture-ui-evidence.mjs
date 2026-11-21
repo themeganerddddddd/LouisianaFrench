@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Scaffold docs/evidence/<issue>/ and optionally capture a Playwright screenshot.
- * Prints paste-ready markdown for the PR **What a learner sees** section.
+ * Prints paste-ready markdown for the PR **Verification** section.
  *
  * Usage:
  *   node .agents/scripts/capture-ui-evidence.mjs <issue>
@@ -21,7 +21,7 @@ const README_PLACEHOLDER = `# Evidence for issue
 1. TODO: describe what was clicked
 2. TODO: what the learner saw
 
-Capture files in this folder (png/jpg/webp/gif/mp4/webm/mov), resize to 50% before commit, then paste raw.githubusercontent.com links into the PR **What a learner sees** section.
+Capture files in this folder (png/jpg/webp/gif/mp4/webm/mov), resize to 50% before commit, then paste raw.githubusercontent.com links into the PR **Verification** section.
 `;
 
 function usage(code = 1) {
@@ -137,7 +137,7 @@ function main() {
     capturedRel ||
     `docs/evidence/${args.issue}/01-example.png`;
 
-  const md = `## What a learner sees
+  const md = `## Verification
 
 TODO: say what was clicked and what happened.
 

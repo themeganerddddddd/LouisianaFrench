@@ -17,14 +17,8 @@ import { exists, isProductionPath, readText, repoRoot, run } from './lib/repo.mj
 const SOFT_LOC = 100;
 const HARD_LOC = 250;
 
-const TEMPLATE_SECTIONS = [
-  'Overview',
-  'Changes',
-  'Testing',
-  'What a learner sees',
-  'Risk',
-  'How to revert'
-];
+// pstack's opening-a-pr headings; Scope and Tradeoffs may be dropped when empty.
+const TEMPLATE_SECTIONS = ['Why', 'What changed', 'Blast Radius', 'Verification'];
 
 function usage(code = 1) {
   console.error(

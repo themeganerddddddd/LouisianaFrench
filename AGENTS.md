@@ -53,12 +53,12 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 - Work from the unblocked `ready-for-agent` GitHub Issue frontier; use one fresh agent context per issue.
 - Preserve characterization separately from behavior changes. A characterization test must not encode a known defect as desired behavior.
 - Keep each pull request focused and reviewable. Production changes require tests in the same pull request.
-- Run reviews locally against `REVIEW.md`. Draft pull requests stay draft until those reviews pass. Do not depend on a GitHub-hosted reviewer that skips drafts.
-- Use `.github/pull_request_template.md` for every pull request, including drafts, and answer each section.
+- Run reviews locally against `REVIEW.md`. Open pull requests ready, not as drafts.
+- Use `.github/pull_request_template.md` for every pull request: pstack's `opening-a-pr` headings, under 40 lines.
 - Never commit or push directly to `main`. Fetch the latest `main`, create a feature branch, and deliver every change through a pull request.
-- Write pull request titles and descriptions in clear B2-level English with minimal technical jargon.
-- When a change affects the UI, put screen grabs and/or a short video under `docs/evidence/<issue>/`, embed them in the pull request body’s **What a learner sees** section (use `raw.githubusercontent.com` links on that branch commit), and say what was clicked and what happened. A reviewer checks that evidence after the pull request is open. Follow the `pr-ui-evidence` skill when opening or updating such pull requests. Never use `docs/pr-evidence/`.
-- Before `gh pr create` or updating a draft for review, run `npm run pr-ready` (lint, test, UI evidence, template, production LOC).
+- Write pull request titles as `type(scope): subject`, and titles and descriptions in clear B2-level English with minimal technical jargon.
+- When a change affects the UI, put screen grabs and/or a short video under `docs/evidence/<issue>/`, embed them in the pull request body’s **Verification** section (use `raw.githubusercontent.com` links on that branch commit), and say what was clicked and what happened. A reviewer checks that evidence after the pull request is open. Follow the `pr-ui-evidence` skill when opening or updating such pull requests. Never use `docs/pr-evidence/`.
+- Before `gh pr create` or updating a pull request for review, run `npm run pr-ready` (lint, test, UI evidence, template, production LOC).
 - Run the repository's required checks before marking a ticket complete.
 
 ## Validation
