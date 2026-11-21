@@ -20,6 +20,15 @@ Current skills:
 
 Cursor subagents: `coordinator`, `plan`, `coding-specialist`, `review`, `explore`, `general`, `validator`, `drift-detector`. See `docs/agents/skills.md`.
 
+### pstack
+
+This repository uses [pstack](https://github.com/cursor/plugins/tree/main/pstack) as its engineering workflow. Start any non-trivial task with `/poteto-mode` (`/pstack:poteto-mode` in Claude Code).
+
+- **Install:** `.claude/settings.json` adds the `cursor-plugins` marketplace and turns pstack on, but does not download it. In Claude Code, run `claude plugin install pstack@cursor-plugins --scope project` once per clone. If it says pstack is not found in `cursor-plugins`, the marketplace is not registered yet (the folder is not trusted, or this is a new machine): run `claude plugin marketplace add cursor/plugins` first. In Cursor, run `/add-plugin pstack`.
+- **Models:** run `/setup-pstack` (`/pstack:setup-pstack` in Claude Code) once per machine. It writes your model choices to your home folder, not to this repository.
+- **Precedence:** when a pstack skill or playbook conflicts with a rule in this file, follow pstack. Where pstack says nothing, follow this file.
+- **Until the tooling is aligned:** CI still checks UI evidence, and `npm run pr-ready` still checks the PR template sections and production line counts. A pull request must pass both until they are changed to match pstack.
+
 ### Large project coordination
 
 - Use the repository-wide `coordinator` for multi-stage or multi-ticket work where delegation conserves the primary context.
