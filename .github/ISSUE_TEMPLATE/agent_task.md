@@ -23,4 +23,4 @@ None
 ## Required checks
 
 - [ ] `npm run pr-ready` (or document why a gate was skipped)
-- [ ] Local dual-axis review against `REVIEW.md`
+- [ ] `/interrogate` review with `REVIEW.md` in the intent; no verified BLOCKING finding

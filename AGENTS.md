@@ -14,7 +14,6 @@ Tool-specific folders hold only what that tool needs to run: subagent personas a
 Current skills:
 
 - `clear-thinking` — Decision Brief before planning (`/clear-thinking`)
-- `local-review` — dual-axis review against `REVIEW.md`
 - `pr-ui-evidence` — UI evidence under `docs/evidence/<issue>/`
 
 Cursor subagents: `coding-specialist`, `explore`, `general`. See `docs/agents/skills.md`. pstack playbooks replace the old coordinator, plan, validator, drift-detector and review subagents.
@@ -26,7 +25,6 @@ This repository uses [pstack](https://github.com/cursor/plugins/tree/main/pstack
 - **Install:** `.claude/settings.json` adds the `cursor-plugins` marketplace and turns pstack on, but does not download it. In Claude Code, run `claude plugin install pstack@cursor-plugins --scope project` once per clone. If it says pstack is not found in `cursor-plugins`, the marketplace is not registered yet (the folder is not trusted, or this is a new machine): run `claude plugin marketplace add cursor/plugins` first. In Cursor, run `/add-plugin pstack`.
 - **Models:** run `/setup-pstack` (`/pstack:setup-pstack` in Claude Code) once per machine. It writes your model choices to your home folder, not to this repository.
 - **Precedence:** when a pstack skill or playbook conflicts with a rule in this file, follow pstack. Where pstack says nothing, follow this file.
-- **Until the tooling is aligned:** CI still checks UI evidence, and `npm run pr-ready` still checks the PR template sections and production line counts. A pull request must pass both until they are changed to match pstack.
 
 ### Issue tracker
 
@@ -46,7 +44,7 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 - Work from the unblocked `ready-for-agent` GitHub Issue frontier; use one fresh agent context per issue.
 - Preserve characterization separately from behavior changes. A characterization test must not encode a known defect as desired behavior.
 - Keep each pull request focused and reviewable. Production changes require tests in the same pull request.
-- Run reviews locally against `REVIEW.md`. Open pull requests ready, not as drafts.
+- Review with `/interrogate`, giving it `REVIEW.md` as part of the intent. Open pull requests ready, not as drafts.
 - Use `.github/pull_request_template.md` for every pull request: pstack's `opening-a-pr` headings, under 40 lines.
 - Never commit or push directly to `main`. Fetch the latest `main`, create a feature branch, and deliver every change through a pull request.
 - Write pull request titles as `type(scope): subject`, and titles and descriptions in clear B2-level English with minimal technical jargon.
@@ -59,7 +57,7 @@ This is a single-context repository. Read `CONTEXT.md` and relevant decisions un
 - Follow the `/poteto-mode` playbook for the task. These check scripts are tools a playbook step can run: `pr-ready`, `check:ui-evidence`, `capture:ui-evidence`, `validate:fixture-sep`, `test:changed`.
 - `npm run pr-ready` warns above 100 and fails above 250 production lines added. This is a deliberate project addition to pstack; see Pull request size below.
 - Stable package ids and evidence paths: `docs/agents/session-facts.md`.
-- Local review entrypoint: `.agents/skills/local-review` (loads `REVIEW.md`). Before `gh pr create`, run `npm run pr-ready`.
+- Review: `/interrogate` with `REVIEW.md` in the intent. Before `gh pr create`, run `npm run pr-ready`.
 - Before planning large or ambiguous work, run `/clear-thinking` (`.agents/skills/clear-thinking`) for a Decision Brief.
 
 ## Code quality

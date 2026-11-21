@@ -1,8 +1,8 @@
 # Review policy
 
-Review-only calibration for local reviewers. Project rules stay in `AGENTS.md`. Domain terms stay in `CONTEXT.md`.
+What reviewers must try to break in this repository. Project rules stay in `AGENTS.md`. Domain terms stay in `CONTEXT.md`.
 
-Reviews run locally on the branch. Do not wait for a GitHub-hosted reviewer. Draft pull requests stay draft until local reviews pass.
+Review with pstack's `/interrogate` (`/pstack:interrogate` in Claude Code) before you merge. Put this file's **Severity** and **Always check** lists in the intent you give it, so its adversaries try to break those invariants. Do not wait for a GitHub-hosted reviewer.
 
 ## Severity
 
@@ -10,7 +10,7 @@ Reviews run locally on the branch. Do not wait for a GitHub-hosted reviewer. Dra
 - **HARDENING** — An unspecced guarantee, style, naming, or "could be DRY." Report at most five per review. Hardening never fails the review.
 - **PRE-EXISTING** — Present before the diff. Do not charge it unless the change makes it worse.
 
-Only a material **BLOCKING** finding returns `REVIEW FAIL`.
+Only a verified **BLOCKING** finding blocks the merge. `/interrogate` drops findings that no run proves, so it does not report **HARDENING** items; a person may still note them.
 
 ## Do not report
 
@@ -33,6 +33,6 @@ A blocking finding needs the violated authority or invariant, exact file and lin
 
 Start the summary with counts by severity. Say plainly when nothing needs fixing.
 
-Only blocking findings trigger repair. Cap: at most one review and one fix round before REPLAN / a narrower spec. On a re-review, judge the new commit; do not restate findings already posted.
+Only blocking findings trigger repair. Cap: at most one review and one fix round; after that, narrow the issue instead. On a re-review, judge the new commit; do not restate findings already posted.
 
-Evidence-only commits (paths under `docs/evidence/**` only) do not require a full dual-axis re-review; a mechanical UI evidence check suffices.
+Evidence-only commits (paths under `docs/evidence/**` only) do not need a new `/interrogate` run; `npm run check:ui-evidence` is enough.
