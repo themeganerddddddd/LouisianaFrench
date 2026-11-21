@@ -295,6 +295,7 @@ export default function SignInModal({
                       setFields((current) => ({ ...current, displayName }))
                     }
                     placeholder="Display name"
+                    placeholderTextColor="#94A3B8"
                     autoCapitalize="words"
                     style={styles.input}
                   />
@@ -306,6 +307,7 @@ export default function SignInModal({
                     value={fields.email}
                     onChangeText={(email) => setFields((current) => ({ ...current, email }))}
                     placeholder="Email"
+                    placeholderTextColor="#94A3B8"
                     autoCapitalize="none"
                     keyboardType="email-address"
                     style={styles.input}
@@ -320,6 +322,7 @@ export default function SignInModal({
                       setFields((current) => ({ ...current, password }))
                     }
                     placeholder={mode === 'replace' ? 'New password' : 'Password'}
+                    placeholderTextColor="#94A3B8"
                     secureTextEntry
                     style={styles.input}
                   />
@@ -470,7 +473,11 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     borderRadius: 8,
     padding: 10,
-    marginBottom: 8
+    marginBottom: 8,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#102A43',
+    backgroundColor: '#F8FAFC'
   },
   primaryFilled: {
     borderRadius: 12,
