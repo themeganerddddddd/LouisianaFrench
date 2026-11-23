@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { resolveStoredCardId, reviewCardIdsToCopy } from '../data/uniqueCardIds';
 import { getNow } from './clock';
 
 const KEYS = {
@@ -216,7 +217,19 @@ export async function updateWordProgress(
 
 export async function getReviewState() {
   const raw = await AsyncStorage.getItem(KEYS.REVIEW_STATE);
-  return raw ? JSON.parse(raw) : {};
+  const state = raw ? JSON.parse(raw) : {};
+  let changed = false;
+
+  for (const [cardId, card] of Object.entries(state)) {
+    for (const copyId of reviewCardIdsToCopy(cardId)) {
+      if (state[copyId]) continue;
+      state[copyId] = { ...card };
+      changed = true;
+    }
+  }
+
+  if (changed) await saveReviewState(state);
+  return state;
 }
 
 export async function saveReviewState(state) {
@@ -333,8 +346,34 @@ export async function getPendingMistakes(language) {
   );
 
   const data = raw ? JSON.parse(raw) : {};
+  const bucket = data[language];
 
-  return Object.values(data[language] || {});
+  if (!bucket) return [];
+
+  const next = {};
+  let changed = false;
+
+  for (const record of Object.values(bucket)) {
+    const cardId = resolveStoredCardId(language, record.cardId, record.sourceId);
+    if (cardId !== record.cardId) changed = true;
+    const candidate = { ...record, cardId };
+    const current = next[cardId];
+    if (!current || String(current.timestamp) < String(candidate.timestamp)) {
+      if (current) changed = true;
+      next[cardId] = candidate;
+    }
+  }
+
+  if (changed || Object.keys(bucket).length !== Object.keys(next).length) {
+    data[language] = next;
+    await AsyncStorage.setItem(
+      KEYS.PENDING_MISTAKES,
+      JSON.stringify(data)
+    );
+    return Object.values(next);
+  }
+
+  return Object.values(bucket);
 }
 
 export async function upsertPendingMistake(

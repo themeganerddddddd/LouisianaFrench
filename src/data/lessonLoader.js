@@ -1,11 +1,10 @@
-import cajunLessons from './cajunLessons.json';
-import kreoleLessons from './kreoleLessons.json';
 import { UNIT_PREFACES } from '../constants/unitPrefaces';
 import { createCatalog } from './catalog';
+import { lessonsWithUniqueCardIds } from './uniqueCardIds';
 
 const bundledCatalog = createCatalog({
   getLessonsByLanguage(language) {
-    return language === 'kreole' ? kreoleLessons : cajunLessons;
+    return lessonsWithUniqueCardIds(language);
   },
   getUnitPreface(language, unitCode) {
     return UNIT_PREFACES[language]?.[unitCode];
