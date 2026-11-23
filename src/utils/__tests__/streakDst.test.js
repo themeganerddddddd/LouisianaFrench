@@ -3,9 +3,9 @@
 // so local midnight Sun -> Mon is 23 hours, and Sat -> Mon is 47 hours.
 // `Math.floor((today - lastDay) / 86400000)` turns those into 0 and 1 days.
 //
-// Run with a US Central clock, e.g.  TZ=America/Chicago npx jest src/utils/__tests__/repro.streakDst.test.js
-// (Jest sandboxes process.env, so the test cannot switch the timezone itself. Under
-// any other TZ every test here fails on the timezone guard instead of passing falsely.)
+// jest.globalSetup.js sets TZ=America/Chicago before workers start. Jest sandboxes
+// process.env, so this file cannot switch the timezone itself. The guard below
+// fails if that setup did not run.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { recordStudyAndXp } from '../storage';
