@@ -61,6 +61,7 @@
     "typescript": "~6.0.3"
   },
   "jest": {
+    "globalSetup": "<rootDir>/jest.globalSetup.js",
     "preset": "jest-expo",
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
