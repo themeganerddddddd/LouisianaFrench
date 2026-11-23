@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-import { join } from 'node:path';
+import { dirname, join, normalize } from 'node:path';
 import { exists, printJson, readText, repoRoot, run } from './lib/repo.mjs';
 
 const SHIPPED_CATALOG =
   /(?:from|require\()\s*['"][^'"]*src\/data\/[^'"]*['"]|src\/data\/(?:cajunLessons|kreoleLessons|catalog)\.json/i;
+const IMPORT_SPEC = /(?:from|require\()\s*['"]([^'"]+)['"]/g;
 const COMPACT_FIXTURE =
   /(?:from|require\()\s*['"][^'"]*fixtures?[^'"]*['"]|__fixtures__|compactFixture|makeFixture|testFixture|fixtures\/(?:catalog|learnerProgress)/i;
 
@@ -33,12 +34,32 @@ function collectCandidateFiles(root) {
     }
   }
 
-  return [...new Set(files)].filter(
-    (path) =>
-      /(^|\/)__tests__\//.test(path) ||
-      /\.test\.[jt]sx?$/.test(path) ||
-      /\.spec\.[jt]sx?$/.test(path)
+  const dirtyTests = testFiles(files);
+  if (dirtyTests.length > 0) return dirtyTests;
+
+  const tracked = run('git', ['ls-files', '-z'], { trim: false });
+  return testFiles(tracked.split('\0'));
+}
+
+function testFiles(paths) {
+  return [...new Set(paths.filter(Boolean))].filter(
+    (filePath) =>
+      /(^|\/)__tests__\//.test(filePath) ||
+      /\.test\.[jt]sx?$/.test(filePath) ||
+      /\.spec\.[jt]sx?$/.test(filePath)
   );
+}
+
+function importsShippedCatalog(content, filePath) {
+  if (SHIPPED_CATALOG.test(content)) return true;
+  const base = dirname(filePath);
+  for (const match of content.matchAll(IMPORT_SPEC)) {
+    const spec = match[1];
+    if (!spec.startsWith('.')) continue;
+    const resolved = normalize(join(base, spec)).split('\\').join('/');
+    if (resolved === 'src/data' || resolved.startsWith('src/data/')) return true;
+  }
+  return false;
 }
 
 function main() {
@@ -57,7 +78,7 @@ function main() {
       continue;
     }
     scanned.push(path);
-    if (SHIPPED_CATALOG.test(content) && COMPACT_FIXTURE.test(content)) {
+    if (importsShippedCatalog(content, path) && COMPACT_FIXTURE.test(content)) {
       warnings.push(
         `${path}: imports both shipped catalog JSON under src/data and compact fixtures — keep shipped-data validation separate from behavior fixtures.`
       );
