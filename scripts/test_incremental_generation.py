@@ -1,138 +1,190 @@
-"""Regression tests for preserving existing lesson IDs as new audio arrives."""
-import csv
-import hashlib
+"""Card ids stay put across regenerations, and a shared id is retired."""
 import json
 import os
+import shutil
+import subprocess
+import sys
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(__file__))
+
 import generate_lessons as lessons
-import generate_audio_manifest as manifest
 
 
-class IncrementalGenerationTests(unittest.TestCase):
+def activity(card_id, base_card_id, index):
+    return {
+        "cardId": card_id,
+        "baseCardId": base_card_id,
+        "activityIndex": index,
+        "type": "multiple_choice",
+    }
+
+
+class CardIdStabilityTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.previous_dir = os.getcwd()
-        os.chdir(self.temp.name)
-        self.addCleanup(self._restore)
-        Path("src/data").mkdir(parents=True)
-        Path("assets/audio/cajun").mkdir(parents=True)
-        Path("assets/audio/kreole").mkdir(parents=True)
-        self.rows = [
-            {"id": "u01_w0001", "unit": "u01", "english": "hello", "variant_text": "bonjour", "audioKey": "old_audio"},
-            {"id": "u01_w0002", "unit": "u01", "english": "goodbye", "variant_text": "à la revoyure", "audioKey": "new_audio"},
-            {"id": "u01_w0003", "unit": "u01", "english": "thank you", "variant_text": "merci", "audioKey": "later_audio"},
-        ]
-        self._write_csv("cajun", self.rows)
-        self._write_csv("kreole", [
-            {"id": "u01_w0001", "unit": "u01", "english": "hello", "variant_text": "bonjou", "audioKey": "kreole_audio"},
-        ])
-        Path("assets/audio/cajun/old_audio.mp3").touch()
-        Path("assets/audio/kreole/kreole_audio.mp3").touch()
-        self.original = [
-            {
-                "id": "cajun_u01_l01", "language": "cajun", "unit": "u01", "unitTitle": "Greetings",
-                "lessonNumberInUnit": 1, "lessonTitle": "Part 1", "type": "core", "wordCount": 1,
-                "words": [{"rowId": "u01_w0001", "english": "hello", "target": "bonjour", "audioKey": "old_audio"}],
-                "activities": [{"cardId": "cajun:u01_w0001:intro:step01", "rowId": "u01_w0001", "type": "intro_card"}],
-                "baseXp": 40,
-            },
-            {
-                "id": "cajun_u01_review", "language": "cajun", "unit": "u01", "unitTitle": "Greetings",
-                "lessonNumberInUnit": 2, "lessonTitle": "Review", "type": "review", "wordCount": 1,
-                "words": [{"rowId": "u01_w0001", "english": "hello", "target": "bonjour", "audioKey": "old_audio"}],
-                "activities": [{"cardId": "cajun:u01_w0001:typing:step01", "rowId": "u01_w0001", "type": "typing"}],
-                "baseXp": 50,
-            },
-        ]
-        Path("src/data/cajunLessons.json").write_text(json.dumps(self.original, ensure_ascii=False), encoding="utf-8")
+        self.root = Path(self.temp.name)
+        self.output = self.root / "lessons.json"
+        self.legacy = self.root / "legacyCardIds.json"
+        self.addCleanup(self.temp.cleanup)
 
-    def _restore(self):
-        os.chdir(self.previous_dir)
-        self.temp.cleanup()
-
-    def _write_csv(self, language, rows):
-        with open(f"{language}.csv", "w", encoding="utf-8", newline="") as target:
-            writer = csv.DictWriter(target, fieldnames=["id", "unit", "english", "variant_text", "audioKey"])
-            writer.writeheader()
-            writer.writerows(rows)
-
-    def _run(self, dry_run=False):
-        lessons.build_lessons("cajun", "cajun.csv", "src/data/cajunLessons.json", dry_run=dry_run)
-
-    def _data(self):
-        return json.loads(Path("src/data/cajunLessons.json").read_text(encoding="utf-8"))
-
-    def _hash(self, path):
-        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
-
-    def test_no_mp3_means_no_lesson_changes_or_invalid_manifest_require(self):
-        before = self._hash("src/data/cajunLessons.json")
-        self._run()
-        self.assertEqual(self._hash("src/data/cajunLessons.json"), before)
-        manifest.main()
-        body = Path("src/data/audioManifest.js").read_text(encoding="utf-8")
-        self.assertIn("old_audio.mp3", body)
-        self.assertIn("kreole_audio.mp3", body)
-        self.assertNotIn("new_audio.mp3", body)
-        self.assertNotIn("later_audio.mp3", body)
-
-    def test_append_only_newly_recorded_words_keeps_older_ids_and_reviews(self):
-        Path("assets/audio/cajun/new_audio.mp3").touch()
-        before_records = {lesson["id"]: lesson for lesson in self.original}
-        self._run()
-        after = self._data()
-        self.assertEqual(len(after), 4)
-        self.assertEqual(after[:2], self.original)
-        self.assertEqual(
-            [record["id"] for record in after[2:]],
-            ["cajun_u01_l02", "cajun_u01_review_add01"]
+    def stabilize(self, generated):
+        return lessons.stabilize_card_ids(
+            "cajun",
+            generated,
+            str(self.output),
+            legacy_map_path=str(self.legacy),
         )
-        self.assertEqual([lesson["lessonNumberInUnit"] for lesson in after], [1, 2, 3, 4])
-        self.assertEqual([word["rowId"] for word in after[2]["words"]], ["u01_w0002"])
-        self.assertEqual([word["rowId"] for word in after[3]["words"]], ["u01_w0002"])
-        self.assertTrue(after[2]["activities"])
-        self.assertTrue(after[3]["activities"])
-        self.assertEqual({k: next(l for l in after if l["id"] == k)
-                          for k in before_records}, before_records)
-        for lesson in after[2:]:
-            self.assertEqual(len({a["cardId"] for a in lesson["activities"]}), len(lesson["activities"]))
 
-        manifest.main()
-        after_hashes = [self._hash("src/data/cajunLessons.json"), self._hash("src/data/audioManifest.js")]
-        self._run()
-        manifest.main()
-        self.assertEqual(after_hashes, [self._hash("src/data/cajunLessons.json"), self._hash("src/data/audioManifest.js")])
+    def write_lessons(self, generated):
+        self.output.write_text(
+            json.dumps(generated, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
-        Path("assets/audio/cajun/later_audio.mp3").touch()
-        self._run()
-        updated = self._data()
-        self.assertEqual(updated[:4], after)
-        self.assertEqual([l["id"] for l in updated[4:]], ["cajun_u01_l03", "cajun_u01_review_add02"])
-        self.assertEqual([w["rowId"] for w in updated[-2]["words"]], ["u01_w0003"])
+    def test_both_copies_of_a_repeated_id_are_renamed_and_mapped(self):
+        shared = "cajun:u03_w0003:mc:step14"
+        generated = [
+            {"id": "cajun_u03_l01", "activities": [activity(shared, "cajun:u03_w0003:mc", 14)]},
+            {"id": "cajun_u03_l02", "activities": [activity(shared, "cajun:u03_w0003:mc", 14)]},
+            {"id": "cajun_u03_l03", "activities": [activity("cajun:kept:step01", "cajun:kept", 1)]},
+        ]
 
-    def test_dry_run_does_not_change_existing_lessons(self):
-        Path("assets/audio/cajun/new_audio.mp3").touch()
-        h = self._hash("src/data/cajunLessons.json")
-        self._run(dry_run=True)
-        self.assertEqual(self._hash("src/data/cajunLessons.json"), h)
-        self.assertEqual(self._data(), self.original)
+        self.stabilize(generated)
+
+        self.assertEqual(
+            generated[0]["activities"][0]["cardId"],
+            "cajun:u03_w0003:mc:step14::cajun_u03_l01",
+        )
+        self.assertEqual(
+            generated[1]["activities"][0]["cardId"],
+            "cajun:u03_w0003:mc:step14::cajun_u03_l02",
+        )
+        self.assertEqual(generated[2]["activities"][0]["cardId"], "cajun:kept:step01")
+        legacy = json.loads(self.legacy.read_text(encoding="utf-8"))
+        self.assertEqual(legacy["cajun"][shared], {
+            "cajun_u03_l01": f"{shared}::cajun_u03_l01",
+            "cajun_u03_l02": f"{shared}::cajun_u03_l02",
+        })
+        self.assertEqual(legacy["kreole"], {})
+
+    def test_second_run_reuses_ids_for_the_same_lesson_step_and_base(self):
+        shared = "cajun:u03_w0003:mc:step14"
+        first = [
+            {"id": "cajun_u03_l01", "activities": [activity(shared, "cajun:u03_w0003:mc", 14)]},
+            {"id": "cajun_u03_l02", "activities": [activity(shared, "cajun:u03_w0003:mc", 14)]},
+        ]
+        self.stabilize(first)
+        self.write_lessons(first)
+        first_ids = [item["activities"][0]["cardId"] for item in first]
+
+        # A fresh generation would emit the bare id again.
+        second = [
+            {"id": "cajun_u03_l01", "activities": [activity(shared, "cajun:u03_w0003:mc", 14)]},
+            {"id": "cajun_u03_l02", "activities": [activity(shared, "cajun:u03_w0003:mc", 14)]},
+        ]
+        self.stabilize(second)
+
+        self.assertEqual([item["activities"][0]["cardId"] for item in second], first_ids)
+        self.assertEqual(second[0]["activities"][0]["baseCardId"], "cajun:u03_w0003:mc")
+
+    def test_a_hand_set_id_survives_regeneration(self):
+        existing = [{
+            "id": "cajun_u01_l01",
+            "activities": [activity("sentinel-id", "cajun:u01_w0001:intro", 1)],
+        }]
+        self.write_lessons(existing)
+        generated = [{
+            "id": "cajun_u01_l01",
+            "activities": [activity("cajun:u01_w0001:intro:step01", "cajun:u01_w0001:intro", 1)],
+        }]
+
+        self.stabilize(generated)
+
+        self.assertEqual(generated[0]["activities"][0]["cardId"], "sentinel-id")
+
+    def test_a_retired_id_is_renamed_instead_of_reused(self):
+        shared = "cajun:u03_w0003:mc:step14"
+        self.legacy.write_text(json.dumps({
+            "version": 1,
+            "cajun": {
+                shared: {
+                    "cajun_u03_l01": f"{shared}::cajun_u03_l01",
+                    "cajun_u03_l02": f"{shared}::cajun_u03_l02",
+                }
+            },
+            "kreole": {},
+        }), encoding="utf-8")
+        generated = [{
+            "id": "cajun_u03_l09",
+            "activities": [activity(shared, "cajun:u03_w0003:mc", 3)],
+        }]
+
+        self.stabilize(generated)
+
+        self.assertEqual(generated[0]["activities"][0]["cardId"], f"{shared}::cajun_u03_l09")
+        legacy = json.loads(self.legacy.read_text(encoding="utf-8"))
+        self.assertEqual(legacy["cajun"][shared]["cajun_u03_l09"], f"{shared}::cajun_u03_l09")
 
     def test_malformed_existing_lessons_are_not_overwritten(self):
-        Path("assets/audio/cajun/new_audio.mp3").touch()
-        Path("src/data/cajunLessons.json").write_text("INVALID JSON", encoding="utf-8")
-        with self.assertRaises(json.JSONDecodeError):
-            self._run()
-        self.assertEqual(Path("src/data/cajunLessons.json").read_text(), "INVALID JSON")
+        self.output.write_text("INVALID JSON", encoding="utf-8")
+        generated = [{
+            "id": "cajun_u01_l01",
+            "activities": [activity("cajun:u01_w0001:intro:step01", "cajun:u01_w0001:intro", 1)],
+        }]
 
-    def test_manifest_retains_previously_used_audio_removed_from_csv(self):
-        manifest.main()
-        self.rows[0]["audioKey"] = ""
-        self._write_csv("cajun", self.rows)
-        manifest.main()
-        self.assertIn("old_audio.mp3", Path("src/data/audioManifest.js").read_text(encoding="utf-8"))
+        with self.assertRaises(json.JSONDecodeError):
+            self.stabilize(generated)
+
+        self.assertEqual(self.output.read_text(encoding="utf-8"), "INVALID JSON")
+
+
+class GeneratorRunTests(unittest.TestCase):
+    def test_two_runs_with_no_csv_change_keep_the_same_ids(self):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        (root / "assets/audio/cajun").mkdir(parents=True)
+        (root / "src/data").mkdir(parents=True)
+        (root / "assets/audio/cajun/hello.mp3").touch()
+        (root / "cajun.csv").write_text(textwrap.dedent("""\
+            id,unit,english,variant_text,audioKey
+            u01_w0001,u01,hello,bonjour,hello
+        """), encoding="utf-8")
+        script = Path(__file__).with_name("generate_lessons.py")
+        code = (
+            "import generate_lessons as lessons\n"
+            "lessons.build_lessons('cajun', 'cajun.csv', 'src/data/cajunLessons.json')\n"
+        )
+
+        def card_ids():
+            lessons_json = json.loads((root / "src/data/cajunLessons.json").read_text(encoding="utf-8"))
+            return [
+                activity["cardId"]
+                for lesson in lessons_json
+                for activity in lesson["activities"]
+            ]
+
+        env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONPATH": str(script.parent)}
+        subprocess.run([sys.executable, "-c", code], cwd=root, env=env, check=True)
+        first = card_ids()
+        self.assertTrue(first)
+        self.assertEqual(len(first), len(set(first)))
+
+        # Prove reuse, not just a deterministic rebuild: pin one id.
+        lessons_json = json.loads((root / "src/data/cajunLessons.json").read_text(encoding="utf-8"))
+        lessons_json[0]["activities"][0]["cardId"] = "sentinel-id"
+        (root / "src/data/cajunLessons.json").write_text(
+            json.dumps(lessons_json, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+        subprocess.run([sys.executable, "-c", code], cwd=root, env=env, check=True)
+        second = card_ids()
+        self.assertEqual(second[0], "sentinel-id")
+        self.assertEqual(second[1:], first[1:])
 
 
 if __name__ == "__main__":

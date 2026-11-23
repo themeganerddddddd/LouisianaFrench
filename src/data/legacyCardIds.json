@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "cajun": {
+    "cajun:match:u01_w0001:step15": { "cajun_u01_l01": "cajun:match:u01_w0001:step15::cajun_u01_l01", "cajun_u02_l01": "cajun:match:u01_w0001:step15::cajun_u02_l01" },
+    "cajun:u01_w0013:listening_target:step14": { "cajun_u01_l06": "cajun:u01_w0013:listening_target:step14::cajun_u01_l06", "cajun_u01_review": "cajun:u01_w0013:listening_target:step14::cajun_u01_review" },
+    "cajun:u01_w0028:listening_target:step06": { "cajun_u01_l06": "cajun:u01_w0028:listening_target:step06::cajun_u01_l06", "cajun_u01_review": "cajun:u01_w0028:listening_target:step06::cajun_u01_review" },
+    "cajun:u02_w0017:listening_target:step02": { "cajun_u02_l04": "cajun:u02_w0017:listening_target:step02::cajun_u02_l04", "cajun_u02_review": "cajun:u02_w0017:listening_target:step02::cajun_u02_review" },
+    "cajun:u03_w0002:mc:step09": { "cajun_u03_l03": "cajun:u03_w0002:mc:step09::cajun_u03_l03", "cajun_u03_l05": "cajun:u03_w0002:mc:step09::cajun_u03_l05" },
+    "cajun:u03_w0003:mc:step14": { "cajun_u03_l01": "cajun:u03_w0003:mc:step14::cajun_u03_l01", "cajun_u03_l02": "cajun:u03_w0003:mc:step14::cajun_u03_l02" },
+    "cajun:u03_w0004:listening_target:step10": { "cajun_u03_l01": "cajun:u03_w0004:listening_target:step10::cajun_u03_l01", "cajun_u03_review": "cajun:u03_w0004:listening_target:step10::cajun_u03_review" },
+    "cajun:u03_w0007:typing:step05": { "cajun_u03_l02": "cajun:u03_w0007:typing:step05::cajun_u03_l02", "cajun_u03_review": "cajun:u03_w0007:typing:step05::cajun_u03_review" },
+    "cajun:u03_w0008:mc:step08": { "cajun_u03_l02": "cajun:u03_w0008:mc:step08::cajun_u03_l02", "cajun_u03_l07": "cajun:u03_w0008:mc:step08::cajun_u03_l07" },
+    "cajun:u03_w0026:listening_target:step12": { "cajun_u03_l06": "cajun:u03_w0026:listening_target:step12::cajun_u03_l06", "cajun_u03_l07": "cajun:u03_w0026:listening_target:step12::cajun_u03_l07" },
+    "cajun:u04_w0001:mc:step02": { "cajun_u04_l01": "cajun:u04_w0001:mc:step02::cajun_u04_l01", "cajun_u04_review": "cajun:u04_w0001:mc:step02::cajun_u04_review" },
+    "cajun:u04_w0006:listening_target:step11": { "cajun_u04_l01": "cajun:u04_w0006:listening_target:step11::cajun_u04_l01", "cajun_u04_review": "cajun:u04_w0006:listening_target:step11::cajun_u04_review" },
+    "cajun:u05_w0016:typing:step02": { "cajun_u05_l04": "cajun:u05_w0016:typing:step02::cajun_u05_l04", "cajun_u05_l05": "cajun:u05_w0016:typing:step02::cajun_u05_l05" },
+    "cajun:u06_w0003:listening_target:step09": { "cajun_u06_l01": "cajun:u06_w0003:listening_target:step09::cajun_u06_l01", "cajun_u06_l02": "cajun:u06_w0003:listening_target:step09::cajun_u06_l02" },
+    "cajun:u06_w0007:typing:step13": { "cajun_u06_l02": "cajun:u06_w0007:typing:step13::cajun_u06_l02", "cajun_u06_l04": "cajun:u06_w0007:typing:step13::cajun_u06_l04" }
+  },
+  "kreole": {
+    "kreole:match:u06_w0010:step15": { "kreole_u06_l02": "kreole:match:u06_w0010:step15::kreole_u06_l02", "kreole_u06_review": "kreole:match:u06_w0010:step15::kreole_u06_review" },
+    "kreole:u04_w0009:mc:step08": { "kreole_u04_l02": "kreole:u04_w0009:mc:step08::kreole_u04_l02", "kreole_u04_review": "kreole:u04_w0009:mc:step08::kreole_u04_review" },
+    "kreole:u05_w0003:listening_target:step11": { "kreole_u05_l02": "kreole:u05_w0003:listening_target:step11::kreole_u05_l02", "kreole_u05_l03": "kreole:u05_w0003:listening_target:step11::kreole_u05_l03" },
+    "kreole:u06_w0011:typing:step09": { "kreole_u06_l03": "kreole:u06_w0011:typing:step09::kreole_u06_l03", "kreole_u06_review": "kreole:u06_w0011:typing:step09::kreole_u06_review" },
+    "kreole:u07_w0009:mc:step12": { "kreole_u07_l03": "kreole:u07_w0009:mc:step12::kreole_u07_l03", "kreole_u07_review": "kreole:u07_w0009:mc:step12::kreole_u07_review" },
+    "kreole:u08_w0001:mc:step08": { "kreole_u08_l01": "kreole:u08_w0001:mc:step08::kreole_u08_l01", "kreole_u08_review": "kreole:u08_w0001:mc:step08::kreole_u08_review" },
+    "kreole:u09_w0001:mc:step05": { "kreole_u09_l01": "kreole:u09_w0001:mc:step05::kreole_u09_l01", "kreole_u09_review": "kreole:u09_w0001:mc:step05::kreole_u09_review" },
+    "kreole:u09_w0005:mc:step08": { "kreole_u09_l02": "kreole:u09_w0005:mc:step08::kreole_u09_l02", "kreole_u09_review": "kreole:u09_w0005:mc:step08::kreole_u09_review" },
+    "kreole:u10_w0001:listening_target:step08": { "kreole_u10_l01": "kreole:u10_w0001:listening_target:step08::kreole_u10_l01", "kreole_u10_l03": "kreole:u10_w0001:listening_target:step08::kreole_u10_l03" }
+  }
+}

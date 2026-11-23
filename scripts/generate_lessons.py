@@ -10,6 +10,7 @@ KREOLE_CSV = "kreole.csv"
 
 OUTPUT_CAJUN = "src/data/cajunLessons.json"
 OUTPUT_KREOLE = "src/data/kreoleLessons.json"
+LEGACY_CARD_IDS = "src/data/legacyCardIds.json"
 
 AUDIO_DIRS = {
     "cajun": "assets/audio/cajun",
@@ -1957,6 +1958,148 @@ def row_to_vocab_card(row):
     return card
 
 
+def load_legacy_map(path):
+    if not os.path.isfile(path):
+        return {"version": 1, "cajun": {}, "kreole": {}}
+
+    with open(path, encoding="utf-8") as handle:
+        loaded = json.load(handle)
+
+    if not isinstance(loaded, dict):
+        raise ValueError(f"{path} is not an object")
+
+    return {
+        "version": loaded.get("version", 1),
+        "cajun": dict(loaded.get("cajun") or {}),
+        "kreole": dict(loaded.get("kreole") or {}),
+    }
+
+
+def save_legacy_map(path, legacy):
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    lines = ["{", '  "version": 1,']
+
+    for language in ("cajun", "kreole"):
+        bucket = legacy.get(language) or {}
+        old_ids = sorted(bucket)
+        lines.append(f'  "{language}": {{')
+
+        for index, old_id in enumerate(old_ids):
+            copies = bucket[old_id]
+            body = ", ".join(
+                f"{json.dumps(lesson_id)}: {json.dumps(copies[lesson_id])}"
+                for lesson_id in sorted(copies)
+            )
+            comma = "," if index < len(old_ids) - 1 else ""
+            lines.append(f"    {json.dumps(old_id)}: {{ {body} }}{comma}")
+
+        lines.append("  }" + ("," if language != "kreole" else ""))
+
+    lines.append("}")
+
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write("\n".join(lines) + "\n")
+
+
+def existing_card_ids(output_path):
+    if not os.path.isfile(output_path):
+        return {}
+
+    with open(output_path, encoding="utf-8") as handle:
+        existing = json.load(handle)
+
+    if not isinstance(existing, list):
+        raise ValueError(f"{output_path} is not a lesson list")
+
+    found = {}
+
+    for lesson in existing:
+        lesson_id = lesson.get("id")
+
+        for activity in lesson.get("activities") or []:
+            key = (
+                lesson_id,
+                activity.get("activityIndex"),
+                activity.get("baseCardId"),
+            )
+            card_id = activity.get("cardId")
+
+            if lesson_id and card_id and key[1] is not None and key[2]:
+                found[key] = card_id
+
+    return found
+
+
+def stabilize_card_ids(
+    language,
+    lessons,
+    output_path,
+    legacy_map_path=LEGACY_CARD_IDS,
+):
+    """
+    Keep card ids stable across regenerations, then retire any id that
+    two lessons still share. Both copies become `<oldId>::<lessonId>`.
+    The bare id is never written again.
+    """
+
+    reused = existing_card_ids(output_path)
+
+    for lesson in lessons:
+        lesson_id = lesson.get("id")
+
+        for activity in lesson.get("activities") or []:
+            key = (
+                lesson_id,
+                activity.get("activityIndex"),
+                activity.get("baseCardId"),
+            )
+            card_id = reused.get(key)
+
+            if card_id:
+                activity["cardId"] = card_id
+
+    legacy = load_legacy_map(legacy_map_path)
+    retired = set((legacy.get(language) or {}).keys())
+    language_map = legacy.setdefault(language, {})
+    counts = defaultdict(int)
+
+    for lesson in lessons:
+        for activity in lesson.get("activities") or []:
+            counts[activity.get("cardId")] += 1
+
+    repeated = {
+        card_id
+        for card_id, count in counts.items()
+        if card_id and count > 1
+    }
+
+    for lesson in lessons:
+        lesson_id = lesson.get("id")
+
+        for activity in lesson.get("activities") or []:
+            card_id = activity.get("cardId")
+
+            if card_id not in repeated and card_id not in retired:
+                continue
+
+            renamed = f"{card_id}::{lesson_id}"
+            activity["cardId"] = renamed
+            language_map.setdefault(card_id, {})[lesson_id] = renamed
+
+    seen = set()
+
+    for lesson in lessons:
+        for activity in lesson.get("activities") or []:
+            card_id = activity.get("cardId")
+            assert card_id and card_id not in seen, (
+                f"repeated cardId {card_id}"
+            )
+            seen.add(card_id)
+
+    save_legacy_map(legacy_map_path, legacy)
+    return lessons
+
+
 def build_lessons(
     language,
     csv_path,
@@ -2243,6 +2386,12 @@ def build_lessons(
         prior_rows_from_earlier_units.extend(
             unit_rows
         )
+
+    stabilize_card_ids(
+        language,
+        all_lessons,
+        output_path
+    )
 
     with open(
         output_path,

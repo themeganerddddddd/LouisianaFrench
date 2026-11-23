@@ -1,12 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { getDefaultLanguage, hasSelectedLanguage } from '../utils/storage';
+import {
+  getDefaultLanguage,
+  hasSelectedLanguage,
+  migrateLegacyCardIds
+} from '../utils/storage';
 
 export default function LoadingScreen({ navigation }) {
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const timer = setTimeout(async () => {
+      await migrateLegacyCardIds();
       const selected = await hasSelectedLanguage();
       const savedLanguage = await getDefaultLanguage();
 

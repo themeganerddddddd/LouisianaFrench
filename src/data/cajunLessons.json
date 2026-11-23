@@ -341,7 +341,7 @@
         "activityIndex": 14
       },
       {
-        "cardId": "cajun:match:u01_w0001:step15",
+        "cardId": "cajun:match:u01_w0001:step15::cajun_u01_l01",
         "type": "match_pairs",
         "prompt": "Match the words",
         "pairs": [
@@ -1938,7 +1938,7 @@
         "activityIndex": 5
       },
       {
-        "cardId": "cajun:u01_w0028:listening_target:step06",
+        "cardId": "cajun:u01_w0028:listening_target:step06::cajun_u01_l06",
         "rowId": "u01_w0028",
         "audioKey": "u01_w0028_lf",
         "type": "listening_target_choice",
@@ -2109,7 +2109,7 @@
         "activityIndex": 13
       },
       {
-        "cardId": "cajun:u01_w0013:listening_target:step14",
+        "cardId": "cajun:u01_w0013:listening_target:step14::cajun_u01_l06",
         "rowId": "u01_w0013",
         "audioKey": "u01_w0013_lf",
         "type": "listening_target_choice",
@@ -2467,7 +2467,7 @@
         "activityIndex": 5
       },
       {
-        "cardId": "cajun:u01_w0028:listening_target:step06",
+        "cardId": "cajun:u01_w0028:listening_target:step06::cajun_u01_review",
         "rowId": "u01_w0028",
         "audioKey": "u01_w0028_lf",
         "type": "listening_target_choice",
@@ -2659,7 +2659,7 @@
         "activityIndex": 13
       },
       {
-        "cardId": "cajun:u01_w0013:listening_target:step14",
+        "cardId": "cajun:u01_w0013:listening_target:step14::cajun_u01_review",
         "rowId": "u01_w0013",
         "audioKey": "u01_w0013_lf",
         "type": "listening_target_choice",
@@ -3083,7 +3083,7 @@
         "activityIndex": 14
       },
       {
-        "cardId": "cajun:match:u01_w0001:step15",
+        "cardId": "cajun:match:u01_w0001:step15::cajun_u02_l01",
         "type": "match_pairs",
         "prompt": "Match the words",
         "pairs": [
@@ -3931,7 +3931,7 @@
         "activityIndex": 1
       },
       {
-        "cardId": "cajun:u02_w0017:listening_target:step02",
+        "cardId": "cajun:u02_w0017:listening_target:step02::cajun_u02_l04",
         "rowId": "u02_w0017",
         "audioKey": "u02_w0017_lf",
         "type": "listening_target_choice",
@@ -5177,7 +5177,7 @@
         "activityIndex": 1
       },
       {
-        "cardId": "cajun:u02_w0017:listening_target:step02",
+        "cardId": "cajun:u02_w0017:listening_target:step02::cajun_u02_review",
         "rowId": "u02_w0017",
         "audioKey": "u02_w0017_lf",
         "type": "listening_target_choice",
@@ -5741,7 +5741,7 @@
         "activityIndex": 9
       },
       {
-        "cardId": "cajun:u03_w0004:listening_target:step10",
+        "cardId": "cajun:u03_w0004:listening_target:step10::cajun_u03_l01",
         "rowId": "u03_w0004",
         "audioKey": "u03_w0004_lf",
         "type": "listening_target_choice",
@@ -5836,7 +5836,7 @@
         "activityIndex": 13
       },
       {
-        "cardId": "cajun:u03_w0003:mc:step14",
+        "cardId": "cajun:u03_w0003:mc:step14::cajun_u03_l01",
         "rowId": "u03_w0003",
         "audioKey": "u03_w0003_lf",
         "type": "multiple_choice",
@@ -6001,7 +6001,7 @@
         "activityIndex": 4
       },
       {
-        "cardId": "cajun:u03_w0007:typing:step05",
+        "cardId": "cajun:u03_w0007:typing:step05::cajun_u03_l02",
         "rowId": "u03_w0007",
         "audioKey": "u03_w0007_lf",
         "type": "typing",
@@ -6044,7 +6044,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "cajun:u03_w0008:mc:step08",
+        "cardId": "cajun:u03_w0008:mc:step08::cajun_u03_l02",
         "rowId": "u03_w0008",
         "audioKey": "u03_w0008_lf",
         "type": "multiple_choice",
@@ -6139,7 +6139,7 @@
         "activityIndex": 13
       },
       {
-        "cardId": "cajun:u03_w0003:mc:step14",
+        "cardId": "cajun:u03_w0003:mc:step14::cajun_u03_l02",
         "rowId": "u03_w0003",
         "audioKey": "u03_w0003_lf",
         "type": "multiple_choice",
@@ -6411,7 +6411,7 @@
         "activityIndex": 8
       },
       {
-        "cardId": "cajun:u03_w0002:mc:step09",
+        "cardId": "cajun:u03_w0002:mc:step09::cajun_u03_l03",
         "rowId": "u03_w0002",
         "audioKey": "u03_w0001_cajun",
         "type": "multiple_choice",
@@ -7109,7 +7109,7 @@
         "activityIndex": 8
       },
       {
-        "cardId": "cajun:u03_w0002:mc:step09",
+        "cardId": "cajun:u03_w0002:mc:step09::cajun_u03_l05",
         "rowId": "u03_w0002",
         "audioKey": "u03_w0001_cajun",
         "type": "multiple_choice",
@@ -7523,7 +7523,7 @@
         "activityIndex": 11
       },
       {
-        "cardId": "cajun:u03_w0026:listening_target:step12",
+        "cardId": "cajun:u03_w0026:listening_target:step12::cajun_u03_l06",
         "rowId": "u03_w0026",
         "audioKey": "u03_w0026_lf",
         "type": "listening_target_choice",
@@ -7768,7 +7768,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "cajun:u03_w0008:mc:step08",
+        "cardId": "cajun:u03_w0008:mc:step08::cajun_u03_l07",
         "rowId": "u03_w0008",
         "audioKey": "u03_w0008_lf",
         "type": "multiple_choice",
@@ -7848,7 +7848,7 @@
         "activityIndex": 11
       },
       {
-        "cardId": "cajun:u03_w0026:listening_target:step12",
+        "cardId": "cajun:u03_w0026:listening_target:step12::cajun_u03_l07",
         "rowId": "u03_w0026",
         "audioKey": "u03_w0026_lf",
         "type": "listening_target_choice",
@@ -8285,7 +8285,7 @@
         "activityIndex": 4
       },
       {
-        "cardId": "cajun:u03_w0007:typing:step05",
+        "cardId": "cajun:u03_w0007:typing:step05::cajun_u03_review",
         "rowId": "u03_w0007",
         "audioKey": "u03_w0007_lf",
         "type": "typing",
@@ -8393,7 +8393,7 @@
         "activityIndex": 9
       },
       {
-        "cardId": "cajun:u03_w0004:listening_target:step10",
+        "cardId": "cajun:u03_w0004:listening_target:step10::cajun_u03_review",
         "rowId": "u03_w0004",
         "audioKey": "u03_w0004_lf",
         "type": "listening_target_choice",
@@ -8591,7 +8591,7 @@
         "activityIndex": 1
       },
       {
-        "cardId": "cajun:u04_w0001:mc:step02",
+        "cardId": "cajun:u04_w0001:mc:step02::cajun_u04_l01",
         "rowId": "u04_w0001",
         "audioKey": "u04_w0001_lf",
         "type": "multiple_choice",
@@ -8780,7 +8780,7 @@
         "activityIndex": 10
       },
       {
-        "cardId": "cajun:u04_w0006:listening_target:step11",
+        "cardId": "cajun:u04_w0006:listening_target:step11::cajun_u04_l01",
         "rowId": "u04_w0006",
         "audioKey": "u04_w0006_lf",
         "type": "listening_target_choice",
@@ -10942,7 +10942,7 @@
         "activityIndex": 1
       },
       {
-        "cardId": "cajun:u04_w0001:mc:step02",
+        "cardId": "cajun:u04_w0001:mc:step02::cajun_u04_review",
         "rowId": "u04_w0001",
         "audioKey": "u04_w0001_lf",
         "type": "multiple_choice",
@@ -11162,7 +11162,7 @@
         "activityIndex": 10
       },
       {
-        "cardId": "cajun:u04_w0006:listening_target:step11",
+        "cardId": "cajun:u04_w0006:listening_target:step11::cajun_u04_review",
         "rowId": "u04_w0006",
         "audioKey": "u04_w0006_lf",
         "type": "listening_target_choice",
@@ -12471,7 +12471,7 @@
         "activityIndex": 1
       },
       {
-        "cardId": "cajun:u05_w0016:typing:step02",
+        "cardId": "cajun:u05_w0016:typing:step02::cajun_u05_l04",
         "rowId": "u05_w0016",
         "audioKey": "u05_w0016_lf",
         "type": "typing",
@@ -12811,7 +12811,7 @@
         "activityIndex": 1
       },
       {
-        "cardId": "cajun:u05_w0016:typing:step02",
+        "cardId": "cajun:u05_w0016:typing:step02::cajun_u05_l05",
         "rowId": "u05_w0016",
         "audioKey": "u05_w0016_lf",
         "type": "typing",
@@ -14573,7 +14573,7 @@
         "activityIndex": 8
       },
       {
-        "cardId": "cajun:u06_w0003:listening_target:step09",
+        "cardId": "cajun:u06_w0003:listening_target:step09::cajun_u06_l01",
         "rowId": "u06_w0003",
         "audioKey": "u06_w0003_lf",
         "type": "listening_target_choice",
@@ -14831,7 +14831,7 @@
         "activityIndex": 8
       },
       {
-        "cardId": "cajun:u06_w0003:listening_target:step09",
+        "cardId": "cajun:u06_w0003:listening_target:step09::cajun_u06_l02",
         "rowId": "u06_w0003",
         "audioKey": "u06_w0003_lf",
         "type": "listening_target_choice",
@@ -14923,7 +14923,7 @@
         "activityIndex": 12
       },
       {
-        "cardId": "cajun:u06_w0007:typing:step13",
+        "cardId": "cajun:u06_w0007:typing:step13::cajun_u06_l02",
         "rowId": "u06_w0007",
         "audioKey": "u06_w0007_lf",
         "type": "typing",
@@ -15555,7 +15555,7 @@
         "activityIndex": 12
       },
       {
-        "cardId": "cajun:u06_w0007:typing:step13",
+        "cardId": "cajun:u06_w0007:typing:step13::cajun_u06_l04",
         "rowId": "u06_w0007",
         "audioKey": "u06_w0007_lf",
         "type": "typing",

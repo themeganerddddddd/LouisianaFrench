@@ -4586,7 +4586,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "kreole:u04_w0009:mc:step08",
+        "cardId": "kreole:u04_w0009:mc:step08::kreole_u04_l02",
         "rowId": "u04_w0009",
         "audioKey": "u04_w0009_kreole",
         "type": "multiple_choice",
@@ -4987,7 +4987,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "kreole:u04_w0009:mc:step08",
+        "cardId": "kreole:u04_w0009:mc:step08::kreole_u04_review",
         "rowId": "u04_w0009",
         "audioKey": "u04_w0009_kreole",
         "type": "multiple_choice",
@@ -5741,7 +5741,7 @@
         "activityIndex": 10
       },
       {
-        "cardId": "kreole:u05_w0003:listening_target:step11",
+        "cardId": "kreole:u05_w0003:listening_target:step11::kreole_u05_l02",
         "rowId": "u05_w0003",
         "audioKey": "u05_w0003_kreole",
         "type": "listening_target_choice",
@@ -6116,7 +6116,7 @@
         "activityIndex": 10
       },
       {
-        "cardId": "kreole:u05_w0003:listening_target:step11",
+        "cardId": "kreole:u05_w0003:listening_target:step11::kreole_u05_l03",
         "rowId": "u05_w0003",
         "audioKey": "u05_w0003_kreole",
         "type": "listening_target_choice",
@@ -7337,7 +7337,7 @@
         "activityIndex": 14
       },
       {
-        "cardId": "kreole:match:u06_w0010:step15",
+        "cardId": "kreole:match:u06_w0010:step15::kreole_u06_l02",
         "type": "match_pairs",
         "prompt": "Match the words",
         "pairs": [
@@ -7552,7 +7552,7 @@
         "activityIndex": 8
       },
       {
-        "cardId": "kreole:u06_w0011:typing:step09",
+        "cardId": "kreole:u06_w0011:typing:step09::kreole_u06_l03",
         "rowId": "u06_w0011",
         "audioKey": "u06_w0011_kreole",
         "type": "typing",
@@ -7974,7 +7974,7 @@
         "activityIndex": 8
       },
       {
-        "cardId": "kreole:u06_w0011:typing:step09",
+        "cardId": "kreole:u06_w0011:typing:step09::kreole_u06_review",
         "rowId": "u06_w0011",
         "audioKey": "u06_w0011_kreole",
         "type": "typing",
@@ -8113,7 +8113,7 @@
         "activityIndex": 14
       },
       {
-        "cardId": "kreole:match:u06_w0010:step15",
+        "cardId": "kreole:match:u06_w0010:step15::kreole_u06_review",
         "type": "match_pairs",
         "prompt": "Match the words",
         "pairs": [
@@ -9098,7 +9098,7 @@
         "activityIndex": 11
       },
       {
-        "cardId": "kreole:u07_w0009:mc:step12",
+        "cardId": "kreole:u07_w0009:mc:step12::kreole_u07_l03",
         "rowId": "u07_w0009",
         "audioKey": "u07_w0009_kreole",
         "type": "multiple_choice",
@@ -9557,7 +9557,7 @@
         "activityIndex": 11
       },
       {
-        "cardId": "kreole:u07_w0009:mc:step12",
+        "cardId": "kreole:u07_w0009:mc:step12::kreole_u07_review",
         "rowId": "u07_w0009",
         "audioKey": "u07_w0009_kreole",
         "type": "multiple_choice",
@@ -9849,7 +9849,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "kreole:u08_w0001:mc:step08",
+        "cardId": "kreole:u08_w0001:mc:step08::kreole_u08_l01",
         "rowId": "u08_w0001",
         "audioKey": "u08_w0001_kreole",
         "type": "multiple_choice",
@@ -10627,7 +10627,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "kreole:u08_w0001:mc:step08",
+        "cardId": "kreole:u08_w0001:mc:step08::kreole_u08_review",
         "rowId": "u08_w0001",
         "audioKey": "u08_w0001_kreole",
         "type": "multiple_choice",
@@ -10907,7 +10907,7 @@
         "activityIndex": 4
       },
       {
-        "cardId": "kreole:u09_w0001:mc:step05",
+        "cardId": "kreole:u09_w0001:mc:step05::kreole_u09_l01",
         "rowId": "u09_w0001",
         "audioKey": "u09_w0001_kreole",
         "type": "multiple_choice",
@@ -11318,7 +11318,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "kreole:u09_w0005:mc:step08",
+        "cardId": "kreole:u09_w0005:mc:step08::kreole_u09_l02",
         "rowId": "u09_w0005",
         "audioKey": "u09_w0005_kreole",
         "type": "multiple_choice",
@@ -11662,7 +11662,7 @@
         "activityIndex": 4
       },
       {
-        "cardId": "kreole:u09_w0001:mc:step05",
+        "cardId": "kreole:u09_w0001:mc:step05::kreole_u09_review",
         "rowId": "u09_w0001",
         "audioKey": "u09_w0001_kreole",
         "type": "multiple_choice",
@@ -11738,7 +11738,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "kreole:u09_w0005:mc:step08",
+        "cardId": "kreole:u09_w0005:mc:step08::kreole_u09_review",
         "rowId": "u09_w0005",
         "audioKey": "u09_w0005_kreole",
         "type": "multiple_choice",
@@ -12059,7 +12059,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "kreole:u10_w0001:listening_target:step08",
+        "cardId": "kreole:u10_w0001:listening_target:step08::kreole_u10_l01",
         "rowId": "u10_w0001",
         "audioKey": "u10_w0001_kreole",
         "type": "listening_target_choice",
@@ -12747,7 +12747,7 @@
         "activityIndex": 7
       },
       {
-        "cardId": "kreole:u10_w0001:listening_target:step08",
+        "cardId": "kreole:u10_w0001:listening_target:step08::kreole_u10_l03",
         "rowId": "u10_w0001",
         "audioKey": "u10_w0001_kreole",
         "type": "listening_target_choice",
