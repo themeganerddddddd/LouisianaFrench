@@ -458,6 +458,11 @@ export async function upsertLeaderboard(name, xp) {
   );
 }
 
+function calendarDaysBetween(later, earlier) {
+  const utcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.round((utcDay(later) - utcDay(earlier)) / 86400000);
+}
+
 // One Language's Profile at a time: overlapping recordStudyAndXp calls
 // used to read the same XP and overwrite each other (#249).
 const recordStudyAndXpByLanguage = new Map();
@@ -503,9 +508,7 @@ export function recordStudyAndXp(language, xpEarned) {
         last.getDate()
       );
 
-      const diffDays = Math.floor(
-        (today - lastDay) / 86400000
-      );
+      const diffDays = calendarDaysBetween(today, lastDay);
 
       if (diffDays === 1) {
         streak += 1;
