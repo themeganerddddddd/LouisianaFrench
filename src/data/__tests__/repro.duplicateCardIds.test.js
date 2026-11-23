@@ -9,6 +9,7 @@ import { seedAsyncStorage } from '../../test/fixtures/learnerProgress/seedAsyncS
 import { renderApp } from '../../test/renderApp';
 import { setupAppTests } from '../../test/setupAppTest';
 import { getDailyReviewQueue } from '../../utils/reviewQueue';
+import { migrateLegacyCardIds } from '../../utils/storage';
 
 setupAppTests();
 
@@ -30,7 +31,9 @@ function duplicateCardIds(language) {
 
 function activityIn(lessonId, cardId) {
   const lesson = getLessonsByLanguage('cajun').find((l) => l.id === lessonId);
-  return lesson.activities.find((a) => a.cardId === cardId);
+  return lesson.activities.find(
+    (activity) => activity.cardId === cardId || activity.cardId === `${cardId}::${lessonId}`
+  );
 }
 
 describe('repro audit: repeated question IDs in the shipped catalog', () => {
@@ -61,6 +64,7 @@ describe('repro audit: repeated question IDs in the shipped catalog', () => {
         }
       }
     });
+    await migrateLegacyCardIds();
 
     renderApp({
       initialRouteName: 'MistakeReview',
@@ -84,11 +88,22 @@ describe('repro audit: repeated question IDs in the shipped catalog', () => {
           nextReviewAt: new Date(2026, 0, 11, 9).toISOString(),
           lapses: 1
         }
+      },
+      // The saved review has no lesson of its own. Unit 2 is the only completed
+      // lesson, so startup migration keeps the history on that copy.
+      lessonProgress: {
+        'cajun:cajun_u02_l01': {
+          completed: true,
+          completedAt: new Date(2026, 0, 11, 9).toISOString()
+        }
       }
     });
+    await migrateLegacyCardIds();
 
     const queue = await getDailyReviewQueue('cajun');
-    const reviewed = queue.filter((a) => a.cardId === SHARED_MATCH_ID);
+    const reviewed = queue.filter(
+      (activity) => activity.cardId === `${SHARED_MATCH_ID}::cajun_u02_l01`
+    );
 
     // The learner only ever answered the Unit 2 version, but both catalog questions
     // share its review state. getDailyReviewQueue dedupes by cardId and keeps the

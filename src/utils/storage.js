@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import legacyCardIds from '../data/legacyCardIds.json';
+import { getLessonsByLanguage } from '../data/lessonLoader';
 import { getNow } from './clock';
 
 const KEYS = {
@@ -9,6 +11,7 @@ const KEYS = {
   LESSON_PROGRESS: 'lf_lesson_progress',
   WORD_PROGRESS: 'lf_word_progress',
   REVIEW_STATE: 'lf_review_state',
+  CARD_ID_MIGRATION: 'lf_card_id_migration',
   DAILY_REVIEW_LOG: 'lf_daily_review_log',
   DAILY_REVIEW_LOG_V2_CAJUN: 'lf_daily_review_log_v2_cajun',
   DAILY_REVIEW_LOG_V2_KREOLE: 'lf_daily_review_log_v2_kreole',
@@ -212,6 +215,117 @@ export async function updateWordProgress(
   progress[key] = current;
 
   await saveWordProgress(progress);
+}
+
+function readObjectStore(raw) {
+  if (raw == null || raw === '') return { ok: true, value: {} };
+  try {
+    const value = JSON.parse(raw);
+    if (value == null || typeof value !== 'object' || Array.isArray(value)) return { ok: false };
+    return { ok: true, value };
+  } catch {
+    return { ok: false };
+  }
+}
+
+function isRecord(value) {
+  return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function lessonOrder(language) {
+  const order = new Map();
+  getLessonsByLanguage(language).forEach((lesson, index) => order.set(lesson.id, index));
+  return order;
+}
+
+function completedLesson(progress, language, lessonId) {
+  const record = progress[`${language}:${lessonId}`];
+  return isRecord(record) && record.completed ? record : null;
+}
+
+function chooseLegacyLesson(language, copies, pending, progress, order) {
+  const lessonIds = Object.keys(copies);
+  if (pending && copies[pending.sourceId]) return pending.sourceId;
+
+  const completed = lessonIds.filter((lessonId) => completedLesson(progress, language, lessonId));
+  if (completed.length === 1) return completed[0];
+
+  const rank = (lessonId) => (order.has(lessonId) ? order.get(lessonId) : Number.MAX_SAFE_INTEGER);
+  if (completed.length > 1) {
+    return completed.slice().sort((left, right) => {
+      const leftTime = Date.parse(completedLesson(progress, language, left).completedAt);
+      const rightTime = Date.parse(completedLesson(progress, language, right).completedAt);
+      const leftOk = Number.isFinite(leftTime);
+      const rightOk = Number.isFinite(rightTime);
+      if (leftOk && rightOk && leftTime !== rightTime) return leftTime - rightTime;
+      if (leftOk !== rightOk) return leftOk ? -1 : 1;
+      return rank(left) - rank(right);
+    })[0];
+  }
+
+  return lessonIds.slice().sort((left, right) => rank(left) - rank(right))[0];
+}
+
+// One startup pass. Read paths stay clear of this so a review write cannot race it.
+// A record already stored under the new id wins. A null record is left in place.
+export async function migrateLegacyCardIds() {
+  const reviewStore = readObjectStore(await AsyncStorage.getItem(KEYS.REVIEW_STATE));
+  const mistakeStore = readObjectStore(await AsyncStorage.getItem(KEYS.PENDING_MISTAKES));
+  const progressStore = readObjectStore(await AsyncStorage.getItem(KEYS.LESSON_PROGRESS));
+  const progress = progressStore.ok ? progressStore.value : {};
+  let reviewDirty = false;
+  let mistakesDirty = false;
+
+  for (const language of ['cajun', 'kreole']) {
+    const map = legacyCardIds[language];
+    if (!isRecord(map)) continue;
+    const order = lessonOrder(language);
+    const mistakes = mistakeStore.ok && isRecord(mistakeStore.value[language])
+      ? mistakeStore.value[language]
+      : null;
+
+    for (const [oldId, copies] of Object.entries(map)) {
+      if (!isRecord(copies)) continue;
+      const reviewHas = reviewStore.ok && Object.prototype.hasOwnProperty.call(reviewStore.value, oldId);
+      const mistakeHas = mistakes != null && Object.prototype.hasOwnProperty.call(mistakes, oldId);
+      const reviewRecord = reviewHas ? reviewStore.value[oldId] : null;
+      const mistakeRecord = mistakeHas ? mistakes[oldId] : null;
+      if (!isRecord(reviewRecord) && !isRecord(mistakeRecord)) continue;
+
+      const newId = copies[chooseLegacyLesson(
+        language,
+        copies,
+        isRecord(mistakeRecord) ? mistakeRecord : null,
+        progress,
+        order
+      )];
+      if (!newId) continue;
+
+      if (isRecord(reviewRecord)) {
+        if (!Object.prototype.hasOwnProperty.call(reviewStore.value, newId)) {
+          reviewStore.value[newId] = { ...reviewRecord };
+        }
+        delete reviewStore.value[oldId];
+        reviewDirty = true;
+      }
+
+      if (isRecord(mistakeRecord)) {
+        if (!Object.prototype.hasOwnProperty.call(mistakes, newId)) {
+          mistakes[newId] = { ...mistakeRecord, cardId: newId };
+        }
+        delete mistakes[oldId];
+        mistakesDirty = true;
+      }
+    }
+  }
+
+  if (reviewDirty) {
+    await AsyncStorage.setItem(KEYS.REVIEW_STATE, JSON.stringify(reviewStore.value));
+  }
+  if (mistakesDirty) {
+    await AsyncStorage.setItem(KEYS.PENDING_MISTAKES, JSON.stringify(mistakeStore.value));
+  }
+  await AsyncStorage.setItem(KEYS.CARD_ID_MIGRATION, '1');
 }
 
 export async function getReviewState() {
