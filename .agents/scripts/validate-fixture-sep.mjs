@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { dirname, join, normalize } from 'node:path';
+import { readdirSync } from 'node:fs';
+import { dirname, join, normalize, relative, resolve, sep } from 'node:path';
 import { exists, printJson, readText, repoRoot, run } from './lib/repo.mjs';
 
 const SHIPPED_CATALOG =
@@ -9,8 +10,26 @@ const IMPORT_SPEC = /(?:from|require\()\s*['"]([^'"]+)['"]/g;
 const COMPACT_FIXTURE =
   /(?:from|require\()\s*['"][^'"]*fixtures?[^'"]*['"]|__fixtures__|compactFixture|makeFixture|testFixture|fixtures\/(?:catalog|learnerProgress)/i;
 
+const SKIP_DIRS = new Set([
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  'coverage',
+  '.expo',
+  'android',
+  'ios'
+]);
+
 function collectCandidateFiles(root) {
   process.chdir(root);
+  const dirtyTests = dirtyTestFiles(root);
+  if (dirtyTests.length > 0) return dirtyTests;
+  return walkTestFiles(root);
+}
+
+function dirtyTestFiles(root) {
+  if (!exists(join(root, '.git'))) return [];
 
   const staged = run('git', ['diff', '--cached', '--name-only', '--diff-filter=ACMR'], {
     allowFail: true
@@ -27,18 +46,40 @@ function collectCandidateFiles(root) {
   if (files.length === 0) {
     const status = run('git', ['status', '-u', '--porcelain']);
     for (const line of status.split('\n').filter(Boolean)) {
-      const path = line.slice(3).includes(' -> ')
+      const filePath = line.slice(3).includes(' -> ')
         ? line.slice(3).split(' -> ').pop()
         : line.slice(3);
-      files.push(path);
+      files.push(filePath);
     }
   }
 
-  const dirtyTests = testFiles(files);
-  if (dirtyTests.length > 0) return dirtyTests;
+  return testFiles(files);
+}
 
-  const tracked = run('git', ['ls-files', '-z'], { trim: false });
-  return testFiles(tracked.split('\0'));
+function walkTestFiles(root) {
+  const found = [];
+
+  const visit = (dir) => {
+    let entries;
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (SKIP_DIRS.has(entry.name)) continue;
+      const absolute = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        visit(absolute);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      found.push(relative(root, absolute).split(sep).join('/'));
+    }
+  };
+
+  visit(root);
+  return testFiles(found);
 }
 
 function testFiles(paths) {
@@ -62,14 +103,31 @@ function importsShippedCatalog(content, filePath) {
   return false;
 }
 
+function scanRoot(argv) {
+  const index = argv.indexOf('--root');
+  if (index === -1) {
+    try {
+      return repoRoot();
+    } catch {
+      return process.cwd();
+    }
+  }
+  const value = argv[index + 1];
+  if (!value || value.startsWith('-')) {
+    throw new Error('--root requires a directory');
+  }
+  return resolve(value);
+}
+
 function main() {
-  const strict = process.argv.includes('--strict');
-  const root = repoRoot();
+  const argv = process.argv.slice(2);
+  const strict = argv.includes('--strict');
+  const root = scanRoot(argv);
   const warnings = [];
   const scanned = [];
 
-  for (const path of collectCandidateFiles(root)) {
-    const absolute = path.startsWith('/') ? path : join(root, path);
+  for (const filePath of collectCandidateFiles(root)) {
+    const absolute = filePath.startsWith('/') ? filePath : join(root, filePath);
     if (!exists(absolute)) continue;
     let content;
     try {
@@ -77,10 +135,10 @@ function main() {
     } catch {
       continue;
     }
-    scanned.push(path);
-    if (importsShippedCatalog(content, path) && COMPACT_FIXTURE.test(content)) {
+    scanned.push(filePath);
+    if (importsShippedCatalog(content, filePath) && COMPACT_FIXTURE.test(content)) {
       warnings.push(
-        `${path}: imports both shipped catalog JSON under src/data and compact fixtures — keep shipped-data validation separate from behavior fixtures.`
+        `${filePath}: imports both shipped catalog JSON under src/data and compact fixtures — keep shipped-data validation separate from behavior fixtures.`
       );
     }
   }
