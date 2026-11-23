@@ -36,6 +36,8 @@ export default function SpeechPracticeScreen({
     [language, word]
   );
   const [dailyPracticeWords, setDailyPracticeWords] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const practiceWords = isDailySpeechPractice ? dailyPracticeWords : freePracticeWords;
   const [wordIndex, setWordIndex] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
@@ -65,17 +67,23 @@ export default function SpeechPracticeScreen({
   useEffect(() => {
     if (!isDailySpeechPractice) return undefined;
     let cancelled = false;
-    Promise.all([getLessonProgress(), getWordProgress()]).then(([lessonProgress, wordProgress]) => {
-      if (cancelled) return;
-      setDailyPracticeWords(pickSpeechWords({
-        lessons: getLessonsByLanguage(language),
-        lessonProgress,
-        wordProgress,
-        limit: wordLimit
-      }));
-    });
+    Promise.all([getLessonProgress(), getWordProgress()])
+      .then(([lessonProgress, wordProgress]) => {
+        if (cancelled) return;
+        setLoadError(false);
+        setDailyPracticeWords(pickSpeechWords({
+          lessons: getLessonsByLanguage(language),
+          lessonProgress,
+          wordProgress,
+          limit: wordLimit
+        }));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLoadError(true);
+      });
     return () => { cancelled = true; };
-  }, [isDailySpeechPractice, language, wordLimit]);
+  }, [isDailySpeechPractice, language, wordLimit, loadAttempt]);
 
   async function play(source) {
     if (!source) return;
@@ -188,6 +196,22 @@ export default function SpeechPracticeScreen({
   }
 
   const accent = language === 'kreole' ? '#08834c' : '#2771CB';
+
+  if (loadError) {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.status}>Daily Speech Practice could not be loaded.</Text>
+        <TouchableOpacity
+          style={[styles.primaryButton, { backgroundColor: accent }]}
+          onPress={() => setLoadAttempt((attempt) => attempt + 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Try again"
+        >
+          <Text style={styles.primaryButtonText}>Try again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (!practiceWords) return null;
 
