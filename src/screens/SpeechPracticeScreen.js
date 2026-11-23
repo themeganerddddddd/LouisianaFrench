@@ -175,24 +175,28 @@ export default function SpeechPracticeScreen({
       return;
     }
     setBusy(true);
-    if (scored) {
-      await recordStudyAndXp(language, 1);
-      if (acceptedCount + 1 >= wordLimit) {
+    try {
+      if (scored) {
+        await recordStudyAndXp(language, 1);
+        if (acceptedCount + 1 >= wordLimit) {
+          await recordPracticeCompletion(language, 'speech');
+          onComplete?.();
+          return;
+        }
+        setAcceptedCount(acceptedCount + 1);
+      } else {
         await recordPracticeCompletion(language, 'speech');
-        setBusy(false);
-        onComplete?.();
-        return;
       }
-      setAcceptedCount(acceptedCount + 1);
-    } else {
-      await recordPracticeCompletion(language, 'speech');
+      setLearnerUri(null);
+      setAttemptDurationMs(null);
+      setHasReviewedAttempt(false);
+      setStatus(INITIAL_STATUS);
+      setWordIndex((index) => (index + 1) % practiceWords.length);
+    } catch {
+      setStatus('Could not save this attempt. Try again.');
+    } finally {
+      setBusy(false);
     }
-    setLearnerUri(null);
-    setAttemptDurationMs(null);
-    setHasReviewedAttempt(false);
-    setStatus(INITIAL_STATUS);
-    setWordIndex((index) => (index + 1) % practiceWords.length);
-    setBusy(false);
   }
 
   const accent = language === 'kreole' ? '#08834c' : '#2771CB';
