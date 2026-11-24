@@ -1,5 +1,5 @@
 import type { AccountEvent, AuthResult, DeleteResult, Effect, Identity } from './accountMachine'
-import { beginAttempt, firstOf, stillCurrent, type AccountConnector } from './accountConnector'
+import { firstOf, type AccountConnector } from './accountConnector'
 
 type Dispatch = (event: AccountEvent) => void
 const unknownAuth: AuthResult = { ok: false, failure: 'unknown' }
@@ -17,7 +17,7 @@ export async function runAccountEffect(effect: Effect, connector: AccountConnect
     const result = await firstOf(work, timeoutMs)
     dispatch({
       type: 'deleteSettled',
-      result: result === 'timeout' ? { ok: false, failure: 'network' } : asDelete(result)
+      result: result === 'timeout' ? { ok: false, failure: 'network' } : result
     })
     return
   }
@@ -25,18 +25,21 @@ export async function runAccountEffect(effect: Effect, connector: AccountConnect
     dispatch({ type: 'authSettled', result: await callAuth(effect, connector).catch(() => unknownAuth) })
     return
   }
-  const mine = effect.run === 'signIn' || effect.run === 'signUp' ? beginAttempt() : 0
+  const mine = effect.run === 'signIn' || effect.run === 'signUp' ? connector.beginAttempt() : 0
   const work = callAuth(effect, connector).catch(() => unknownAuth)
   const result = await firstOf(work, timeoutMs)
   if (result === 'timeout') {
     dispatch({ type: 'authSettled', result: { ok: false, failure: 'network' } })
     if (mine) {
       void work.then((late) => {
-        if (late.ok === true && stillCurrent(mine)) void connector.signOut().catch(() => undefined)
+        if (late.ok === true && 'identity' in late && connector.orphaned(mine)) {
+          void connector.signOut().catch(() => undefined)
+        }
       })
     }
     return
   }
+  if (mine && result.ok === true && 'identity' in result) connector.noteSuccess(mine)
   dispatch({ type: 'authSettled', result })
 }
 
@@ -51,14 +54,9 @@ async function callAuth(effect: AuthEffect, connector: AccountConnector): Promis
     case 'signInWithProvider': return connector.signInWithProvider(effect.provider)
     case 'sendReset': return connector.sendReset(effect.email)
     case 'updatePassword': return connector.updatePassword(effect.password)
-    default: return effect
+    default: {
+      const unreachable: never = effect
+      return unreachable
+    }
   }
-}
-
-function asDelete(result: unknown): DeleteResult {
-  if (!result || typeof result !== 'object') return unknownDelete
-  if ('ok' in result && result.ok === true) return { ok: true }
-  const failure = 'failure' in result ? result.failure : undefined
-  if (failure === 'network' || failure === 'notSignedIn' || failure === 'unknown') return { ok: false, failure }
-  return unknownDelete
 }
