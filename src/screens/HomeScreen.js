@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AboutTextModal from '../components/AboutTextModal';
 import SignInModal from '../components/SignInModal';
+import { useAccountMachine } from '../account/useAccountMachine';
 import { createSupabaseIdentityConnector } from '../identity/connector';
 import BugReportButton from '../components/BugReportButton';
 import DebugCatalogModal from '../components/DebugCatalogModal';
@@ -39,6 +40,16 @@ const ABOUT_MENU_EXIT_MS = 200;
 
 // Account stays out of the menu until rollout turns this on.
 const SHOW_ACCOUNT_MENU_ENTRY = false;
+
+function asAccountIdentity(identity) {
+  if (!identity?.id) return null;
+  return {
+    id: identity.id,
+    email: identity.email || '',
+    username: identity.username ?? null,
+    provider: identity.provider === 'google' ? 'google' : 'email'
+  };
+}
 
 function getLessonButtonText(done, locked = false) {
   if (done) return 'Done';
@@ -322,29 +333,37 @@ export default function HomeScreen() {
   const bugReportOpenTimerRef = useRef(null);
   const [identity, setIdentity] = useState(null);
   const [signInVisible, setSignInVisible] = useState(false);
-  const [recoveryActive, setRecoveryActive] = useState(false);
   const connectorRef = useRef(null);
   if (!connectorRef.current) {
     connectorRef.current = createSupabaseIdentityConnector();
   }
+  const { view: accountView, dispatch: dispatchAccount } = useAccountMachine(
+    connectorRef.current.account,
+    null
+  );
+  const accountKind = useRef(accountView.kind);
+  const recovering = useRef(false);
   const initialExpansionLanguage = useRef(null);
   const tboyTapRef = useRef({ count: 0, lastTapAt: 0 });
 
   useEffect(() => {
     let live = true;
     const connector = connectorRef.current;
-    connector.getIdentity().then((next) => {
-      if (live) setIdentity(next);
-    });
-    const unsubscribe = connector.subscribe((next) => {
-      if (live) setIdentity(next);
-    });
+    function rememberIdentity(next) {
+      if (!live || recovering.current) return;
+      setIdentity(next);
+      if (!next?.id) return;
+      dispatchAccount({ type: 'opened', identity: asAccountIdentity(next) });
+    }
+    connector.getIdentity().then(rememberIdentity);
+    const unsubscribe = connector.subscribe(rememberIdentity);
 
     async function openRecovery(url) {
-      const result = await connector.handleAuthUrl(url);
-      if (!live || result.kind !== 'recovery') return;
-      setRecoveryActive(true);
-      setSignInVisible(true);
+      const event = await connector.account.consumeAuthUrl(url);
+      if (!live || !event) return;
+      if (event.type === 'recoveryLinkOpened') recovering.current = true;
+      dispatchAccount(event);
+      if (event.type === 'recoveryLinkOpened' || event.type === 'linkFailed') setSignInVisible(true);
     }
 
     Linking.getInitialURL().then((url) => {
@@ -359,7 +378,13 @@ export default function HomeScreen() {
       unsubscribe();
       linking.remove();
     };
-  }, []);
+  }, [dispatchAccount]);
+
+  useEffect(() => {
+    if (accountView.kind === 'signedIn') setIdentity(accountView.identity);
+    if (accountKind.current === 'signedIn' && accountView.kind === 'signIn') setIdentity(null);
+    accountKind.current = accountView.kind;
+  }, [accountView]);
 
   useEffect(
     () => () => {
@@ -832,6 +857,7 @@ export default function HomeScreen() {
         onAccount={() => {
           setAboutMenuVisible(false);
           setAboutExpanded(false);
+          dispatchAccount({ type: 'opened', identity: asAccountIdentity(identity) });
           setSignInVisible(true);
         }}
         onToggle={() => setAboutExpanded((expanded) => !expanded)}
@@ -854,14 +880,14 @@ export default function HomeScreen() {
 
       <SignInModal
         visible={signInVisible}
-        identity={identity}
-        connector={connectorRef.current}
-        recoveryActive={recoveryActive}
-        onRecoveryFinished={() => setRecoveryActive(false)}
+        view={accountView}
+        dispatch={dispatchAccount}
         accentColor={theme.accent}
         onClose={() => {
           setSignInVisible(false);
-          setRecoveryActive(false);
+          if (accountView.kind !== 'signedIn' && accountView.kind !== 'deleteAccount') {
+            dispatchAccount({ type: 'opened', identity: null });
+          }
         }}
       />
 

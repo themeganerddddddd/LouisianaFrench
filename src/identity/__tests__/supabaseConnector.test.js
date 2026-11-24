@@ -38,6 +38,11 @@ describe('Supabase identity connector', () => {
     );
   });
 
+  it('leaves provider sign-in to the account connector', () => {
+    const connector = createSupabaseIdentityConnector({});
+    expect(connector.signInWithProvider).toBeUndefined();
+  });
+
   it('does not create a client when the public configuration is missing', async () => {
     createClient.mockClear();
     const connector = createSupabaseIdentityConnector({});

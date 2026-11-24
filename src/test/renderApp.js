@@ -9,6 +9,7 @@ import {
 } from 'react-native-safe-area-context';
 
 import AdvancedScreen from '../screens/AdvancedScreen';
+import AuthCallbackScreen from '../screens/AuthCallbackScreen';
 import DailyReviewScreen from '../screens/DailyReviewScreen';
 import DictionaryScreen from '../screens/DictionaryScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -29,7 +30,8 @@ const SCREENS = Object.freeze({
   LessonComplete: LessonCompleteScreen,
   DailyReview: DailyReviewScreen,
   Advanced: AdvancedScreen,
-  Dictionary: DictionaryScreen
+  Dictionary: DictionaryScreen,
+  AuthCallback: AuthCallbackScreen
 });
 
 export const REGISTERED_ROUTES = Object.freeze(Object.keys(SCREENS));

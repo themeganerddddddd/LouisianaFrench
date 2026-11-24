@@ -399,6 +399,15 @@ describe('forgot password and inbox', () => {
 });
 
 describe('recovery password', () => {
+  it('shows a link failure on the sign-in form', () => {
+    expect(reduce(signIn(), { type: 'linkFailed', failure: 'network' })).toEqual({
+      kind: 'signIn',
+      email: 'ada@example.com',
+      password: 'secret',
+      submit: { status: 'failed', failure: 'network' }
+    });
+  });
+
   it('enters setNewPassword only through the recovery link', () => {
     expect(reduce(signIn(), { type: 'recoveryLinkOpened' })).toEqual({
       kind: 'setNewPassword',

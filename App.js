@@ -2,13 +2,17 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { setAudioModeAsync } from 'expo-audio';
 import { StatusBar } from 'expo-status-bar';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import {
   initialWindowMetrics,
   SafeAreaProvider
 } from 'react-native-safe-area-context';
 
+import { authLinking, completeWebAuth } from './src/account/webAuth';
 import AdvancedScreen from './src/screens/AdvancedScreen';
+import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import DailyReviewScreen from './src/screens/DailyReviewScreen';
 import DictionaryScreen from './src/screens/DictionaryScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -19,6 +23,13 @@ import LoadingScreen from './src/screens/LoadingScreen';
 import MistakeReviewScreen from './src/screens/MistakeReviewScreen';
 
 const Stack = createStackNavigator();
+const webOrigin = typeof globalThis.location === 'object' && globalThis.location?.origin
+  ? globalThis.location.origin
+  : 'http://localhost';
+
+completeWebAuth(Platform.OS, () => {
+  WebBrowser.maybeCompleteAuthSession();
+});
 
 export default function App() {
   useEffect(() => {
@@ -40,7 +51,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <NavigationContainer>
+      <NavigationContainer linking={authLinking(Platform.OS, webOrigin)}>
         <StatusBar style="dark" />
         <Stack.Navigator
           initialRouteName="Loading"
@@ -55,6 +66,7 @@ export default function App() {
           <Stack.Screen name="DailyReview" component={DailyReviewScreen} />
           <Stack.Screen name="Advanced" component={AdvancedScreen} />
           <Stack.Screen name="Dictionary" component={DictionaryScreen} />
+          <Stack.Screen name="AuthCallback" component={AuthCallbackScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

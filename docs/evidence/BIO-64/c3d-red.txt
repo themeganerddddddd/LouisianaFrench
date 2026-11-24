@@ -1,0 +1,56 @@
+C3d red, captured before each fix. Paths are the repo-relative test files.
+
+1. redirectTo required
+src/account/__tests__/accountConnector.test.ts(17,5): error TS2578: Unused '@ts-expect-error' directive.
+Omitting redirectTo still compiled, so the directive was unused.
+
+2. Sign-in modal through the machine
+FAIL src/components/__tests__/SignInModal.machine.test.tsx
+Unable to find an element with text: /Choose a new password/
+The modal still showed Close and the sign-in form.
+
+3. Home recovery link
+FAIL src/screens/__tests__/homeAccountMachine.test.js
+expect(jest.fn()).toHaveBeenCalledWith(...expected)
+Expected: "https://x/auth/callback?code=abc&type=recovery"
+Number of calls: 0
+
+4. Android browser race
+FAIL src/account/__tests__/authBrowser.test.ts
+thrown: "Exceeded timeout of 1000 ms for a test."
+dispatches authSettled when Linking delivers the redirect
+The browser promise never resolved, and nothing listened for the redirect.
+
+5. consumeAuthUrl failures
+FAIL src/account/__tests__/accountMachine.test.ts
+shows a link failure on the sign-in form
+The reducer returned the unchanged sign-in view.
+FAIL src/account/__tests__/accountConnector.test.ts
+Expected: {"failure": "network", "type": "linkFailed"}
+Received: null
+The hanging exchange exceeded the 1000 ms test timeout.
+
+6. Home shows that failure
+FAIL src/screens/__tests__/homeAccountMachine.test.js
+shows a recovery exchange failure instead of ignoring it
+Received: null
+
+7. Web callback
+FAIL src/account/__tests__/webAuth.test.ts
+Expected number of calls: 1
+Received number of calls: 0
+
+8. Retire identity signInWithProvider
+FAIL src/identity/__tests__/supabaseConnector.test.js
+leaves provider sign-in to the account connector
+Received: [Function signInWithProvider]
+
+9. PKCE digest
+FAIL src/identity/__tests__/pkceCrypto.test.ts
+Matcher error: received value must be a promise or a function returning a promise
+Received has value: undefined
+
+10. Username while the profile read fails
+FAIL src/identity/__tests__/username.test.ts
+Expected: "Ada"
+Received: null
