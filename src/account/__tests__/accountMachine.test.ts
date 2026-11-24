@@ -1,10 +1,12 @@
+import { describe, expect, it } from '@jest/globals';
+
 import {
   DELETE_WORD,
+  canDismiss,
   effectFor,
   initialView,
   isDeleteArmed,
   reduce,
-  canDismiss,
   type AccountEvent,
   type AccountView,
   type AuthResult,
@@ -14,19 +16,6 @@ import {
   type Submit
 } from '../accountMachine';
 import { isValidUsernameFormat } from '../usernameFormat';
-
-declare function describe(name: string, fn: () => void): void;
-declare function it(name: string, fn: () => void): void;
-declare namespace it {
-  function each<T extends readonly unknown[]>(
-    cases: readonly T[]
-  ): (name: string, fn: (...args: T) => void) => void;
-}
-declare function expect(actual: unknown): {
-  toBe(expected: unknown): void;
-  toEqual(expected: unknown): void;
-  toBeNull(): void;
-};
 
 type Assert<T extends true> = T;
 type IncludesApple = 'apple' extends Provider ? true : false;
