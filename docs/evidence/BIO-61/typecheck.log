@@ -1,0 +1,123 @@
+===== npm run typecheck FAIL (src/typecheck-scratch.ts present) =====
+started: 2026-11-23T21:17:45-06:00
+
+> louisiana-french-v5@1.0.0 typecheck
+> tsc --noEmit
+
+src/typecheck-scratch.ts(1,14): error TS2322: Type 'string' is not assignable to type 'number'.
+exit:2
+
+===== npm run pr-ready FAIL (src/typecheck-scratch.ts present) =====
+started: 2026-11-23T21:17:52-06:00
+
+> louisiana-french-v5@1.0.0 pr-ready
+> node .agents/scripts/pr-ready.mjs
+
+→ npm run lint
+
+> louisiana-french-v5@1.0.0 lint
+> eslint .
+
+→ npm run typecheck
+
+> louisiana-french-v5@1.0.0 typecheck
+> tsc --noEmit
+
+src/typecheck-scratch.ts(1,14): error TS2322: Type 'string' is not assignable to type 'number'.
+→ npm run test
+
+> louisiana-french-v5@1.0.0 test
+> jest --watchAll=false
+
+
+Test Suites: 1 skipped, 56 passed, 56 of 57 total
+Tests:       10 skipped, 635 passed, 645 total
+Snapshots:   0 total
+Time:        20.775 s
+Ran all test suites.
+→ agent PR gates
+→ check-pr-ui-evidence
+{
+  "ok": true,
+  "reason": "non-ui-diff",
+  "base": "origin/main",
+  "baseSha": "2d35daf0618b31dfeb26d91288a93ee904b0e21e",
+  "changedCount": 0,
+  "uiFiles": []
+}
+→ no --body-file; skipping PR template section check
+→ production LOC added: 0 (soft 100 / hard 250); deleted 0
+{
+  "ok": true,
+  "ai": true,
+  "markers": [],
+  "failures": [],
+  "warnings": [],
+  "productionLoc": {
+    "added": 0,
+    "deleted": 0
+  }
+}
+pr-ready: FAILED (typecheck)
+exit:1
+
+===== npm run typecheck PASS (scratch file removed) =====
+started: 2026-11-23T21:18:30-06:00
+
+> louisiana-french-v5@1.0.0 typecheck
+> tsc --noEmit
+
+exit:0
+
+===== npm run pr-ready PASS (scratch file removed) =====
+started: 2026-11-23T21:18:31-06:00
+
+> louisiana-french-v5@1.0.0 pr-ready
+> node .agents/scripts/pr-ready.mjs
+
+→ npm run lint
+
+> louisiana-french-v5@1.0.0 lint
+> eslint .
+
+→ npm run typecheck
+
+> louisiana-french-v5@1.0.0 typecheck
+> tsc --noEmit
+
+→ npm run test
+
+> louisiana-french-v5@1.0.0 test
+> jest --watchAll=false
+
+
+Test Suites: 1 skipped, 56 passed, 56 of 57 total
+Tests:       10 skipped, 635 passed, 645 total
+Snapshots:   0 total
+Time:        15.106 s, estimated 21 s
+Ran all test suites.
+→ agent PR gates
+→ check-pr-ui-evidence
+{
+  "ok": true,
+  "reason": "non-ui-diff",
+  "base": "origin/main",
+  "baseSha": "2d35daf0618b31dfeb26d91288a93ee904b0e21e",
+  "changedCount": 0,
+  "uiFiles": []
+}
+→ no --body-file; skipping PR template section check
+→ production LOC added: 0 (soft 100 / hard 250); deleted 0
+{
+  "ok": true,
+  "ai": true,
+  "markers": [],
+  "failures": [],
+  "warnings": [],
+  "productionLoc": {
+    "added": 0,
+    "deleted": 0
+  }
+}
+pr-ready: ok
+exit:0
