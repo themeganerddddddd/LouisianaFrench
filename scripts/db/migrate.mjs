@@ -40,6 +40,23 @@ function loadLocal() {
   return { rows, blocks };
 }
 
+function verifyCatalog() {
+  const dir = path.join(root, 'scripts', 'db', 'verify');
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
+  const available = [];
+  for (const file of names) {
+    const match = /^(\d{14})\.sql$/.exec(file);
+    if (match) available.push({ version: match[1], path: path.join(dir, file) });
+  }
+  return available;
+}
+
 function writeOut(text) {
   if (!text) return;
   process.stdout.write(checks.redact(text.endsWith('\n') ? text : `${text}\n`, secrets));
@@ -76,13 +93,7 @@ async function main() {
     processEnv: process.env,
     fileText: readEnvFile()
   });
-  let password = '';
-  try {
-    password = new URL(url).password;
-  } catch {
-    throw new Error('Database URL is not a valid postgres URL.');
-  }
-  secrets = { url, password };
+  secrets = { url, password: checks.passwordFromUrl(url) };
   const target = checks.assertTarget({ env: parsed.env, url, confirm: parsed.confirm });
   writeOut([
     `env ${parsed.env}`,
@@ -91,13 +102,16 @@ async function main() {
     `port ${target.port}`
   ].join('\n'));
 
-  const verifyPath = path.join(root, 'scripts', 'db', 'verify.sql');
+  const catalog = verifyCatalog();
   if (parsed.command === 'verify') {
-    const [command] = checks.commandsFor({
-      command: 'verify', dbUrl: url, workdir: root, verifyPath
+    const remote = await readRemote(url);
+    const verifyPaths = checks.verifyFilesForVersions(remote.map((row) => row.version), catalog);
+    if (verifyPaths.length === 0) writeOut('no verify file for the applied versions');
+    const commands = checks.commandsFor({
+      command: 'verify', dbUrl: url, workdir: root, verifyPaths
     });
-    const result = await runCommand(command);
-    process.exit(result.code === 0 ? 0 : result.code || 1);
+    const outcome = await checks.runSteps({ history: { ok: true }, commands, run: runCommand });
+    process.exit(outcome.code === 0 ? 0 : outcome.code || 1);
   }
 
   const remote = await readRemote(url);
@@ -113,8 +127,16 @@ async function main() {
     process.exit(history.ok ? 0 : 1);
   }
 
+  const verifyPaths = checks.verifyFilesForVersions(
+    remote.map((row) => row.version).concat(history.pending.map((row) => row.version)),
+    catalog
+  );
   const commands = checks.commandsFor({
-    command: parsed.command, dbUrl: url, workdir: root, verifyPath
+    command: parsed.command,
+    dbUrl: url,
+    workdir: root,
+    verifyPaths,
+    pendingCount: history.pending.length
   });
   const outcome = await checks.runSteps({
     history,

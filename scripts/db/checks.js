@@ -83,15 +83,51 @@ function assertTarget({ env, url, confirm, refs }) {
   return { ref, port, host: parsed.hostname, username };
 }
 
+function decodePassword(value) {
+  if (typeof value !== 'string' || value.length === 0) return '';
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function passwordFromUrl(url) {
+  try {
+    return decodePassword(new URL(url).password);
+  } catch {
+    return '';
+  }
+}
+
+function withoutPassword(url) {
+  const parsed = new URL(url);
+  parsed.password = '';
+  return parsed.href;
+}
+
 function redact(text, secrets = {}) {
   const needles = [];
   const add = (value) => {
     if (typeof value === 'string' && value.length > 0) needles.push(value);
   };
   add(secrets.url);
-  add(secrets.password);
-  if (typeof secrets.password === 'string' && secrets.password.length > 0) {
-    add(encodeURIComponent(secrets.password));
+  const seen = new Set();
+  const consider = (value) => {
+    if (typeof value !== 'string' || value.length === 0 || seen.has(value)) return;
+    seen.add(value);
+    add(value);
+    add(encodeURIComponent(value));
+    const decoded = decodePassword(value);
+    if (decoded !== value) consider(decoded);
+  };
+  consider(secrets.password);
+  if (secrets.url) {
+    try {
+      consider(new URL(secrets.url).password);
+    } catch {
+      /* the secret url is not a database URL */
+    }
   }
   let out = String(text ?? '');
   for (const needle of [...new Set(needles)].sort((a, b) => b.length - a.length)) {
@@ -200,7 +236,7 @@ function pushCommand(dbUrl, { dryRun, workdir }) {
     'push',
     '--skip-vault',
     `--workdir=${workdir}`,
-    `--remote=${dbUrl}`
+    `--remote=${withoutPassword(dbUrl)}`
   ];
   if (dryRun) args.push('--dry-run');
   return { cmd: 'npx', args, label: dryRun ? 'dry-run' : 'push' };
@@ -210,7 +246,7 @@ function historyCommand(dbUrl) {
   return {
     cmd: 'psql',
     args: [
-      dbUrl,
+      withoutPassword(dbUrl),
       '-X',
       '-v', 'ON_ERROR_STOP=1',
       '-v', 'VERBOSITY=verbose',
@@ -226,7 +262,7 @@ function verifyCommand(dbUrl, verifyPath) {
   return {
     cmd: 'psql',
     args: [
-      dbUrl,
+      withoutPassword(dbUrl),
       '-X',
       '-v', 'ON_ERROR_STOP=1',
       '-c', 'set default_transaction_read_only = on',
@@ -236,18 +272,28 @@ function verifyCommand(dbUrl, verifyPath) {
   };
 }
 
-function commandsFor({ command, dbUrl, workdir, verifyPath }) {
+function commandsFor({ command, dbUrl, workdir, verifyPaths, pendingCount }) {
   if (command === 'plan') return [pushCommand(dbUrl, { dryRun: true, workdir })];
   if (command === 'apply') {
-    return [
-      pushCommand(dbUrl, { dryRun: true, workdir }),
-      pushCommand(dbUrl, { dryRun: false, workdir }),
-      verifyCommand(dbUrl, verifyPath)
-    ];
+    const commands = [pushCommand(dbUrl, { dryRun: true, workdir })];
+    if (pendingCount > 0) commands.push(pushCommand(dbUrl, { dryRun: false, workdir }));
+    for (const verifyPath of verifyPaths || []) commands.push(verifyCommand(dbUrl, verifyPath));
+    return commands;
   }
-  if (command === 'verify') return [verifyCommand(dbUrl, verifyPath)];
+  if (command === 'verify') {
+    return (verifyPaths || []).map((verifyPath) => verifyCommand(dbUrl, verifyPath));
+  }
   if (command === 'status') return [historyCommand(dbUrl)];
   throw new Error(`Unknown command ${command}`);
+}
+
+function verifyFilesForVersions(appliedVersions, available) {
+  const applied = new Set(appliedVersions);
+  return available
+    .filter((file) => applied.has(file.version))
+    .slice()
+    .sort((left, right) => cmpVersion(left.version, right.version))
+    .map((file) => file.path);
 }
 
 async function runSteps({ history, commands, run }) {
@@ -261,11 +307,11 @@ async function runSteps({ history, commands, run }) {
   return { code: 0, ran };
 }
 
-function scrubbedEnv() {
-  const env = { ...process.env, PGCONNECT_TIMEOUT: '15', LC_ALL: 'C' };
+function scrubbedEnv(secrets = {}) {
+  const env = { ...process.env, PGCONNECT_TIMEOUT: '15', LC_ALL: 'C', PGSSLMODE: 'require' };
   delete env.SUPABASE_DB_URL_DEV;
   delete env.SUPABASE_DB_URL_PROD;
-  delete env.PGPASSWORD;
+  env.PGPASSWORD = decodePassword(secrets.password || '');
   return env;
 }
 
@@ -286,7 +332,7 @@ function runCaptured(cmd, args, secrets) {
     const child = spawn(cmd, args, {
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: scrubbedEnv()
+      env: scrubbedEnv(secrets)
     });
     child.stdout.on('data', (chunk) => out.push(String(chunk)));
     child.stderr.on('data', (chunk) => err.push(String(chunk)));
@@ -374,6 +420,8 @@ module.exports = {
   resolveDatabaseUrl,
   projectRefs,
   assertTarget,
+  passwordFromUrl,
+  withoutPassword,
   redact,
   formatCommand,
   parseMigrationFileName,
@@ -382,6 +430,8 @@ module.exports = {
   historyCommand,
   verifyCommand,
   commandsFor,
+  verifyFilesForVersions,
+  scrubbedEnv,
   runSteps,
   runCaptured,
   parseHistoryTuples,

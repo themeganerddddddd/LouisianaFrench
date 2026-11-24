@@ -32,7 +32,7 @@ node scripts/db/migrate.mjs apply --env dev
 node scripts/db/migrate.mjs verify --env dev
 ```
 
-`status` reads `supabase_migrations.schema_migrations` and compares it with the files. `plan` is a dry run: the same check, then `supabase db push --dry-run`. `apply` runs that dry run, then the real push (which records each file version), then `verify`. `verify` runs `scripts/db/verify.sql` only.
+`status` reads `supabase_migrations.schema_migrations` and compares it with the files. `plan` is a dry run: the same check, then `supabase db push --dry-run`. `apply` runs that dry run, then the real push when a file is still pending, then `verify`. When the plan has nothing pending, the push is skipped. `verify` runs `scripts/db/verify/<version>.sql` for every applied version that has a file.
 
 Prod also needs the prod ref on the command line. Anything else stops the script before it connects:
 
@@ -40,9 +40,9 @@ Prod also needs the prod ref on the command line. Anything else stops the script
 node scripts/db/migrate.mjs apply --env prod --confirm ykfbvrkqzzyyeheblhye
 ```
 
-The CLI pin is `npx supabase@3.3.0`. Version 3 replaced `--db-url` with `--remote=<url>` (the old flag still works in 3.3.0 and is removed in v4). The push is `db push --yes --skip-vault --remote=<url>`. `--skip-vault` keeps vault secrets out of the push. `--include-all` is never passed, so an out-of-order file cannot be forced through.
+The CLI pin is `npx supabase@3.3.0`. The push is `db push --yes --skip-vault --remote=<url>`. `--skip-vault` keeps vault secrets out of the push. `--include-all` is never passed, so an out-of-order file cannot be forced through.
 
-Passwords and database URLs are removed from this script's output, including child-process stderr. The URI is still in the process list while `psql` or the CLI runs.
+Passwords and database URLs are removed from this script's output, including child-process stderr. The password is not put on the command line. The child receives it as `PGPASSWORD`, and the connection requires SSL.
 
 ## History check
 
@@ -76,13 +76,13 @@ update supabase_migrations.schema_migrations set version='<file version>' where 
 ```
 
 3. Call `list_migrations` and confirm that version and name.
-4. Run `scripts/db/verify.sql` through `execute_sql`. The file sets the session read-only, then checks `check_username` and `set_username` (no execute for `anon`, execute for `authenticated`, security definer, empty `search_path`), row level security on `profiles`, and lists the policies. If the connector rejects `SET`, skip that first line and run the rest. If it accepts one statement at a time, run the `do` block first, then the policy `select`.
+4. For each applied version, run the matching file in `scripts/db/verify/` through `execute_sql` when that file exists. `20261124032500.sql` checks row level security on `profiles` and lists the policies. `20261124120000.sql` checks `check_username` and `set_username` (no execute for `anon`, execute for `authenticated`, security definer, empty `search_path`). Each file sets the session read-only. If the connector rejects `SET`, skip that first line and run the rest. If it accepts one statement at a time, run the `do` block first, then the policy `select`.
 
 Dev's project id is `isezzedrbdomyhfuqjak`. Prod's is `ykfbvrkqzzyyeheblhye`.
 
 ## Local check
 
-Unit tests do not open a database. To run `verify.sql` against local Postgres after the migrations, with podman available:
+Unit tests do not open a database. To run the files in `scripts/db/verify/` against local Postgres after the migrations, with podman available:
 
 ```
 LF_DB_LOCAL=1 npx jest --watchAll=false scripts/db/__tests__/migrate.test.js

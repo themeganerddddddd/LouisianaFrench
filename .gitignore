@@ -32,8 +32,6 @@ yarn-error.*
 
 # local env files
 .env*.local
-# Session-pooler URLs for scripts/db/migrate.mjs
-.env.db.local
 
 # typescript
 *.tsbuildinfo

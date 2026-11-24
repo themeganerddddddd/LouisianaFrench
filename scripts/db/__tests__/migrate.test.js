@@ -113,15 +113,21 @@ describe('redaction', () => {
     expect(out).toContain('[redacted]');
   });
 
-  it('removes a percent-encoded password that is not inside the original URL', () => {
-    const password = 'p@ss w/ord';
-    const encoded = encodeURIComponent(password);
+  it('redacts a decoded password when the URL still stores it encoded', () => {
+    const decoded = 'p@ss w/rd#1';
+    const encoded = encodeURIComponent(decoded);
     const url = `postgresql://postgres.${DEV_REF}:${encoded}@aws-0-us-east-1.pooler.supabase.com:5432/postgres`;
-    const leaked = `url ${url} raw ${password} encoded ${encoded}`;
-    const out = db.redact(leaked, { url, password });
-    expect(out).not.toContain(password);
-    expect(out).not.toContain(encoded);
-    expect(out).not.toContain('postgresql://');
+    const secrets = { url, password: db.passwordFromUrl(url) };
+    expect(new URL(url).password).toBe(encoded);
+    expect(secrets.password).toBe(decoded);
+    const leaked = `url ${url} raw ${decoded} encoded ${encoded} stored ${new URL(url).password}`;
+    const out = db.redact(leaked, secrets);
+    const fromEncoded = db.redact(leaked, { url, password: new URL(url).password });
+    for (const text of [out, fromEncoded]) {
+      expect(text).not.toContain(decoded);
+      expect(text).not.toContain(encoded);
+      expect(text).not.toContain('postgresql://');
+    }
   });
 
   it('redacts child-process stderr before it is returned', async () => {
@@ -144,8 +150,17 @@ describe('redaction', () => {
     const shown = db.formatCommand(command.cmd, command.args, { url, password: PASSWORD });
     expect(shown).not.toContain(PASSWORD);
     expect(shown).not.toContain(url);
-    expect(shown).toContain('[redacted]');
     expect(shown).toContain(`supabase@${db.SUPABASE_CLI_VERSION}`);
+  });
+
+  it('passes the decoded password to the child and requires ssl', () => {
+    const decoded = 'p@ss w/rd#1';
+    const url = `postgresql://postgres.${DEV_REF}:${encodeURIComponent(decoded)}@aws-0-us-east-1.pooler.supabase.com:5432/postgres`;
+    const env = db.scrubbedEnv({ url, password: db.passwordFromUrl(url) });
+    expect(env.PGPASSWORD).toBe(decoded);
+    expect(env.PGSSLMODE).toBe('require');
+    expect(env.SUPABASE_DB_URL_DEV).toBeUndefined();
+    expect(env.SUPABASE_DB_URL_PROD).toBeUndefined();
   });
 });
 
@@ -246,7 +261,8 @@ describe('migration history', () => {
       command: 'apply',
       dbUrl: databaseUrl(DEV_REF),
       workdir: root,
-      verifyPath: path.join(root, 'scripts/db/verify.sql')
+      verifyPaths: [path.join(root, 'scripts/db/verify/20261124032500.sql')],
+      pendingCount: 1
     });
     const run = jest.fn(async () => ({ code: 0 }));
     const result = await db.runSteps({ history, commands, run });
@@ -258,16 +274,21 @@ describe('migration history', () => {
 
 describe('commands', () => {
   const url = databaseUrl(DEV_REF);
-  const verifyPath = path.join(root, 'scripts/db/verify.sql');
+  const verifyPaths = [
+    path.join(root, 'scripts/db/verify/20261124032500.sql'),
+    path.join(root, 'scripts/db/verify/20261124120000.sql')
+  ];
 
   function joined(commands) {
     return commands.map((command) => [command.cmd, ...command.args].join(' '));
   }
 
   it('plans a dry run and applies that dry run before a real push, then verify', () => {
-    const plan = db.commandsFor({ command: 'plan', dbUrl: url, workdir: root, verifyPath });
-    const apply = db.commandsFor({ command: 'apply', dbUrl: url, workdir: root, verifyPath });
-    const verify = db.commandsFor({ command: 'verify', dbUrl: url, workdir: root, verifyPath });
+    const plan = db.commandsFor({ command: 'plan', dbUrl: url, workdir: root });
+    const apply = db.commandsFor({
+      command: 'apply', dbUrl: url, workdir: root, verifyPaths, pendingCount: 2
+    });
+    const verify = db.commandsFor({ command: 'verify', dbUrl: url, workdir: root, verifyPaths });
     const planText = joined(plan).join('\n');
     const applyText = joined(apply).join('\n');
 
@@ -275,15 +296,17 @@ describe('commands', () => {
     expect(planText).toContain('db push');
     expect(planText).toContain('--dry-run');
     expect(planText).toContain(`supabase@${db.SUPABASE_CLI_VERSION}`);
-    expect(planText).toContain(`--remote=${url}`);
+    expect(planText).toContain(`--remote=${db.withoutPassword(url)}`);
     expect(planText).not.toContain('--db-url');
+    expect(planText).not.toContain(PASSWORD);
 
     expect(applyText.indexOf('--dry-run')).toBeGreaterThan(-1);
     expect(applyText.indexOf('--dry-run')).toBeLessThan(applyText.lastIndexOf('db push'));
     expect(apply[1].args).not.toContain('--dry-run');
-    expect(applyText).toContain(verifyPath);
-    expect(verify.map((command) => command.cmd)).toEqual(['psql']);
-    expect(joined(verify).join('\n')).toContain(verifyPath);
+    expect(applyText).toContain(verifyPaths[0]);
+    expect(applyText).toContain(verifyPaths[1]);
+    expect(verify.map((command) => command.cmd)).toEqual(['psql', 'psql']);
+    expect(joined(verify).join('\n')).toContain(verifyPaths[0]);
 
     for (const text of [planText, applyText, joined(verify).join('\n')]) {
       expect(text).not.toMatch(/pgtap/i);
@@ -292,9 +315,49 @@ describe('commands', () => {
     }
   });
 
+  it('puts no password in any argument', () => {
+    const decoded = 'p@ss w/rd#1';
+    const encoded = encodeURIComponent(decoded);
+    const secretUrl = `postgresql://postgres.${DEV_REF}:${encoded}@aws-0-us-east-1.pooler.supabase.com:5432/postgres`;
+    const commands = ['plan', 'apply', 'verify', 'status'].flatMap((command) => db.commandsFor({
+      command,
+      dbUrl: secretUrl,
+      workdir: root,
+      verifyPaths,
+      pendingCount: 1
+    }));
+    for (const command of commands) {
+      for (const entry of [command.cmd, ...command.args]) {
+        expect(entry).not.toContain(decoded);
+        expect(entry).not.toContain(encoded);
+      }
+    }
+  });
+
+  it('skips the push when nothing is pending', () => {
+    const commands = db.commandsFor({
+      command: 'apply', dbUrl: url, workdir: root, verifyPaths, pendingCount: 0
+    });
+    const pushes = commands.filter((command) => command.args.includes('push'));
+    expect(pushes).toHaveLength(1);
+    expect(pushes[0].args).toContain('--dry-run');
+  });
+
+  it('runs a verify file only for an applied version that has one', () => {
+    const available = [
+      { version: '20261124032500', path: verifyPaths[0] },
+      { version: '20261124120000', path: verifyPaths[1] }
+    ];
+    expect(db.verifyFilesForVersions(['20261124120000', '20261124032500', '20261125000000'], available))
+      .toEqual(verifyPaths);
+    expect(db.verifyFilesForVersions(['20261124032500'], available)).toEqual([verifyPaths[0]]);
+  });
+
   it('stops after a failed dry run and does not push', async () => {
     const history = { ok: true, blocks: [], pending: [] };
-    const commands = db.commandsFor({ command: 'apply', dbUrl: url, workdir: root, verifyPath });
+    const commands = db.commandsFor({
+      command: 'apply', dbUrl: url, workdir: root, verifyPaths, pendingCount: 1
+    });
     const run = jest.fn()
       .mockResolvedValueOnce({ code: 1 })
       .mockResolvedValue({ code: 0 });
@@ -355,22 +418,25 @@ describe('env and history text', () => {
 });
 
 describe('verify.sql', () => {
-  const sql = () => fs.readFileSync(path.join(root, 'scripts/db/verify.sql'), 'utf8');
+  const sql = (version) => fs.readFileSync(path.join(root, 'scripts/db/verify', `${version}.sql`), 'utf8');
 
   it('checks the username objects and does not write or load pgTAP', () => {
-    const text = sql();
-    expect(text).toMatch(/has_function_privilege/);
-    expect(text).toMatch(/check_username/);
-    expect(text).toMatch(/set_username/);
-    expect(text).toMatch(/['"]anon['"]/);
-    expect(text).toMatch(/['"]authenticated['"]/);
-    expect(text).toMatch(/prosecdef/);
-    expect(text).toMatch(/search_path/);
-    expect(text).toMatch(/relrowsecurity/);
-    expect(text).toMatch(/pg_policy/);
-    expect(text).toMatch(/profiles_select_own/);
-    expect(text).toMatch(/default_transaction_read_only/);
-    expect(text.toLowerCase()).not.toMatch(/\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|pgtap)\b/);
+    const profiles = sql('20261124032500');
+    const functions = sql('20261124120000');
+    expect(functions).toMatch(/has_function_privilege/);
+    expect(functions).toMatch(/check_username/);
+    expect(functions).toMatch(/set_username/);
+    expect(functions).toMatch(/['"]anon['"]/);
+    expect(functions).toMatch(/['"]authenticated['"]/);
+    expect(functions).toMatch(/prosecdef/);
+    expect(functions).toMatch(/search_path/);
+    expect(profiles).toMatch(/relrowsecurity/);
+    expect(profiles).toMatch(/pg_policy/);
+    expect(profiles).toMatch(/profiles_select_own/);
+    for (const text of [profiles, functions]) {
+      expect(text).toMatch(/default_transaction_read_only/);
+      expect(text.toLowerCase()).not.toMatch(/\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|pgtap)\b/);
+    }
   });
 });
 
@@ -416,14 +482,18 @@ describe('verify.sql', () => {
           throw new Error(applied.stderr || applied.stdout);
         }
       }
-      const verify = exec(
-        ['psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-f', '-'],
-        fs.readFileSync(path.join(root, 'scripts/db/verify.sql'))
-      );
-      if (verify.status !== 0) {
-        throw new Error(verify.stderr || verify.stdout || `psql exited ${verify.status}`);
+      let policyList = '';
+      for (const version of ['20261124032500', '20261124120000']) {
+        const verify = exec(
+          ['psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-f', '-'],
+          fs.readFileSync(path.join(root, 'scripts/db/verify', `${version}.sql`))
+        );
+        if (verify.status !== 0) {
+          throw new Error(verify.stderr || verify.stdout || `psql exited ${verify.status}`);
+        }
+        policyList += verify.stdout || '';
       }
-      expect(verify.stdout).toContain('profiles_select_own');
+      expect(policyList).toContain('profiles_select_own');
     } finally {
       cleanup();
     }

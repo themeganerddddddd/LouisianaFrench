@@ -542,7 +542,7 @@ FAIL scripts/db/__tests__/migrate.test.js
 
   ● verify.sql › checks the username objects and does not write or load pgTAP
 
-    ENOENT: no such file or directory, open '/home/logandelafosse/Personal-Projects/LouisianaFrench/scripts/db/verify.sql'
+    ENOENT: no such file or directory, open 'scripts/db/verify.sql'
 
       356 |
       357 | describe('verify.sql', () => {
