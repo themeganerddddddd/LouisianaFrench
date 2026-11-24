@@ -522,6 +522,15 @@ describe('signed in, sign out, and delete', () => {
     });
   });
 
+  it('keeps deleting through a session clear, then finishes at account deleted', () => {
+    const view = deleting();
+    const stayed = reduce(view, { type: 'opened', identity: null });
+    expect(stayed).toBe(view);
+    expect(reduce(stayed, { type: 'deleteSettled', result: { ok: true } })).toEqual({
+      kind: 'accountDeleted'
+    });
+  });
+
   it('keeps account deleted on screen until the shell closes it', () => {
     const view: AccountView = { kind: 'accountDeleted' };
     expect(canDismiss(view)).toBe(false);

@@ -1,9 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { createAccountConnector } from '../../account/accountConnector';
 import { createIdentityConnector } from '../connector';
 import { createSessionStore } from '../sessionStore';
 
 const REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback';
+const GOOGLE = {
+  id: 'learner-1',
+  email: 'ada@example.com',
+  username: null,
+  provider: 'google'
+};
 const USER = {
   id: 'learner-1',
   email: 'ada@example.com',
@@ -53,7 +60,8 @@ async function harness(openBrowser, options) {
   });
   const client = createFakeClient(storage, options);
   const connector = createIdentityConnector({ client, openBrowser });
-  return { connector, client };
+  const account = createAccountConnector({ client, openBrowser });
+  return { connector, account, client };
 }
 
 describe('signInWithProvider', () => {
@@ -66,18 +74,14 @@ describe('signInWithProvider', () => {
   });
 
   it('exchanges a Google redirect for an identity and an access token', async () => {
-    const { connector, client } = await harness(async () => ({
+    const { account, client } = await harness(async () => ({
       url: `${REDIRECT}?code=good-code`
     }));
 
-    const result = await connector.signInWithProvider('google');
+    const result = await account.signInWithProvider('google');
 
-    expect(result.identity).toEqual({
-      id: 'learner-1',
-      email: 'ada@example.com',
-      displayName: 'Ada'
-    });
-    expect(await connector.getAccessToken()).toBe('access-token-value');
+    expect(result).toEqual({ ok: true, identity: GOOGLE });
+    expect(client.calls[0].provider).toBe('google');
     expect(client.calls[0].options.redirectTo).toBe(REDIRECT);
     expect(client.calls[0].options.skipBrowserRedirect).toBe(true);
     expect(client.calls[1]).toEqual({ method: 'exchange', code: 'good-code' });
@@ -88,7 +92,7 @@ describe('signInWithProvider', () => {
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
 
-  it('uses the email name when the provider sends no display name', async () => {
+  it('returns a Google identity with no username when the provider sends no display name', async () => {
     const storage = createSessionStore({
       platform: 'ios',
       secureStore: {
@@ -104,20 +108,20 @@ describe('signInWithProvider', () => {
       await storage.setItem('sb-auth-token', JSON.stringify(session));
       return { data: { session }, error: null };
     };
-    const connector = createIdentityConnector({
+    const account = createAccountConnector({
       client,
       openBrowser: async () => ({ url: `${REDIRECT}?code=good-code` })
     });
 
-    const result = await connector.signInWithProvider('google');
-    expect(result.identity.displayName).toBe('ada');
+    const result = await account.signInWithProvider('google');
+    expect(result).toEqual({ ok: true, identity: GOOGLE });
+    expect(JSON.stringify(result)).not.toContain('displayName');
   });
 
   it('leaves a guest when the browser is closed', async () => {
-    const { connector, client } = await harness(async () => null);
-    const result = await connector.signInWithProvider('google');
-    expect(result).toEqual({ identity: null, message: null });
-    expect(await connector.getIdentity()).toBeNull();
+    const { account, client } = await harness(async () => null);
+    const result = await account.signInWithProvider('google');
+    expect(result).toEqual({ ok: false, failure: 'oauthCancelled' });
     expect(client.calls.some((call) => call.method === 'exchange')).toBe(false);
   });
 
@@ -130,28 +134,28 @@ describe('signInWithProvider', () => {
       () => firstBrowser,
       async () => ({ url: `${REDIRECT}?code=second-code` })
     ];
-    const { connector, client } = await harness(() => browsers.shift()());
+    const { account, client } = await harness(() => browsers.shift()());
 
-    const first = connector.signInWithProvider('google');
+    const first = account.signInWithProvider('google');
     await Promise.resolve();
-    const second = await connector.signInWithProvider('google');
+    const second = await account.signInWithProvider('google');
     finishFirst({ url: `${REDIRECT}?code=first-code` });
     await first;
 
-    expect(second.identity.displayName).toBe('Ada');
+    expect(second).toEqual({ ok: true, identity: GOOGLE });
     expect(client.calls.filter((call) => call.method === 'exchange')).toEqual([
       { method: 'exchange', code: 'second-code' }
     ]);
   });
 
   it('hides the redirect query when Google returns an error', async () => {
-    const { connector } = await harness(async () => ({
+    const { account } = await harness(async () => ({
       url: `${REDIRECT}?error=access_denied&error_description=secret-code`
     }));
-    const result = await connector.signInWithProvider('google');
-    expect(result).toEqual({ identity: null, message: 'Sign-in failed.' });
-    expect(result.message).not.toContain('secret-code');
-    expect(result.message).not.toContain(REDIRECT);
+    const result = await account.signInWithProvider('google');
+    expect(result).toEqual({ ok: false, failure: 'oauthFailed' });
+    expect(JSON.stringify(result)).not.toContain('secret-code');
+    expect(JSON.stringify(result)).not.toContain(REDIRECT);
   });
 
   it('exchanges a Facebook redirect for an identity and an access token', async () => {
@@ -182,14 +186,13 @@ describe('signInWithProvider', () => {
   });
 
   it('hides a code that the exchange error repeats', async () => {
-    const { connector } = await harness(async () => ({ url: `${REDIRECT}?code=leaked` }), {
+    const { account } = await harness(async () => ({ url: `${REDIRECT}?code=leaked` }), {
       exchangeError: {
         message: `bad ${REDIRECT}?code=leaked`
       }
     });
-    const result = await connector.signInWithProvider('google');
-    expect(result.message).toBe('Sign-in failed.');
-    expect(result.message).not.toContain('leaked');
-    expect(await connector.getIdentity()).toBeNull();
+    const result = await account.signInWithProvider('google');
+    expect(result).toEqual({ ok: false, failure: 'unknown' });
+    expect(JSON.stringify(result)).not.toContain('leaked');
   });
 });

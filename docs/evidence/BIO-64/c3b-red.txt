@@ -1,0 +1,55 @@
+FAIL src/account/__tests__/runAccountEffects.test.ts
+  ● Test suite failed to run
+
+    Cannot find module '../runAccountEffects' from 'src/account/__tests__/runAccountEffects.test.ts'
+
+      2 |
+      3 | import type { Effect, Identity } from '../accountMachine';
+    > 4 | import { continueAccount, openAccount, runAccountEffect } from '../runAccountEffects';
+        | ^
+      5 |
+      6 | const ada: Identity = {
+      7 |   id: 'learner-1',
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:1031:11)
+      at Object.require (src/account/__tests__/runAccountEffects.test.ts:4:1)
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● Test suite failed to run
+
+    Cannot find module '../accountConnector' from 'src/account/__tests__/accountConnector.test.ts'
+
+      1 | import { describe, expect, it } from '@jest/globals';
+      2 |
+    > 3 | import { createAccountConnector, parseAuthUrl } from '../accountConnector';
+        | ^
+      4 |
+      5 | const REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback';
+      6 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:1031:11)
+      at Object.require (src/account/__tests__/accountConnector.test.ts:3:1)
+
+FAIL src/identity/__tests__/provider.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../account/accountConnector' from 'src/identity/__tests__/provider.test.js'
+
+      1 | import AsyncStorage from '@react-native-async-storage/async-storage';
+      2 |
+    > 3 | import { createAccountConnector } from '../../account/accountConnector';
+        | ^
+      4 | import { createIdentityConnector } from '../connector';
+      5 | import { createSessionStore } from '../sessionStore';
+      6 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:1031:11)
+      at Object.require (src/identity/__tests__/provider.test.js:3:1)
+
+
+Test Suites: 3 failed, 1 passed, 4 total
+Tests:       47 passed, 47 total
+Snapshots:   0 total
+Time:        0.969 s
+Ran all test suites matching src/account/__tests__/accountConnector.test.ts|src/account/__tests__/runAccountEffects.test.ts|src/identity/__tests__/provider.test.js|src/account/__tests__/accountMachine.test.ts.
+EXIT:1
