@@ -1,0 +1,11 @@
+
+> louisiana-french-v5@1.0.0 test
+> jest --watchAll=false --watchAll=false
+
+
+Test Suites: 1 skipped, 58 passed, 58 of 59 total
+Tests:       10 skipped, 646 passed, 656 total
+Snapshots:   0 total
+Time:        15.456 s, estimated 23 s
+Ran all test suites.
+EXIT:0
