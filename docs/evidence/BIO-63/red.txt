@@ -1,0 +1,337 @@
+The idle case, "calls onPress once per press when the primary button is idle", passes against a plain button: that button calls onPress. 17 tests fail on behaviour. 1 passes by design.
+
+FAIL src/components/account/__tests__/formControls.test.tsx
+  ● Field › puts the label above the input and does not rely on a placeholder
+
+    Unable to find an element with text: Email
+
+    <TextInput
+      placeholder="Email"
+      testID="email"
+      value=""
+    />
+
+      36 |     renderField();
+      37 |
+    > 38 |     expect(screen.getByText('Email')).toBeOnTheScreen();
+         |                   ^
+      39 |     expect(screen.getByLabelText('Email').props.placeholder).toBeUndefined();
+      40 |     expect(flat(screen.getByText('Email').props.style)).toMatchObject({
+      41 |       fontSize: 12,
+
+      at Object.getByText (src/components/account/__tests__/formControls.test.tsx:38:19)
+
+  ● Field › uses the accent prop for a native focus border without shifting the inset
+
+    Unable to find an element with accessibility label: Email
+
+    <TextInput
+      placeholder="Email"
+      testID="email"
+      value=""
+    />
+
+      54 |   it('uses the accent prop for a native focus border without shifting the inset', () => {
+      55 |     renderField();
+    > 56 |     const input = screen.getByLabelText('Email');
+         |                          ^
+      57 |     const resting = flat(input.props.style);
+      58 |     const restingInset = Number(resting.borderWidth) + Number(resting.paddingHorizontal);
+      59 |
+
+      at Object.getByLabelText (src/components/account/__tests__/formControls.test.tsx:56:26)
+
+  ● Field › uses an offset accent outline on web and keeps the 1px field border
+
+    Unable to find an element with accessibility label: Email
+
+    <TextInput
+      placeholder="Email"
+      testID="email"
+      value=""
+    />
+
+      76 |     try {
+      77 |       renderField();
+    > 78 |       fireEvent(screen.getByLabelText('Email'), 'focus');
+         |                        ^
+      79 |
+      80 |       expect(flat(screen.getByLabelText('Email').props.style)).toMatchObject({
+      81 |         borderWidth: 1,
+
+      at Object.getByLabelText (src/components/account/__tests__/formControls.test.tsx:78:24)
+
+  ● Field › shows an error border, icon, and message announced to screen readers
+
+    Unable to find an element with accessibility label: Email
+
+    <TextInput
+      placeholder="Email"
+      testID="email"
+      value=""
+    />
+
+      93 |     renderField({ error: 'That email is already registered.' });
+      94 |
+    > 95 |     expect(flat(screen.getByLabelText('Email').props.style)).toMatchObject({
+         |                        ^
+      96 |       borderWidth: 2,
+      97 |       borderColor: '#DC2626'
+      98 |     });
+
+      at Object.getByLabelText (src/components/account/__tests__/formControls.test.tsx:95:24)
+
+  ● Field › keeps the error border when the field is also focused
+
+    Unable to find an element with accessibility label: Email
+
+    <TextInput
+      placeholder="Email"
+      testID="email"
+      value=""
+    />
+
+      113 |   it('keeps the error border when the field is also focused', () => {
+      114 |     renderField({ error: 'Use at least 8 characters.' });
+    > 115 |     fireEvent(screen.getByLabelText('Email'), 'focus');
+          |                      ^
+      116 |
+      117 |     const style = flat(screen.getByLabelText('Email').props.style);
+      118 |     expect(style.borderColor).toBe('#DC2626');
+
+      at Object.getByLabelText (src/components/account/__tests__/formControls.test.tsx:115:22)
+
+  ● Field › wraps a long label and error at large type without clipping
+
+    Unable to find an element with text: Choose a username so people know you on the board, even when the type is very large
+
+    <TextInput
+      placeholder="Choose a username so people know you on the board, even when the type is very large"
+      testID="email"
+      value=""
+    />
+
+      126 |     renderField({ label: LONG, error });
+      127 |
+    > 128 |     for (const text of [screen.getByText(LONG), screen.getByRole('alert')]) {
+          |                                ^
+      129 |       const style = flat(text.props.style);
+      130 |       expect(text.props.numberOfLines).toBeUndefined();
+      131 |       expect(text.props.allowFontScaling).not.toBe(false);
+
+      at Object.getByText (src/components/account/__tests__/formControls.test.tsx:128:32)
+
+  ● account buttons › gives the primary control a hit area of at least 44 by 44
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 44
+    Received:    NaN
+
+      148 |     render(<Button label="Continue" onPress={() => {}} accentColor={ACCENT} testID="control" />);
+      149 |     const style = flat(screen.getByTestId('control').props.style);
+    > 150 |     expect(Number(style.minHeight)).toBeGreaterThanOrEqual(44);
+          |                                     ^
+      151 |     expect(Number(style.minWidth)).toBeGreaterThanOrEqual(44);
+      152 |   });
+      153 |
+
+      at toBeGreaterThanOrEqual (src/components/account/__tests__/formControls.test.tsx:150:37)
+
+  ● account buttons › gives the secondary control a hit area of at least 44 by 44
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 44
+    Received:    NaN
+
+      148 |     render(<Button label="Continue" onPress={() => {}} accentColor={ACCENT} testID="control" />);
+      149 |     const style = flat(screen.getByTestId('control').props.style);
+    > 150 |     expect(Number(style.minHeight)).toBeGreaterThanOrEqual(44);
+          |                                     ^
+      151 |     expect(Number(style.minWidth)).toBeGreaterThanOrEqual(44);
+      152 |   });
+      153 |
+
+      at toBeGreaterThanOrEqual (src/components/account/__tests__/formControls.test.tsx:150:37)
+
+  ● account buttons › gives the link control a hit area of at least 44 by 44
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 44
+    Received:    NaN
+
+      148 |     render(<Button label="Continue" onPress={() => {}} accentColor={ACCENT} testID="control" />);
+      149 |     const style = flat(screen.getByTestId('control').props.style);
+    > 150 |     expect(Number(style.minHeight)).toBeGreaterThanOrEqual(44);
+          |                                     ^
+      151 |     expect(Number(style.minWidth)).toBeGreaterThanOrEqual(44);
+      152 |   });
+      153 |
+
+      at toBeGreaterThanOrEqual (src/components/account/__tests__/formControls.test.tsx:150:37)
+
+  ● account buttons › gives the destructive control a hit area of at least 44 by 44
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 44
+    Received:    NaN
+
+      148 |     render(<Button label="Continue" onPress={() => {}} accentColor={ACCENT} testID="control" />);
+      149 |     const style = flat(screen.getByTestId('control').props.style);
+    > 150 |     expect(Number(style.minHeight)).toBeGreaterThanOrEqual(44);
+          |                                     ^
+      151 |     expect(Number(style.minWidth)).toBeGreaterThanOrEqual(44);
+      152 |   });
+      153 |
+
+      at toBeGreaterThanOrEqual (src/components/account/__tests__/formControls.test.tsx:150:37)
+
+  ● account buttons › keeps the primary label, fades, and ignores presses while loading
+
+    expect(jest.fn()).not.toHaveBeenCalled()
+
+    Expected number of calls: 0
+    Received number of calls: 2
+
+    1: called with 0 arguments
+    2: called with 0 arguments
+
+      162 |     fireEvent.press(button);
+      163 |
+    > 164 |     expect(onPress).not.toHaveBeenCalled();
+          |                         ^
+      165 |     expect(screen.getByText('Sign in')).toBeOnTheScreen();
+      166 |     expect(screen.getByTestId('sign-in-spinner')).toBeOnTheScreen();
+      167 |     expect(flat(button.props.style).opacity).toBe(0.55);
+
+      at Object.toHaveBeenCalled (src/components/account/__tests__/formControls.test.tsx:164:25)
+
+  ● account buttons › paints the link with the accent prop and no underline
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 4
+    + Received  + 2
+
+      Object {
+    -   "color": "#123456",
+    -   "fontSize": 15,
+    -   "fontWeight": "800",
+    -   "textDecorationLine": "none",
+    +   "color": "#2771CB",
+    +   "textDecorationLine": "underline",
+      }
+
+      182 |   it('paints the link with the accent prop and no underline', () => {
+      183 |     render(<LinkButton label="Forgot password?" onPress={() => {}} accentColor={ACCENT} />);
+    > 184 |     expect(flat(screen.getByText('Forgot password?').props.style)).toMatchObject({
+          |                                                                    ^
+      185 |       color: ACCENT,
+      186 |       textDecorationLine: 'none',
+      187 |       fontSize: 15,
+
+      at Object.toMatchObject (src/components/account/__tests__/formControls.test.tsx:184:68)
+
+  ● account buttons › paints secondary with the field border and ink, not a Language color
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "#FFFFFF"
+    Received: "#2771CB"
+
+      193 |     render(<SecondaryButton label="Keep my account" onPress={() => {}} accentColor={ACCENT} testID="keep" />);
+      194 |     const style = flat(screen.getByTestId('keep').props.style);
+    > 195 |     expect(style.backgroundColor).toBe('#FFFFFF');
+          |                                   ^
+      196 |     expect(style.borderColor).toBe('#64748B');
+      197 |     expect(style.backgroundColor).not.toBe('#2771CB');
+      198 |     expect(style.backgroundColor).not.toBe('#08834C');
+
+      at Object.toBe (src/components/account/__tests__/formControls.test.tsx:195:35)
+
+  ● account buttons › uses error text for the destructive entry and danger for confirm
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "#B91C1C"
+    Received: "#2771CB"
+
+      204 |       <DestructiveButton label="Delete account" onPress={() => {}} accentColor={ACCENT} testID="delete" />
+      205 |     );
+    > 206 |     expect(flat(screen.getByText('Delete account').props.style).color).toBe('#B91C1C');
+          |                                                                        ^
+      207 |     expect(screen.getByTestId('delete-icon')).toBeOnTheScreen();
+      208 |
+      209 |     rerender(
+
+      at Object.toBe (src/components/account/__tests__/formControls.test.tsx:206:72)
+
+  ● account buttons › wraps a long button label without clipping
+
+    expect(received).toBeUndefined()
+
+    Received: 1
+
+      224 |     const text = screen.getByText(LONG);
+      225 |     const button = flat(screen.getByTestId('long').props.style);
+    > 226 |     expect(text.props.numberOfLines).toBeUndefined();
+          |                                      ^
+      227 |     expect(text.props.allowFontScaling).not.toBe(false);
+      228 |     expect(flat(text.props.style).height).toBeUndefined();
+      229 |     expect(button.height).toBeUndefined();
+
+      at Object.toBeUndefined (src/components/account/__tests__/formControls.test.tsx:226:38)
+
+FAIL src/screens/__tests__/homeStartAccent.test.js
+  ● Home start accent › paints the cajun start control from accentFor, not a copied hex
+
+    expect(element).toHaveStyle()
+
+    - Expected
+    + Received
+
+    - color: "#BB22BB";
+    + color: "#2771CB";
+
+      17 |     renderApp({ initialRouteName: 'Home', initialParams: { language } });
+      18 |
+    > 19 |     expect(await screen.findByText('Report a bug')).toHaveStyle({ color: accent });
+         |                                                     ^
+      20 |   });
+      21 | });
+      22 |
+
+      at toHaveStyle (src/screens/__tests__/homeStartAccent.test.js:19:53)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● Home start accent › paints the kreole start control from accentFor, not a copied hex
+
+    expect(element).toHaveStyle()
+
+    - Expected
+    + Received
+
+    - color: "#11AA11";
+    + color: "#08834C";
+
+      17 |     renderApp({ initialRouteName: 'Home', initialParams: { language } });
+      18 |
+    > 19 |     expect(await screen.findByText('Report a bug')).toHaveStyle({ color: accent });
+         |                                                     ^
+      20 |   });
+      21 | });
+      22 |
+
+      at toHaveStyle (src/screens/__tests__/homeStartAccent.test.js:19:53)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 2 failed, 2 total
+Tests:       17 failed, 1 passed, 18 total
+Snapshots:   0 total
+Time:        1.274 s, estimated 2 s
+Ran all test suites matching src/components/account/__tests__/formControls.test.tsx|src/screens/__tests__/homeStartAccent.test.js.
