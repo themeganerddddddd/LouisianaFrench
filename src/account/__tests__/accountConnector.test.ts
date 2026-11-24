@@ -328,6 +328,73 @@ describe('account connector', () => {
     expect(signOuts).toEqual([]);
   });
 
+  it('opens a recovery link only after the code exchange succeeds', async () => {
+    const calls: string[] = [];
+    const failed = createAccountConnector({
+      client: client({
+        exchangeCodeForSession: async (code: string) => {
+          calls.push(code);
+          return { data: { session: null }, error: { message: 'bad code' } };
+        }
+      })
+    });
+    expect(await failed.consumeAuthUrl(`${REDIRECT}?code=crafted&type=recovery`)).toBeNull();
+    expect(calls).toEqual(['crafted']);
+
+    const recovered = createAccountConnector({
+      client: client({
+        exchangeCodeForSession: async (code: string) => {
+          calls.push(code);
+          return {
+            data: { session: { user: { id: 'learner-1', email: 'ada@example.com' } } },
+            error: null
+          };
+        }
+      })
+    });
+    expect(await recovered.consumeAuthUrl(`${REDIRECT}#code=frag&type=recovery`)).toEqual({
+      type: 'recoveryLinkOpened'
+    });
+  });
+
+  it('does not read a bare code as email confirmation while Google is open', async () => {
+    const calls: string[] = [];
+    let consume: (url: string) => Promise<unknown> = async () => null;
+    const connector = createAccountConnector({
+      client: client({
+        signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null }),
+        exchangeCodeForSession: async (code: string) => {
+          calls.push(code);
+          return {
+            data: { session: { user: { id: 'learner-1', email: 'ada@example.com' } } },
+            error: null
+          };
+        }
+      }),
+      openBrowser: async () => {
+        expect(await consume(`${REDIRECT}?code=bare`)).toBeNull();
+        return { url: `${REDIRECT}?code=from-google` };
+      }
+    });
+    consume = (url) => connector.consumeAuthUrl(url);
+    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, identity: GOOGLE });
+    expect(calls).toEqual(['from-google']);
+  });
+
+  it('sends the reset link back with type=recovery', async () => {
+    const calls: { redirectTo?: string }[] = [];
+    const connector = createAccountConnector({
+      client: client({
+        resetPasswordForEmail: async (_email: string, options: { redirectTo: string }) => {
+          calls.push(options);
+          return { error: null };
+        }
+      })
+    });
+    expect(await connector.sendReset('ada@example.com')).toEqual({ ok: true, pending: 'passwordReset' });
+    expect(calls[0].redirectTo).toBe(`${REDIRECT}?type=recovery`);
+  });
+
   it('signs out locally after deleting the account, even when sign-out throws', async () => {
     const scopes: unknown[] = [];
     const connector = createAccountConnector({

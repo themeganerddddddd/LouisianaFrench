@@ -10,13 +10,12 @@ import {
   View
 } from 'react-native';
 
-import { accentFor } from '../theme/languageAccent';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
 const EMPTY = { email: '', password: '', displayName: '' };
 const TBOY_LINES = {
   signIn:
-    "Sign in with an email, Google, or Facebook. I don't store any of your personal information that I don't need to make the app work!",
+    "Sign in with an email or Google. I don't store any of your personal information that I don't need to make the app work!",
   create: "A name, an email, and a password. That’s the account.",
   forgot:
     'I can email a one-time link. It opens this app so you can choose a new password.',
@@ -33,7 +32,7 @@ export default function SignInModal({
   recoveryActive,
   onRecoveryFinished,
   onClose,
-  accentColor = accentFor('cajun')
+  accentColor
 }) {
   const [mode, setMode] = useState('signIn');
   const [fields, setFields] = useState(EMPTY);
@@ -186,15 +185,6 @@ export default function SignInModal({
                       style={styles.logoButton}
                     >
                       <FontAwesome5 name="google" size={22} color="#DB4437" />
-                    </Pressable>
-                    <Pressable
-                      onPress={() => continueWith('facebook')}
-                      testID="sign-in-facebook"
-                      accessibilityRole="button"
-                      accessibilityLabel="Sign in with Facebook"
-                      style={styles.logoButton}
-                    >
-                      <FontAwesome5 name="facebook-f" size={22} color="#1877F2" />
                     </Pressable>
                   </View>
                 ) : null}
