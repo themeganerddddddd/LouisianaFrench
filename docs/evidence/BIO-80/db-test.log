@@ -1,4 +1,4 @@
-Head SHA: f5a09e8ef6db80be5514fe7799f3d68718cfe417
+Tested commit: f5a09e8ef6db80be5514fe7799f3d68718cfe417
 === WITHOUT MIGRATIONS ===
 Command: bash tests/db/run-local.sh --skip-migrations
 Exit: 3
