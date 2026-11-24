@@ -1,0 +1,44 @@
+
+> louisiana-french-v5@1.0.0 pr-ready
+> node .agents/scripts/pr-ready.mjs
+
+→ npm run lint
+
+> louisiana-french-v5@1.0.0 lint
+> eslint .
+
+→ npm run test
+
+> louisiana-french-v5@1.0.0 test
+> jest --watchAll=false
+
+
+Test Suites: 1 skipped, 55 passed, 55 of 56 total
+Tests:       10 skipped, 634 passed, 644 total
+Snapshots:   0 total
+Time:        15.457 s
+Ran all test suites.
+→ agent PR gates
+→ check-pr-ui-evidence
+{
+  "ok": true,
+  "reason": "non-ui-diff",
+  "base": "origin/main",
+  "baseSha": "90ec56fc1dcc4088e290103e7e284e6d994e16cd",
+  "changedCount": 1,
+  "uiFiles": []
+}
+→ no --body-file; skipping PR template section check
+→ production LOC added: 0 (soft 100 / hard 250); deleted 0
+{
+  "ok": true,
+  "ai": true,
+  "markers": [],
+  "failures": [],
+  "warnings": [],
+  "productionLoc": {
+    "added": 0,
+    "deleted": 0
+  }
+}
+pr-ready: ok
