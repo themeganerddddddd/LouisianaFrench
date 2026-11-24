@@ -1,0 +1,228 @@
+Ran against origin/main 38fbd59699ed36e6d3647be1658e5dddc9b068c8 (#485).
+Production code was main's. The new tests were copied from this branch.
+Exit 1. Four failures, all behavioural. No failure was a missing module.
+
+- accountConnector.signIn returned username null while the profile row was Céline.
+- connector.js toIdentity returned displayName Ada from Auth metadata, not Céline.
+- connector.js used the email local part ada when the profile username was missing.
+- The signed-in title was empty, not Learner.
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › reads the profile username on sign-in
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "identity": Object {
+          "email": "ada@example.com",
+          "id": "learner-1",
+          "provider": "email",
+    -     "username": "Céline",
+    +     "username": null,
+        },
+        "ok": true,
+      }
+
+      72 |       }
+      73 |     });
+    > 74 |     expect(await connector.signIn('ada@example.com', 'secret')).toEqual({
+         |                                                                 ^
+      75 |       ok: true,
+      76 |       identity: { id: 'learner-1', email: 'ada@example.com', username: 'Céline', provider: 'email' }
+      77 |     });
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:74:65)
+      at asyncGeneratorStep (../../home/logandelafosse/Personal-Projects/LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../home/logandelafosse/Personal-Projects/LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL src/identity/__tests__/connector.test.js
+  ● identity connector › reads the profile username and does not store a display name
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    +   "displayName": "Ada",
+        "email": "ada@example.com",
+        "id": "learner-1",
+    -   "username": "Céline",
+      }
+
+      373 |       password: 'secret'
+      374 |     });
+    > 375 |     expect(signedIn.identity).toEqual({
+          |                               ^
+      376 |       id: 'learner-1',
+      377 |       email: 'ada@example.com',
+      378 |       username: 'Céline'
+
+      at Object.toEqual (src/identity/__tests__/connector.test.js:375:31)
+      at asyncGeneratorStep (../../home/logandelafosse/Personal-Projects/LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../home/logandelafosse/Personal-Projects/LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● identity connector › does not use the email local part when the profile has no username
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    +   "displayName": "ada",
+        "email": "ada@example.com",
+        "id": "learner-1",
+    -   "username": null,
+      }
+
+      411 |       password: 'secret'
+      412 |     });
+    > 413 |     expect(signedIn.identity).toEqual({
+          |                               ^
+      414 |       id: 'learner-1',
+      415 |       email: 'ada@example.com',
+      416 |       username: null
+
+      at Object.toEqual (src/identity/__tests__/connector.test.js:413:31)
+      at asyncGeneratorStep (../../home/logandelafosse/Personal-Projects/LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../home/logandelafosse/Personal-Projects/LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL src/components/__tests__/SignInModal.recovery.test.js
+  ● SignInModal password recovery › shows Learner when the signed-in profile has no username
+
+    Unable to find an element with text: Learner
+
+    <Modal>
+      <View
+        accessible={true}
+        testID="sign-in-backdrop"
+      >
+        <View
+          accessible={true}
+          testID="sign-in-modal"
+        >
+          <View>
+            <View
+              accessibilityLabel="Close sign in"
+              accessibilityRole="button"
+              accessible={true}
+            >
+              <Text>
+                Close
+              </Text>
+            </View>
+            <View>
+              <Text />
+              <View
+                accessibilityRole="button"
+                accessible={true}
+                testID="sign-out"
+              >
+                <Text>
+                  Sign out
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+
+      30 |       />
+      31 |     );
+    > 32 |     expect(screen.getByText('Learner')).toBeOnTheScreen();
+         |                   ^
+      33 |   });
+      34 |
+      35 |   it('locks Home until a new password is saved from a recovery return', async () => {
+
+      at Object.getByText (src/components/__tests__/SignInModal.recovery.test.js:32:19)
+
+Test Suites: 3 failed, 3 total
+Tests:       4 failed, 30 skipped, 34 total
+Snapshots:   0 total
+Time:        2.907 s
+Ran all test suites matching src/identity/__tests__/connector.test.js|src/account/__tests__/accountConnector.test.ts|src/components/__tests__/SignInModal.recovery.test.js with tests matching "reads the profile username|does not use the email local part|shows Learner when the signed-in profile has no username".
+EXIT:1
+HEAD:38fbd59699ed36e6d3647be1658e5dddc9b068c8
+
+
+---
+
+Profile read timeout, run on 1f22a2ac1dff6efef663c6233992935db7247a5d before the 5s race existed.
+(a) Failed for a behavioural reason: after 5s of fake time, getIdentity had not settled (settled was false). The profile read was a promise that never resolves.
+(b) Passed on that same commit, before the timeout: PGRST205, 42P01, and a thrown read each left username null and sign-in ok. The summary below is 1 failed, 3 passed.
+
+FAIL src/identity/__tests__/connector.test.js
+  ● identity connector › does not wait forever when the profile read never settles
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      426 |       });
+      427 |       await jest.advanceTimersByTimeAsync(5000);
+    > 428 |       expect(settled).toBe(true);
+          |                       ^
+      429 |       await expect(pending).resolves.toEqual({
+      430 |         id: 'learner-1',
+      431 |         email: 'ada@example.com',
+
+      at Object.toBe (src/identity/__tests__/connector.test.js:428:23)
+      at asyncGeneratorStep (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 14 skipped, 3 passed, 18 total
+Snapshots:   0 total
+Time:        0.479 s, estimated 1 s
+Ran all test suites matching src/identity/__tests__/connector.test.js with tests matching "does not wait forever|keeps sign-in when the profile read".
+EXIT:1
+
+
+---
+
+Detached from(), run on 59f293ff18c207ace792d3a47d460c2fc75edd95 before the call went through the client.
+The fake is a class whose from reads this.tables.profiles. getIdentity resolved username null, not Céline. The catch swallowed the TypeError from the detached method.
+
+FAIL src/identity/__tests__/connector.test.js
+  ● identity connector › reads the username with from still attached to the client
+
+    expect(received).resolves.toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "email": "ada@example.com",
+        "id": "learner-1",
+    -   "username": "Céline",
+    +   "username": null,
+      }
+
+      444 |
+      445 |     const connector = createIdentityConnector({ client: new ProfileReader() });
+    > 446 |     await expect(connector.getIdentity()).resolves.toEqual({
+          |                                                    ^
+      447 |       id: 'learner-1',
+      448 |       email: 'ada@example.com',
+      449 |       username: 'Céline'
+
+      at Object.toEqual (../LouisianaFrench/node_modules/expect/build/index.js:2140:20)
+      at Object.toEqual (src/identity/__tests__/connector.test.js:446:52)
+      at asyncGeneratorStep (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at ../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 19 skipped, 20 total
+Snapshots:   0 total
+Time:        0.455 s, estimated 1 s
+Ran all test suites matching src/identity/__tests__/connector.test.js with tests matching "reads the username with from still attached".
+EXIT:1

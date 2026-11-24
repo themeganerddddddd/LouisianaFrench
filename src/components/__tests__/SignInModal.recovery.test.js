@@ -20,6 +20,18 @@ jest.mock('../TBoySpeechBubble', () => {
 });
 
 describe('SignInModal password recovery', () => {
+  it('shows Learner when the signed-in profile has no username', () => {
+    render(
+      <SignInModal
+        visible
+        identity={{ id: 'learner-1', email: 'ada@example.com', username: null }}
+        connector={{}}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByText('Learner')).toBeOnTheScreen();
+  });
+
   it('locks Home until a new password is saved from a recovery return', async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();

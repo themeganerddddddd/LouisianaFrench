@@ -10,6 +10,7 @@ import {
   View
 } from 'react-native';
 
+import { accountName } from '../identity/username';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
 const EMPTY = { email: '', password: '', displayName: '' };
@@ -150,7 +151,7 @@ export default function SignInModal({
 
             {showSignedIn ? (
               <View>
-                <Text style={styles.title}>{identity.displayName}</Text>
+                <Text style={styles.title}>{accountName(identity.username)}</Text>
                 <Pressable onPress={signOut} testID="sign-out" accessibilityRole="button">
                   <Text style={styles.primaryFilledText}>Sign out</Text>
                 </Pressable>

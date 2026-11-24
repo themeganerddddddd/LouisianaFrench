@@ -37,7 +37,7 @@ const mockConnector = {
     if (password !== 'secret') {
       return { identity: null, message: 'That email or password is not right.' };
     }
-    this.identity = { id: 'learner-1', email, displayName: 'Ada' };
+    this.identity = { id: 'learner-1', email, username: 'Ada' };
     this.emit();
     return { identity: this.identity, message: null };
   },
@@ -47,7 +47,7 @@ const mockConnector = {
   async handleAuthUrl(url) {
     this.lastAuthUrl = url;
     if (String(url).includes('type=recovery')) {
-      this.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+      this.identity = { id: 'learner-1', email: 'ada@example.com', username: 'Ada' };
       this.emit();
       return { kind: 'recovery' };
     }
@@ -57,14 +57,14 @@ const mockConnector = {
     if (password === 'bad') {
       return { identity: null, message: 'That password was rejected.' };
     }
-    this.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+    this.identity = { id: 'learner-1', email: 'ada@example.com', username: 'Ada' };
     this.emit();
     return { identity: this.identity, message: null };
   },
   async signInWithProvider(provider) {
     this.provider = provider;
     if (this.failure === 'cancel') return { identity: null, message: null };
-    this.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+    this.identity = { id: 'learner-1', email: 'ada@example.com', username: 'Ada' };
     this.emit();
     return { identity: this.identity, message: null };
   },
@@ -269,7 +269,7 @@ describe.skip('Home email sign-in', () => {
     expect(screen.getByLabelText('Account')).toBeOnTheScreen();
     expect(mockConnector.signOutScope).toBe('local');
 
-    mockConnector.identity = { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' };
+    mockConnector.identity = { id: 'learner-1', email: 'ada@example.com', username: 'Ada' };
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
     await screen.findByLabelText('About menu');
     await user.press(screen.getByLabelText('About menu'));

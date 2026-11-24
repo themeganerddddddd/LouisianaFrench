@@ -52,6 +52,31 @@ describe('account connector', () => {
     expect(JSON.stringify(result)).not.toContain(REDIRECT);
   });
 
+  it('reads the profile username on sign-in', async () => {
+    const base = client({
+      signInWithPassword: async () => ({
+        data: { session: { user: { id: 'learner-1', email: 'ada@example.com' } } },
+        error: null
+      })
+    });
+    const connector = createAccountConnector({
+      client: {
+        ...base,
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: { username: 'Céline' }, error: null })
+            })
+          })
+        })
+      }
+    });
+    expect(await connector.signIn('ada@example.com', 'secret')).toEqual({
+      ok: true,
+      identity: { id: 'learner-1', email: 'ada@example.com', username: 'Céline', provider: 'email' }
+    });
+  });
+
   it('returns confirmSignUp when sign-up has no session and does not write a display name', async () => {
     const calls: unknown[] = [];
     const connector = createAccountConnector({

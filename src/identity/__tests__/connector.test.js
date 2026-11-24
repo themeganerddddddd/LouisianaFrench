@@ -128,9 +128,9 @@ describe('identity connector', () => {
     expect(result.identity).toEqual({
       id: 'learner-1',
       email: 'ada@example.com',
-      displayName: 'Ada'
+      username: null
     });
-    expect(client.calls[0].options.data.display_name).toBe('Ada');
+    expect(JSON.stringify(client.calls[0])).not.toContain('display_name');
     expect(seen.at(-1)).toEqual(result.identity);
     expect(client.calls[0].password).toBe(PASSWORD);
     expect(JSON.stringify(await AsyncStorage.getItem('sb-auth-token'))).not.toContain(
@@ -157,7 +157,7 @@ describe('identity connector', () => {
       email: 'ada@example.com',
       password: PASSWORD
     });
-    expect(signedIn.identity.displayName).toBe('Ada');
+    expect(signedIn.identity.username).toBeNull();
     expect(await connector.getAccessToken()).toBe('access-token-value');
   });
 
@@ -175,7 +175,7 @@ describe('identity connector', () => {
     expect(await second.getIdentity()).toEqual({
       id: 'learner-1',
       email: 'ada@example.com',
-      displayName: 'Ada'
+      username: null
     });
     expect(await second.getAccessToken()).toBe('access-token-value');
   });
@@ -218,7 +218,7 @@ describe('identity connector', () => {
     expect(await connector.getIdentity()).toEqual({
       id: 'learner-1',
       email: 'ada@example.com',
-      displayName: 'Ada'
+      username: null
     });
     expect(client.calls[0]).toEqual({ method: 'exchange', code: 'recover-code' });
 
@@ -228,7 +228,7 @@ describe('identity connector', () => {
     expect(providerStyle).toEqual({ kind: null });
 
     const saved = await connector.updatePassword('new-secret');
-    expect(saved.identity.displayName).toBe('Ada');
+    expect(saved.identity.username).toBeNull();
     expect(client.calls.some((call) => call.method === 'updatePassword')).toBe(true);
     expect(JSON.stringify(await AsyncStorage.getItem('sb-auth-token'))).not.toContain(
       'recover-code'
@@ -309,6 +309,266 @@ describe('identity connector', () => {
       })
     ).toEqual({ identity: null, message: 'Check your email.' });
     expect(await connector.getIdentity()).toBeNull();
+  });
+
+  it('reads the profile username and does not store a display name', async () => {
+    const calls = [];
+    const client = {
+      calls,
+      from() {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  async maybeSingle() {
+                    return { data: { username: 'Céline' }, error: null };
+                  }
+                };
+              }
+            };
+          }
+        };
+      },
+      auth: {
+        async getSession() {
+          return { data: { session: null } };
+        },
+        async signInWithPassword() {
+          return {
+            data: {
+              session: {
+                access_token: 'access-token-value',
+                user: {
+                  id: 'learner-1',
+                  email: 'ada@example.com',
+                  user_metadata: { display_name: 'Ada', full_name: 'Ada Lovelace' }
+                }
+              }
+            },
+            error: null
+          };
+        },
+        async signUp({ email, password, options }) {
+          calls.push({ method: 'signUp', email, password, options });
+          return {
+            data: {
+              session: {
+                access_token: 'access-token-value',
+                user: {
+                  id: 'learner-1',
+                  email,
+                  user_metadata: { display_name: 'Ada' }
+                }
+              }
+            },
+            error: null
+          };
+        }
+      }
+    };
+    const connector = createIdentityConnector({ client });
+    const signedIn = await connector.signInWithPassword({
+      email: 'ada@example.com',
+      password: 'secret'
+    });
+    expect(signedIn.identity).toEqual({
+      id: 'learner-1',
+      email: 'ada@example.com',
+      username: 'Céline'
+    });
+
+    await connector.signUpWithPassword({
+      email: 'ada@example.com',
+      password: 'secret',
+      displayName: 'Ada'
+    });
+    expect(JSON.stringify(calls)).not.toContain('display_name');
+  });
+
+  function profileClient(maybeSingle, session = null) {
+    return {
+      auth: {
+        async getSession() {
+          return { data: { session } };
+        },
+        async signInWithPassword() {
+          return {
+            data: { session: sessionFor() },
+            error: null
+          };
+        }
+      },
+      from() {
+        return {
+          select() {
+            return {
+              eq() {
+                return { maybeSingle };
+              }
+            };
+          }
+        };
+      }
+    };
+  }
+
+  it('reads the username with from still attached to the client', async () => {
+    class ProfileReader {
+      constructor() {
+        this.tables = { profiles: { username: 'Céline' } };
+        this.auth = {
+          async getSession() {
+            return { data: { session: sessionFor() } };
+          }
+        };
+      }
+
+      from(table) {
+        const row = this.tables[table];
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  async maybeSingle() {
+                    return { data: row, error: null };
+                  }
+                };
+              }
+            };
+          }
+        };
+      }
+    }
+
+    const connector = createIdentityConnector({ client: new ProfileReader() });
+    await expect(connector.getIdentity()).resolves.toEqual({
+      id: 'learner-1',
+      email: 'ada@example.com',
+      username: 'Céline'
+    });
+  });
+
+  it('does not wait forever when the profile read never settles', async () => {
+    jest.useFakeTimers();
+    try {
+      const connector = createIdentityConnector({
+        client: profileClient(() => new Promise(() => {}), sessionFor())
+      });
+      let settled = false;
+      const pending = connector.getIdentity().then((identity) => {
+        settled = true;
+        return identity;
+      });
+      await jest.advanceTimersByTimeAsync(5000);
+      expect(settled).toBe(true);
+      await expect(pending).resolves.toEqual({
+        id: 'learner-1',
+        email: 'ada@example.com',
+        username: null
+      });
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('clears the profile timer when the read settles', async () => {
+    jest.useFakeTimers();
+    try {
+      const connector = createIdentityConnector({
+        client: profileClient(
+          async () => ({ data: { username: 'Céline' }, error: null }),
+          sessionFor()
+        )
+      });
+      await expect(connector.getIdentity()).resolves.toEqual({
+        id: 'learner-1',
+        email: 'ada@example.com',
+        username: 'Céline'
+      });
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it.each([
+    ['PGRST205', async () => ({ data: null, error: { code: 'PGRST205', message: 'schema cache' } })],
+    ['42P01', async () => ({ data: null, error: { code: '42P01', message: 'undefined_table' } })],
+    ['a thrown read', async () => {
+      throw new Error('socket hang up');
+    }]
+  ])('keeps sign-in when the profile read is %s', async (_label, maybeSingle) => {
+    const connector = createIdentityConnector({ client: profileClient(maybeSingle) });
+    await expect(
+      connector.signInWithPassword({ email: 'ada@example.com', password: 'secret' })
+    ).resolves.toEqual({
+      identity: { id: 'learner-1', email: 'ada@example.com', username: null },
+      message: null
+    });
+  });
+
+  it('does not use the email local part when the profile has no username', async () => {
+    const client = {
+      auth: {
+        async getSession() {
+          return { data: { session: null } };
+        },
+        async signInWithPassword() {
+          return {
+            data: {
+              session: {
+                access_token: 'access-token-value',
+                user: { id: 'learner-1', email: 'ada@example.com', user_metadata: {} }
+              }
+            },
+            error: null
+          };
+        }
+      }
+    };
+    const connector = createIdentityConnector({ client });
+    const signedIn = await connector.signInWithPassword({
+      email: 'ada@example.com',
+      password: 'secret'
+    });
+    expect(signedIn.identity).toEqual({
+      id: 'learner-1',
+      email: 'ada@example.com',
+      username: null
+    });
+  });
+
+  it('calls set_username and check_username on the client', async () => {
+    const calls = [];
+    const client = {
+      auth: {
+        async getSession() {
+          return { data: { session: null } };
+        }
+      },
+      async rpc(fn, args) {
+        calls.push([fn, args]);
+        if (fn === 'check_username') return { data: { status: 'available' }, error: null };
+        return { data: { ok: true, username: 'Céline' }, error: null };
+      }
+    };
+    const connector = createIdentityConnector({ client });
+    await expect(connector.setUsername('Céline')).resolves.toEqual({
+      ok: true,
+      username: 'Céline'
+    });
+    await expect(connector.checkUsername('celine')).resolves.toEqual({ status: 'available' });
+    expect(calls).toEqual([
+      ['set_username', { proposed: 'Céline' }],
+      ['check_username', { candidate: 'celine' }]
+    ]);
+
+    const guest = createIdentityConnector({ client: null });
+    await expect(guest.setUsername('Céline')).resolves.toEqual({ ok: false, reason: 'network' });
+    await expect(guest.checkUsername('Céline')).resolves.toEqual({ status: 'error' });
   });
 
   it('stays a guest when sign-in is not configured', async () => {
