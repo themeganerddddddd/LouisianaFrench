@@ -1,0 +1,462 @@
+=== WITHOUT MIGRATIONS (main has no username migration) ===
+Command: bash supabase/tests/run-local.sh --skip-migrations
+Starting public.ecr.aws/supabase/postgres:17.12.0.002 as lf-bio80-postgres on port 55432.
+Image: public.ecr.aws/supabase/postgres:17.12.0.002
+Container: lf-bio80-postgres
+Host port: 55432
+Admin role: supabase_admin
+=== auth stub ===
+psql:<stdin>:8: NOTICE:  schema "auth" already exists, skipping
+CREATE SCHEMA
+psql:<stdin>:14: NOTICE:  relation "users" already exists, skipping
+CREATE TABLE
+DO
+CREATE FUNCTION
+GRANT
+GRANT
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+=== migrations skipped ===
+=== pgTAP extension ===
+CREATE EXTENSION
+=== pgTAP tests ===
+BEGIN
+ plan  
+-------
+ 1..53
+(1 row)
+
+SAVEPOINT
+ set_config 
+------------
+ 
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "40000000-0000-0000-0000-000000000001", "role" : "authenticated"}
+(1 row)
+
+                             is                              
+-------------------------------------------------------------
+ ok 1 - uid reads request.jwt.claims when claim.sub is empty
+(1 row)
+
+ROLLBACK
+ set_config 
+------------
+ 
+(1 row)
+
+              set_config              
+--------------------------------------
+ 40000000-0000-0000-0000-000000000002
+(1 row)
+
+                   is                   
+----------------------------------------
+ ok 2 - uid reads request.jwt.claim.sub
+(1 row)
+
+ROLLBACK
+psql:<stdin>:28: ERROR:  function public.username_key(unknown) does not exist
+LINE 1: select is(public.username_key('Élise'), 'elise', 'Élise fold...
+                  ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+pgTAP tests failed (exit 3).
+WITHOUT_MIGRATIONS_EXIT:3
+
+=== WITH MIGRATIONS FROM ZERO, THEN PGTAP ===
+Command: bash supabase/tests/run-local.sh
+Starting public.ecr.aws/supabase/postgres:17.12.0.002 as lf-bio80-postgres on port 55432.
+Image: public.ecr.aws/supabase/postgres:17.12.0.002
+Container: lf-bio80-postgres
+Host port: 55432
+Admin role: supabase_admin
+=== auth stub ===
+psql:<stdin>:8: NOTICE:  schema "auth" already exists, skipping
+CREATE SCHEMA
+psql:<stdin>:14: NOTICE:  relation "users" already exists, skipping
+CREATE TABLE
+DO
+CREATE FUNCTION
+GRANT
+GRANT
+GRANT
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+=== migrations from zero ===
+-- supabase/migrations/20261124032500_profiles_username.sql
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE TABLE
+CREATE INDEX
+CREATE FUNCTION
+CREATE TRIGGER
+ALTER TABLE
+REVOKE
+REVOKE
+REVOKE
+GRANT
+CREATE POLICY
+CREATE FUNCTION
+CREATE TRIGGER
+REVOKE
+REVOKE
+CREATE FUNCTION
+INSERT 0 0
+ migrate_profile_usernames 
+---------------------------
+ 
+(1 row)
+
+REVOKE
+=== pgTAP extension ===
+CREATE EXTENSION
+=== pgTAP tests ===
+BEGIN
+ plan  
+-------
+ 1..53
+(1 row)
+
+SAVEPOINT
+ set_config 
+------------
+ 
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "40000000-0000-0000-0000-000000000001", "role" : "authenticated"}
+(1 row)
+
+                             is                              
+-------------------------------------------------------------
+ ok 1 - uid reads request.jwt.claims when claim.sub is empty
+(1 row)
+
+ROLLBACK
+ set_config 
+------------
+ 
+(1 row)
+
+              set_config              
+--------------------------------------
+ 40000000-0000-0000-0000-000000000002
+(1 row)
+
+                   is                   
+----------------------------------------
+ ok 2 - uid reads request.jwt.claim.sub
+(1 row)
+
+ROLLBACK
+             is              
+-----------------------------
+ ok 3 - Élise folds to elise
+(1 row)
+
+                 is                 
+------------------------------------
+ ok 4 - Élise and elise share a key
+(1 row)
+
+             is              
+-----------------------------
+ ok 5 - T_Boy folds to t_boy
+(1 row)
+
+           is            
+-------------------------
+ ok 6 - Élise_1 is valid
+(1 row)
+
+               is               
+--------------------------------
+ ok 7 - three letters are valid
+(1 row)
+
+               is               
+--------------------------------
+ ok 8 - 20 characters are valid
+(1 row)
+
+        is        
+------------------
+ ok 9 - too short
+(1 row)
+
+             is             
+----------------------------
+ ok 10 - too long after NFC
+(1 row)
+
+       is       
+----------------
+ ok 11 - hyphen
+(1 row)
+
+      is       
+---------------
+ ok 12 - space
+(1 row)
+
+      is       
+---------------
+ ok 13 - emoji
+(1 row)
+
+      is       
+---------------
+ ok 14 - empty
+(1 row)
+
+    is     
+-----------
+ ok 15 - æ
+(1 row)
+
+    is     
+-----------
+ ok 16 - œ
+(1 row)
+
+          is           
+-----------------------
+ ok 17 - leading digit
+(1 row)
+
+             is             
+----------------------------
+ ok 18 - Cyrillic lookalike
+(1 row)
+
+                  is                   
+---------------------------------------
+ ok 19 - Admin folds to a reserved key
+(1 row)
+
+                  is                   
+---------------------------------------
+ ok 20 - T_Boy folds to a reserved key
+(1 row)
+
+INSERT 0 8
+                           ok                            
+---------------------------------------------------------
+ ok 21 - inserting an auth user creates an empty profile
+(1 row)
+
+ migrate_profile_usernames 
+---------------------------
+ 
+(1 row)
+
+                       is                        
+-------------------------------------------------
+ ok 22 - earliest account keeps the display name
+(1 row)
+
+                     ok                      
+---------------------------------------------
+ ok 23 - later folded collision becomes null
+(1 row)
+
+                      is                      
+----------------------------------------------
+ ok 24 - smaller id wins when created_at ties
+(1 row)
+
+                    ok                    
+------------------------------------------
+ ok 25 - larger id loses a created_at tie
+(1 row)
+
+                     is                      
+---------------------------------------------
+ ok 26 - valid display name is kept as typed
+(1 row)
+
+                     ok                      
+---------------------------------------------
+ ok 27 - too-short display name becomes null
+(1 row)
+
+                    ok                     
+-------------------------------------------
+ ok 28 - invalid display name becomes null
+(1 row)
+
+               ok                
+---------------------------------
+ ok 29 - full_name is not copied
+(1 row)
+
+                                     ok                                     
+----------------------------------------------------------------------------
+ ok 30 - kept name sets username_set_at and leaves username_changed_at null
+(1 row)
+
+                        ok                        
+--------------------------------------------------
+ ok 31 - dropped name leaves username_set_at null
+(1 row)
+
+INSERT 0 5
+             throws_ok              
+------------------------------------
+ ok 32 - check rejects a short name
+(1 row)
+
+                   throws_ok                   
+-----------------------------------------------
+ ok 33 - check rejects a name that is too long
+(1 row)
+
+           throws_ok            
+--------------------------------
+ ok 34 - check rejects a hyphen
+(1 row)
+
+           throws_ok           
+-------------------------------
+ ok 35 - check rejects a space
+(1 row)
+
+           throws_ok            
+--------------------------------
+ ok 36 - check rejects an emoji
+(1 row)
+
+              throws_ok              
+-------------------------------------
+ ok 37 - check rejects an empty name
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 38 - check rejects æ
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 39 - check rejects œ
+(1 row)
+
+               throws_ok               
+---------------------------------------
+ ok 40 - check rejects a leading digit
+(1 row)
+
+                 throws_ok                  
+--------------------------------------------
+ ok 41 - check rejects a Cyrillic lookalike
+(1 row)
+
+          throws_ok          
+-----------------------------
+ ok 42 - check rejects Admin
+(1 row)
+
+          throws_ok          
+-----------------------------
+ ok 43 - check rejects T_Boy
+(1 row)
+
+UPDATE 1
+                is                
+----------------------------------
+ ok 44 - Zoé_9 is stored as typed
+(1 row)
+
+               is               
+--------------------------------
+ ok 45 - stored key is the fold
+(1 row)
+
+UPDATE 1
+                     throws_ok                     
+---------------------------------------------------
+ ok 46 - unique index rejects the folded collision
+(1 row)
+
+SET
+ set_config 
+------------
+ 
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "30000000-0000-0000-0000-00000000000b", "role" : "authenticated"}
+(1 row)
+
+                        is                        
+--------------------------------------------------
+ ok 47 - authenticated uid reads jwt.claims alone
+(1 row)
+
+              set_config              
+--------------------------------------
+ 30000000-0000-0000-0000-00000000000b
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "30000000-0000-0000-0000-00000000000b", "role" : "authenticated"}
+(1 row)
+
+             is_empty              
+-----------------------------------
+ ok 48 - user B cannot read user A
+(1 row)
+
+              throws_ok              
+-------------------------------------
+ ok 49 - user B cannot update user A
+(1 row)
+
+              set_config              
+--------------------------------------
+ 30000000-0000-0000-0000-00000000000a
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "30000000-0000-0000-0000-00000000000a", "role" : "authenticated"}
+(1 row)
+
+               results_eq                
+-----------------------------------------
+ ok 50 - owner reads own id and username
+(1 row)
+
+              throws_ok               
+--------------------------------------
+ ok 51 - owner cannot update username
+(1 row)
+
+                  throws_ok                  
+---------------------------------------------
+ ok 52 - owner cannot update username_set_at
+(1 row)
+
+               throws_ok                
+----------------------------------------
+ ok 53 - owner cannot read username_key
+(1 row)
+
+RESET
+ finish 
+--------
+(0 rows)
+
+ROLLBACK
+pgTAP tests passed.
+WITH_MIGRATIONS_EXIT:0
