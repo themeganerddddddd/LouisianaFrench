@@ -51,16 +51,8 @@ declare
   changed_at timestamptz;
   in_window boolean;
 begin
-  if uid is null then
+  if uid is null or proposed is null then
     return jsonb_build_object('ok', false, 'reason', 'invalid');
-  end if;
-
-  -- Skip: not a set, and it starts no window.
-  if proposed is null then
-    return jsonb_build_object(
-      'ok', true,
-      'username', (select p.username from public.profiles as p where p.id = uid)
-    );
   end if;
 
   name := pg_catalog.normalize(proposed, 'NFC');

@@ -1,6 +1,6 @@
 begin;
 
-select plan(54);
+select plan(70);
 
 insert into auth.users (id, created_at) values
   ('70000000-0000-0000-0000-000000000001', '2024-03-01T00:00:00Z'),
@@ -78,6 +78,12 @@ select throws_ok(
   'permission denied for function set_username',
   'anon cannot call set_username'
 );
+select throws_ok(
+  $$ select public.check_username('Céline') $$,
+  '42501',
+  'permission denied for function check_username',
+  'anon cannot call check_username'
+);
 reset role;
 
 select is(
@@ -94,12 +100,12 @@ select ok(
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
 
-select is((public.set_username(null) ->> 'ok')::boolean, true, 'skip returns ok');
+select is(public.set_username(null) ->> 'reason', 'invalid', 'a null name is invalid');
 reset role;
 select ok(
   (select username is null and username_set_at is null and username_changed_at is null
    from public.profiles where id = '70000000-0000-0000-0000-000000000001'),
-  'skip sets no timestamps'
+  'a null call leaves both timestamps null'
 );
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
@@ -114,6 +120,19 @@ select is(public.set_username('æbc') ->> 'reason', 'invalid', 'æ is invalid');
 select is(public.set_username('œab') ->> 'reason', 'invalid', 'œ is invalid');
 select is(public.set_username('1logan') ->> 'reason', 'invalid', 'a leading digit is invalid');
 select is(public.set_username(U&'\0435lise') ->> 'reason', 'invalid', 'a Cyrillic lookalike is invalid');
+select is(public.set_username(' ab') ->> 'reason', 'invalid', 'a leading space is invalid');
+select is(public.set_username('ab ') ->> 'reason', 'invalid', 'a trailing space is invalid');
+select is(public.set_username(E'ab\tc') ->> 'reason', 'invalid', 'a tab is invalid');
+select is(public.set_username(U&'ab\00A0c') ->> 'reason', 'invalid', 'NBSP is invalid');
+select is(public.set_username(U&'ab\200Bc') ->> 'reason', 'invalid', 'U+200B is invalid');
+select is(public.set_username(U&'\FEFFabc') ->> 'reason', 'invalid', 'U+FEFF is invalid');
+select is(public.check_username(' ab') ->> 'status', 'invalid', 'check_username rejects a leading space');
+select is(public.check_username('ab ') ->> 'status', 'invalid', 'check_username rejects a trailing space');
+select is(public.check_username(E'ab\tc') ->> 'status', 'invalid', 'check_username rejects a tab');
+select is(public.check_username(U&'ab\00A0c') ->> 'status', 'invalid', 'check_username rejects NBSP');
+select is(public.check_username(U&'ab\200Bc') ->> 'status', 'invalid', 'check_username rejects U+200B');
+select is(public.check_username(U&'\FEFFabc') ->> 'status', 'invalid', 'check_username rejects U+FEFF');
+select is(public.check_username(null) ->> 'status', 'invalid', 'check_username(null) is invalid');
 select is(public.set_username('Admin') ->> 'reason', 'reserved', 'Admin is reserved');
 select is(public.set_username('T_Boy') ->> 'reason', 'reserved', 'T_Boy is reserved');
 select is(public.check_username('Admin') ->> 'status', 'reserved', 'check_username returns reserved');
@@ -220,6 +239,13 @@ select is(public.set_username('Fresh_1') ->> 'username', 'Fresh_1', 'another use
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000006', true);
 select is(public.set_username('fresh_1') ->> 'reason', 'taken', 'set_username returns taken after the claim');
 
+select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000008', true);
+select is(
+  public.set_username(normalize(repeat(U&'\00E9', 20), NFD)) ->> 'username',
+  repeat(U&'\00E9', 20),
+  'a decomposed 20-letter name is accepted'
+);
+
 reset role;
 -- The harness switches loopback to scram-sha-256. Trust auth would ignore
 -- the password, and non-superuser dblink then refuses the connection.
@@ -245,6 +271,7 @@ select dblink_send_query('b', $$
   from (select set_config('request.jwt.claim.sub', '60000000-0000-0000-0000-00000000000b', false)) as cfg
 $$);
 select pg_sleep(0.4);
+select is(dblink_is_busy('b'), 1, 'the second claim is blocked until the first commits');
 select dblink_exec('a', 'commit');
 select is(
   (select result ->> 'reason' from dblink_get_result('b') as t(result jsonb)),

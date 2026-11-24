@@ -13,7 +13,14 @@ without=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-migrations) skip_migrations=1; shift ;;
-    --without) without="${2:-}"; shift 2 ;;
+    --without)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "usage: tests/db/run-local.sh [--skip-migrations] [--without <migration-file>]" >&2
+        exit 2
+      fi
+      without="$2"
+      shift 2
+      ;;
     *)
       echo "usage: tests/db/run-local.sh [--skip-migrations] [--without <migration-file>]" >&2
       exit 2
