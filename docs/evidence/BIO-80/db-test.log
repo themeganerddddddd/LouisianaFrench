@@ -1,15 +1,9 @@
 === WITHOUT MIGRATIONS ===
-Command: bash supabase/tests/run-local.sh --skip-migrations
+Command: bash tests/db/run-local.sh --skip-migrations
 Exit: 3
 Starting public.ecr.aws/supabase/postgres:17.12.0.002 as lf-bio80-postgres. The database port is not published.
 Image: public.ecr.aws/supabase/postgres:17.12.0.002
 Container: lf-bio80-postgres
-Admin role: supabase_admin
-=== auth stub ===
-CREATE FUNCTION
-GRANT
-GRANT
-GRANT
 === auth users before migrations ===
 INSERT 0 8
 === migrations skipped ===
@@ -29,17 +23,11 @@ HINT:  No function matches the given name and argument types. You might need to 
 pgTAP tests failed (exit 3).
 
 === WITH MIGRATIONS ===
-Command: bash supabase/tests/run-local.sh
+Command: bash tests/db/run-local.sh
 Exit: 0
 Starting public.ecr.aws/supabase/postgres:17.12.0.002 as lf-bio80-postgres. The database port is not published.
 Image: public.ecr.aws/supabase/postgres:17.12.0.002
 Container: lf-bio80-postgres
-Admin role: supabase_admin
-=== auth stub ===
-CREATE FUNCTION
-GRANT
-GRANT
-GRANT
 === auth users before migrations ===
 INSERT 0 8
 === migrations from zero ===
@@ -354,9 +342,9 @@ UPDATE 1
  ok 56 - unique index rejects the folded collision
 (1 row)
 
-                        throws_ok                         
-----------------------------------------------------------
- ok 57 - decomposed Élise collides with an existing elise
+                          throws_ok                          
+-------------------------------------------------------------
+ ok 57 - decomposed Élise collides with the backfilled Élise
 (1 row)
 
 UPDATE 1

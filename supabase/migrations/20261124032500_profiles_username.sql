@@ -104,13 +104,13 @@ create unique index profiles_username_key_unique
 create function public.profiles_set_username_key()
 returns trigger
 language plpgsql
-set search_path = public, pg_catalog
+set search_path = ''
 as $$
 begin
   if new.username is null then
     new.username_key := null;
   else
-    new.username := normalize(new.username, NFC);
+    new.username := pg_catalog.normalize(new.username, 'NFC');
     new.username_key := public.username_key(new.username);
   end if;
   return new;
@@ -194,7 +194,7 @@ begin
   update public.profiles as p
   set
     username = case when ranked.ok and ranked.n = 1 then ranked.username else null end,
-    username_set_at = case when ranked.ok and ranked.n = 1 then ranked.created_at else null end,
+    username_set_at = case when ranked.ok and ranked.n = 1 then coalesce(ranked.created_at, now()) else null end,
     username_changed_at = null
   from ranked
   where p.id = ranked.id;

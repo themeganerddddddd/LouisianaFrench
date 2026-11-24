@@ -12,7 +12,7 @@ skip_migrations=0
 if [[ "${1:-}" == "--skip-migrations" ]]; then
   skip_migrations=1
 elif [[ $# -gt 0 ]]; then
-  echo "usage: supabase/tests/run-local.sh [--skip-migrations]" >&2
+  echo "usage: tests/db/run-local.sh [--skip-migrations]" >&2
   exit 2
 fi
 
@@ -62,15 +62,6 @@ fi
 echo "Image: ${image}"
 echo "Container: ${name}"
 
-admin_user=postgres
-if podman exec "$name" psql -U postgres -d postgres -tAc "select 1 from pg_roles where rolname = 'supabase_admin'" | grep -q 1; then
-  admin_user=supabase_admin
-fi
-echo "Admin role: ${admin_user}"
-
-echo "=== auth stub ==="
-psql_file "$admin_user" tests/fixtures/db/stub_auth.sql
-
 echo "=== auth users before migrations ==="
 psql_file postgres tests/fixtures/db/users_before_migration.sql
 
@@ -91,12 +82,12 @@ else
 fi
 
 echo "=== pgTAP extension ==="
-podman exec "$name" psql -U "$admin_user" -d postgres -v ON_ERROR_STOP=1 -c 'create extension if not exists pgtap;'
+podman exec "$name" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'create extension if not exists pgtap;'
 
 echo "=== pgTAP tests ==="
 tmp=$(mktemp)
 set +e
-podman exec -i "$name" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f - < supabase/tests/profiles_username.sql | tee "$tmp"
+podman exec -i "$name" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f - < tests/db/profiles_username.sql | tee "$tmp"
 status=${PIPESTATUS[0]}
 set -e
 if grep -E '^(not ok|ERROR:)' "$tmp" >/dev/null; then

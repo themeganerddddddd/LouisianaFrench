@@ -234,7 +234,7 @@ select throws_ok(
   $$ update public.profiles set username = U&'E\0301lise' where id = '30000000-0000-0000-0000-0000000000e2' $$,
   '23505',
   'duplicate key value violates unique constraint "profiles_username_key_unique"',
-  'decomposed Élise collides with an existing elise'
+  'decomposed Élise collides with the backfilled Élise'
 );
 
 update public.profiles
@@ -289,7 +289,11 @@ select is(
 );
 
 select ok(
-  not has_table_privilege(r.role, 'public.profiles', p.priv),
+  not case
+    when p.priv in ('INSERT', 'UPDATE', 'REFERENCES')
+      then has_any_column_privilege(r.role, 'public.profiles', p.priv)
+    else has_table_privilege(r.role, 'public.profiles', p.priv)
+  end,
   r.role || ' cannot ' || p.priv || ' public.profiles'
 )
 from (values ('anon'), ('authenticated')) as r(role)
