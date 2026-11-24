@@ -87,6 +87,7 @@ function main() {
   console.error('→ check-pr-ui-evidence');
   const uiArgs = [join(dirname(fileURLToPath(import.meta.url)), 'check-pr-ui-evidence.mjs'), '--base', args.base];
   if (args.bodyFile) uiArgs.push('--body-file', args.bodyFile);
+  if (args.branch) uiArgs.push('--branch', args.branch);
   if (args.issue) uiArgs.push('--issue', args.issue);
   const ui = spawnSync(process.execPath, uiArgs, { cwd: root, stdio: 'inherit' });
   if (ui.status !== 0) failures.push('ui-evidence');
