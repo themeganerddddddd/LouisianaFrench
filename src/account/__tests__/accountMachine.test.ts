@@ -200,6 +200,16 @@ describe('sign in', () => {
     expect(reduce(first.next, { type: 'submitted' })).toBe(first.next);
   });
 
+  it('keeps a Google sign-in when the sheet closes before it settles', () => {
+    const oauth = reduce(signIn(), { type: 'providerChosen', provider: 'google' });
+    const closed = reduce(oauth, { type: 'opened', identity: null });
+    expect(reduce(closed, { type: 'authSettled', result: { ok: true, identity: googleAda } })).toEqual({
+      kind: 'signedIn',
+      identity: googleAda,
+      signingOut: false
+    });
+  });
+
   it('locks the form while Google sign-in is in progress', () => {
     const started = step(signIn(), { type: 'providerChosen', provider: 'google' });
     expect(started.next).toEqual({

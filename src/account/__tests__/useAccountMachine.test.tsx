@@ -1,9 +1,10 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { render } from '@testing-library/react-native';
+import { render, screen, userEvent } from '@testing-library/react-native';
 import { act, StrictMode, useState } from 'react';
 
+import SignInModal from '../../components/SignInModal';
 import type { AccountConnector } from '../accountConnector';
-import type { AuthResult } from '../accountMachine';
+import type { AuthResult, Identity } from '../accountMachine';
 import { useAccountMachine } from '../useAccountMachine';
 
 const failed: AuthResult = { ok: false, failure: 'wrongCredentials' };
@@ -136,5 +137,46 @@ describe('useAccountMachine', () => {
     expect(renders).toBe(rendersAtUnmount);
     expect(errors).toEqual([]);
     spy.mockRestore();
+  });
+
+  it('shows the username when Google finishes after Close', async () => {
+    const user = userEvent.setup();
+    const ada: Identity = {
+      id: 'learner-1',
+      email: 'ada@example.com',
+      username: 'Ada',
+      provider: 'google'
+    };
+    let release: (result: AuthResult) => void = () => {};
+    const pending = new Promise<AuthResult>((resolve) => {
+      release = resolve;
+    });
+    const account = connector(async () => failed);
+    account.signInWithProvider = () => pending;
+    function Screen() {
+      const { view, dispatch } = useAccountMachine(account, null);
+      return (
+        <SignInModal
+          visible
+          view={view}
+          dispatch={dispatch}
+          accentColor="#2771CB"
+          onClose={() => {
+            if (view.kind !== 'signedIn' && view.kind !== 'deleteAccount') {
+              dispatch({ type: 'opened', identity: null });
+            }
+          }}
+        />
+      );
+    }
+    render(<Screen />);
+    await user.press(screen.getByTestId('sign-in-google'));
+    expect(screen.queryByLabelText('Close sign in')).toBeNull();
+    await user.press(screen.getByTestId('sign-in-backdrop'));
+    await act(async () => {
+      release({ ok: true, identity: ada });
+      await pending;
+    });
+    expect(screen.getByText('Ada')).toBeOnTheScreen();
   });
 });

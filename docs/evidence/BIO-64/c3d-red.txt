@@ -54,3 +54,14 @@ Received has value: undefined
 FAIL src/identity/__tests__/username.test.ts
 Expected: "Ada"
 Received: null
+
+11. Closing the sheet during Google sign-in, on a0cd2e2
+FAIL src/account/__tests__/accountMachine.test.ts
+sign in › keeps a Google sign-in when the sheet closes before it settles
+Expected kind signedIn with the Google identity.
+Received kind signIn, email "", password "", submit editing.
+
+FAIL src/account/__tests__/useAccountMachine.test.tsx
+useAccountMachine › shows the username when Google finishes after Close
+Unable to find an element with text: Ada
+Close was still on the sheet, and the late success left the guest form.

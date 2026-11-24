@@ -86,7 +86,10 @@ export function reduce(view: AccountView, event: AccountEvent): AccountView {
   if (sessionLocked(view) && (event.type === 'opened' || event.type === 'recoveryLinkOpened' || event.type === 'linkFailed')) {
     return view;
   }
-  if (event.type === 'opened') return initialView(event.identity);
+  if (event.type === 'opened') {
+    if (formStatus(view) === 'submitting' || formStatus(view) === 'oauth') return view;
+    return initialView(event.identity);
+  }
   if (event.type === 'recoveryLinkOpened') return { kind: 'setNewPassword', password: '', submit: EDITING };
   if (event.type === 'linkFailed') return applyLinkFailure(view, event.failure);
   switch (view.kind) {

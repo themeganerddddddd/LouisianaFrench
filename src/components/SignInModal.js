@@ -9,6 +9,7 @@ import {
   View
 } from 'react-native';
 
+import { canDismiss } from '../account/accountMachine';
 import { accountName } from '../identity/username';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
@@ -44,7 +45,7 @@ function failureText(view) {
 
 export default function SignInModal({ visible, view, dispatch, onClose, accentColor }) {
   const mode = screenOf(view);
-  const locked = view.kind === 'setNewPassword';
+  const dismiss = canDismiss(view);
   const identity = view.kind === 'signedIn' || view.kind === 'deleteAccount' ? view.identity : null;
   const email = view.email || '';
   const password = view.password || '';
@@ -52,7 +53,7 @@ export default function SignInModal({ visible, view, dispatch, onClose, accentCo
   const message = failureText(view);
 
   function close() {
-    if (locked) return;
+    if (!dismiss) return;
     onClose();
   }
 
@@ -73,12 +74,12 @@ export default function SignInModal({ visible, view, dispatch, onClose, accentCo
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <Pressable
         style={styles.backdrop}
-        onPress={locked ? undefined : close}
+        onPress={close}
         testID="sign-in-backdrop"
       >
         <Pressable onPress={() => {}} testID="sign-in-modal">
           <View style={styles.card}>
-            {locked ? null : (
+            {dismiss ? (
               <Pressable
                 onPress={close}
                 accessibilityRole="button"
@@ -86,7 +87,7 @@ export default function SignInModal({ visible, view, dispatch, onClose, accentCo
               >
                 <Text style={styles.close}>Close</Text>
               </Pressable>
-            )}
+            ) : null}
 
             {showSignedIn ? (
               <View>
@@ -222,7 +223,7 @@ export default function SignInModal({ visible, view, dispatch, onClose, accentCo
 
                 {mode === 'done' ? (
                   <Pressable
-                    onPress={close}
+                    onPress={onClose}
                     testID="sign-in-done"
                     accessibilityRole="button"
                     style={filledStyle}

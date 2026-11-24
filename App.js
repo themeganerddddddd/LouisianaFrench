@@ -10,9 +10,8 @@ import {
   SafeAreaProvider
 } from 'react-native-safe-area-context';
 
-import { authLinking, completeWebAuth } from './src/account/webAuth';
+import { completeWebAuth } from './src/account/webAuth';
 import AdvancedScreen from './src/screens/AdvancedScreen';
-import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import DailyReviewScreen from './src/screens/DailyReviewScreen';
 import DictionaryScreen from './src/screens/DictionaryScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -23,9 +22,6 @@ import LoadingScreen from './src/screens/LoadingScreen';
 import MistakeReviewScreen from './src/screens/MistakeReviewScreen';
 
 const Stack = createStackNavigator();
-const webOrigin = typeof globalThis.location === 'object' && globalThis.location?.origin
-  ? globalThis.location.origin
-  : 'http://localhost';
 
 completeWebAuth(Platform.OS, () => {
   WebBrowser.maybeCompleteAuthSession();
@@ -51,7 +47,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <NavigationContainer linking={authLinking(Platform.OS, webOrigin)}>
+      <NavigationContainer>
         <StatusBar style="dark" />
         <Stack.Navigator
           initialRouteName="Loading"
@@ -66,7 +62,6 @@ export default function App() {
           <Stack.Screen name="DailyReview" component={DailyReviewScreen} />
           <Stack.Screen name="Advanced" component={AdvancedScreen} />
           <Stack.Screen name="Dictionary" component={DictionaryScreen} />
-          <Stack.Screen name="AuthCallback" component={AuthCallbackScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
