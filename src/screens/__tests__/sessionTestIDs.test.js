@@ -225,8 +225,7 @@ describe('session testIDs', () => {
 
     renderApp({ initialRouteName: 'Home', initialParams: { language: 'cajun' } });
 
-    expect(await screen.findByTestId('home-xp')).toHaveTextContent('⚡ 40');
-    expect(screen.getByTestId('home-streak')).toHaveTextContent('🔥 2');
+    expect(await screen.findByTestId('home-stats')).toHaveTextContent('⚡ 40 · 🔥 2 · 25% mastered');
     expect(screen.getByTestId('home-review-control')).toBeOnTheScreen();
     expect(screen.getByTestId('review-count')).toBeOnTheScreen();
     expect(screen.getByTestId('home-mistakes-control')).toBeOnTheScreen();

@@ -266,7 +266,7 @@ export default function SpeechPracticeScreen({
 
   if (!practiceWord) {
     return (
-      <Text style={styles.status} testID="speech-practice-screen">
+      <Text style={styles.status} testID="speech-practice-empty">
         No Word with Audio is available for this language.
       </Text>
     );
