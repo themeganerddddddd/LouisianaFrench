@@ -1,0 +1,20 @@
+FAIL src/account/__tests__/accountMachine.test.ts
+  ● Test suite failed to run
+
+    Cannot find module '../accountMachine' from 'src/account/__tests__/accountMachine.test.ts'
+
+    > 1 | import {
+        | ^
+      2 |   DELETE_WORD,
+      3 |   effectFor,
+      4 |   initialView,
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:1031:11)
+      at Object.require (src/account/__tests__/accountMachine.test.ts:1:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        1.006 s
+Ran all test suites matching src/account/__tests__/accountMachine.test.ts.
+EXIT:1

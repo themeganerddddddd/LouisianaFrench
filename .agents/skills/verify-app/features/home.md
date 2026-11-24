@@ -24,7 +24,7 @@ Preconditions:
 - **Kouri-Vini.** After choosing Kouri-Vini, the plan is the same (Day 1, Lesson, Lesson, No review). The Unit card reads `text:Greetings & Check-ins`, `text:0 / 12 words · 0 / 3 lessons`, and `text:Part 1 — Hello, How is it going?, How goes it?`.
 - **Start from the plan.** Run `$L tap id:home-plan-cta`. A Lesson opens at `text:1 / 15` (see `lesson.md`).
 - **Start from the Unit card.** Run `$L tap id:home-current-unit-continue`. The same Lesson opens.
-- **Open a control.** Run `$L tap id:home-dictionary-control`. The Dictionary opens (`id:dictionary-screen`). `id:home-review-control`, `id:home-hub-control` and `id:home-mistakes-control` work the same way.
+- **Open a control.** Run `$L tap id:home-dictionary-control`. The Dictionary opens (`id:dictionary-screen`). `id:home-hub-control` opens the Hub (see `speech-practice.md`). On a fresh Day 1 Home, `id:home-review-control` is disabled: its label is `desc:Review`, the plan helper is `text:Reviews unlock once you've learned new words.`, and a tap stays on Home. Review opens Daily Review only after a Word is learned, or from day 2 on (see `daily-review.md`). `id:home-mistakes-control` is disabled while it reads `desc:Mistakes, none pending`. It opens Mistake Review only when the badge is at least 1 (see `mistake-review.md`).
 - **Proof.** Run `$L shot home`. After a Lesson, run `$L open`. The plan and the Unit card show the progress.
 
 ## Gotchas

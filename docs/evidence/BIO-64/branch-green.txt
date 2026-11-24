@@ -1,0 +1,6 @@
+Test Suites: 1 passed, 1 total
+Tests:       41 passed, 41 total
+Snapshots:   0 total
+Time:        0.557 s, estimated 1 s
+Ran all test suites matching src/account/__tests__/accountMachine.test.ts.
+EXIT:0

@@ -32,5 +32,9 @@ Each feature file has an H1, one paragraph, then `Sub-features`, `How to get to 
 - [Language select](./language-select.md) covers the first-run choice and switching Language from Home.
 - [Home and Today's plan](./home.md) covers the plan stepper, the plan button, the current Unit card, and the Home controls.
 - [Lesson](./lesson.md) covers New-word and Practice Activities, answering, advancing, and leaving.
+- [Lesson Complete](./lesson-complete.md) covers the end screen after a Lesson with no pending Mistake.
+- [Daily Review](./daily-review.md) covers Day 1 disabled Review, the empty queue, and one due Card.
+- [Mistake Review](./mistake-review.md) covers creating a pending Mistake, Home entry, and resolving one.
+- [Speech Practice](./speech-practice.md) covers Free Speech Practice from the Hub, including the record cycle.
 - [Dictionary](./dictionary.md) covers browsing, search, category filters, and Word status.
 - [About menu](./about-menu.md) covers the pelican menu, About Us, and Support.
