@@ -1,0 +1,19 @@
+=== npm run lint with src/account/eslintScratch.ts ===
+
+> louisiana-french-v5@1.0.0 lint
+> eslint .
+
+
+src/account/eslintScratch.ts
+  6:3  error  Duplicate name 'read'  @typescript-eslint/no-dupe-class-members
+
+✖ 1 problem (1 error, 0 warnings)
+
+EXIT:1
+
+=== npm run lint after removing src/account/eslintScratch.ts ===
+
+> louisiana-french-v5@1.0.0 lint
+> eslint .
+
+EXIT:0
