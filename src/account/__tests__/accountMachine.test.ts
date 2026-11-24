@@ -22,6 +22,9 @@ type IncludesApple = 'apple' extends Provider ? true : false;
 type IncludesDisplayName = 'displayName' extends keyof Extract<AccountView, { kind: 'create' }>
   ? true
   : false;
+type StoresCancel = 'oauthCancelled' extends Extract<Submit, { status: 'failed' }>['failure']
+  ? true
+  : false;
 
 const editing: Submit = { status: 'editing' };
 
@@ -109,6 +112,8 @@ describe('isValidUsernameFormat', () => {
     expect(isValidUsernameFormat('Εlise')).toBe(false);
     expect(isValidUsernameFormat('Еlise')).toBe(false);
     expect(isValidUsernameFormat('')).toBe(false);
+    expect(isValidUsernameFormat(' Élise_1')).toBe(false);
+    expect(isValidUsernameFormat('Élise_1 ')).toBe(false);
   });
 
   it('counts length after NFC, so 20 passes and 21 fails', () => {
@@ -129,8 +134,10 @@ describe('account types', () => {
   it('has no apple provider and no displayName on create', () => {
     const noApple: Assert<IncludesApple extends false ? true : false> = true;
     const noDisplayName: Assert<IncludesDisplayName extends false ? true : false> = true;
+    const noCancel: Assert<StoresCancel extends false ? true : false> = true;
     expect(noApple).toBe(true);
     expect(noDisplayName).toBe(true);
+    expect(noCancel).toBe(true);
   });
 });
 
@@ -155,15 +162,31 @@ describe('sign in', () => {
     expect(reduce(view, { type: 'edited', field: 'username', value: 'Bea' })).toBe(view);
   });
 
-  it('keeps an edit made while sign-in is submitting, and does not send a second effect', () => {
+  it('ignores an edit while sign-in is submitting', () => {
     const submitting = reduce(signIn(), { type: 'submitted' });
-    const edited = reduce(submitting, { type: 'edited', field: 'email', value: 'bea@example.com' });
-    expect(edited).toEqual({
-      ...signIn(),
-      email: 'bea@example.com',
-      submit: { status: 'submitting' }
-    });
-    expect(effectFor(submitting, edited)).toBeNull();
+    expect(reduce(submitting, { type: 'edited', field: 'email', value: 'bea@example.com' })).toBe(
+      submitting
+    );
+  });
+
+  it('drops navigation while a form is submitting or in oauth', () => {
+    const submitting = reduce(create('Élise_1'), { type: 'submitted' });
+    const stayed = reduce(submitting, { type: 'navigated', to: 'signIn' });
+    expect(stayed).toBe(submitting);
+    expect(reduce(stayed, {
+      type: 'authSettled',
+      result: { ok: true, identity: ada }
+    })).toEqual(signedIn());
+
+    const oauth = reduce(signIn(), { type: 'providerChosen', provider: 'google' });
+    expect(reduce(oauth, { type: 'navigated', to: 'forgot' })).toBe(oauth);
+  });
+
+  it('blocks dismiss while a form is submitting or in oauth', () => {
+    expect(canDismiss(reduce(signIn(), { type: 'submitted' }))).toBe(false);
+    expect(canDismiss(reduce(forgot(), { type: 'submitted' }))).toBe(false);
+    expect(canDismiss(reduce(create(), { type: 'providerChosen', provider: 'google' }))).toBe(false);
+    expect(canDismiss(signIn())).toBe(true);
   });
 
   it('submits once, drops a second submit, and asks for signIn', () => {
@@ -175,7 +198,6 @@ describe('sign in', () => {
       password: 'secret'
     });
     expect(reduce(first.next, { type: 'submitted' })).toBe(first.next);
-    expect(effectFor(first.next, first.next)).toBeNull();
   });
 
   it('locks the form while Google sign-in is in progress', () => {
@@ -188,7 +210,6 @@ describe('sign in', () => {
     expect(reduce(started.next, { type: 'submitted' })).toBe(started.next);
     expect(reduce(started.next, { type: 'providerChosen', provider: 'google' })).toBe(started.next);
     expect(reduce(started.next, { type: 'edited', field: 'email', value: 'x' })).toBe(started.next);
-    expect(effectFor(started.next, started.next)).toBeNull();
   });
 
   it('settles a password sign-in to signed in, a failure, or a cancelled Google attempt', () => {
@@ -264,8 +285,18 @@ describe('create account', () => {
       run: 'signUp',
       email: 'ada@example.com',
       password: 'secret',
-      username: ''
+      username: null
     });
+  });
+
+  it('does not trim a username, so spaces stay invalid', () => {
+    const view = create(' Élise_1');
+    const result = step(view, { type: 'submitted' });
+    expect(result.next).toEqual({
+      ...view,
+      submit: { status: 'failed', failure: 'invalidUsername' }
+    });
+    expect(result.effect).toBeNull();
   });
 
   it('keeps an invalid username on the form and emits no effect', () => {
@@ -364,7 +395,6 @@ describe('forgot password and inbox', () => {
     expect(reduce(inbox, { type: 'submitted' })).toBe(inbox);
     expect(reduce(inbox, { type: 'navigated', to: 'create' })).toBe(inbox);
     expect(canDismiss(inbox)).toBe(true);
-    expect(effectFor(inbox, inbox)).toBeNull();
   });
 });
 
@@ -414,7 +444,7 @@ describe('recovery password', () => {
     expect(canDismiss(view)).toBe(false);
     expect(reduce(view, { type: 'submitted' })).toBe(view);
     expect(reduce(view, { type: 'navigated', to: 'signIn' })).toBe(view);
-    expect(effectFor(view, view)).toBeNull();
+    expect(reduce(view, { type: 'opened', identity: ada })).toEqual(signedIn());
   });
 });
 
@@ -521,7 +551,6 @@ describe('ignored events', () => {
 
   it.each(cases)('ignores an illegal event on %s', (_name, view, event) => {
     expect(reduce(view, event)).toBe(view);
-    expect(effectFor(view, view)).toBeNull();
   });
 });
 
@@ -529,5 +558,19 @@ describe('opened', () => {
   it('replaces the current view from the session', () => {
     expect(reduce(confirmDelete('DELETE'), { type: 'opened', identity: null }).kind).toBe('signIn');
     expect(reduce(signIn(), { type: 'opened', identity: ada })).toEqual(signedIn());
+  });
+
+  it('ignores opened while deleting or signing out', () => {
+    const deletingView = deleting();
+    const signingOut = signedIn(true);
+    expect(reduce(deletingView, { type: 'opened', identity: null })).toBe(deletingView);
+    expect(reduce(signingOut, { type: 'opened', identity: null })).toBe(signingOut);
+  });
+
+  it('ignores a recovery link while deleting or signing out', () => {
+    const deletingView = deleting();
+    const signingOut = signedIn(true);
+    expect(reduce(deletingView, { type: 'recoveryLinkOpened' })).toBe(deletingView);
+    expect(reduce(signingOut, { type: 'recoveryLinkOpened' })).toBe(signingOut);
   });
 });

@@ -1,13 +1,12 @@
 import { isValidUsernameFormat } from './usernameFormat';
 
-export type Language = 'cajun' | 'kreole';
 export type Provider = 'email' | 'google';
 export type Identity = { id: string; email: string; username: string | null; provider: Provider };
 export type FieldName = 'username' | 'email' | 'password';
 export type AuthFailure =
   | 'wrongCredentials' | 'emailTaken' | 'emailNotConfirmed' | 'weakPassword' | 'rateLimited'
   | 'network' | 'unavailable' | 'unknown' | 'oauthCancelled' | 'oauthFailed';
-export type SubmitFailure = AuthFailure | 'invalidUsername';
+export type SubmitFailure = Exclude<AuthFailure, 'oauthCancelled'> | 'invalidUsername';
 export type Submit =
   | { status: 'editing' }
   | { status: 'submitting' }
@@ -31,9 +30,6 @@ export type AuthResult =
   | { ok: true; pending: 'confirmSignUp' | 'passwordReset' }
   | { ok: false; failure: AuthFailure };
 export type DeleteResult = { ok: true } | { ok: false; failure: 'network' | 'notSignedIn' | 'unknown' };
-export type AuthLink =
-  | { kind: 'oauth'; code: string } | { kind: 'recovery' } | { kind: 'confirmed' }
-  | { kind: 'ignored' } | { kind: 'failed' };
 export type AccountEvent =
   | { type: 'opened'; identity: Identity | null }
   | { type: 'recoveryLinkOpened' }
@@ -48,7 +44,7 @@ export type AccountEvent =
   | { type: 'deleteSettled'; result: DeleteResult };
 export type Effect =
   | { run: 'signIn'; email: string; password: string }
-  | { run: 'signUp'; email: string; password: string; username: string }
+  | { run: 'signUp'; email: string; password: string; username: string | null }
   | { run: 'signInWithProvider'; provider: 'google' }
   | { run: 'sendReset'; email: string }
   | { run: 'updatePassword'; password: string }
@@ -71,16 +67,24 @@ export function isDeleteArmed(deletion: Deletion): boolean {
 }
 
 export function canDismiss(view: AccountView): boolean {
-  if (view.kind === 'signedIn') return !view.signingOut;
-  if (view.kind === 'deleteAccount') return view.deletion.phase === 'confirm';
-  return view.kind === 'signIn' || view.kind === 'create' || view.kind === 'forgot' || view.kind === 'inbox';
+  switch (view.kind) {
+    case 'signedIn': return !view.signingOut;
+    case 'deleteAccount': return view.deletion.phase === 'confirm';
+    case 'signIn':
+    case 'create':
+    case 'forgot': return !formBusy(view.submit);
+    case 'inbox': return true;
+    case 'setNewPassword':
+    case 'passwordSaved':
+    case 'accountDeleted': return false;
+    default: { const unreachable: never = view; return unreachable; }
+  }
 }
 
 export function reduce(view: AccountView, event: AccountEvent): AccountView {
+  if (sessionLocked(view) && (event.type === 'opened' || event.type === 'recoveryLinkOpened')) return view;
   if (event.type === 'opened') return initialView(event.identity);
-  if (event.type === 'recoveryLinkOpened') {
-    return { kind: 'setNewPassword', password: '', submit: EDITING };
-  }
+  if (event.type === 'recoveryLinkOpened') return { kind: 'setNewPassword', password: '', submit: EDITING };
   switch (view.kind) {
     case 'signIn':
     case 'create':
@@ -95,10 +99,7 @@ export function reduce(view: AccountView, event: AccountEvent): AccountView {
       return reduceSignedIn(view, event);
     case 'deleteAccount':
       return reduceDelete(view, event);
-    default: {
-      const unreachable: never = view;
-      return unreachable;
-    }
+    default: { const unreachable: never = view; return unreachable; }
   }
 }
 
@@ -106,7 +107,7 @@ export function effectFor(prev: AccountView, next: AccountView): Effect | null {
   if (entered(prev, next, 'submitting')) {
     if (next.kind === 'signIn') return { run: 'signIn', email: next.email, password: next.password };
     if (next.kind === 'create') {
-      return { run: 'signUp', email: next.email, password: next.password, username: next.username };
+      return { run: 'signUp', email: next.email, password: next.password, username: next.username === '' ? null : next.username };
     }
     if (next.kind === 'forgot') return { run: 'sendReset', email: next.email };
     if (next.kind === 'setNewPassword') return { run: 'updatePassword', password: next.password };
@@ -117,10 +118,7 @@ export function effectFor(prev: AccountView, next: AccountView): Effect | null {
   if (next.kind === 'signedIn' && next.signingOut && !(prev.kind === 'signedIn' && prev.signingOut)) {
     return { run: 'signOut' };
   }
-  if (
-    next.kind === 'deleteAccount' && next.deletion.phase === 'deleting'
-    && !(prev.kind === 'deleteAccount' && prev.deletion.phase === 'deleting')
-  ) {
+  if (next.kind === 'deleteAccount' && next.deletion.phase === 'deleting' && !(prev.kind === 'deleteAccount' && prev.deletion.phase === 'deleting')) {
     return { run: 'deleteAccount' };
   }
   return null;
@@ -131,18 +129,16 @@ function reduceForm(view: FormView, event: AccountEvent): AccountView {
   if (event.type === 'submitted') return submitForm(view);
   if (event.type === 'providerChosen') {
     if (view.kind !== 'signIn' && view.kind !== 'create') return view;
-    if (view.submit.status === 'submitting' || view.submit.status === 'oauth') return view;
+    if (formBusy(view.submit)) return view;
     return { ...view, submit: { status: 'oauth', provider: 'google' } };
   }
   if (event.type === 'authSettled') return applyAuth(view, event.result);
-  if (event.type === 'navigated') return navigate(view, event.to);
+  if (event.type === 'navigated') return formBusy(view.submit) ? view : navigate(view, event.to);
   return view;
 }
 
 function reduceSignedIn(view: SignedInView, event: AccountEvent): AccountView {
-  if (event.type === 'signOutRequested') {
-    return view.signingOut ? view : { ...view, signingOut: true };
-  }
+  if (event.type === 'signOutRequested') return view.signingOut ? view : { ...view, signingOut: true };
   if (event.type === 'signedOut') return view.signingOut ? initialView(null) : view;
   if (event.type === 'deleteRequested') {
     if (view.signingOut) return view;
@@ -157,8 +153,7 @@ function reduceDelete(view: DeleteView, event: AccountEvent): AccountView {
     if (event.result.ok) return { kind: 'accountDeleted' };
     if (event.result.failure === 'notSignedIn') return initialView(null);
     return {
-      kind: 'deleteAccount',
-      identity: view.identity,
+      kind: 'deleteAccount', identity: view.identity,
       deletion: { phase: 'confirm', typed: '', failure: event.result.failure }
     };
   }
@@ -166,9 +161,7 @@ function reduceDelete(view: DeleteView, event: AccountEvent): AccountView {
     if (event.field !== 'typed') return view;
     return { ...view, deletion: { phase: 'confirm', typed: event.value } };
   }
-  if (event.type === 'deleteCancelled') {
-    return { kind: 'signedIn', identity: view.identity, signingOut: false };
-  }
+  if (event.type === 'deleteCancelled') return { kind: 'signedIn', identity: view.identity, signingOut: false };
   if (event.type === 'deleteConfirmed') {
     if (!isDeleteArmed(view.deletion)) return view;
     return { ...view, deletion: { phase: 'deleting' } };
@@ -177,19 +170,20 @@ function reduceDelete(view: DeleteView, event: AccountEvent): AccountView {
 }
 
 function editForm(view: FormView, field: FieldName | 'typed', value: string): AccountView {
-  if (field === 'typed' || view.submit.status === 'oauth') return view;
+  if (field === 'typed' || formBusy(view.submit)) return view;
   const submit = view.submit.status === 'failed' ? EDITING : view.submit;
-  if (view.kind === 'signIn' && (field === 'email' || field === 'password')) {
-    return { ...view, [field]: value, submit };
-  }
-  if (view.kind === 'create') return { ...view, [field]: value, submit };
+  if (view.kind === 'signIn' && field === 'email') return { ...view, email: value, submit };
+  if (view.kind === 'signIn' && field === 'password') return { ...view, password: value, submit };
+  if (view.kind === 'create' && field === 'username') return { ...view, username: value, submit };
+  if (view.kind === 'create' && field === 'email') return { ...view, email: value, submit };
+  if (view.kind === 'create' && field === 'password') return { ...view, password: value, submit };
   if (view.kind === 'forgot' && field === 'email') return { ...view, email: value, submit };
   if (view.kind === 'setNewPassword' && field === 'password') return { ...view, password: value, submit };
   return view;
 }
 
 function submitForm(view: FormView): AccountView {
-  if (view.submit.status === 'submitting' || view.submit.status === 'oauth') return view;
+  if (formBusy(view.submit)) return view;
   if (view.kind === 'create' && view.username !== '' && !isValidUsernameFormat(view.username)) {
     if (view.submit.status === 'failed' && view.submit.failure === 'invalidUsername') return view;
     return { ...view, submit: { status: 'failed', failure: 'invalidUsername' } };
@@ -198,7 +192,7 @@ function submitForm(view: FormView): AccountView {
 }
 
 function applyAuth(view: FormView, result: AuthResult): AccountView {
-  if (view.submit.status !== 'submitting' && view.submit.status !== 'oauth') return view;
+  if (!formBusy(view.submit)) return view;
   if (!result.ok) {
     if (result.failure === 'oauthCancelled') return { ...view, submit: EDITING };
     return { ...view, submit: { status: 'failed', failure: result.failure } };
@@ -221,9 +215,7 @@ function applyAuth(view: FormView, result: AuthResult): AccountView {
 
 function navigate(view: AccountView, to: 'signIn' | 'create' | 'forgot'): AccountView {
   if (view.kind === 'signIn' && to !== 'signIn') return blank(to);
-  if ((view.kind === 'create' || view.kind === 'forgot' || view.kind === 'inbox') && to === 'signIn') {
-    return blank('signIn');
-  }
+  if ((view.kind === 'create' || view.kind === 'forgot' || view.kind === 'inbox') && to === 'signIn') return blank('signIn');
   return view;
 }
 
@@ -231,6 +223,14 @@ function blank(to: 'signIn' | 'create' | 'forgot'): AccountView {
   if (to === 'create') return { kind: 'create', username: '', email: '', password: '', submit: EDITING };
   if (to === 'forgot') return { kind: 'forgot', email: '', submit: EDITING };
   return { kind: 'signIn', email: '', password: '', submit: EDITING };
+}
+
+function formBusy(submit: Submit): boolean {
+  return submit.status === 'submitting' || submit.status === 'oauth';
+}
+
+function sessionLocked(view: AccountView): boolean {
+  return (view.kind === 'signedIn' && view.signingOut) || (view.kind === 'deleteAccount' && view.deletion.phase === 'deleting');
 }
 
 function formStatus(view: AccountView): Submit['status'] | null {
