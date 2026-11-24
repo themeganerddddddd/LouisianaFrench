@@ -1,6 +1,6 @@
 # BIO-8 — primary verify-app recipes
 
-emulator-5580 only (`lf-api35`), re-driven on main after the session testIDs landed. Shots are half the emulator size.
+emulator-5580 only (`lf-api35`). Driven on main `39a70358b1b72d19d659882c23051567ba0d68bf` after the session testIDs landed. Shots are half the emulator size.
 
 | File | What was clicked | What it shows |
 | --- | --- | --- |
@@ -19,4 +19,4 @@ emulator-5580 only (`lf-api35`), re-driven on main after the session testIDs lan
 | lesson-complete-lf.png | All 15 Activities of the first Louisiana French Lesson, no Skip | Blue Session Complete, `id:lesson-complete-home` |
 | lesson-complete-kv.png | All 15 Activities of the first Kouri-Vini Lesson | Green Session Complete |
 
-Not verified: stopping a Speech Practice take. uiautomator cannot dump while the microphone is open, so `id:speech-practice-stop` cannot be tapped. Play my recording and Sounds good were not driven. Daily Speech Practice (`Practice Speech`) was not the plan button. On these Day 1 Homes it read `Start your new lesson`, or `Continue to lesson` after a Lesson was completed today.
+Not verified: stopping a Speech Practice take. uiautomator cannot dump while the microphone is open, so `id:speech-practice-stop` cannot be tapped. Play my recording and Sounds good were not driven. Daily Speech Practice (`Practice Speech`) was not the plan button. On these Day 1 Homes it read `Start your new lesson`, or `Continue to lesson` after a Lesson was completed today. iOS was not driven.
