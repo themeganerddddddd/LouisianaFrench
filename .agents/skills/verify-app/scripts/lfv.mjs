@@ -88,25 +88,12 @@ function expoGoApk() {
 
 // ---- UI tree -------------------------------------------------------------
 
-function dumpOnce(timeoutMs) {
-  // A dump can hang indefinitely while the app is starting, or while the mic is open.
-  const start = Date.now();
-  const out = trySh('adb', ['-s', SERIAL, 'exec-out', 'uiautomator', 'dump', '/dev/tty'], { timeout: timeoutMs });
-  const hung = Date.now() - start >= timeoutMs - 1000;
-  if (out && out.includes('<hierarchy')) {
-    return {
-      nodes: parseNodes(out.slice(out.indexOf('<?xml'), out.lastIndexOf('</hierarchy>') + 12)),
-      hung: false
-    };
-  }
-  return { nodes: null, hung };
-}
-
 function dumpNodes() {
   // uiautomator refuses to dump while an animation is running; retry briefly.
   for (let i = 0; i < 5; i++) {
-    const result = dumpOnce(15000);
-    if (result.nodes) return result.nodes;
+    // A dump can hang indefinitely while the app is starting; time it out and retry.
+    const out = trySh('adb', ['-s', SERIAL, 'exec-out', 'uiautomator', 'dump', '/dev/tty'], { timeout: 15000 });
+    if (out && out.includes('<hierarchy')) return parseNodes(out.slice(out.indexOf('<?xml'), out.lastIndexOf('</hierarchy>') + 12));
     spawnSync('sleep', ['0.5']);
   }
   die('uiautomator dump failed (is the screen on and the app in front?)');
@@ -142,28 +129,7 @@ function matcher(selector) {
 }
 
 const visible = (n) => n.x2 > n.x1 && n.y2 > n.y1;
-
-function cachedNode(selector) {
-  const hit = loadState().tapCentres?.[selector];
-  if (!hit) return null;
-  const { x, y } = hit;
-  return { id: '', text: '', desc: '', clickable: true, x1: x - 1, y1: y - 1, x2: x + 1, y2: y + 1 };
-}
-
-function findNode(selector) {
-  // Speech Practice keeps the mic open, and uiautomator then hangs instead of dumping.
-  // A second tap of the same selector repeats that control's last centre.
-  const cache = cachedNode(selector);
-  let hung = false;
-  for (let i = 0; i < 5; i++) {
-    const result = dumpOnce(cache ? 4000 : 15000);
-    if (result.nodes) return result.nodes.filter(visible).find(matcher(selector));
-    hung = hung || result.hung;
-    if (hung && cache) return cache;
-    if (i < 4) spawnSync('sleep', ['0.5']);
-  }
-  return undefined;
-}
+const findNode = (selector) => dumpNodes().filter(visible).find(matcher(selector));
 
 async function waitFor(selector, timeoutMs = 20000) {
   let node;
@@ -280,18 +246,7 @@ function dump(raw) {
 const tapNode = (n) => adb('shell', 'input', 'tap', String((n.x1 + n.x2) >> 1), String((n.y1 + n.y2) >> 1));
 
 async function tap(selector) {
-  const node = await waitFor(selector, 10000);
-  tapNode(node);
-  const s = loadState();
-  saveState({
-    tapCentres: {
-      ...(s.tapCentres || {}),
-      [selector]: {
-        x: (node.x1 + node.x2) >> 1,
-        y: (node.y1 + node.y2) >> 1
-      }
-    }
-  });
+  tapNode(await waitFor(selector, 10000));
   console.error(`lfv: tapped ${selector}`);
 }
 
@@ -344,7 +299,7 @@ const HELP = `lfv — drive Louisiana Languages on an isolated emulator (${SERIA
   doctor                read-only health check; exit 1 if anything is off
   open                  force-stop Expo Go and reopen the app (keeps app data)
   dump [--raw]          list on-screen nodes: id:/text:/desc: handles, [tap], centre
-  tap <sel>             wait up to 10s for <sel>, tap its centre. If uiautomator hangs, the same <sel> taps its last centre again
+  tap <sel>             wait up to 10s for <sel>, tap its centre
   wait <sel> [secs]     wait for <sel> (default 20s); exit 1 on timeout
   type <text>           type into the focused field
   key <KEYCODE>         e.g. BACK, ENTER, TAB

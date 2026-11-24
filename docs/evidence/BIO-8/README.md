@@ -20,3 +20,5 @@ emulator-5580 only (`lf-api35`). Each recipe started from a cold `lfv up`. Shots
 | lesson-complete-kv.png | All 15 Activities of the first Kouri-Vini Lesson | Green Session Complete for Greetings & Check-ins |
 
 Not verified: Daily Speech Practice (`Practice Speech` on Today's plan). On these Day 1 Homes, `id:home-plan-cta` read `Start your new lesson` or, after a Lesson was completed today, `Continue to lesson`.
+
+`speech-hub-recorded.png` and `speech-hub-kv.png` were stopped with a driver fallback that this branch no longer has. Stopping a take does not work with current `lfv`. Those two shots are not proof of a stop step.

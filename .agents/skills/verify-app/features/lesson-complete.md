@@ -35,7 +35,7 @@ Preconditions:
 ## Gotchas
 
 - `text:Session Complete` does not match. The title node is `Session Complete 🎉`. Use `has:Session Complete` or `id:lesson-complete-scroll`.
-- The Back to Home button has no testID and no accessibility label. `text:Back to Home` is the handle. TODO: switch to testID `lesson-complete-home` once the testIDs PR lands.
+- The Back to Home button has no testID and no accessibility label. `text:Back to Home` is the handle.
 - `text:Next Question` is the visible label. The control has no accessibility label. `desc:Check answer` is the check control; its visible text is `Check`.
 - T-Boy (`id:home-tboy` ten times) can jump the Catalog. Do not use it for this recipe. These steps are the real Lesson.
 - A pending Mistake at the last Activity opens Mistake Review (`mistake-review.md`) and this screen does not appear until that queue is cleared from the Lesson path.

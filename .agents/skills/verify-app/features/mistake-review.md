@@ -36,5 +36,5 @@ Preconditions:
 - Mistake Review sets `allowSkip` false. Do not look for Skip there.
 - Resolving the last Home-entry Mistake replaces the screen with Home when Next Question is tapped. It does not open Lesson Complete. Lesson Complete is the end-of-Lesson path (`lesson-complete.md`).
 - `id:mistakes-count` is the badge view. The digit is the following `text:` node (`text:1`), not an attribute of the id.
-- The shell has no testID. `text:Mistake Review` is the wait target. TODO: switch to testID `mistake-review-screen` once the testIDs PR lands.
+- The shell has no testID. `text:Mistake Review` is the wait target.
 - Answer choices must be found by their label text, never by position or index, because option order may shuffle. That applies even after the `*-choice-N` testIDs land.

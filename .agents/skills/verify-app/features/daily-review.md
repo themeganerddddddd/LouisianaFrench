@@ -40,7 +40,7 @@ Preconditions:
 - `reviewEnabled` is `!firstDay || learnedWords > 0`. Day 1 with no learned Word disables Review. Dictionary and Hub stay enabled. Mistakes stays disabled until a Mistake is pending.
 - An enabled Review with nothing due still reads `desc:Review`. The same label is the disabled control. The tap is the proof: disabled stays on Home, enabled opens `text:Daily Review`. The Day 1 helper stays on screen after a Word is learned. `id:home-plan-status` stays `text:Day 1` until a Lesson was completed on an earlier day, even after the clock moves.
 - Intro Activities are not Cards in the Daily Review queue. A New-word Continue learns the Word (Review turns on) but does not by itself create a due Card. Answer one Practice Activity.
-- The queue screen has no testID. Wait on `text:Daily Review` and `text:No review cards are due right now.` TODO: switch to testID `daily-review-empty` for the empty shell, and `daily-review-session` for the active shell, once the testIDs PR lands.
+- The queue screen has no testID. Wait on `text:Daily Review` and `text:No review cards are due right now.`
 - Answer choices must be found by their label text, never by position or index, because option order may shuffle. That applies even after the `*-choice-N` testIDs land.
 - One day on the clock can fall on the same minute as `nextReviewAt` and leave the Card not due. Two days is the step above.
 - The last due Card opens Lesson Complete with the title Daily Review (`lesson-complete.md`).
