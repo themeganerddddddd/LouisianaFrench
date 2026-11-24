@@ -12,6 +12,7 @@
     "test": "jest --watchAll=false",
     "db:test": "bash supabase/tests/run-local.sh",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test:changed": "node .agents/scripts/test-changed.mjs",
     "check:ui-evidence": "node .agents/scripts/check-pr-ui-evidence.mjs",
     "capture:ui-evidence": "node .agents/scripts/capture-ui-evidence.mjs",

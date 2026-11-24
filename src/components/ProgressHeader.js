@@ -1,6 +1,16 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function ProgressHeader({ current, total, xp, title, modeLabel, language, unitPreface, onOpenPreface }) {
+export default function ProgressHeader({
+  current,
+  total,
+  xp,
+  title,
+  modeLabel,
+  language,
+  unitPreface,
+  onOpenPreface,
+  countTestID
+}) {
   const pct = total > 0 ? ((current / total) * 100).toFixed(0) : 0;
 
   const theme =
@@ -49,7 +59,7 @@ export default function ProgressHeader({ current, total, xp, title, modeLabel, l
         />
       </View>
 
-      <Text style={styles.sub}>
+      <Text style={styles.sub} testID={countTestID}>
         {current} / {total}
       </Text>
     </View>
