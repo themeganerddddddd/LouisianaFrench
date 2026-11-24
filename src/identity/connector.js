@@ -2,26 +2,23 @@ import { createClient } from '@supabase/supabase-js';
 import * as WebBrowser from 'expo-web-browser';
 
 import { createSessionStore } from './sessionStore';
+import {
+  checkUsername as checkUsernameRpc,
+  loadProfileUsername,
+  setUsername as setUsernameRpc
+} from './username';
 
 const UNAVAILABLE = 'Sign-in is unavailable.';
 const FAILED = 'Sign-in failed.';
 const WRONG_PASSWORD = 'That email or password is not right.';
 const AUTH_REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback';
 
-function displayNameFrom(user, fallbackEmail) {
-  const metadata = user?.user_metadata ?? {};
-  const named = metadata.display_name || metadata.full_name;
-  if (named) return named;
-  const email = user?.email || fallbackEmail || '';
-  return email.split('@')[0] || '';
-}
-
-function toIdentity(user, fallbackEmail) {
+function toIdentity(user, fallbackEmail, username) {
   if (!user?.id) return null;
   return {
     id: user.id,
     email: user.email || fallbackEmail || '',
-    displayName: displayNameFrom(user, fallbackEmail)
+    username
   };
 }
 
@@ -36,9 +33,11 @@ function learnerMessage(error) {
   return FAILED;
 }
 
-function remember(session, email) {
+async function remember(profileClient, session, email) {
+  const user = session?.user;
+  const username = user?.id ? await loadProfileUsername(profileClient, user.id) : null;
   return {
-    identity: toIdentity(session?.user, email),
+    identity: toIdentity(user, email, username),
     accessToken: session?.access_token ?? null
   };
 }
@@ -75,6 +74,12 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       },
       async signOut() {
         return { identity: null };
+      },
+      async setUsername() {
+        return { ok: false, reason: 'network' };
+      },
+      async checkUsername() {
+        return { status: 'error' };
       }
     };
   }
@@ -91,14 +96,14 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
 
   async function hydrate() {
     const { data } = await client.auth.getSession();
-    const next = remember(data?.session);
+    const next = await remember(client, data?.session);
     identity = next.identity;
     accessToken = next.accessToken;
   }
 
   async function apply(session, email) {
     await ready;
-    const next = remember(session, email);
+    const next = await remember(client, session, email);
     identity = next.identity;
     accessToken = next.accessToken;
     emit();
@@ -118,12 +123,8 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    async signUpWithPassword({ email, password, displayName }) {
-      const { data, error } = await client.auth.signUp({
-        email,
-        password,
-        options: { data: { display_name: displayName } }
-      });
+    async signUpWithPassword({ email, password }) {
+      const { data, error } = await client.auth.signUp({ email, password });
       if (error) {
         return { identity: null, message: learnerMessage(error) };
       }
@@ -236,6 +237,12 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       accessToken = null;
       emit();
       return { identity: null };
+    },
+    async setUsername(name) {
+      return setUsernameRpc((fn, args) => client.rpc(fn, args), name);
+    },
+    async checkUsername(candidate) {
+      return checkUsernameRpc((fn, args) => client.rpc(fn, args), candidate);
     }
   };
 }

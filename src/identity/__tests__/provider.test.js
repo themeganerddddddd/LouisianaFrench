@@ -75,7 +75,7 @@ describe('signInWithProvider', () => {
     expect(result.identity).toEqual({
       id: 'learner-1',
       email: 'ada@example.com',
-      displayName: 'Ada'
+      username: null
     });
     expect(await connector.getAccessToken()).toBe('access-token-value');
     expect(client.calls[0].options.redirectTo).toBe(REDIRECT);
@@ -88,7 +88,7 @@ describe('signInWithProvider', () => {
     expect(JSON.parse(await AsyncStorage.getItem('lf_profile')).username).toBe('Player');
   });
 
-  it('uses the email name when the provider sends no display name', async () => {
+  it('does not use the email local part when the profile has no username', async () => {
     const storage = createSessionStore({
       platform: 'ios',
       secureStore: {
@@ -110,7 +110,7 @@ describe('signInWithProvider', () => {
     });
 
     const result = await connector.signInWithProvider('google');
-    expect(result.identity.displayName).toBe('ada');
+    expect(result.identity.username).toBeNull();
   });
 
   it('leaves a guest when the browser is closed', async () => {
@@ -138,7 +138,7 @@ describe('signInWithProvider', () => {
     finishFirst({ url: `${REDIRECT}?code=first-code` });
     await first;
 
-    expect(second.identity.displayName).toBe('Ada');
+    expect(second.identity.username).toBeNull();
     expect(client.calls.filter((call) => call.method === 'exchange')).toEqual([
       { method: 'exchange', code: 'second-code' }
     ]);
@@ -161,7 +161,7 @@ describe('signInWithProvider', () => {
 
     const result = await connector.signInWithProvider('facebook');
 
-    expect(result.identity.displayName).toBe('Ada');
+    expect(result.identity.username).toBeNull();
     expect(await connector.getAccessToken()).toBe('access-token-value');
     expect(client.calls[0].provider).toBe('facebook');
     expect(client.calls[0].options.redirectTo).toBe(REDIRECT);

@@ -1,6 +1,6 @@
 begin;
 
-select plan(70);
+select plan(71);
 
 insert into auth.users (id, created_at) values
   ('70000000-0000-0000-0000-000000000001', '2024-03-01T00:00:00Z'),
@@ -272,6 +272,19 @@ select dblink_send_query('b', $$
 $$);
 select pg_sleep(0.4);
 select is(dblink_is_busy('b'), 1, 'the second claim is blocked until the first commits');
+select is(
+  (
+    select a.wait_event_type
+    from pg_stat_activity as a
+    where a.pid <> pg_backend_pid()
+      and a.state = 'active'
+      and a.query like '%set_username%'
+      and a.query like '%race_1%'
+    limit 1
+  ),
+  'Lock',
+  'the second claim waits on a lock'
+);
 select dblink_exec('a', 'commit');
 select is(
   (select result ->> 'reason' from dblink_get_result('b') as t(result jsonb)),

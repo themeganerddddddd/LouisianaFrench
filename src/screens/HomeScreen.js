@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AboutTextModal from '../components/AboutTextModal';
 import SignInModal from '../components/SignInModal';
 import { createSupabaseIdentityConnector } from '../identity/connector';
+import { accountName } from '../identity/username';
 import BugReportButton from '../components/BugReportButton';
 import DebugCatalogModal from '../components/DebugCatalogModal';
 import HomeAboutMenu from '../components/HomeAboutMenu';
@@ -823,7 +824,7 @@ export default function HomeScreen() {
         anchorTop={insets.top + 68}
         anchorLeft={20}
         accentColor={theme.accent}
-        accountDetail={identity?.displayName || ''}
+        accountDetail={identity ? accountName(identity.username) : ''}
         expanded={aboutExpanded}
         onAccount={() => {
           setAboutMenuVisible(false);

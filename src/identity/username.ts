@@ -13,13 +13,37 @@ export type UsernameAvailability =
 
 type RpcResult = { data: unknown; error: { message?: string } | null };
 type Rpc = (fn: string, args: Record<string, unknown>) => Promise<RpcResult>;
-
-const SET_REASONS = new Set(['invalid', 'reserved', 'taken']);
-const CHECK_STATUSES = new Set(['available', 'current', 'taken', 'invalid', 'reserved']);
+type ProfileClient = {
+  from?: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => Promise<{ data: unknown; error?: unknown }>;
+      };
+    };
+  };
+};
 
 function row(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
+  return Object.fromEntries(Object.entries(value));
+}
+
+function setReason(value: unknown): 'invalid' | 'reserved' | 'taken' | null {
+  if (value === 'invalid' || value === 'reserved' || value === 'taken') return value;
+  return null;
+}
+
+function checkStatus(value: unknown): Exclude<UsernameAvailability['status'], 'error'> | null {
+  if (
+    value === 'available' ||
+    value === 'current' ||
+    value === 'taken' ||
+    value === 'invalid' ||
+    value === 'reserved'
+  ) {
+    return value;
+  }
+  return null;
 }
 
 export function mapSetUsername(value: unknown): SetUsernameResult {
@@ -31,28 +55,55 @@ export function mapSetUsername(value: unknown): SetUsernameResult {
   if (found.ok === false && found.reason === 'too_soon' && typeof found.retryAt === 'string') {
     return { ok: false, reason: 'too_soon', retryAt: found.retryAt };
   }
-  if (found.ok === false && typeof found.reason === 'string' && SET_REASONS.has(found.reason)) {
-    return { ok: false, reason: found.reason as 'invalid' | 'reserved' | 'taken' };
-  }
+  const reason = setReason(found.reason);
+  if (found.ok === false && reason) return { ok: false, reason };
   return { ok: false, reason: 'network' };
 }
 
 export function mapCheckUsername(value: unknown): UsernameAvailability {
   const found = row(value);
-  if (found && typeof found.status === 'string' && CHECK_STATUSES.has(found.status)) {
-    return { status: found.status as UsernameAvailability['status'] };
-  }
+  const status = found ? checkStatus(found.status) : null;
+  if (status) return { status };
   return { status: 'error' };
 }
 
+async function invoke(rpc: Rpc, fn: string, args: Record<string, unknown>): Promise<RpcResult> {
+  try {
+    return await rpc(fn, args);
+  } catch {
+    return { data: null, error: { message: 'network' } };
+  }
+}
+
 export async function setUsername(rpc: Rpc, name: string): Promise<SetUsernameResult> {
-  const { data, error } = await rpc('set_username', { proposed: name });
+  const { data, error } = await invoke(rpc, 'set_username', { proposed: name });
   if (error) return { ok: false, reason: 'network' };
   return mapSetUsername(data);
 }
 
 export async function checkUsername(rpc: Rpc, candidate: string): Promise<UsernameAvailability> {
-  const { data, error } = await rpc('check_username', { candidate });
+  const { data, error } = await invoke(rpc, 'check_username', { candidate });
   if (error) return { status: 'error' };
   return mapCheckUsername(data);
+}
+
+export function usernameFromProfile(value: unknown): string | null {
+  const found = row(value);
+  if (!found || typeof found.username !== 'string' || found.username.length === 0) return null;
+  return found.username;
+}
+
+export function accountName(username: string | null | undefined): string {
+  return usernameFromProfile({ username }) ?? 'Learner';
+}
+
+export async function loadProfileUsername(client: ProfileClient, id: string): Promise<string | null> {
+  if (!client.from) return null;
+  try {
+    const { data, error } = await client.from('profiles').select('username').eq('id', id).maybeSingle();
+    if (error) return null;
+    return usernameFromProfile(data);
+  } catch {
+    return null;
+  }
 }

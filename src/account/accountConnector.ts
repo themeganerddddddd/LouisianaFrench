@@ -1,4 +1,5 @@
 import type { AuthFailure, AuthResult, DeleteResult, Provider } from './accountMachine'
+import { loadProfileUsername } from '../identity/username'
 
 const REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback'
 const BY_CODE: Record<string, AuthFailure> = {
@@ -26,6 +27,13 @@ export type AccountClient = {
     signOut(input: { scope: 'local' }): Promise<{ error?: AuthError | null }>
   }
   deleteAccount(): Promise<{ error?: AuthError | null }>
+  from?: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => Promise<{ data: unknown; error?: AuthError | null }>
+      }
+    }
+  }
 }
 
 let attempt = 0
@@ -59,10 +67,11 @@ function fail(error: AuthError | null | undefined): AuthResult {
 function googleFail(error: AuthError | null | undefined): AuthResult {
   return { ok: false, failure: mapAuthFailure(error) === 'network' ? 'network' : 'oauthFailed' }
 }
-function signedIn(user: User | null | undefined, fallback: Provider): AuthResult {
+async function signedIn(client: AccountClient, user: User | null | undefined, fallback: Provider): Promise<AuthResult> {
   if (!user?.id) return { ok: false, failure: 'unknown' }
   const provider: Provider = user.app_metadata?.provider === 'google' || fallback === 'google' ? 'google' : 'email'
-  return { ok: true, identity: { id: user.id, email: user.email || '', username: null, provider } }
+  const username = await loadProfileUsername(client, user.id)
+  return { ok: true, identity: { id: user.id, email: user.email || '', username, provider } }
 }
 
 function isAuthError(error: unknown): error is AuthError {
@@ -107,14 +116,14 @@ export function createAccountConnector({
       if (!client) return unavailable
       const { data, error } = await client.auth.signInWithPassword({ email, password })
       if (error || !data?.session?.user) return fail(error)
-      return signedIn(data.session.user, 'email')
+      return signedIn(client, data.session.user, 'email')
     },
     async signUp(email: string, password: string, _username: string | null): Promise<AuthResult> {
       if (!client) return unavailable
       const { data, error } = await client.auth.signUp({ email, password })
       if (error) return fail(error)
       if (!data?.session?.user) return { ok: true, pending: 'confirmSignUp' }
-      return signedIn(data.session.user, 'email')
+      return signedIn(client, data.session.user, 'email')
     },
     async sendReset(email: string): Promise<AuthResult> {
       if (!client) return unavailable
@@ -126,7 +135,7 @@ export function createAccountConnector({
       const { data, error } = await client.auth.updateUser({ password })
       const user = data?.user || data?.session?.user
       if (error || !user) return fail(error)
-      return signedIn(user, 'email')
+      return signedIn(client, user, 'email')
     },
     async signInWithProvider(provider: string): Promise<AuthResult> {
       if (provider !== 'google') return { ok: false, failure: 'oauthFailed' }
@@ -158,7 +167,7 @@ export function createAccountConnector({
       }
       if (!stillCurrent(mine)) return { ok: false, failure: 'oauthCancelled' }
       if (exchanged.error || !exchanged.data?.session?.user) return googleFail(exchanged.error)
-      return signedIn(exchanged.data.session.user, 'google')
+      return signedIn(client, exchanged.data.session.user, 'google')
     },
     async signOut() {
       if (client) await client.auth.signOut({ scope: 'local' })

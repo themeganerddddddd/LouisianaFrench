@@ -50,4 +50,12 @@ describe('username RPC mapping', () => {
     await expect(setUsername(rpc, 'Céline')).resolves.toEqual({ ok: false, reason: 'network' });
     await expect(checkUsername(rpc, 'Céline')).resolves.toEqual({ status: 'error' });
   });
+
+  it('maps a thrown RPC rejection as a network error', async () => {
+    const rpc = async () => {
+      throw new Error('socket hang up');
+    };
+    await expect(setUsername(rpc, 'Céline')).resolves.toEqual({ ok: false, reason: 'network' });
+    await expect(checkUsername(rpc, 'Céline')).resolves.toEqual({ status: 'error' });
+  });
 });
