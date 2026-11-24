@@ -25,3 +25,18 @@ On attempt 5 of 5, both saves succeeded and the step that leaves Speech Practice
 
 ![Before: save-failed message](before-next-step-called-save-failed.png)
 ![After: saved message](after-next-step-says-saved.png)
+
+## After merging the loading timeout
+
+The same Expo web session, after main's loading message and 8 second timeout were merged in. Failures were forced only for the captures.
+
+Daily Speech Practice stayed on "Loading Daily Speech Practice." while the progress read never finished. After 8 seconds it showed the error, with Try again and Home. Home returned to today's plan and did not award XP.
+
+![Loading](merged-loading.png)
+![Timeout error](merged-timeout-error.png)
+![Home from the error](merged-home-from-error.png)
+
+On the last of five phrases, the session save failed once and the learner tapped Sounds good again. Home showed 5 XP and the streak time did not change. When the next step threw after a good save, the screen said the attempt was saved.
+
+![Retry keeps 5 XP](merged-retry-xp.png)
+![Saved, next step could not start](merged-next-step-saved.png)
