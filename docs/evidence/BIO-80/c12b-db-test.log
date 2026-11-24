@@ -1,3 +1,4 @@
+Tested commit: 3c956635a0689b4452b03c3b65f8a8be4254dce6
 C12b username RPCs.
 Image: public.ecr.aws/supabase/postgres:17.12.0.002. The database port is not published.
 pgTAP before this migration: 81 (tests/db/profiles_username.sql).
