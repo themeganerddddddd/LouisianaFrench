@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Local PR readiness for agents: lint → test → the same agent gates CI runs (pr-gates.mjs).
+ * Local PR readiness for agents: lint → typecheck → test → the same agent gates CI runs (pr-gates.mjs).
  *
  * Usage:
  *   node .agents/scripts/pr-ready.mjs [--skip-test] [--issue N] [--body-file path]
@@ -42,6 +42,7 @@ function main() {
   const failures = [];
 
   if (!step('npm run lint', 'npm', ['run', 'lint'], root)) failures.push('lint');
+  if (!step('npm run typecheck', 'npm', ['run', 'typecheck'], root)) failures.push('typecheck');
   if (args.skipTest) console.error('→ skipping tests (--skip-test)');
   else if (!step('npm run test', 'npm', ['run', 'test'], root)) failures.push('test');
 
