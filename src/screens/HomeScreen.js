@@ -500,7 +500,7 @@ export default function HomeScreen() {
       : {
           topBarGrad: ['#0AA35F', '#066B3F'],
           headerGrad: ['#0AA35F', '#066B3F'],
-          start: accentFor(language),
+          start: accentFor('kreole'),
           doneSoft: '#34D399',
           progressFill: '#6EE7B7',
           subtitle: '#E7F5EE',
