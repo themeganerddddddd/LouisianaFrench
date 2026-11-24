@@ -1,0 +1,47 @@
+command: npm test
+exit: 0
+summary: Tests: 10 skipped, 635 passed, 645 total
+
+command: npm run lint
+exit: 0
+summary: eslint: no problems
+
+command: npm run test:changed
+exit: 0
+summary: full-suite-fallback (no related tests in the diff); Tests: 10 skipped, 635 passed, 645 total
+
+command: python -m unittest discover -s scripts -p 'test_*.py'
+exit: 0
+summary: Ran 48 tests in 0.084s; OK
+
+command: python scripts/test_generate_lessons.py
+exit: 0
+summary: Ran 21 tests in 0.001s; OK
+
+command: python scripts/test_incremental_generation.py
+exit: 0
+summary: Ran 6 tests in 0.073s; OK
+
+command: python scripts/test_normalize_audio.py
+exit: 0
+summary: Ran 21 tests in 0.000s; OK
+
+command: npm run pr-ready
+exit: 0
+summary: pr-ready: ok; Tests: 10 skipped, 635 passed, 645 total
+
+command: npm run check:ui-evidence
+exit: 0
+summary: ok true; reason non-ui-diff
+
+command: npm run validate:fixture-sep
+exit: 0
+summary: verdict PASS; warnings 6
+
+command: npm run build
+exit: 0
+summary: Exported dist/ios and dist/android
+
+command: npm ci
+exit: 0
+summary: added 1305 packages, and audited 1306 packages in 7s
