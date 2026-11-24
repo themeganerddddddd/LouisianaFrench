@@ -381,6 +381,21 @@ describe('account connector', () => {
     expect(calls).toEqual(['from-google']);
   });
 
+  it('sends the reset to the redirect the caller provides', async () => {
+    const calls: { redirectTo?: string }[] = [];
+    const connector = createAccountConnector({
+      client: client({
+        resetPasswordForEmail: async (_email: string, options: { redirectTo: string }) => {
+          calls.push(options);
+          return { error: null };
+        }
+      }),
+      redirectTo: 'https://x/auth/callback'
+    });
+    expect(await connector.sendReset('ada@example.com')).toEqual({ ok: true, pending: 'passwordReset' });
+    expect(calls[0].redirectTo).toBe('https://x/auth/callback?type=recovery');
+  });
+
   it('sends the reset link back with type=recovery', async () => {
     const calls: { redirectTo?: string }[] = [];
     const connector = createAccountConnector({

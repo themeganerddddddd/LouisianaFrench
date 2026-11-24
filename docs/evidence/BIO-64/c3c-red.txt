@@ -261,3 +261,84 @@ Tests:       1 failed, 1 total
 Snapshots:   0 total
 Time:        0.35 s
 Ran all test suites matching src/account/__tests__/useAccountMachine.test.tsx.
+
+
+--- review on 52b9508: StrictMode dispatch, unmount, injected redirect ---
+These three tests were run before the fix. The hook file was the version that runs the effect inside setView and never sets alive back to true.
+
+FAIL src/account/__tests__/useAccountMachine.test.tsx
+  ● useAccountMachine › signs in once under StrictMode and shows the failure
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 6
+    + Received  + 1
+
+    - Array [
+    -   Array [
+    -     "ada@example.com",
+    -     "secret",
+    -   ],
+    - ]
+    + Array []
+
+      86 |       signInWith('ada@example.com', 'secret', ready(slot));
+      87 |     });
+    > 88 |     expect(calls).toEqual([['ada@example.com', 'secret']]);
+         |                   ^
+      89 |     expect(slot.machine?.view).toEqual({
+      90 |       kind: 'signIn',
+      91 |       email: 'ada@example.com',
+
+      at Object.toEqual (src/account/__tests__/useAccountMachine.test.tsx:88:19)
+
+  ● useAccountMachine › drops the result when the screen unmounts before sign-in settles
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 8
+
+    - Array []
+    + Array [
+    +   Array [
+    +     "Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://react.dev/link/setstate-in-render",
+    +     "Host",
+    +     "Screen",
+    +     "Screen",
+    +   ],
+    + ]
+
+      135 |     });
+      136 |     expect(renders).toBe(rendersAtUnmount);
+    > 137 |     expect(errors).toEqual([]);
+          |                    ^
+      138 |     spy.mockRestore();
+      139 |   });
+      140 | });
+
+      at Object.toEqual (src/account/__tests__/useAccountMachine.test.tsx:137:20)
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › sends the reset to the redirect the caller provides
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "https://x/auth/callback?type=recovery"
+    Received: "com.westleysturhan.louisianafrench://auth/callback?type=recovery"
+
+      394 |     });
+      395 |     expect(await connector.sendReset('ada@example.com')).toEqual({ ok: true, pending: 'passwordReset' });
+    > 396 |     expect(calls[0].redirectTo).toBe('https://x/auth/callback?type=recovery');
+          |                                 ^
+      397 |   });
+      398 |
+      399 |   it('sends the reset link back with type=recovery', async () => {
+
+      at Object.toBe (src/account/__tests__/accountConnector.test.ts:396:33)
+
+Test Suites: 2 failed, 2 total
+Tests:       3 failed, 17 skipped, 20 total
+Snapshots:   0 total
+Time:        0.214 s, estimated 1 s
+Ran all test suites matching src/account/__tests__/useAccountMachine.test.tsx|src/account/__tests__/accountConnector.test.ts with tests matching "signs in once under StrictMode|drops the result when the screen unmounts|sends the reset to the redirect".

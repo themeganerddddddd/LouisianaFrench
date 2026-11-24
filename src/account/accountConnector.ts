@@ -1,5 +1,7 @@
 import type { AccountEvent, AuthFailure, AuthResult, DeleteResult, Provider } from './accountMachine'
-import { parseAuthUrl, resolveAuthRedirect } from './authLink'
+import { parseAuthUrl } from './authLink'
+
+const NATIVE_REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback'
 const BY_CODE: Record<string, AuthFailure> = {
   invalid_credentials: 'wrongCredentials', invalid_grant: 'wrongCredentials',
   email_not_confirmed: 'emailNotConfirmed', user_already_exists: 'emailTaken', email_exists: 'emailTaken',
@@ -73,13 +75,14 @@ function caught(work: Promise<AuthCall>): Promise<AuthCall> {
 export function createAccountConnector({
   client,
   openBrowser,
-  timeoutMs = 15000
+  timeoutMs = 15000,
+  redirectTo = NATIVE_REDIRECT
 }: {
   client: AccountClient | null
   openBrowser?: Browser
   timeoutMs?: number
+  redirectTo?: string
 }) {
-  const redirect = resolveAuthRedirect()
   const unavailable: AuthResult = { ok: false, failure: 'unavailable' }
   let attempt = 0
   let succeeded = 0
@@ -110,7 +113,7 @@ export function createAccountConnector({
     },
     async sendReset(email: string): Promise<AuthResult> {
       if (!client) return unavailable
-      const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: `${redirect}?type=recovery` })
+      const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: `${redirectTo}?type=recovery` })
       return error ? fail(error) : { ok: true, pending: 'passwordReset' }
     },
     async updatePassword(password: string): Promise<AuthResult> {
@@ -126,7 +129,7 @@ export function createAccountConnector({
       const mine = beginAttempt()
       const started = await firstOf(caught(client.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: redirect, skipBrowserRedirect: true }
+        options: { redirectTo, skipBrowserRedirect: true }
       })), timeoutMs)
       if (started === 'timeout') return { ok: false, failure: 'network' }
       if (started.error || !started.data?.url) return started.error ? googleFail(started.error) : { ok: false, failure: 'oauthFailed' }
@@ -140,7 +143,7 @@ export function createAccountConnector({
         oauthInFlight = false
       }
       if (mine !== attempt || !returned?.url) return { ok: false, failure: 'oauthCancelled' }
-      const link = parseAuthUrl(returned.url, redirect)
+      const link = parseAuthUrl(returned.url, redirectTo)
       if (link.kind === 'failed' || link.kind === 'ignored') return { ok: false, failure: 'oauthFailed' }
       const pending = caught(client.auth.exchangeCodeForSession(link.code))
       const exchanged = await firstOf(pending, timeoutMs)
@@ -163,7 +166,7 @@ export function createAccountConnector({
     noteSuccess,
     orphaned,
     async consumeAuthUrl(url: string): Promise<AccountEvent | null> {
-      const link = parseAuthUrl(url, redirect)
+      const link = parseAuthUrl(url, redirectTo)
       if (link.kind === 'oauth' && oauthInFlight) return null
       if (link.kind !== 'recovery' && link.kind !== 'confirmed' && link.kind !== 'oauth') return null
       if (!client) return null
