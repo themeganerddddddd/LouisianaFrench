@@ -3,6 +3,10 @@ import { describe, expect, it } from '@jest/globals';
 import { createAccountConnector, type AccountClient } from '../accountConnector';
 import { runAccountEffect } from '../runAccountEffects';
 
+function openConnector(options: Omit<Parameters<typeof createAccountConnector>[0], 'redirectTo'> & { redirectTo?: string }) {
+  return createAccountConnector({ redirectTo: REDIRECT, ...options });
+}
+
 const REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback';
 const GOOGLE = {
   id: 'learner-1',
@@ -12,8 +16,15 @@ const GOOGLE = {
 };
 
 describe('account connector', () => {
+  it('requires the redirect address', () => {
+    const options = { client: null };
+    // @ts-expect-error omitting redirectTo must not compile
+    const connector = createAccountConnector(options);
+    expect(typeof connector.signIn).toBe('function');
+  });
+
   it('uses error.code before the message regex', async () => {
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithPassword: async () => ({
           data: { session: null },
@@ -28,7 +39,7 @@ describe('account connector', () => {
   });
 
   it('falls back to the message regex and scrubs a url', async () => {
-    const taken = createAccountConnector({
+    const taken = openConnector({
       client: client({
         signInWithPassword: async () => ({
           data: { session: null },
@@ -38,7 +49,7 @@ describe('account connector', () => {
     });
     expect(await taken.signIn('ada@example.com', 'nope')).toEqual({ ok: false, failure: 'emailTaken' });
 
-    const leaked = createAccountConnector({
+    const leaked = openConnector({
       client: client({
         signInWithPassword: async () => ({
           data: { session: null },
@@ -59,7 +70,7 @@ describe('account connector', () => {
         error: null
       })
     });
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: {
         ...base,
         from: () => ({
@@ -79,7 +90,7 @@ describe('account connector', () => {
 
   it('returns confirmSignUp when sign-up has no session and does not write a display name', async () => {
     const calls: unknown[] = [];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signUp: async (input: { email: string; password: string }) => {
           calls.push(input);
@@ -97,7 +108,7 @@ describe('account connector', () => {
 
   it('returns oauthFailed for a provider other than google and does not call Supabase', async () => {
     const calls: unknown[] = [];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: async (input: unknown) => {
           calls.push(input);
@@ -112,7 +123,7 @@ describe('account connector', () => {
 
   it('exchanges a Google return that also says recovery', async () => {
     const calls: { method: string; code?: string }[] = [];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: async () => {
           calls.push({ method: 'oauth' });
@@ -145,7 +156,7 @@ describe('account connector', () => {
 
   it('returns a Google identity and cancels a closed or failed browser', async () => {
     const calls: { method: string; provider?: string; code?: string }[] = [];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: async (input: { provider: string; options: { redirectTo: string; skipBrowserRedirect: boolean } }) => {
           calls.push({ method: 'oauth', provider: input.provider });
@@ -165,7 +176,7 @@ describe('account connector', () => {
     expect(await connector.signInWithProvider('google')).toEqual({ ok: true, identity: GOOGLE });
     expect(JSON.stringify(calls)).not.toContain('displayName');
 
-    const closed = createAccountConnector({
+    const closed = openConnector({
       client: client({
         signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null })
       }),
@@ -173,7 +184,7 @@ describe('account connector', () => {
     });
     expect(await closed.signInWithProvider('google')).toEqual({ ok: false, failure: 'oauthCancelled' });
 
-    const denied = createAccountConnector({
+    const denied = openConnector({
       client: client({
         signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null })
       }),
@@ -194,7 +205,7 @@ describe('account connector', () => {
       }),
       async () => ({ url: `${REDIRECT}?code=second-code` })
     ];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: async () => {
           calls.push({ method: 'oauth' });
@@ -226,7 +237,7 @@ describe('account connector', () => {
   });
 
   it('maps a Google invalid_grant to oauthFailed and keeps a network error', async () => {
-    const expired = createAccountConnector({
+    const expired = openConnector({
       client: client({
         signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null }),
         exchangeCodeForSession: async () => ({
@@ -238,7 +249,7 @@ describe('account connector', () => {
     });
     expect(await expired.signInWithProvider('google')).toEqual({ ok: false, failure: 'oauthFailed' });
 
-    const offline = createAccountConnector({
+    const offline = openConnector({
       client: client({
         signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null }),
         exchangeCodeForSession: async () => ({
@@ -252,7 +263,7 @@ describe('account connector', () => {
   });
 
   it('times out a slow Google sign-in request as network', async () => {
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: () => new Promise(() => {})
       }),
@@ -267,7 +278,7 @@ describe('account connector', () => {
   });
 
   it('does not time the learner out while Google is open in the browser', async () => {
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null }),
         exchangeCodeForSession: async () => ({
@@ -293,7 +304,7 @@ describe('account connector', () => {
   it('times out the code exchange and signs out if that exchange later succeeds', async () => {
     let release: (value: { data: { session: { user: { id: string; email: string } } }; error: null }) => void = () => {};
     const signOuts: unknown[] = [];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null }),
         exchangeCodeForSession: () => new Promise((resolve) => {
@@ -324,7 +335,7 @@ describe('account connector', () => {
     let exchanges = 0;
     const signOuts: unknown[] = [];
     const session = { data: { session: { user: { id: 'learner-1', email: 'ada@example.com' } } }, error: null };
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null }),
         exchangeCodeForSession: () => {
@@ -355,7 +366,7 @@ describe('account connector', () => {
 
   it('opens a recovery link only after the code exchange succeeds', async () => {
     const calls: string[] = [];
-    const failed = createAccountConnector({
+    const failed = openConnector({
       client: client({
         exchangeCodeForSession: async (code: string) => {
           calls.push(code);
@@ -363,10 +374,13 @@ describe('account connector', () => {
         }
       })
     });
-    expect(await failed.consumeAuthUrl(`${REDIRECT}?code=crafted&type=recovery`)).toBeNull();
+    expect(await failed.consumeAuthUrl(`${REDIRECT}?code=crafted&type=recovery`)).toEqual({
+      type: 'linkFailed',
+      failure: 'unknown'
+    });
     expect(calls).toEqual(['crafted']);
 
-    const recovered = createAccountConnector({
+    const recovered = openConnector({
       client: client({
         exchangeCodeForSession: async (code: string) => {
           calls.push(code);
@@ -385,7 +399,7 @@ describe('account connector', () => {
   it('does not read a bare code as email confirmation while Google is open', async () => {
     const calls: string[] = [];
     let consume: (url: string) => Promise<unknown> = async () => null;
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null }),
         exchangeCodeForSession: async (code: string) => {
@@ -408,7 +422,7 @@ describe('account connector', () => {
 
   it('sends the reset to the redirect the caller provides', async () => {
     const calls: { redirectTo?: string }[] = [];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         resetPasswordForEmail: async (_email: string, options: { redirectTo: string }) => {
           calls.push(options);
@@ -423,7 +437,7 @@ describe('account connector', () => {
 
   it('sends the reset link back with type=recovery', async () => {
     const calls: { redirectTo?: string }[] = [];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         resetPasswordForEmail: async (_email: string, options: { redirectTo: string }) => {
           calls.push(options);
@@ -435,9 +449,37 @@ describe('account connector', () => {
     expect(calls[0].redirectTo).toBe(`${REDIRECT}?type=recovery`);
   });
 
+  it('surfaces a recovery exchange that fails', async () => {
+    const connector = openConnector({
+      client: client({
+        exchangeCodeForSession: async () => ({
+          data: { session: null },
+          error: { message: 'network down' }
+        })
+      })
+    });
+    expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`)).toEqual({
+      type: 'linkFailed',
+      failure: 'network'
+    });
+  });
+
+  it('surfaces a recovery exchange that hangs', async () => {
+    const connector = openConnector({
+      timeoutMs: 20,
+      client: client({
+        exchangeCodeForSession: () => new Promise(() => {})
+      })
+    });
+    expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`)).toEqual({
+      type: 'linkFailed',
+      failure: 'network'
+    });
+  }, 1000);
+
   it('signs out locally after deleting the account, even when sign-out throws', async () => {
     const scopes: unknown[] = [];
-    const connector = createAccountConnector({
+    const connector = openConnector({
       client: client({
         signOut: async (input: { scope: string }) => {
           scopes.push(input);

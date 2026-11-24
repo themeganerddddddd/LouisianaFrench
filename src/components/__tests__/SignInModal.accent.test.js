@@ -11,12 +11,14 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
+const GUEST = { kind: 'signIn', email: '', password: '', submit: { status: 'editing' } };
+
 function renderModal(accentColor) {
   render(
     <SignInModal
       visible
-      identity={null}
-      connector={{}}
+      view={GUEST}
+      dispatch={() => {}}
       onClose={() => {}}
       accentColor={accentColor}
     />
@@ -39,7 +41,7 @@ describe('SignInModal accent', () => {
 
   it('does not paint Cajun blue when the caller forgets accentColor', () => {
     render(
-      <SignInModal visible identity={null} connector={{}} onClose={() => {}} />
+      <SignInModal visible view={GUEST} dispatch={() => {}} onClose={() => {}} />
     );
     expect(screen.getByTestId('sign-in-submit')).not.toHaveStyle({ backgroundColor: accentFor('cajun') });
   });

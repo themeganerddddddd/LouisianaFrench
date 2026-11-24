@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 
-import { matchesAuthRedirect, parseAuthUrl, resolveAuthRedirect } from '../account/authLink';
+import { createAccountConnector } from '../account/accountConnector';
+import { openAuthBrowser } from '../account/authBrowser';
+import { parseAuthUrl, resolveAuthRedirect } from '../account/authLink';
 import { createSessionStore } from './sessionStore';
 import {
   checkUsername as checkUsernameRpc,
@@ -50,6 +52,7 @@ async function remember(profileClient, session, email) {
 }
 
 export function createIdentityConnector({ client, openBrowser } = {}) {
+  const account = createAccountConnector({ client, openBrowser, redirectTo: AUTH_REDIRECT });
   if (!client) {
     return {
       async getIdentity() {
@@ -76,9 +79,6 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       async updatePassword() {
         return { identity: null, message: UNAVAILABLE };
       },
-      async signInWithProvider() {
-        return { identity: null, message: UNAVAILABLE };
-      },
       async signOut() {
         return { identity: null };
       },
@@ -87,13 +87,13 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       },
       async checkUsername() {
         return { status: 'error' };
-      }
+      },
+      account
     };
   }
 
   let identity = null;
   let accessToken = null;
-  let providerAttempt = 0;
   const listeners = new Set();
   let ready = hydrate();
 
@@ -184,48 +184,6 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       }
       return apply(sessionData.session);
     },
-    async signInWithProvider(provider) {
-      const attempt = ++providerAttempt;
-      const { data, error } = await client.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo: AUTH_REDIRECT, skipBrowserRedirect: true }
-      });
-      if (error || !data?.url || !openBrowser) {
-        return { identity: null, message: error ? learnerMessage(error) : UNAVAILABLE };
-      }
-
-      let returned = null;
-      try {
-        returned = await openBrowser(data.url);
-      } catch (browserError) {
-        return { identity: null, message: learnerMessage(browserError) };
-      }
-      if (attempt !== providerAttempt || !returned?.url) {
-        return { identity: null, message: null };
-      }
-
-      let code = null;
-      try {
-        const parsed = new URL(returned.url);
-        if (!matchesAuthRedirect(returned.url, AUTH_REDIRECT) || parsed.searchParams.get('error')) {
-          return { identity: null, message: FAILED };
-        }
-        code = parsed.searchParams.get('code');
-      } catch {
-        return { identity: null, message: FAILED };
-      }
-      if (!code) return { identity: null, message: FAILED };
-
-      const exchanged = await client.auth.exchangeCodeForSession(code);
-      if (attempt !== providerAttempt) return { identity: null, message: null };
-      if (exchanged.error || !exchanged.data?.session) {
-        return {
-          identity: null,
-          message: exchanged.error ? learnerMessage(exchanged.error) : FAILED
-        };
-      }
-      return apply(exchanged.data.session);
-    },
     async signOut() {
       await client.auth.signOut({ scope: 'local' });
       identity = null;
@@ -238,7 +196,8 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
     },
     async checkUsername(candidate) {
       return checkUsernameRpc((fn, args) => client.rpc(fn, args), candidate);
-    }
+    },
+    account
   };
 }
 
@@ -264,10 +223,10 @@ export function createSupabaseIdentityConnector(env = {
 
   return createIdentityConnector({
     client,
-    openBrowser: async (url) => {
-      const result = await WebBrowser.openAuthSessionAsync(url, AUTH_REDIRECT);
-      if (result.type !== 'success' || !result.url) return null;
-      return { url: result.url };
-    }
+    openBrowser: (url) => openAuthBrowser(url, AUTH_REDIRECT, {
+      platform: Platform.OS,
+      browser: WebBrowser,
+      linking: Linking
+    })
   });
 }

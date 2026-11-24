@@ -2,7 +2,6 @@ import type { AccountEvent, AuthFailure, AuthResult, DeleteResult, Provider } fr
 import { loadProfileUsername } from '../identity/username'
 import { parseAuthUrl } from './authLink'
 
-const NATIVE_REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback'
 const BY_CODE: Record<string, AuthFailure> = {
   invalid_credentials: 'wrongCredentials', invalid_grant: 'wrongCredentials',
   email_not_confirmed: 'emailNotConfirmed', user_already_exists: 'emailTaken', email_exists: 'emailTaken',
@@ -85,12 +84,12 @@ export function createAccountConnector({
   client,
   openBrowser,
   timeoutMs = 15000,
-  redirectTo = NATIVE_REDIRECT
+  redirectTo
 }: {
   client: AccountClient | null
   openBrowser?: Browser
   timeoutMs?: number
-  redirectTo?: string
+  redirectTo: string
 }) {
   const unavailable: AuthResult = { ok: false, failure: 'unavailable' }
   let attempt = 0
@@ -180,8 +179,12 @@ export function createAccountConnector({
       if (link.kind !== 'recovery' && link.kind !== 'confirmed' && link.kind !== 'oauth') return null
       if (!client) return null
       const mine = beginAttempt()
-      const exchanged = await caught(client.auth.exchangeCodeForSession(link.code))
-      if (exchanged.error || !exchanged.data?.session?.user) return null
+      const exchanged = await firstOf(caught(client.auth.exchangeCodeForSession(link.code)), timeoutMs)
+      if (exchanged === 'timeout') return { type: 'linkFailed', failure: 'network' }
+      if (exchanged.error || !exchanged.data?.session?.user) {
+        const failure = exchanged.error ? mapAuthFailure(exchanged.error) : 'unknown'
+        return { type: 'linkFailed', failure: failure === 'oauthCancelled' ? 'unknown' : failure }
+      }
       noteSuccess(mine)
       return link.kind === 'recovery' ? { type: 'recoveryLinkOpened' } : null
     },

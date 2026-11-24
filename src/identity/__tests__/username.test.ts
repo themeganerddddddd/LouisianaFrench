@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { checkUsername, mapCheckUsername, mapSetUsername, setUsername } from '../username';
+import { checkUsername, loadProfileUsername, mapCheckUsername, mapSetUsername, setUsername } from '../username';
 
 describe('username RPC mapping', () => {
   it('maps a saved username, a refusal, and a too_soon retry', () => {
@@ -49,6 +49,32 @@ describe('username RPC mapping', () => {
     const rpc = async () => ({ data: null, error: { message: 'network' } });
     await expect(setUsername(rpc, 'Céline')).resolves.toEqual({ ok: false, reason: 'network' });
     await expect(checkUsername(rpc, 'Céline')).resolves.toEqual({ status: 'error' });
+  });
+
+  it('shows the last username for that learner when the next read fails', async () => {
+    let online = true;
+    const client = {
+      from() {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  async maybeSingle() {
+                    if (!online) return { data: null, error: { message: 'network' } };
+                    return { data: { username: 'Ada' }, error: null };
+                  }
+                };
+              }
+            };
+          }
+        };
+      }
+    };
+    expect(await loadProfileUsername(client, 'learner-ada')).toBe('Ada');
+    online = false;
+    expect(await loadProfileUsername(client, 'learner-ada')).toBe('Ada');
+    expect(await loadProfileUsername(client, 'learner-other')).toBeNull();
   });
 
   it('maps a thrown RPC rejection as a network error', async () => {
