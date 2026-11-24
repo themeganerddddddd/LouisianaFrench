@@ -30,7 +30,8 @@ Each feature file has an H1, one paragraph, then `Sub-features`, `How to get to 
 ## Features
 
 - [Language select](./language-select.md) covers the first-run choice and switching Language from Home.
-- [Home and Today's plan](./home.md) covers the plan stepper, the plan button, the current Unit card, and the Home controls.
+- [Home and Today's plan](./home.md) covers the plan stepper, the plan button, the current Unit card, the Unit list, and the day-2 plan.
 - [Lesson](./lesson.md) covers New-word and Practice Activities, answering, advancing, and leaving.
-- [Dictionary](./dictionary.md) covers browsing, search, category filters, and Word status.
-- [About menu](./about-menu.md) covers the pelican menu, About Us, and Support.
+- [Lesson preface](./lesson-preface.md) covers the Unit 6 note, Learn more, Close, Start lesson, and the Kouri-Vini lesson that has no preface.
+- [Dictionary](./dictionary.md) covers browsing, search, category filters, Word status, and Speech Practice for one Word.
+- [About menu](./about-menu.md) covers the pelican menu, About Us, Support, and bug-report consent.
