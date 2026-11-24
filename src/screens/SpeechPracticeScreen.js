@@ -22,6 +22,8 @@ import {
 const MIN_ATTEMPT_MS = 600;
 export const SPEECH_WORD_LIMIT = 5;
 const INITIAL_STATUS = 'Play the speaker, then record yourself saying the same phrase.';
+// A read that never settles used to leave Daily Speech Practice blank.
+const DAILY_PROGRESS_LOAD_TIMEOUT_MS = 8000;
 
 export default function SpeechPracticeScreen({
   language,
@@ -66,10 +68,20 @@ export default function SpeechPracticeScreen({
 
   useEffect(() => {
     if (!isDailySpeechPractice) return undefined;
-    let cancelled = false;
+    let settled = false;
+    setLoadError(false);
+    setDailyPracticeWords(null);
+    const timeoutId = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      setLoadError(true);
+    }, DAILY_PROGRESS_LOAD_TIMEOUT_MS);
+
     Promise.all([getLessonProgress(), getWordProgress()])
       .then(([lessonProgress, wordProgress]) => {
-        if (cancelled) return;
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
         setLoadError(false);
         setDailyPracticeWords(pickSpeechWords({
           lessons: getLessonsByLanguage(language),
@@ -79,10 +91,15 @@ export default function SpeechPracticeScreen({
         }));
       })
       .catch(() => {
-        if (cancelled) return;
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
         setLoadError(true);
       });
-    return () => { cancelled = true; };
+    return () => {
+      settled = true;
+      clearTimeout(timeoutId);
+    };
   }, [isDailySpeechPractice, language, wordLimit, loadAttempt]);
 
   async function play(source) {
@@ -217,7 +234,13 @@ export default function SpeechPracticeScreen({
     );
   }
 
-  if (!practiceWords) return null;
+  if (!practiceWords) {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.status}>Loading Daily Speech Practice.</Text>
+      </View>
+    );
+  }
 
   if (!practiceWord) {
     return <Text style={styles.status}>No Word with Audio is available for this language.</Text>;
