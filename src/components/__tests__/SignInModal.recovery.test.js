@@ -19,14 +19,22 @@ jest.mock('../TBoySpeechBubble', () => {
   };
 });
 
+const SIGNED_OUT_NAME = {
+  kind: 'signedIn',
+  signingOut: false,
+  identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
+};
+const REPLACE = { kind: 'setNewPassword', password: '', submit: { status: 'editing' } };
+
 describe('SignInModal password recovery', () => {
   it('shows Learner when the signed-in profile has no username', () => {
     render(
       <SignInModal
         visible
-        identity={{ id: 'learner-1', email: 'ada@example.com', username: null }}
-        connector={{}}
+        view={SIGNED_OUT_NAME}
+        dispatch={() => {}}
         onClose={() => {}}
+        accentColor={accentFor('cajun')}
       />
     );
     expect(screen.getByText('Learner')).toBeOnTheScreen();
@@ -35,44 +43,31 @@ describe('SignInModal password recovery', () => {
   it('locks Home until a new password is saved from a recovery return', async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();
-    const onRecoveryFinished = jest.fn();
-    const connector = {
-      async updatePassword(password) {
-        if (password === 'bad') {
-          return { identity: null, message: 'That password was rejected.' };
-        }
-        return {
-          identity: { id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' },
-          message: null
-        };
-      }
-    };
-
-    render(
+    const { rerender } = render(
       <SignInModal
         visible
+        view={REPLACE}
+        dispatch={() => {}}
         accentColor={accentFor('cajun')}
-        identity={{ id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' }}
-        connector={connector}
-        recoveryActive
-        onRecoveryFinished={onRecoveryFinished}
         onClose={onClose}
       />
     );
 
     expect(screen.getByText(/Choose a new password/)).toBeOnTheScreen();
     expect(screen.queryByLabelText('Close sign in')).toBeNull();
-
-    await user.type(screen.getByTestId('sign-in-password'), 'bad');
-    await user.press(screen.getByTestId('sign-in-submit'));
-    expect(await screen.findByText('That password was rejected.')).toBeOnTheScreen();
+    await user.press(screen.getByTestId('sign-in-backdrop'));
     expect(onClose).not.toHaveBeenCalled();
 
-    await user.type(screen.getByTestId('sign-in-password'), 'new-secret');
-    await user.press(screen.getByTestId('sign-in-submit'));
-    expect(await screen.findByText(/That link is finished/)).toBeOnTheScreen();
-    expect(onRecoveryFinished).toHaveBeenCalled();
-
+    rerender(
+      <SignInModal
+        visible
+        view={{ kind: 'passwordSaved' }}
+        dispatch={() => {}}
+        accentColor={accentFor('cajun')}
+        onClose={onClose}
+      />
+    );
+    expect(screen.getByText(/That link is finished/)).toBeOnTheScreen();
     await user.press(screen.getByTestId('sign-in-done'));
     expect(onClose).toHaveBeenCalled();
   });

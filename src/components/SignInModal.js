@@ -1,5 +1,4 @@
 import { FontAwesome5 } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
 import {
   Image,
   Modal,
@@ -10,10 +9,16 @@ import {
   View
 } from 'react-native';
 
+import { canDismiss } from '../account/accountMachine';
 import { accountName } from '../identity/username';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
-const EMPTY = { email: '', password: '', displayName: '' };
+const FAILURE_TEXT = {
+  wrongCredentials: 'That email or password is not right.',
+  emailTaken: 'That email is already registered.',
+  network: 'The network failed. Try again.',
+  unavailable: 'Sign-in is unavailable.'
+};
 const TBOY_LINES = {
   signIn:
     "Sign in with an email or Google. I don't store any of your personal information that I don't need to make the app work!",
@@ -26,99 +31,34 @@ const TBOY_LINES = {
 };
 const tBoyImage = require('../../assets/images/mainscreen.png');
 
-export default function SignInModal({
-  visible,
-  identity,
-  connector,
-  recoveryActive,
-  onRecoveryFinished,
-  onClose,
-  accentColor
-}) {
-  const [mode, setMode] = useState('signIn');
-  const [fields, setFields] = useState(EMPTY);
-  const [message, setMessage] = useState('');
-  const locked = mode === 'replace';
+function screenOf(view) {
+  if (view.kind === 'setNewPassword') return 'replace';
+  if (view.kind === 'passwordSaved' || view.kind === 'accountDeleted') return 'done';
+  if (view.kind === 'signedIn' || view.kind === 'deleteAccount') return 'signedIn';
+  return view.kind;
+}
 
-  useEffect(() => {
-    if (!visible) {
-      setFields(EMPTY);
-      setMessage('');
-      setMode('signIn');
-    }
-  }, [visible]);
+function failureText(view) {
+  if (!view.submit || view.submit.status !== 'failed') return '';
+  return FAILURE_TEXT[view.submit.failure] || 'Sign-in failed.';
+}
 
-  useEffect(() => {
-    if (recoveryActive) {
-      setMode('replace');
-      setMessage('');
-      setFields(EMPTY);
-    }
-  }, [recoveryActive]);
+export default function SignInModal({ visible, view, dispatch, onClose, accentColor }) {
+  const mode = screenOf(view);
+  const dismiss = canDismiss(view);
+  const identity = view.kind === 'signedIn' || view.kind === 'deleteAccount' ? view.identity : null;
+  const email = view.email || '';
+  const password = view.password || '';
+  const displayName = view.username || '';
+  const message = failureText(view);
 
   function close() {
-    if (locked) return;
-    setFields(EMPTY);
-    setMessage('');
+    if (!dismiss) return;
     onClose();
   }
 
-  async function submit() {
-    const email = fields.email.trim();
-    const password = fields.password;
-    let result;
-    if (mode === 'create') {
-      result = await connector.signUpWithPassword({
-        email,
-        password,
-        displayName: fields.displayName.trim()
-      });
-    } else if (mode === 'forgot') {
-      result = await connector.sendPasswordReset(email);
-      if (result.message) {
-        setMessage(result.message);
-        return;
-      }
-      setMode('inbox');
-      setMessage('');
-      setFields((current) => ({ ...current, password: '' }));
-      return;
-    } else if (mode === 'replace') {
-      result = await connector.updatePassword(password);
-      if (result.identity) {
-        setMode('done');
-        setFields(EMPTY);
-        setMessage('');
-        onRecoveryFinished?.();
-        return;
-      }
-      setMessage(result.message || 'Sign-in failed.');
-      setFields((current) => ({ ...current, password: '' }));
-      return;
-    } else {
-      result = await connector.signInWithPassword({ email, password });
-    }
-
-    if (result.identity) {
-      close();
-      return;
-    }
-    setMessage(result.message || 'Sign-in failed.');
-    setFields((current) => ({ ...current, password: '' }));
-  }
-
-  async function continueWith(provider) {
-    const result = await connector.signInWithProvider(provider);
-    if (result.identity) {
-      close();
-      return;
-    }
-    if (result.message) setMessage(result.message);
-  }
-
-  async function signOut() {
-    await connector.signOut();
-    close();
+  function edit(field, value) {
+    dispatch({ type: 'edited', field, value });
   }
 
   const note = TBOY_LINES[mode] || TBOY_LINES.signIn;
@@ -134,12 +74,12 @@ export default function SignInModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <Pressable
         style={styles.backdrop}
-        onPress={locked ? undefined : close}
+        onPress={close}
         testID="sign-in-backdrop"
       >
         <Pressable onPress={() => {}} testID="sign-in-modal">
           <View style={styles.card}>
-            {locked ? null : (
+            {dismiss ? (
               <Pressable
                 onPress={close}
                 accessibilityRole="button"
@@ -147,12 +87,19 @@ export default function SignInModal({
               >
                 <Text style={styles.close}>Close</Text>
               </Pressable>
-            )}
+            ) : null}
 
             {showSignedIn ? (
               <View>
                 <Text style={styles.title}>{accountName(identity.username)}</Text>
-                <Pressable onPress={signOut} testID="sign-out" accessibilityRole="button">
+                <Pressable
+                  onPress={() => {
+                    dispatch({ type: 'signOutRequested' });
+                    onClose();
+                  }}
+                  testID="sign-out"
+                  accessibilityRole="button"
+                >
                   <Text style={styles.primaryFilledText}>Sign out</Text>
                 </Pressable>
               </View>
@@ -179,7 +126,7 @@ export default function SignInModal({
                 {showLogos ? (
                   <View style={styles.logoRow}>
                     <Pressable
-                      onPress={() => continueWith('google')}
+                      onPress={() => dispatch({ type: 'providerChosen', provider: 'google' })}
                       testID="sign-in-google"
                       accessibilityRole="button"
                       accessibilityLabel="Sign in with Google"
@@ -193,10 +140,8 @@ export default function SignInModal({
                 {mode === 'create' ? (
                   <TextInput
                     testID="sign-in-display-name"
-                    value={fields.displayName}
-                    onChangeText={(displayName) =>
-                      setFields((current) => ({ ...current, displayName }))
-                    }
+                    value={displayName}
+                    onChangeText={(value) => edit('username', value)}
                     placeholder="Display name"
                     autoCapitalize="words"
                     style={styles.input}
@@ -206,8 +151,8 @@ export default function SignInModal({
                 {showEmail ? (
                   <TextInput
                     testID="sign-in-email"
-                    value={fields.email}
-                    onChangeText={(email) => setFields((current) => ({ ...current, email }))}
+                    value={email}
+                    onChangeText={(value) => edit('email', value)}
                     placeholder="Email"
                     autoCapitalize="none"
                     keyboardType="email-address"
@@ -218,10 +163,8 @@ export default function SignInModal({
                 {showPassword ? (
                   <TextInput
                     testID="sign-in-password"
-                    value={fields.password}
-                    onChangeText={(password) =>
-                      setFields((current) => ({ ...current, password }))
-                    }
+                    value={password}
+                    onChangeText={(value) => edit('password', value)}
                     placeholder={mode === 'replace' ? 'New password' : 'Password'}
                     secureTextEntry
                     style={styles.input}
@@ -232,7 +175,7 @@ export default function SignInModal({
 
                 {showSubmit ? (
                   <Pressable
-                    onPress={submit}
+                    onPress={() => dispatch({ type: 'submitted' })}
                     testID="sign-in-submit"
                     accessibilityRole="button"
                     style={filledStyle}
@@ -252,21 +195,14 @@ export default function SignInModal({
                 {mode === 'signIn' ? (
                   <View style={styles.textActions}>
                     <Pressable
-                      onPress={() => {
-                        setMode('create');
-                        setMessage('');
-                      }}
+                      onPress={() => dispatch({ type: 'navigated', to: 'create' })}
                       testID="sign-in-create-mode"
                       accessibilityRole="button"
                     >
                       <Text style={linkStyle}>Create an account</Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => {
-                        setMode('forgot');
-                        setMessage('');
-                        setFields((current) => ({ ...current, password: '' }));
-                      }}
+                      onPress={() => dispatch({ type: 'navigated', to: 'forgot' })}
                       testID="sign-in-forgot"
                       accessibilityRole="button"
                     >
@@ -277,10 +213,7 @@ export default function SignInModal({
 
                 {mode === 'create' || mode === 'forgot' || mode === 'inbox' ? (
                   <Pressable
-                    onPress={() => {
-                      setMode('signIn');
-                      setMessage('');
-                    }}
+                    onPress={() => dispatch({ type: 'navigated', to: 'signIn' })}
                     testID="sign-in-email-mode"
                     accessibilityRole="button"
                   >
@@ -290,7 +223,7 @@ export default function SignInModal({
 
                 {mode === 'done' ? (
                   <Pressable
-                    onPress={close}
+                    onPress={onClose}
                     testID="sign-in-done"
                     accessibilityRole="button"
                     style={filledStyle}

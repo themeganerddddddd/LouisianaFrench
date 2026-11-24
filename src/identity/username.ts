@@ -98,28 +98,47 @@ export function accountName(username: string | null | undefined): string {
 }
 
 const PROFILE_READ_MS = 5000;
+const rememberedUsernames = new WeakMap<ProfileClient, Map<string, string>>();
+type ProfileRead = { ok: true; username: string | null } | { ok: false };
 
-async function readProfileUsername(client: ProfileClient, id: string): Promise<string | null> {
-  if (!client.from) return null;
+function namesFor(client: ProfileClient): Map<string, string> {
+  const found = rememberedUsernames.get(client);
+  if (found) return found;
+  const created = new Map<string, string>();
+  rememberedUsernames.set(client, created);
+  return created;
+}
+
+async function readProfileUsername(client: ProfileClient, id: string): Promise<ProfileRead> {
+  if (!client.from) return { ok: false };
   try {
     const { data, error } = await client.from('profiles').select('username').eq('id', id).maybeSingle();
-    if (error) return null;
-    return usernameFromProfile(data);
+    if (error) return { ok: false };
+    return { ok: true, username: usernameFromProfile(data) };
   } catch {
-    return null;
+    return { ok: false };
   }
 }
 
+function remember(client: ProfileClient, id: string, read: ProfileRead): string | null {
+  const names = namesFor(client);
+  if (!read.ok) return names.get(id) ?? null;
+  if (read.username) names.set(id, read.username);
+  else names.delete(id);
+  return read.username;
+}
+
 export async function loadProfileUsername(client: ProfileClient, id: string): Promise<string | null> {
-  if (!client.from) return null;
+  if (!client.from) return namesFor(client).get(id) ?? null;
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    return await Promise.race([
+    const read = await Promise.race([
       readProfileUsername(client, id),
-      new Promise<null>((resolve) => {
-        timer = setTimeout(() => resolve(null), PROFILE_READ_MS);
+      new Promise<ProfileRead>((resolve) => {
+        timer = setTimeout(() => resolve({ ok: false }), PROFILE_READ_MS);
       })
     ]);
+    return remember(client, id, read);
   } finally {
     clearTimeout(timer);
   }

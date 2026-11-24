@@ -33,6 +33,7 @@ export type DeleteResult = { ok: true } | { ok: false; failure: 'network' | 'not
 export type AccountEvent =
   | { type: 'opened'; identity: Identity | null }
   | { type: 'recoveryLinkOpened' }
+  | { type: 'linkFailed'; failure: SubmitFailure }
   | { type: 'navigated'; to: 'signIn' | 'create' | 'forgot' }
   | { type: 'edited'; field: FieldName | 'typed'; value: string }
   | { type: 'submitted' }
@@ -82,9 +83,15 @@ export function canDismiss(view: AccountView): boolean {
 }
 
 export function reduce(view: AccountView, event: AccountEvent): AccountView {
-  if (sessionLocked(view) && (event.type === 'opened' || event.type === 'recoveryLinkOpened')) return view;
-  if (event.type === 'opened') return initialView(event.identity);
+  if (sessionLocked(view) && (event.type === 'opened' || event.type === 'recoveryLinkOpened' || event.type === 'linkFailed')) {
+    return view;
+  }
+  if (event.type === 'opened') {
+    if (formStatus(view) === 'submitting' || formStatus(view) === 'oauth') return view;
+    return initialView(event.identity);
+  }
   if (event.type === 'recoveryLinkOpened') return { kind: 'setNewPassword', password: '', submit: EDITING };
+  if (event.type === 'linkFailed') return applyLinkFailure(view, event.failure);
   switch (view.kind) {
     case 'signIn':
     case 'create':
@@ -189,6 +196,14 @@ function submitForm(view: FormView): AccountView {
     return { ...view, submit: { status: 'failed', failure: 'invalidUsername' } };
   }
   return { ...view, submit: { status: 'submitting' } };
+}
+
+function applyLinkFailure(view: AccountView, failure: SubmitFailure): AccountView {
+  if (view.kind !== 'signIn' && view.kind !== 'create' && view.kind !== 'forgot' && view.kind !== 'setNewPassword') {
+    return view;
+  }
+  if (formBusy(view.submit)) return view;
+  return { ...view, submit: { status: 'failed', failure } };
 }
 
 function applyAuth(view: FormView, result: AuthResult): AccountView {
