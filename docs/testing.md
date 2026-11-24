@@ -2,7 +2,13 @@
 
 Run these commands from the repository root. They are the scripts in `package.json`, the Python tests under `scripts/`, and the commands the workflows run.
 
-`package.json` has no `typecheck` script. `typescript` is a devDependency and `tsconfig.json` is present. No script and no workflow runs `tsc`.
+## Typecheck
+
+```bash
+npm run typecheck
+```
+
+`npm run typecheck` runs `tsc --noEmit`. New TypeScript is checked. Existing JavaScript is allowed and is not type-checked. No workflow runs this command yet.
 
 ## Jest
 
@@ -60,7 +66,7 @@ python scripts/test_normalize_audio.py
 npm run pr-ready
 ```
 
-`npm run pr-ready` runs `npm run lint`, then `npm test`, then `.agents/scripts/pr-gates.mjs --ai`. The gates check UI evidence, the pull request headings (Why, What changed, Blast Radius, Verification), and the production line count.
+`npm run pr-ready` runs `npm run lint`, then `npm run typecheck`, then `npm test`, then `.agents/scripts/pr-gates.mjs --ai`. The gates check UI evidence, the pull request headings (Why, What changed, Blast Radius, Verification), and the production line count.
 
 Two more check scripts are in `package.json`:
 
@@ -85,6 +91,8 @@ The capture script is `.agents/scripts/capture-ui-evidence.mjs` (`capture:ui-evi
 | `build` | 42–52 | `npm ci`, then `npm run build` |
 
 The lint, test, and build jobs use Node 22. The python job uses Python 3.12. No step sets `continue-on-error`. A non-zero Python run fails the `python` job, which fails the workflow on pull requests to `main`.
+
+No job runs `npm run typecheck`. A type error fails `npm run pr-ready` on a laptop and does not fail CI until a workflow job is added.
 
 `npm run build` is `npm run build:ios && npm run build:android` in `package.json`. The build job exports the iOS bundle and the Android bundle.
 
