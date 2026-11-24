@@ -94,9 +94,11 @@ describe('Profile', () => {
     await expect(getProfile('english')).rejects.toThrow('Unknown Language: english');
   });
 
-  it('rejects when the persisted Profile record is malformed JSON', async () => {
+  it('uses a fresh Profile when the saved record is not readable JSON', async () => {
     await seedRawAsyncStorage({ profileCajun: 'not-json', profileMigrated: 'true' });
-    await expect(getProfile('cajun')).rejects.toThrow();
+
+    expect(await getProfile('cajun')).toEqual(profiles.fresh);
+    expect(await AsyncStorage.getItem('lf_profile_cajun')).toBe('not-json');
   });
 });
 
@@ -247,6 +249,17 @@ describe('Word mastery status', () => {
       'cajun:u01_w0001': wordMastery.strong
     });
   });
+
+  it('keeps a non-object saved Word entry without failing to read the others', async () => {
+    await seedAsyncStorage({
+      wordProgress: { 'cajun:bad': 'nope', 'cajun:u01_w0001': wordMastery.strong }
+    });
+
+    expect(await getWordProgress()).toEqual({
+      'cajun:bad': 'nope',
+      'cajun:u01_w0001': wordMastery.strong
+    });
+  });
 });
 
 describe('Review state persistence', () => {
@@ -370,13 +383,14 @@ describe('Daily Review log', () => {
     expect(await AsyncStorage.getItem('lf_daily_review_log_v2_kreole')).toBeNull();
   });
 
-  it('propagates malformed scoped v2 JSON through the scoped interface', async () => {
+  it('uses an empty Daily Review log when the saved record is not readable JSON', async () => {
     await seedRawAsyncStorage({
       dailyReviewLogV2Cajun: 'not-json',
       dailyReviewMigrated: 'true'
     });
 
-    await expect(getLanguageDailyReviewLog('cajun')).rejects.toThrow();
+    expect(await getLanguageDailyReviewLog('cajun')).toEqual({});
+    expect(await AsyncStorage.getItem('lf_daily_review_log_v2_cajun')).toBe('not-json');
   });
 });
 
@@ -482,13 +496,35 @@ describe('Pending Mistake Review and Practice persistence', () => {
     );
   });
 
-  it('propagates malformed pending and Practice records', async () => {
+  it('keeps a null or blank pending mistake without throwing', async () => {
+    await seedRawAsyncStorage({
+      pendingMistakes: JSON.stringify({
+        cajun: {
+          blank: '',
+          spaced: '   ',
+          gone: null,
+          [pendingMistakes.cajun.greetingChoice.cardId]: pendingMistakes.cajun.greetingChoice
+        }
+      })
+    });
+
+    expect(await getPendingMistakes('cajun')).toEqual([
+      '',
+      '   ',
+      null,
+      pendingMistakes.cajun.greetingChoice
+    ]);
+  });
+
+  it('uses empty pending mistakes and no Practice when the saved records are not readable JSON', async () => {
     await seedRawAsyncStorage({ pendingMistakes: 'not-json' });
-    await expect(getPendingMistakes('cajun')).rejects.toThrow();
+    expect(await getPendingMistakes('cajun')).toEqual([]);
+    expect(await AsyncStorage.getItem('lf_pending_mistakes')).toBe('not-json');
 
     await AsyncStorage.clear();
     await seedRawAsyncStorage({ practiceLog: 'not-json' });
-    await expect(getTodayPractice('cajun')).rejects.toThrow();
+    expect(await getTodayPractice('cajun')).toBeNull();
+    expect(await AsyncStorage.getItem('lf_practice_log')).toBe('not-json');
   });
 });
 
