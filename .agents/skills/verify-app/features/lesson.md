@@ -10,7 +10,7 @@ A Lesson walks through Activities (15 in the first Lesson of each Language). New
 - `lesson-incorrect` shows `Not quite` for a wrong answer and lets the learner try again.
 - `lesson-skip` skips a Practice Activity.
 - `lesson-leave` leaves mid-Lesson with Android Back.
-- `lesson-complete` shows the end screen (`id:lesson-complete-scroll`).
+- `lesson-complete` shows the end screen (`id:lesson-complete-scroll`). The driving steps are in `lesson-complete.md`.
 
 ## How to get to it (user POV)
 
@@ -35,6 +35,6 @@ Preconditions:
 
 - `desc:Continue` exists only on New-word Activities. Practice uses `desc:Check answer`, then `desc:Next Question`. A `tap` on a missing handle waits 10 seconds, then fails.
 - The Languages differ at Activity 2: Louisiana French has a Practice match for `Hello!`, and Kouri-Vini has a Listening Activity for `Bonjou`.
-- A wrong answer followed by a right one on `Try again` leaves `desc:Mistakes, none pending` on Home. To make a pending Mistake, a recipe needs a different path, which has not been mapped yet.
+- A wrong answer followed by a right one on `Try again` leaves `desc:Mistakes, none pending` on Home. To create a pending Mistake, Skip, or answer wrong twice and tap Continue (see `mistake-review.md`).
 - Activity order and answer choices come from the Catalog. Read the question with `$L dump`. Do not hard-code which answer comes in which position.
 - `adb` has no audio capture. To prove Audio plays, use the `desc:Play audio: …` tap and the Metro `$L logs`, not the video.
