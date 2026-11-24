@@ -228,16 +228,27 @@ export default function SpeechPracticeScreen({
   }
 
   const accent = language === 'kreole' ? '#08834c' : '#2771CB';
+  const recordTestID = isRecording
+    ? 'speech-practice-stop'
+    : learnerUri
+      ? 'speech-practice-record-again'
+      : 'speech-practice-record';
+  const statusTestID = status === SAVE_FAILED_STATUS
+    ? 'speech-practice-save-failed'
+    : status === SAVED_NEXT_FAILED_STATUS
+      ? 'speech-practice-saved-next-failed'
+      : 'speech-practice-status';
 
   if (loadError) {
     return (
-      <View style={styles.card}>
-        <Text style={styles.status}>Daily Speech Practice could not be loaded.</Text>
+      <View style={styles.card} testID="speech-practice-screen">
+        <Text style={styles.status} testID="speech-practice-load-error">Daily Speech Practice could not be loaded.</Text>
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: accent }]}
           onPress={() => setLoadAttempt((attempt) => attempt + 1)}
           accessibilityRole="button"
           accessibilityLabel="Try again"
+          testID="speech-practice-try-again"
         >
           <Text style={styles.primaryButtonText}>Try again</Text>
         </TouchableOpacity>
@@ -247,22 +258,26 @@ export default function SpeechPracticeScreen({
 
   if (!practiceWords) {
     return (
-      <View style={styles.card}>
-        <Text style={styles.status}>Loading Daily Speech Practice.</Text>
+      <View style={styles.card} testID="speech-practice-screen">
+        <Text style={styles.status} testID="speech-practice-loading">Loading Daily Speech Practice.</Text>
       </View>
     );
   }
 
   if (!practiceWord) {
-    return <Text style={styles.status}>No Word with Audio is available for this language.</Text>;
+    return (
+      <Text style={styles.status} testID="speech-practice-screen">
+        No Word with Audio is available for this language.
+      </Text>
+    );
   }
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.phrase}>{practiceWord.target}</Text>
+    <View style={styles.card} testID="speech-practice-screen">
+      <Text style={styles.phrase} testID="speech-practice-phrase">{practiceWord.target}</Text>
       <Text style={styles.translation}>{practiceWord.english}</Text>
       {word ? null : (
-        <Text style={styles.progress}>
+        <Text style={styles.progress} testID="speech-practice-progress">
           {scored
             ? `Attempt ${acceptedCount + 1}/${wordLimit}`
             : `Phrase ${wordIndex + 1}/${practiceWords.length}`}
@@ -285,8 +300,9 @@ export default function SpeechPracticeScreen({
         style={[styles.primaryButton, { backgroundColor: isRecording ? '#B91C1C' : accent }]}
         onPress={isRecording ? finishRecording : beginRecording}
         disabled={busy}
+        testID={recordTestID}
       >
-        <Text style={styles.primaryButtonText}>
+        <Text style={styles.primaryButtonText} testID={busy ? 'speech-practice-busy' : undefined}>
           {busy
             ? 'Working...'
             : isRecording
@@ -315,6 +331,7 @@ export default function SpeechPracticeScreen({
           ]}
           onPress={acceptAttempt}
           disabled={!hasReviewedAttempt || busy}
+          testID="speech-practice-sounds-good"
         >
           <Text style={styles.primaryButtonText}>
             {word ? 'Sounds good' : 'Sounds good, next phrase'}
@@ -322,7 +339,7 @@ export default function SpeechPracticeScreen({
         </TouchableOpacity>
       ) : null}
 
-      <Text style={styles.status}>{status}</Text>
+      <Text style={styles.status} testID={statusTestID}>{status}</Text>
     </View>
   );
 }

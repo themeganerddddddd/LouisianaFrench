@@ -84,14 +84,15 @@ export default function DailyReviewScreen({
 
   if (!queue.length) {
     return (
-      <SafeScreenView style={styles.container}>
-        <View style={styles.emptyState}>
+      <SafeScreenView style={styles.container} testID="daily-review-screen">
+        <View style={styles.emptyState} testID="daily-review-empty">
           <Text style={styles.emptyTitle}>Daily Review</Text>
           <Text style={styles.emptyMessage}>No review cards are due right now.</Text>
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.emptyButton}
             onPress={() => navigation.replace('Home', { language })}
+            testID="daily-review-home"
           >
             <Text style={styles.emptyButtonText}>Back to Home</Text>
           </TouchableOpacity>
@@ -204,6 +205,7 @@ export default function DailyReviewScreen({
       style={
         styles.container
       }
+      testID="daily-review-screen"
     >
       <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View
@@ -226,6 +228,7 @@ export default function DailyReviewScreen({
           language={
             language
           }
+          countTestID="daily-review-due-count"
         />
 
         <Text
@@ -252,6 +255,7 @@ export default function DailyReviewScreen({
           onWrong={
             handleWrong
           }
+          testIDPrefix="daily-review"
         />
       </View>
       </KeyboardAvoidingView>

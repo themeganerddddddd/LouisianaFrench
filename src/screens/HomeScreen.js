@@ -558,7 +558,14 @@ export default function HomeScreen() {
                 {loadedProjection
                   ? loadedProjection.firstDay
                     ? "Welcome! Let's learn new words."
-                    : `⚡ ${loadedProjection.dashboard.xp} · 🔥 ${loadedProjection.dashboard.streak} · ${loadedProjection.dashboard.masteryPercent}% mastered`
+                    : (
+                      <>
+                        <Text testID="home-xp">{`⚡ ${loadedProjection.dashboard.xp}`}</Text>
+                        {' · '}
+                        <Text testID="home-streak">{`🔥 ${loadedProjection.dashboard.streak}`}</Text>
+                        {` · ${loadedProjection.dashboard.masteryPercent}% mastered`}
+                      </>
+                    )
                   : null}
               </Text>
             </View>

@@ -12,7 +12,7 @@ export default function AdvancedScreen({ route, navigation }) {
   const buttonFill = language === 'kreole' ? '#E7F5EE' : '#EAF3FF';
 
   return (
-    <SafeScreenView style={styles.container}>
+    <SafeScreenView style={styles.container} testID="speech-practice-hub">
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <TouchableOpacity

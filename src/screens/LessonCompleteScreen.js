@@ -8,7 +8,7 @@ export default function LessonCompleteScreen({ route, navigation }) {
   const softBackground = language === 'kreole' ? '#E7F5EE' : '#EFF6FF';
 
   return (
-    <SafeScreenView style={[styles.container, { backgroundColor: softBackground }]}>
+    <SafeScreenView style={[styles.container, { backgroundColor: softBackground }]} testID="lesson-complete-screen">
       <ScrollView
         testID="lesson-complete-scroll"
         contentContainerStyle={styles.content}
@@ -26,7 +26,7 @@ export default function LessonCompleteScreen({ route, navigation }) {
 
           <View style={styles.row}>
             <View style={styles.stat}>
-              <Text style={styles.statNum}>⚡ {xpEarned}</Text>
+              <Text style={styles.statNum} testID="lesson-complete-xp">⚡ {xpEarned}</Text>
               <Text style={styles.statLabel}>XP earned</Text>
             </View>
 
@@ -36,13 +36,14 @@ export default function LessonCompleteScreen({ route, navigation }) {
             </View>
           </View>
 
-          {streak ? <Text style={styles.streak}>🔥 Streak: {streak}</Text> : null}
+          {streak ? <Text style={styles.streak} testID="lesson-complete-streak">🔥 Streak: {streak}</Text> : null}
 
           <TouchableOpacity
             style={[styles.primaryBtn, { backgroundColor: accent }]}
             onPress={() =>
               navigation.replace('Home', language ? { language } : undefined)
             }
+            testID="lesson-complete-home"
           >
             <Text style={styles.primaryText}>Back to Home</Text>
           </TouchableOpacity>
