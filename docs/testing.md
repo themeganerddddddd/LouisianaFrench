@@ -8,7 +8,7 @@ Run these commands from the repository root. They are the scripts in `package.js
 npm run typecheck
 ```
 
-`npm run typecheck` runs `tsc --noEmit`. New TypeScript is checked. Existing JavaScript is allowed and is not type-checked. No workflow runs this command yet.
+`npm run typecheck` runs `tsc --noEmit`. New TypeScript is checked. Existing JavaScript is allowed and is not type-checked. The `typecheck` job in CI runs this command.
 
 ## Jest
 
@@ -89,10 +89,9 @@ The capture script is `.agents/scripts/capture-ui-evidence.mjs` (`capture:ui-evi
 | `test` | 21–30 | `npm ci`, then `npm test` |
 | `python` | 32–40 | `python -m unittest discover -s scripts -p 'test_*.py'` |
 | `build` | 42–52 | `npm ci`, then `npm run build` |
+| `typecheck` | 54–63 | `npm ci`, then `npm run typecheck` |
 
-The lint, test, and build jobs use Node 22. The python job uses Python 3.12. No step sets `continue-on-error`. A non-zero Python run fails the `python` job, which fails the workflow on pull requests to `main`.
-
-No job runs `npm run typecheck`. A type error fails `npm run pr-ready` on a laptop and does not fail CI until a workflow job is added.
+The lint, test, build, and typecheck jobs use Node 22. The python job uses Python 3.12. No step sets `continue-on-error`. A non-zero Python run fails the `python` job, which fails the workflow on pull requests to `main`. A type error fails the `typecheck` job the same way.
 
 `npm run build` is `npm run build:ios && npm run build:android` in `package.json`. The build job exports the iOS bundle and the Android bundle.
 
