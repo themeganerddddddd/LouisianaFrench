@@ -26,6 +26,7 @@ import HomeAboutMenu from '../components/HomeAboutMenu';
 import { ABOUT_TEXT } from '../data/aboutContent';
 import { registerTBoyTap } from '../utils/debugCatalogUnlock';
 import { getHomeProjection } from '../utils/homeProjection';
+import { accentFor } from '../theme/languageAccent';
 import {
   getDefaultLanguage,
   getLastWorkedUnit,
@@ -488,7 +489,7 @@ export default function HomeScreen() {
           doneSoft: '#3B82F6',
           progressFill: '#7DD3FC',
           subtitle: '#DCEBFF',
-          accent: '#2771CB',
+          accent: accentFor('cajun'),
           badgeText: '#102A43',
           planBackground: '#102A43',
           planSoft: '#7DD3FC'
@@ -500,7 +501,7 @@ export default function HomeScreen() {
           doneSoft: '#34D399',
           progressFill: '#6EE7B7',
           subtitle: '#E7F5EE',
-          accent: '#08834C',
+          accent: accentFor('kreole'),
           badgeText: '#064E32',
           planBackground: '#064E32',
           planSoft: '#6EE7B7'
@@ -853,6 +854,7 @@ export default function HomeScreen() {
         connector={connectorRef.current}
         recoveryActive={recoveryActive}
         onRecoveryFinished={() => setRecoveryActive(false)}
+        accentColor={theme.accent}
         onClose={() => {
           setSignInVisible(false);
           setRecoveryActive(false);
