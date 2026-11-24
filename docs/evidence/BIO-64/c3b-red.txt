@@ -1,0 +1,201 @@
+FAIL src/account/__tests__/runAccountEffects.test.ts
+  ● runAccountEffect › settles every auth effect, and a timeout is a network failure
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "settled"
+    Received: "hung"
+
+      50 |       new Promise((resolve) => setTimeout(() => resolve('hung'), 80))
+      51 |     ]);
+    > 52 |     expect(deleteOutcome).toBe('settled');
+         |                           ^
+      53 |     expect(deleted).toEqual([{ type: 'deleteSettled', result: { ok: false, failure: 'network' } }]);
+      54 |
+      55 |     const thrown: unknown[] = [];
+
+      at Object.toBe (src/account/__tests__/runAccountEffects.test.ts:52:27)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● runAccountEffect › signs out when a timed-out sign-in later succeeds and nothing has retried
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 1
+
+    - Array [
+    -   "local",
+    - ]
+    + Array []
+
+      85 |     await running;
+      86 |     expect(events).toEqual([{ type: 'authSettled', result: { ok: false, failure: 'network' } }]);
+    > 87 |     expect(signOuts).toEqual(['local']);
+         |                      ^
+      88 |   });
+      89 |
+      90 |   it('leaves the session when that late sign-in arrives after a newer sign-in succeeded', async () => {
+
+      at Object.toEqual (src/account/__tests__/runAccountEffects.test.ts:87:22)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › maps a Google invalid_grant to oauthFailed and keeps a network error
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "failure": "oauthFailed",
+    +   "failure": "wrongCredentials",
+        "ok": false,
+      }
+
+      130 |       openBrowser: async () => ({ url: `${REDIRECT}?code=expired` })
+      131 |     });
+    > 132 |     expect(await expired.signInWithProvider('google')).toEqual({ ok: false, failure: 'oauthFailed' });
+          |                                                        ^
+      133 |
+      134 |     const offline = createAccountConnector({
+      135 |       client: client({
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:132:56)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › times out a slow Google sign-in request as network
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "failure": "network",
+    +   "failure": "unavailable",
+        "ok": false,
+      }
+
+      156 |       new Promise((resolve) => setTimeout(() => resolve('waiting'), 80))
+      157 |     ]);
+    > 158 |     expect(result).toEqual({ ok: false, failure: 'network' });
+          |                    ^
+      159 |   });
+      160 |
+      161 |   it('does not time the learner out while Google is open in the browser', async () => {
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:158:20)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › does not time the learner out while Google is open in the browser
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 7
+    + Received  + 2
+
+      Array [
+        Object {
+          "result": Object {
+    -       "identity": Object {
+    -         "email": "ada@example.com",
+    -         "id": "learner-1",
+    -         "provider": "google",
+    -         "username": null,
+    -       },
+    -       "ok": true,
+    +       "failure": "network",
+    +       "ok": false,
+          },
+          "type": "authSettled",
+        },
+      ]
+
+      180 |       20
+      181 |     );
+    > 182 |     expect(events).toEqual([{ type: 'authSettled', result: { ok: true, identity: GOOGLE } }]);
+          |                    ^
+      183 |   });
+      184 |
+      185 |   it('times out the code exchange and signs out if that exchange later succeeds', async () => {
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:182:20)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › times out the code exchange and signs out if that exchange later succeeds
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"failure": "network", "ok": false}
+    Received: "waiting"
+
+      206 |     ]);
+      207 |     release({ data: { session: { user: { id: 'learner-1', email: 'ada@example.com' } } }, error: null });
+    > 208 |     expect(result).toEqual({ ok: false, failure: 'network' });
+          |                    ^
+      209 |     await pending;
+      210 |     expect(signOuts).toEqual([{ scope: 'local' }]);
+      211 |   });
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:208:20)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › does not sign out a late Google exchange after a newer attempt succeeds
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"failure": "network", "ok": false}
+    Received: "waiting"
+
+      240 |     releaseFirst(session);
+      241 |     await first;
+    > 242 |     expect(firstResult).toEqual({ ok: false, failure: 'network' });
+          |                         ^
+      243 |     expect(second).toEqual({ ok: true, identity: GOOGLE });
+      244 |     expect(signOuts).toEqual([]);
+      245 |   });
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:242:25)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › signs out locally after deleting the account, even when sign-out throws
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 5
+    + Received  + 1
+
+    - Array [
+    -   Object {
+    -     "scope": "local",
+    -   },
+    - ]
+    + Array []
+
+      256 |     });
+      257 |     expect(await connector.deleteAccount()).toEqual({ ok: true });
+    > 258 |     expect(scopes).toEqual([{ scope: 'local' }]);
+          |                    ^
+      259 |   });
+      260 | });
+      261 |
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:258:20)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 2 failed, 2 total
+Tests:       8 failed, 9 passed, 17 total
+Snapshots:   0 total
+Time:        0.779 s, estimated 1 s
+Ran all test suites matching src/account/__tests__/accountConnector.test.ts|src/account/__tests__/runAccountEffects.test.ts.
+EXIT:1
