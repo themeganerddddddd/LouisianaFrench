@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node .agents/scripts/check-pr-ui-evidence.mjs [--base origin/main]
- *     [--body-file path] [--issue N] [--allow-non-ui] [--stdin]
+ *     [--body-file path] [--branch name] [--issue N] [--allow-non-ui] [--stdin]
  *
  * Always prints JSON to stdout. Exit 0 on pass, 2 on fail, 1 on usage/error.
  */
@@ -17,6 +17,7 @@ const MEDIA_RE = /\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i;
 const NON_UI_ATTEST_RE = /does not change the UI|no UI change|non-UI/i;
 const ISSUE_IN_BODY_RE = /(?:closes|fixes|resolves)?\s*#(\d{1,5})\b/i;
 const ISSUE_IN_BRANCH_RE = /(\d{2,4})/;
+const LINEAR_KEY_RE = /\bBIO-(\d+)\b/i;
 
 const UI_PREFIXES = [
   'src/screens/',
@@ -28,7 +29,7 @@ const UI_ROOT_FILES = new Set(['App.js', 'App.tsx']);
 
 function usage(code = 1) {
   console.error(
-    'Usage: node .agents/scripts/check-pr-ui-evidence.mjs [--base origin/main] [--body-file path] [--issue N] [--allow-non-ui] [--stdin]'
+    'Usage: node .agents/scripts/check-pr-ui-evidence.mjs [--base origin/main] [--body-file path] [--branch name] [--issue N] [--allow-non-ui] [--stdin]'
   );
   process.exit(code);
 }
@@ -37,6 +38,7 @@ function parseArgs(argv) {
   const out = {
     base: null,
     bodyFile: null,
+    branch: '',
     issue: null,
     allowNonUi: false,
     stdin: false
@@ -45,6 +47,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--base') out.base = argv[++i];
     else if (a === '--body-file') out.bodyFile = argv[++i];
+    else if (a === '--branch') out.branch = argv[++i] ?? '';
     else if (a === '--issue') out.issue = Number(argv[++i]);
     else if (a === '--allow-non-ui') out.allowNonUi = true;
     else if (a === '--stdin') out.stdin = true;
@@ -141,17 +144,29 @@ function readBody(args) {
   return '';
 }
 
+function linearEvidenceKey(text) {
+  const match = String(text || '').match(LINEAR_KEY_RE);
+  return match ? `BIO-${match[1]}` : null;
+}
+
+function currentBranch(root) {
+  try {
+    return run('git', ['branch', '--show-current'], { cwd: root });
+  } catch {
+    return '';
+  }
+}
+
 function resolveIssue(args, body, root) {
   if (args.issue != null) return args.issue;
+  const fromBodyLinear = linearEvidenceKey(body);
+  if (fromBodyLinear) return fromBodyLinear;
   const fromBody = body.match(ISSUE_IN_BODY_RE);
   if (fromBody) return Number(fromBody[1]);
-  let branch = '';
-  try {
-    branch = run('git', ['branch', '--show-current'], { cwd: root });
-  } catch {
-    branch = '';
-  }
-  const fromBranch = branch.match(ISSUE_IN_BRANCH_RE);
+  const branch = args.branch || currentBranch(root);
+  const fromBranchLinear = linearEvidenceKey(branch);
+  if (fromBranchLinear) return fromBranchLinear;
+  const fromBranch = String(branch || '').match(ISSUE_IN_BRANCH_RE);
   if (fromBranch) return Number(fromBranch[1]);
   return null;
 }

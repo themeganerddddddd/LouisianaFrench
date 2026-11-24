@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createAudioPlayer } from 'expo-audio';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Keyboard,
@@ -694,6 +694,12 @@ function SkipQuestionButton({ onSkip, disabled }) {
   );
 }
 
+const ActivityTestIDPrefix = createContext(null);
+
+function activityTestID(prefix, element) {
+  return prefix ? `${prefix}-${element}` : undefined;
+}
+
 function FeedbackFooter({
   state,
   firstWrong,
@@ -706,6 +712,7 @@ function FeedbackFooter({
   wrongTitle = 'Let’s move on',
   answerContent
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const [submitted, setSubmitted] = useState(false);
 
   // One-shot the advance control, but re-enable if the session handler rejects
@@ -725,7 +732,7 @@ function FeedbackFooter({
 
   if (state === 'correct') {
     return (
-      <View style={[styles.footer, styles.footerGreen]}>
+      <View style={[styles.footer, styles.footerGreen]} testID={activityTestID(idPrefix, 'feedback-correct')}>
         <Text style={styles.footerTitle}>Correct!</Text>
 
         {altContent}
@@ -736,6 +743,7 @@ function FeedbackFooter({
             void submit(onNext);
           }}
           disabled={submitted}
+          testID={activityTestID(idPrefix, 'next')}
         >
           <Text style={styles.footerButtonText}>Next Question</Text>
         </TouchableOpacity>
@@ -745,7 +753,7 @@ function FeedbackFooter({
 
   if (state === 'skipped') {
     return (
-      <View style={[styles.footer, styles.footerRed]}>
+      <View style={[styles.footer, styles.footerRed]} testID={activityTestID(idPrefix, 'feedback-incorrect')}>
         <Text style={styles.footerTitle}>Skipped</Text>
 
         {answerContent ||
@@ -761,6 +769,7 @@ function FeedbackFooter({
             void submit(onIncorrect);
           }}
           disabled={submitted}
+          testID={activityTestID(idPrefix, 'next')}
         >
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
@@ -770,7 +779,7 @@ function FeedbackFooter({
 
   if (state === 'wrong' && firstWrong) {
     return (
-      <View style={[styles.footer, styles.footerRed]}>
+      <View style={[styles.footer, styles.footerRed]} testID={activityTestID(idPrefix, 'feedback-incorrect')}>
         <Text style={styles.footerTitle}>Not quite</Text>
 
         {hintText ? <Text style={styles.footerSub}>{hintText}</Text> : null}
@@ -780,6 +789,7 @@ function FeedbackFooter({
           onPress={onTryAgain}
           accessibilityRole="button"
           accessibilityLabel="Try again"
+          testID={activityTestID(idPrefix, 'try-again')}
         >
           <Text style={styles.footerButtonText}>Try Again</Text>
         </TouchableOpacity>
@@ -789,7 +799,7 @@ function FeedbackFooter({
 
   if (state === 'wrong' && !firstWrong) {
     return (
-      <View style={[styles.footer, styles.footerRed]}>
+      <View style={[styles.footer, styles.footerRed]} testID={activityTestID(idPrefix, 'feedback-incorrect')}>
         <Text style={styles.footerTitle}>{wrongTitle}</Text>
 
         {answerContent ||
@@ -807,6 +817,7 @@ function FeedbackFooter({
             void submit(onIncorrect);
           }}
           disabled={submitted}
+          testID={activityTestID(idPrefix, 'next')}
         >
           <Text style={styles.footerButtonText}>Continue</Text>
         </TouchableOpacity>
@@ -817,7 +828,15 @@ function FeedbackFooter({
   return null;
 }
 
-export default function ActivityRenderer({
+export default function ActivityRenderer({ testIDPrefix, ...props }) {
+  return (
+    <ActivityTestIDPrefix.Provider value={testIDPrefix || null}>
+      <ActivityBody {...props} />
+    </ActivityTestIDPrefix.Provider>
+  );
+}
+
+function ActivityBody({
   activity,
   onCorrect,
   onWrong,
@@ -825,6 +844,7 @@ export default function ActivityRenderer({
   allowSkip = true,
   onOpenPreface
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const theme = getTheme(language);
   const submittedRef = useRef(false);
 
@@ -939,7 +959,7 @@ export default function ActivityRenderer({
     default:
       return (
         <View style={styles.card}>
-          <Text style={styles.prompt}>
+          <Text style={styles.prompt} testID={activityTestID(idPrefix, 'prompt')}>
             Unknown activity type: {activity.type}
           </Text>
         </View>
@@ -954,6 +974,7 @@ function IntroCard({
   theme,
   onOpenPreface
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const { playAudioKey, stopAll } = useAudio(language);
 
   const [submitted, setSubmitted] = useState(false);
@@ -989,7 +1010,7 @@ function IntroCard({
         language={language}
       />
 
-      <Text style={styles.prompt}>
+      <Text style={styles.prompt} testID={activityTestID(idPrefix, 'prompt')}>
         {activity.prompt}
       </Text>
 
@@ -1073,6 +1094,7 @@ function IntroCard({
         ]}
         onPress={submit}
         disabled={submitted}
+        testID={activityTestID(idPrefix, 'next')}
       >
         <Text style={styles.primaryBtnText}>
           Continue
@@ -1091,6 +1113,7 @@ function MultipleChoice({
   allowSkip,
   onOpenPreface
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -1143,13 +1166,14 @@ function MultipleChoice({
         language={language}
       />
 
-      <Text style={styles.prompt}>
+      <Text style={styles.prompt} testID={activityTestID(idPrefix, 'prompt')}>
         {promptText}
       </Text>
 
-      {activity.options.map((opt) => (
+      {activity.options.map((opt, index) => (
         <TouchableOpacity
           key={opt}
+          testID={activityTestID(idPrefix, `choice-${index}`)}
           disabled={isLocked(state)}
           style={[
             styles.option,
@@ -1183,6 +1207,7 @@ function MultipleChoice({
           onPress={checkAnswer}
           accessibilityRole="button"
           accessibilityLabel="Check answer"
+          testID={activityTestID(idPrefix, 'check')}
         >
           <Text style={styles.primaryBtnText}>
             Check
@@ -1241,6 +1266,7 @@ function SelectMultiple({
   allowSkip,
   onOpenPreface
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const [selected, setSelected] = useState([]);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -1312,14 +1338,15 @@ function SelectMultiple({
 
       <ContextBadge activity={activity} language={language} />
 
-      <Text style={styles.prompt}>{activity.prompt}</Text>
+      <Text style={styles.prompt} testID={activityTestID(idPrefix, 'prompt')}>{activity.prompt}</Text>
 
-      {activity.options.map((opt) => {
+      {activity.options.map((opt, index) => {
         const isSelected = selected.includes(opt);
 
         return (
           <TouchableOpacity
             key={opt}
+            testID={activityTestID(idPrefix, `choice-${index}`)}
             disabled={isLocked(state)}
             style={[
               styles.option,
@@ -1360,6 +1387,7 @@ function SelectMultiple({
           onPress={checkAnswer}
           accessibilityRole="button"
           accessibilityLabel="Check answer"
+          testID={activityTestID(idPrefix, 'check')}
         >
           <Text style={styles.primaryBtnText}>Check</Text>
         </TouchableOpacity>
@@ -1404,6 +1432,7 @@ function ListeningTargetChoice({
   allowSkip,
   onOpenPreface
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const [selected, setSelected] = useState(null);
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -1483,13 +1512,14 @@ function ListeningTargetChoice({
         language={language}
       />
 
-      <Text style={styles.prompt}>
+      <Text style={styles.prompt} testID={activityTestID(idPrefix, 'prompt')}>
         {activity.prompt}
       </Text>
 
-      {activity.options.map((opt) => (
+      {activity.options.map((opt, index) => (
         <TouchableOpacity
           key={opt}
+          testID={activityTestID(idPrefix, `choice-${index}`)}
           disabled={isLocked(state)}
           style={[
             styles.option,
@@ -1523,6 +1553,7 @@ function ListeningTargetChoice({
           onPress={checkAnswer}
           accessibilityRole="button"
           accessibilityLabel="Check answer"
+          testID={activityTestID(idPrefix, 'check')}
         >
           <Text style={styles.primaryBtnText}>
             Check
@@ -1581,6 +1612,7 @@ function Typing({
   allowSkip,
   onOpenPreface
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const [value, setValue] = useState('');
   const [state, setState] = useState('idle');
   const [attempts, setAttempts] = useState(0);
@@ -1663,7 +1695,7 @@ function Typing({
         language={language}
       />
 
-      <Text style={styles.prompt}>
+      <Text style={styles.prompt} testID={activityTestID(idPrefix, 'prompt')}>
         {promptText}
       </Text>
 
@@ -1693,6 +1725,7 @@ function Typing({
       ) : null}
 
       <TextInput
+        testID={activityTestID(idPrefix, 'answer')}
         placeholder="Type your answer"
         value={value}
         onChangeText={setValue}
@@ -1787,6 +1820,7 @@ function Typing({
           onPress={checkAnswer}
           accessibilityRole="button"
           accessibilityLabel="Check answer"
+          testID={activityTestID(idPrefix, 'check')}
         >
           <Text style={styles.primaryBtnText}>
             Check
@@ -1846,6 +1880,7 @@ function SentenceBuild({
   allowSkip,
   onOpenPreface
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const [selected, setSelected] = useState([]);
   const [pool, setPool] = useState(
     () => shuffle(activity.words || [])
@@ -1918,7 +1953,7 @@ function SentenceBuild({
         language={language}
       />
 
-      <Text style={styles.prompt}>
+      <Text style={styles.prompt} testID={activityTestID(idPrefix, 'prompt')}>
         {promptText}
       </Text>
 
@@ -1953,6 +1988,7 @@ function SentenceBuild({
         {pool.map((word, idx) => (
           <TouchableOpacity
             key={`${word}-${idx}`}
+            testID={activityTestID(idPrefix, `choice-${idx}`)}
             disabled={isLocked(state)}
             style={[
               styles.wordChip,
@@ -1980,6 +2016,7 @@ function SentenceBuild({
           onPress={checkAnswer}
           accessibilityRole="button"
           accessibilityLabel="Check answer"
+          testID={activityTestID(idPrefix, 'check')}
         >
           <Text style={styles.primaryBtnText}>
             Check
@@ -2118,6 +2155,7 @@ function MatchPairs({
   allowSkip,
   onOpenPreface
 }) {
+  const idPrefix = useContext(ActivityTestIDPrefix);
   const { left, right } = useMemo(
     () => makeMatchColumns(activity.pairs || []),
     [activity.pairs]
@@ -2240,7 +2278,7 @@ function MatchPairs({
         language={language}
       />
 
-      <Text style={styles.prompt}>
+      <Text style={styles.prompt} testID={activityTestID(idPrefix, 'prompt')}>
         {activity.prompt}
       </Text>
 
@@ -2290,6 +2328,7 @@ function MatchPairs({
                 onPress={() => selectLeft(leftItem)}
                 accessibilityRole="button"
                 accessibilityLabel={leftItem.value}
+                testID={activityTestID(idPrefix, `choice-${rowIndex}`)}
                 accessibilityState={{ selected: leftActive }}
               >
                 <Text style={styles.matchText}>
@@ -2317,6 +2356,7 @@ function MatchPairs({
                 onPress={() => selectRight(rightItem)}
                 accessibilityRole="button"
                 accessibilityLabel={rightItem.value}
+                testID={activityTestID(idPrefix, `choice-right-${rowIndex}`)}
                 accessibilityState={{ selected: rightActive }}
               >
                 <Text style={styles.matchText}>

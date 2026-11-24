@@ -398,6 +398,7 @@ export default function MistakeReviewScreen({
       style={
         styles.container
       }
+      testID="mistake-review-screen"
     >
       <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View
@@ -430,6 +431,7 @@ export default function MistakeReviewScreen({
             style={
               styles.reviewCount
             }
+            testID="mistake-review-progress"
           >
             {
               currentMistakeNumber
@@ -473,6 +475,7 @@ export default function MistakeReviewScreen({
             allowSkip={
               false
             }
+            testIDPrefix="mistake-review"
           />
         </View>
       </View>
