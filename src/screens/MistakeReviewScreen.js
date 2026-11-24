@@ -113,6 +113,16 @@ export default function MistakeReviewScreen({
         const record
         of pending
       ) {
+        // Home still counts a null or blank value. Review can only use a Card record.
+        if (
+          record == null ||
+          typeof record !== 'object' ||
+          typeof record.cardId !== 'string' ||
+          record.cardId.trim() === ''
+        ) {
+          continue;
+        }
+
         const activity =
           activities.get(
             record.cardId
