@@ -485,7 +485,7 @@ export default function HomeScreen() {
       ? {
           topBarGrad: ['#498BDC', '#2771CB'],
           headerGrad: ['#498BDC', '#2771CB'],
-          start: '#2771CB',
+          start: accentFor(language),
           doneSoft: '#3B82F6',
           progressFill: '#7DD3FC',
           subtitle: '#DCEBFF',
@@ -497,7 +497,7 @@ export default function HomeScreen() {
       : {
           topBarGrad: ['#0AA35F', '#066B3F'],
           headerGrad: ['#0AA35F', '#066B3F'],
-          start: '#08834C',
+          start: accentFor(language),
           doneSoft: '#34D399',
           progressFill: '#6EE7B7',
           subtitle: '#E7F5EE',
