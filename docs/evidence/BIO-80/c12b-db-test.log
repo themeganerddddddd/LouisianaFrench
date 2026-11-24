@@ -1,0 +1,1336 @@
+Tested commit: 3c956635a0689b4452b03c3b65f8a8be4254dce6
+C12b username RPCs.
+Image: public.ecr.aws/supabase/postgres:17.12.0.002. The database port is not published.
+pgTAP before this migration: 81 (tests/db/profiles_username.sql).
+pgTAP after: 135 (81 + 54 in tests/db/username_rpcs.sql).
+
+=== WITHOUT the C12b migration ===
+Command: bash tests/db/run-local.sh --without 20261124120000_username_rpcs.sql
+Exit: 3
+C12a still passes (81). The new file errors because public.set_username(text) does not exist.
+
+Starting public.ecr.aws/supabase/postgres:17.12.0.002 as lf-bio80-postgres. The database port is not published.
+Image: public.ecr.aws/supabase/postgres:17.12.0.002
+Container: lf-bio80-postgres
+=== loopback password auth for dblink ===
+ALTER ROLE
+ pg_reload_conf 
+----------------
+ t
+(1 row)
+
+=== auth users before migrations ===
+INSERT 0 8
+=== migrations from zero ===
+-- supabase/migrations/20261124032500_profiles_username.sql
+DO
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE TABLE
+CREATE INDEX
+CREATE FUNCTION
+CREATE TRIGGER
+ALTER TABLE
+REVOKE
+GRANT
+CREATE POLICY
+CREATE FUNCTION
+CREATE TRIGGER
+REVOKE
+REVOKE
+DO
+-- skip supabase/migrations/20261124120000_username_rpcs.sql
+=== pgTAP extension ===
+CREATE EXTENSION
+=== pgTAP tests ===
+=== tests/db/profiles_username.sql ===
+BEGIN
+ plan  
+-------
+ 1..81
+(1 row)
+
+             is              
+-----------------------------
+ ok 1 - Élise folds to elise
+(1 row)
+
+                 is                 
+------------------------------------
+ ok 2 - Élise and elise share a key
+(1 row)
+
+             is              
+-----------------------------
+ ok 3 - T_Boy folds to t_boy
+(1 row)
+
+         is          
+---------------------
+ ok 4 - Ç folds to c
+(1 row)
+
+         is          
+---------------------
+ ok 5 - ÿ folds to y
+(1 row)
+
+         is          
+---------------------
+ ok 6 - Ÿ folds to y
+(1 row)
+
+           is            
+-------------------------
+ ok 7 - Élise_1 is valid
+(1 row)
+
+               is               
+--------------------------------
+ ok 8 - three letters are valid
+(1 row)
+
+               is               
+--------------------------------
+ ok 9 - 20 characters are valid
+(1 row)
+
+        is         
+-------------------
+ ok 10 - too short
+(1 row)
+
+             is             
+----------------------------
+ ok 11 - too long after NFC
+(1 row)
+
+       is       
+----------------
+ ok 12 - hyphen
+(1 row)
+
+      is       
+---------------
+ ok 13 - space
+(1 row)
+
+      is       
+---------------
+ ok 14 - emoji
+(1 row)
+
+      is       
+---------------
+ ok 15 - empty
+(1 row)
+
+    is     
+-----------
+ ok 16 - æ
+(1 row)
+
+    is     
+-----------
+ ok 17 - œ
+(1 row)
+
+          is           
+-----------------------
+ ok 18 - leading digit
+(1 row)
+
+             is             
+----------------------------
+ ok 19 - leading underscore
+(1 row)
+
+    is     
+-----------
+ ok 20 - á
+(1 row)
+
+    is     
+-----------
+ ok 21 - ñ
+(1 row)
+
+             is             
+----------------------------
+ ok 22 - Cyrillic lookalike
+(1 row)
+
+                           ok                            
+---------------------------------------------------------
+ ok 23 - a 20-letter name in decomposed form is accepted
+(1 row)
+
+                  is                   
+---------------------------------------
+ ok 24 - Admin folds to a reserved key
+(1 row)
+
+                  is                   
+---------------------------------------
+ ok 25 - T_Boy folds to a reserved key
+(1 row)
+
+                    hasnt_function                     
+-------------------------------------------------------
+ ok 26 - the backfill is not left behind as a function
+(1 row)
+
+INSERT 0 1
+                           ok                            
+---------------------------------------------------------
+ ok 27 - inserting an auth user creates an empty profile
+(1 row)
+
+                       is                        
+-------------------------------------------------
+ ok 28 - earliest account keeps the display name
+(1 row)
+
+                     ok                      
+---------------------------------------------
+ ok 29 - later folded collision becomes null
+(1 row)
+
+                      is                      
+----------------------------------------------
+ ok 30 - smaller id wins when created_at ties
+(1 row)
+
+                    ok                    
+------------------------------------------
+ ok 31 - larger id loses a created_at tie
+(1 row)
+
+                     is                      
+---------------------------------------------
+ ok 32 - valid display name is kept as typed
+(1 row)
+
+                     ok                      
+---------------------------------------------
+ ok 33 - too-short display name becomes null
+(1 row)
+
+                    ok                     
+-------------------------------------------
+ ok 34 - invalid display name becomes null
+(1 row)
+
+               ok                
+---------------------------------
+ ok 35 - full_name is not copied
+(1 row)
+
+                                  is                                   
+-----------------------------------------------------------------------
+ ok 36 - a kept name records username_set_at as the account created_at
+(1 row)
+
+                         ok                          
+-----------------------------------------------------
+ ok 37 - a kept name leaves username_changed_at null
+(1 row)
+
+                         ok                         
+----------------------------------------------------
+ ok 38 - a dropped name leaves username_set_at null
+(1 row)
+
+INSERT 0 10
+             throws_ok              
+------------------------------------
+ ok 39 - check rejects a short name
+(1 row)
+
+                   throws_ok                   
+-----------------------------------------------
+ ok 40 - check rejects a name that is too long
+(1 row)
+
+           throws_ok            
+--------------------------------
+ ok 41 - check rejects a hyphen
+(1 row)
+
+           throws_ok           
+-------------------------------
+ ok 42 - check rejects a space
+(1 row)
+
+           throws_ok            
+--------------------------------
+ ok 43 - check rejects an emoji
+(1 row)
+
+              throws_ok              
+-------------------------------------
+ ok 44 - check rejects an empty name
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 45 - check rejects æ
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 46 - check rejects œ
+(1 row)
+
+               throws_ok               
+---------------------------------------
+ ok 47 - check rejects a leading digit
+(1 row)
+
+                 throws_ok                  
+--------------------------------------------
+ ok 48 - check rejects a leading underscore
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 49 - check rejects á
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 50 - check rejects ñ
+(1 row)
+
+                 throws_ok                  
+--------------------------------------------
+ ok 51 - check rejects a Cyrillic lookalike
+(1 row)
+
+          throws_ok          
+-----------------------------
+ ok 52 - check rejects Admin
+(1 row)
+
+          throws_ok          
+-----------------------------
+ ok 53 - check rejects T_Boy
+(1 row)
+
+UPDATE 1
+                is                
+----------------------------------
+ ok 54 - Zoé_9 is stored as typed
+(1 row)
+
+               is               
+--------------------------------
+ ok 55 - stored key is the fold
+(1 row)
+
+UPDATE 1
+                     throws_ok                     
+---------------------------------------------------
+ ok 56 - unique index rejects the folded collision
+(1 row)
+
+                          throws_ok                          
+-------------------------------------------------------------
+ ok 57 - decomposed Élise collides with the backfilled Élise
+(1 row)
+
+UPDATE 1
+UPDATE 1
+                        is                        
+--------------------------------------------------
+ ok 58 - decomposed E\0301lise is stored as Élise
+(1 row)
+
+                      is                      
+----------------------------------------------
+ ok 59 - decomposed E\0301lise folds to elise
+(1 row)
+
+UPDATE 1
+                          is                          
+------------------------------------------------------
+ ok 60 - a decomposed 20-letter name is stored in NFC
+(1 row)
+
+UPDATE 1
+DELETE 1
+                      is_empty                      
+----------------------------------------------------
+ ok 61 - deleting the auth user deletes the profile
+(1 row)
+
+UPDATE 1
+                     is                      
+---------------------------------------------
+ ok 62 - another user can take the freed key
+(1 row)
+
+                           ok                            
+---------------------------------------------------------
+ ok 63 - anon cannot INSERT public.profiles
+ ok 64 - authenticated cannot INSERT public.profiles
+ ok 65 - anon cannot UPDATE public.profiles
+ ok 66 - authenticated cannot UPDATE public.profiles
+ ok 67 - anon cannot DELETE public.profiles
+ ok 68 - authenticated cannot DELETE public.profiles
+ ok 69 - anon cannot TRUNCATE public.profiles
+ ok 70 - authenticated cannot TRUNCATE public.profiles
+ ok 71 - anon cannot REFERENCES public.profiles
+ ok 72 - authenticated cannot REFERENCES public.profiles
+ ok 73 - anon cannot TRIGGER public.profiles
+ ok 74 - authenticated cannot TRIGGER public.profiles
+(12 rows)
+
+                           is                            
+---------------------------------------------------------
+ ok 75 - profiles_for_new_user sets an empty search_path
+(1 row)
+
+SET
+              set_config              
+--------------------------------------
+ 30000000-0000-0000-0000-00000000000b
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "30000000-0000-0000-0000-00000000000b", "role" : "authenticated"}
+(1 row)
+
+             is_empty              
+-----------------------------------
+ ok 76 - user B cannot read user A
+(1 row)
+
+              throws_ok              
+-------------------------------------
+ ok 77 - user B cannot update user A
+(1 row)
+
+              set_config              
+--------------------------------------
+ 30000000-0000-0000-0000-00000000000a
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "30000000-0000-0000-0000-00000000000a", "role" : "authenticated"}
+(1 row)
+
+               results_eq                
+-----------------------------------------
+ ok 78 - owner reads own id and username
+(1 row)
+
+              throws_ok               
+--------------------------------------
+ ok 79 - owner cannot update username
+(1 row)
+
+                  throws_ok                  
+---------------------------------------------
+ ok 80 - owner cannot update username_set_at
+(1 row)
+
+               throws_ok                
+----------------------------------------
+ ok 81 - owner cannot read username_key
+(1 row)
+
+RESET
+ finish 
+--------
+(0 rows)
+
+ROLLBACK
+=== tests/db/username_rpcs.sql ===
+BEGIN
+ plan  
+-------
+ 1..54
+(1 row)
+
+INSERT 0 8
+psql:<stdin>:18: ERROR:  function "public.set_username(text)" does not exist
+pgTAP failed in tests/db/username_rpcs.sql (exit 3).
+pgTAP tests failed (exit 3).
+
+=== WITH both migrations ===
+Command: bash tests/db/run-local.sh
+Exit: 0
+
+Starting public.ecr.aws/supabase/postgres:17.12.0.002 as lf-bio80-postgres. The database port is not published.
+Image: public.ecr.aws/supabase/postgres:17.12.0.002
+Container: lf-bio80-postgres
+=== loopback password auth for dblink ===
+ALTER ROLE
+ pg_reload_conf 
+----------------
+ t
+(1 row)
+
+=== auth users before migrations ===
+INSERT 0 8
+=== migrations from zero ===
+-- supabase/migrations/20261124032500_profiles_username.sql
+DO
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE TABLE
+CREATE INDEX
+CREATE FUNCTION
+CREATE TRIGGER
+ALTER TABLE
+REVOKE
+GRANT
+CREATE POLICY
+CREATE FUNCTION
+CREATE TRIGGER
+REVOKE
+REVOKE
+DO
+-- supabase/migrations/20261124120000_username_rpcs.sql
+CREATE FUNCTION
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+GRANT
+=== pgTAP extension ===
+CREATE EXTENSION
+=== pgTAP tests ===
+=== tests/db/profiles_username.sql ===
+BEGIN
+ plan  
+-------
+ 1..81
+(1 row)
+
+             is              
+-----------------------------
+ ok 1 - Élise folds to elise
+(1 row)
+
+                 is                 
+------------------------------------
+ ok 2 - Élise and elise share a key
+(1 row)
+
+             is              
+-----------------------------
+ ok 3 - T_Boy folds to t_boy
+(1 row)
+
+         is          
+---------------------
+ ok 4 - Ç folds to c
+(1 row)
+
+         is          
+---------------------
+ ok 5 - ÿ folds to y
+(1 row)
+
+         is          
+---------------------
+ ok 6 - Ÿ folds to y
+(1 row)
+
+           is            
+-------------------------
+ ok 7 - Élise_1 is valid
+(1 row)
+
+               is               
+--------------------------------
+ ok 8 - three letters are valid
+(1 row)
+
+               is               
+--------------------------------
+ ok 9 - 20 characters are valid
+(1 row)
+
+        is         
+-------------------
+ ok 10 - too short
+(1 row)
+
+             is             
+----------------------------
+ ok 11 - too long after NFC
+(1 row)
+
+       is       
+----------------
+ ok 12 - hyphen
+(1 row)
+
+      is       
+---------------
+ ok 13 - space
+(1 row)
+
+      is       
+---------------
+ ok 14 - emoji
+(1 row)
+
+      is       
+---------------
+ ok 15 - empty
+(1 row)
+
+    is     
+-----------
+ ok 16 - æ
+(1 row)
+
+    is     
+-----------
+ ok 17 - œ
+(1 row)
+
+          is           
+-----------------------
+ ok 18 - leading digit
+(1 row)
+
+             is             
+----------------------------
+ ok 19 - leading underscore
+(1 row)
+
+    is     
+-----------
+ ok 20 - á
+(1 row)
+
+    is     
+-----------
+ ok 21 - ñ
+(1 row)
+
+             is             
+----------------------------
+ ok 22 - Cyrillic lookalike
+(1 row)
+
+                           ok                            
+---------------------------------------------------------
+ ok 23 - a 20-letter name in decomposed form is accepted
+(1 row)
+
+                  is                   
+---------------------------------------
+ ok 24 - Admin folds to a reserved key
+(1 row)
+
+                  is                   
+---------------------------------------
+ ok 25 - T_Boy folds to a reserved key
+(1 row)
+
+                    hasnt_function                     
+-------------------------------------------------------
+ ok 26 - the backfill is not left behind as a function
+(1 row)
+
+INSERT 0 1
+                           ok                            
+---------------------------------------------------------
+ ok 27 - inserting an auth user creates an empty profile
+(1 row)
+
+                       is                        
+-------------------------------------------------
+ ok 28 - earliest account keeps the display name
+(1 row)
+
+                     ok                      
+---------------------------------------------
+ ok 29 - later folded collision becomes null
+(1 row)
+
+                      is                      
+----------------------------------------------
+ ok 30 - smaller id wins when created_at ties
+(1 row)
+
+                    ok                    
+------------------------------------------
+ ok 31 - larger id loses a created_at tie
+(1 row)
+
+                     is                      
+---------------------------------------------
+ ok 32 - valid display name is kept as typed
+(1 row)
+
+                     ok                      
+---------------------------------------------
+ ok 33 - too-short display name becomes null
+(1 row)
+
+                    ok                     
+-------------------------------------------
+ ok 34 - invalid display name becomes null
+(1 row)
+
+               ok                
+---------------------------------
+ ok 35 - full_name is not copied
+(1 row)
+
+                                  is                                   
+-----------------------------------------------------------------------
+ ok 36 - a kept name records username_set_at as the account created_at
+(1 row)
+
+                         ok                          
+-----------------------------------------------------
+ ok 37 - a kept name leaves username_changed_at null
+(1 row)
+
+                         ok                         
+----------------------------------------------------
+ ok 38 - a dropped name leaves username_set_at null
+(1 row)
+
+INSERT 0 10
+             throws_ok              
+------------------------------------
+ ok 39 - check rejects a short name
+(1 row)
+
+                   throws_ok                   
+-----------------------------------------------
+ ok 40 - check rejects a name that is too long
+(1 row)
+
+           throws_ok            
+--------------------------------
+ ok 41 - check rejects a hyphen
+(1 row)
+
+           throws_ok           
+-------------------------------
+ ok 42 - check rejects a space
+(1 row)
+
+           throws_ok            
+--------------------------------
+ ok 43 - check rejects an emoji
+(1 row)
+
+              throws_ok              
+-------------------------------------
+ ok 44 - check rejects an empty name
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 45 - check rejects æ
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 46 - check rejects œ
+(1 row)
+
+               throws_ok               
+---------------------------------------
+ ok 47 - check rejects a leading digit
+(1 row)
+
+                 throws_ok                  
+--------------------------------------------
+ ok 48 - check rejects a leading underscore
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 49 - check rejects á
+(1 row)
+
+        throws_ok        
+-------------------------
+ ok 50 - check rejects ñ
+(1 row)
+
+                 throws_ok                  
+--------------------------------------------
+ ok 51 - check rejects a Cyrillic lookalike
+(1 row)
+
+          throws_ok          
+-----------------------------
+ ok 52 - check rejects Admin
+(1 row)
+
+          throws_ok          
+-----------------------------
+ ok 53 - check rejects T_Boy
+(1 row)
+
+UPDATE 1
+                is                
+----------------------------------
+ ok 54 - Zoé_9 is stored as typed
+(1 row)
+
+               is               
+--------------------------------
+ ok 55 - stored key is the fold
+(1 row)
+
+UPDATE 1
+                     throws_ok                     
+---------------------------------------------------
+ ok 56 - unique index rejects the folded collision
+(1 row)
+
+                          throws_ok                          
+-------------------------------------------------------------
+ ok 57 - decomposed Élise collides with the backfilled Élise
+(1 row)
+
+UPDATE 1
+UPDATE 1
+                        is                        
+--------------------------------------------------
+ ok 58 - decomposed E\0301lise is stored as Élise
+(1 row)
+
+                      is                      
+----------------------------------------------
+ ok 59 - decomposed E\0301lise folds to elise
+(1 row)
+
+UPDATE 1
+                          is                          
+------------------------------------------------------
+ ok 60 - a decomposed 20-letter name is stored in NFC
+(1 row)
+
+UPDATE 1
+DELETE 1
+                      is_empty                      
+----------------------------------------------------
+ ok 61 - deleting the auth user deletes the profile
+(1 row)
+
+UPDATE 1
+                     is                      
+---------------------------------------------
+ ok 62 - another user can take the freed key
+(1 row)
+
+                           ok                            
+---------------------------------------------------------
+ ok 63 - anon cannot INSERT public.profiles
+ ok 64 - authenticated cannot INSERT public.profiles
+ ok 65 - anon cannot UPDATE public.profiles
+ ok 66 - authenticated cannot UPDATE public.profiles
+ ok 67 - anon cannot DELETE public.profiles
+ ok 68 - authenticated cannot DELETE public.profiles
+ ok 69 - anon cannot TRUNCATE public.profiles
+ ok 70 - authenticated cannot TRUNCATE public.profiles
+ ok 71 - anon cannot REFERENCES public.profiles
+ ok 72 - authenticated cannot REFERENCES public.profiles
+ ok 73 - anon cannot TRIGGER public.profiles
+ ok 74 - authenticated cannot TRIGGER public.profiles
+(12 rows)
+
+                           is                            
+---------------------------------------------------------
+ ok 75 - profiles_for_new_user sets an empty search_path
+(1 row)
+
+SET
+              set_config              
+--------------------------------------
+ 30000000-0000-0000-0000-00000000000b
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "30000000-0000-0000-0000-00000000000b", "role" : "authenticated"}
+(1 row)
+
+             is_empty              
+-----------------------------------
+ ok 76 - user B cannot read user A
+(1 row)
+
+              throws_ok              
+-------------------------------------
+ ok 77 - user B cannot update user A
+(1 row)
+
+              set_config              
+--------------------------------------
+ 30000000-0000-0000-0000-00000000000a
+(1 row)
+
+                                 set_config                                 
+----------------------------------------------------------------------------
+ {"sub" : "30000000-0000-0000-0000-00000000000a", "role" : "authenticated"}
+(1 row)
+
+               results_eq                
+-----------------------------------------
+ ok 78 - owner reads own id and username
+(1 row)
+
+              throws_ok               
+--------------------------------------
+ ok 79 - owner cannot update username
+(1 row)
+
+                  throws_ok                  
+---------------------------------------------
+ ok 80 - owner cannot update username_set_at
+(1 row)
+
+               throws_ok                
+----------------------------------------
+ ok 81 - owner cannot read username_key
+(1 row)
+
+RESET
+ finish 
+--------
+(0 rows)
+
+ROLLBACK
+=== tests/db/username_rpcs.sql ===
+BEGIN
+ plan  
+-------
+ 1..54
+(1 row)
+
+INSERT 0 8
+                      ok                       
+-----------------------------------------------
+ ok 1 - authenticated can execute set_username
+(1 row)
+
+                   ok                    
+-----------------------------------------
+ ok 2 - anon cannot execute set_username
+(1 row)
+
+                       ok                        
+-------------------------------------------------
+ ok 3 - service_role cannot execute set_username
+(1 row)
+
+                       ok                        
+-------------------------------------------------
+ ok 4 - authenticated can execute check_username
+(1 row)
+
+                    ok                     
+-------------------------------------------
+ ok 5 - anon cannot execute check_username
+(1 row)
+
+                    ok                     
+-------------------------------------------
+ ok 6 - public cannot execute set_username
+(1 row)
+
+                     ok                      
+---------------------------------------------
+ ok 7 - public cannot execute check_username
+(1 row)
+
+                   ok                    
+-----------------------------------------
+ ok 8 - set_username is security definer
+(1 row)
+
+                    ok                     
+-------------------------------------------
+ ok 9 - check_username is security definer
+(1 row)
+
+                       is                       
+------------------------------------------------
+ ok 10 - set_username sets an empty search_path
+(1 row)
+
+                        is                        
+--------------------------------------------------
+ ok 11 - check_username sets an empty search_path
+(1 row)
+
+SET
+               throws_ok               
+---------------------------------------
+ ok 12 - anon cannot call set_username
+(1 row)
+
+RESET
+                     is                     
+--------------------------------------------
+ ok 13 - a call with no user writes nothing
+(1 row)
+
+                           ok                            
+---------------------------------------------------------
+ ok 14 - the unauthenticated call left the profile empty
+(1 row)
+
+SET
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000001
+(1 row)
+
+           is            
+-------------------------
+ ok 15 - skip returns ok
+(1 row)
+
+RESET
+               ok                
+---------------------------------
+ ok 16 - skip sets no timestamps
+(1 row)
+
+SET
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000001
+(1 row)
+
+              is              
+------------------------------
+ ok 17 - too short is invalid
+(1 row)
+
+                  is                   
+---------------------------------------
+ ok 18 - too long after NFC is invalid
+(1 row)
+
+            is             
+---------------------------
+ ok 19 - hyphen is invalid
+(1 row)
+
+            is            
+--------------------------
+ ok 20 - space is invalid
+(1 row)
+
+            is            
+--------------------------
+ ok 21 - emoji is invalid
+(1 row)
+
+            is            
+--------------------------
+ ok 22 - empty is invalid
+(1 row)
+
+          is          
+----------------------
+ ok 23 - æ is invalid
+(1 row)
+
+          is          
+----------------------
+ ok 24 - œ is invalid
+(1 row)
+
+                 is                 
+------------------------------------
+ ok 25 - a leading digit is invalid
+(1 row)
+
+                   is                    
+-----------------------------------------
+ ok 26 - a Cyrillic lookalike is invalid
+(1 row)
+
+            is             
+---------------------------
+ ok 27 - Admin is reserved
+(1 row)
+
+            is             
+---------------------------
+ ok 28 - T_Boy is reserved
+(1 row)
+
+                   is                    
+-----------------------------------------
+ ok 29 - check_username returns reserved
+(1 row)
+
+                   is                   
+----------------------------------------
+ ok 30 - check_username returns invalid
+(1 row)
+
+                is                 
+-----------------------------------
+ ok 31 - Céline is stored as typed
+(1 row)
+
+RESET
+                     is                     
+--------------------------------------------
+ ok 32 - set_username stores the folded key
+(1 row)
+
+                             ok                              
+-------------------------------------------------------------
+ ok 33 - the first set starts the window and is not a change
+(1 row)
+
+SET
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000001
+(1 row)
+
+                 is                  
+-------------------------------------
+ ok 34 - the identical display is ok
+(1 row)
+
+RESET
+                           ok                            
+---------------------------------------------------------
+ ok 35 - the identical display does not consume a change
+(1 row)
+
+SET
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000002
+(1 row)
+
+                      is                       
+-----------------------------------------------
+ ok 36 - check_username folds Céline to celine
+(1 row)
+
+                  is                   
+---------------------------------------
+ ok 37 - the folded collision is taken
+(1 row)
+
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000001
+(1 row)
+
+                    is                    
+------------------------------------------
+ ok 38 - the caller's own fold is current
+(1 row)
+
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000003
+(1 row)
+
+                   is                    
+-----------------------------------------
+ ok 39 - the window starts with Window_A
+(1 row)
+
+                    is                     
+-------------------------------------------
+ ok 40 - a different name inside 24h is ok
+(1 row)
+
+RESET
+                                    ok                                    
+--------------------------------------------------------------------------
+ ok 41 - a change inside the typo window does not set username_changed_at
+(1 row)
+
+RESET
+UPDATE 1
+SET
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000004
+(1 row)
+
+                is                
+----------------------------------
+ ok 42 - Limit_A is the first set
+(1 row)
+
+RESET
+UPDATE 1
+SET
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000004
+(1 row)
+
+                       is                       
+------------------------------------------------
+ ok 43 - one change is allowed after the window
+(1 row)
+
+RESET
+                         ok                          
+-----------------------------------------------------
+ ok 44 - the counted change sets username_changed_at
+(1 row)
+
+                              is                              
+--------------------------------------------------------------
+ ok 45 - too_soon retryAt is username_changed_at plus 30 days
+(1 row)
+
+                       is                       
+------------------------------------------------
+ ok 46 - too_soon does not replace the username
+(1 row)
+
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000005
+(1 row)
+
+                is                
+----------------------------------
+ ok 47 - Renée is stored as typed
+(1 row)
+
+RESET
+UPDATE 1
+SET
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000005
+(1 row)
+
+                   is                    
+-----------------------------------------
+ ok 48 - a same-key re-case is not taken
+(1 row)
+
+RESET
+                      ok                       
+-----------------------------------------------
+ ok 49 - a same-key re-case counts as a change
+(1 row)
+
+SET
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000006
+(1 row)
+
+              is              
+------------------------------
+ ok 50 - Fresh_1 is available
+(1 row)
+
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000007
+(1 row)
+
+                 is                  
+-------------------------------------
+ ok 51 - another user claims Fresh_1
+(1 row)
+
+              set_config              
+--------------------------------------
+ 70000000-0000-0000-0000-000000000006
+(1 row)
+
+                         is                         
+----------------------------------------------------
+ ok 52 - set_username returns taken after the claim
+(1 row)
+
+RESET
+CREATE EXTENSION
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+ dblink_exec 
+-------------
+ INSERT 0 2
+(1 row)
+
+ dblink_exec 
+-------------
+ BEGIN
+(1 row)
+
+                    is                    
+------------------------------------------
+ ok 53 - the first concurrent claim is ok
+(1 row)
+
+ dblink_send_query 
+-------------------
+                 1
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ dblink_exec 
+-------------
+ COMMIT
+(1 row)
+
+                      is                      
+----------------------------------------------
+ ok 54 - the second concurrent claim is taken
+(1 row)
+
+ dblink_exec 
+-------------
+ DELETE 2
+(1 row)
+
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+ finish 
+--------
+(0 rows)
+
+ROLLBACK
+pgTAP tests passed.
