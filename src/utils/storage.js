@@ -34,6 +34,19 @@ const defaultProfile = {
   lastStudyDate: null
 };
 
+// Unreadable saved progress matches a missing key. The raw value is left in place.
+function readStoredJson(raw, fallback) {
+  if (raw == null || raw === '') return fallback;
+  try {
+    const value = JSON.parse(raw);
+    if (Array.isArray(fallback)) return Array.isArray(value) ? value : fallback;
+    if (value != null && typeof value === 'object' && !Array.isArray(value)) return value;
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function getDefaultLanguage() {
   const raw = await AsyncStorage.getItem(KEYS.DEFAULT_LANGUAGE);
   return raw || null;
@@ -64,7 +77,7 @@ export async function hasSeenInfoContext(contextKey) {
   if (!contextKey) return true;
 
   const raw = await AsyncStorage.getItem(KEYS.INFO_CONTEXT_SEEN);
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
   return !!data[contextKey];
 }
@@ -73,7 +86,7 @@ export async function markInfoContextSeen(contextKey) {
   if (!contextKey) return;
 
   const raw = await AsyncStorage.getItem(KEYS.INFO_CONTEXT_SEEN);
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
   data[contextKey] = true;
 
@@ -108,7 +121,7 @@ export async function getProfile(language) {
   const key = getLanguageProfileKey(language);
   await migrateSharedProfile();
   const raw = await AsyncStorage.getItem(key);
-  return raw ? JSON.parse(raw) : defaultProfile;
+  return readStoredJson(raw, defaultProfile);
 }
 
 export async function saveProfile(language, profile) {
@@ -120,7 +133,7 @@ export async function saveProfile(language, profile) {
 
 export async function getLessonProgress() {
   const raw = await AsyncStorage.getItem(KEYS.LESSON_PROGRESS);
-  return raw ? JSON.parse(raw) : {};
+  return readStoredJson(raw, {});
 }
 
 export async function saveLessonProgress(progress) {
@@ -132,14 +145,14 @@ export async function saveLessonProgress(progress) {
 
 export async function getLastWorkedUnit(language) {
   const raw = await AsyncStorage.getItem(KEYS.LAST_WORKED_UNIT);
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
   return data[language] || null;
 }
 
 export async function setLastWorkedUnit(language, unitCode) {
   const raw = await AsyncStorage.getItem(KEYS.LAST_WORKED_UNIT);
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
   data[language] = unitCode;
 
@@ -170,10 +183,10 @@ function wordMasteryStatus({ seen, correct, wrong }) {
 // A saved status is not authoritative: it is recalculated from the answer counts on every read.
 export async function getWordProgress() {
   const raw = await AsyncStorage.getItem(KEYS.WORD_PROGRESS);
-  const progress = raw ? JSON.parse(raw) : {};
+  const progress = readStoredJson(raw, {});
 
   for (const record of Object.values(progress)) {
-    if (!record) continue;
+    if (!isRecord(record)) continue;
     record.status = wordMasteryStatus(record);
   }
 
@@ -330,7 +343,7 @@ export async function migrateLegacyCardIds() {
 
 export async function getReviewState() {
   const raw = await AsyncStorage.getItem(KEYS.REVIEW_STATE);
-  return raw ? JSON.parse(raw) : {};
+  return readStoredJson(raw, {});
 }
 
 export async function saveReviewState(state) {
@@ -342,7 +355,7 @@ export async function saveReviewState(state) {
 
 export async function getDailyReviewLog() {
   const raw = await AsyncStorage.getItem(KEYS.DAILY_REVIEW_LOG);
-  return raw ? JSON.parse(raw) : {};
+  return readStoredJson(raw, {});
 }
 
 export async function markDailyReviewDone(dateKey) {
@@ -366,7 +379,7 @@ export async function getLanguageDailyReviewLog(language) {
   const key = getLanguageDailyReviewKey(language);
 
   const raw = await AsyncStorage.getItem(key);
-  const current = raw ? JSON.parse(raw) : {};
+  const current = readStoredJson(raw, {});
 
   if (
     (await AsyncStorage.getItem(
@@ -390,9 +403,7 @@ export async function getLanguageDailyReviewLog(language) {
       ? raw
       : await AsyncStorage.getItem(defaultKey);
 
-  const defaultLog = defaultRaw
-    ? JSON.parse(defaultRaw)
-    : {};
+  const defaultLog = readStoredJson(defaultRaw, {});
 
   const shouldImport =
     !Object.keys(defaultLog).length &&
@@ -411,7 +422,7 @@ export async function getLanguageDailyReviewLog(language) {
   );
 
   return shouldImport && defaultLanguage === language
-    ? JSON.parse(await AsyncStorage.getItem(key))
+    ? readStoredJson(await AsyncStorage.getItem(key), {})
     : current;
 }
 
@@ -446,9 +457,11 @@ export async function getPendingMistakes(language) {
     KEYS.PENDING_MISTAKES
   );
 
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
+  const bucket = data[language];
+  if (!isRecord(bucket)) return [];
 
-  return Object.values(data[language] || {});
+  return Object.values(bucket);
 }
 
 export async function upsertPendingMistake(
@@ -464,9 +477,9 @@ export async function upsertPendingMistake(
     KEYS.PENDING_MISTAKES
   );
 
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
-  data[language] = data[language] || {};
+  if (!isRecord(data[language])) data[language] = {};
 
   data[language][cardId] = {
     cardId,
@@ -490,7 +503,7 @@ export async function removePendingMistake(
     KEYS.PENDING_MISTAKES
   );
 
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
   if (!data[language]?.[cardId]) {
     return;
@@ -516,9 +529,9 @@ export async function recordPracticeCompletion(
     KEYS.PRACTICE_LOG
   );
 
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
-  data[language] = data[language] || {};
+  if (!isRecord(data[language])) data[language] = {};
 
   data[language][getTodayKey()] = {
     type,
@@ -536,14 +549,14 @@ export async function getTodayPractice(language) {
     KEYS.PRACTICE_LOG
   );
 
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
   return data[language]?.[getTodayKey()] || null;
 }
 
 export async function getLeaderboard() {
   const raw = await AsyncStorage.getItem(KEYS.LEADERBOARD);
-  return raw ? JSON.parse(raw) : [];
+  return readStoredJson(raw, []);
 }
 
 export async function upsertLeaderboard(name, xp) {
@@ -654,7 +667,7 @@ export async function isPrefaceRead(prefaceId) {
     KEYS.PREFACE_READ
   );
 
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
   return !!data[prefaceId];
 }
@@ -664,7 +677,7 @@ export async function markPrefaceRead(prefaceId) {
     KEYS.PREFACE_READ
   );
 
-  const data = raw ? JSON.parse(raw) : {};
+  const data = readStoredJson(raw, {});
 
   data[prefaceId] = true;
 
