@@ -1,3 +1,5 @@
+import { describe, expect, it } from '@jest/globals';
+
 import { checkUsername, mapCheckUsername, mapSetUsername, setUsername } from '../username';
 
 describe('username RPC mapping', () => {
