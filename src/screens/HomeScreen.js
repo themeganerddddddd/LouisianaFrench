@@ -37,6 +37,9 @@ import {
 // leave Android's mail app with a bare address and no subject or Device block.
 const ABOUT_MENU_EXIT_MS = 200;
 
+// Account stays out of the menu until rollout turns this on.
+const SHOW_ACCOUNT_MENU_ENTRY = false;
+
 function getLessonButtonText(done, locked = false) {
   if (done) return 'Done';
   if (locked) return 'Locked';
@@ -823,7 +826,8 @@ export default function HomeScreen() {
         anchorTop={insets.top + 68}
         anchorLeft={20}
         accentColor={theme.accent}
-        accountDetail={identity?.displayName || ''}
+        showAccountEntry={SHOW_ACCOUNT_MENU_ENTRY}
+        identity={identity}
         expanded={aboutExpanded}
         onAccount={() => {
           setAboutMenuVisible(false);
