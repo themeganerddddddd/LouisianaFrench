@@ -1,5 +1,6 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 
+import { accentFor } from '../../theme/languageAccent';
 import SignInModal from '../SignInModal';
 
 jest.mock('@expo/vector-icons', () => {
@@ -38,6 +39,7 @@ describe('SignInModal password recovery', () => {
     render(
       <SignInModal
         visible
+        accentColor={accentFor('cajun')}
         identity={{ id: 'learner-1', email: 'ada@example.com', displayName: 'Ada' }}
         connector={connector}
         recoveryActive

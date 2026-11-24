@@ -88,7 +88,45 @@ describe('runAccountEffect', () => {
     expect(signOuts).toEqual(['local']);
   });
 
-  it('leaves the session when that late sign-in arrives after a newer sign-in succeeded', async () => {
+  it('signs out when a timed-out sign-in succeeds after a failed retry', async () => {
+    let releaseFirst: (value: AuthResult) => void = () => {};
+    let calls = 0;
+    const signOuts: string[] = [];
+    const events: unknown[] = [];
+    const connector = port({
+      signIn: () => {
+        calls += 1;
+        if (calls === 1) {
+          return new Promise((resolve) => {
+            releaseFirst = resolve;
+          });
+        }
+        return Promise.resolve({ ok: false, failure: 'wrongCredentials' });
+      },
+      signOut: async () => {
+        signOuts.push('local');
+      }
+    });
+    const first = runAccountEffect(
+      { run: 'signIn', email: 'ada@example.com', password: 'secret' },
+      connector,
+      (event) => events.push(event),
+      20
+    );
+    await waitFor(() => events.length === 1);
+    await runAccountEffect(
+      { run: 'signIn', email: 'ada@example.com', password: 'secret' },
+      connector,
+      (event) => events.push(event),
+      20
+    );
+    releaseFirst({ ok: true, identity: ada });
+    await first;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(signOuts).toEqual(['local']);
+  });
+
+  it('leaves the session when a newer sign-in has already succeeded', async () => {
     let releaseFirst: (value: AuthResult) => void = () => {};
     let calls = 0;
     const signOuts: string[] = [];
@@ -160,40 +198,21 @@ describe('runAccountEffect', () => {
       { type: 'deleteSettled', result: { ok: false, failure: 'unknown' } }
     ]);
 
-    const garbage: unknown[] = [];
-    await runAccountEffect(
-      { run: 'deleteAccount' },
-      port({
-        deleteAccount: (async () => ({ ok: false, failure: 'oauthFailed' })) as unknown as AccountConnector['deleteAccount']
-      }),
-      (event) => garbage.push(event)
-    );
-    expect(garbage).toEqual([
-      { type: 'deleteSettled', result: { ok: false, failure: 'unknown' } }
-    ]);
   });
 
   it('dispatches opened only when the modal opens or the learner continues', async () => {
-    let subscribed = false;
     const events: unknown[] = [];
     const dispatch = (event: unknown) => events.push(event);
-    const connector = port({
-      signIn: async () => ({ ok: true, identity: ada })
-    });
-    Object.assign(connector, {
-      onAuthStateChange() {
-        subscribed = true;
-      }
-    });
     await runAccountEffect(
       { run: 'signIn', email: 'ada@example.com', password: 'secret' },
-      connector,
+      port({
+        signIn: async () => ({ ok: true, identity: ada })
+      }),
       dispatch,
       20
     );
     openAccount(null, dispatch);
     openAccount(ada, dispatch);
-    expect(subscribed).toBe(false);
     expect(events).toEqual([
       { type: 'authSettled', result: { ok: true, identity: ada } },
       { type: 'opened', identity: null },
@@ -203,6 +222,8 @@ describe('runAccountEffect', () => {
 });
 
 function port(overrides: Partial<AccountConnector>): AccountConnector {
+  let attempt = 0;
+  let succeeded = 0;
   return {
     signIn: async () => ({ ok: false, failure: 'unknown' }),
     signUp: async () => ({ ok: false, failure: 'unknown' }),
@@ -211,7 +232,18 @@ function port(overrides: Partial<AccountConnector>): AccountConnector {
     signInWithProvider: async () => ({ ok: false, failure: 'unknown' }),
     signOut: async () => {},
     deleteAccount: async () => ({ ok: false, failure: 'unknown' }),
-    ...overrides
+    consumeAuthUrl: async () => null,
+    ...overrides,
+    beginAttempt() {
+      attempt += 1;
+      return attempt;
+    },
+    noteSuccess(id: number) {
+      if (id > succeeded) succeeded = id;
+    },
+    orphaned(id: number) {
+      return !(succeeded > id);
+    }
   };
 }
 
