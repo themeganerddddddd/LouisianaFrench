@@ -1,7 +1,7 @@
 === status wrong ref ===
 Database URL project ref aaaaaaaaaaaaaaaaaaaa does not match dev (isezzedrbdomyhfuqjak).
 exit 1
-elapsed_sec 0.018
+elapsed_sec 0.020
 === status port 6543 ===
 Transaction pooler port 6543 cannot run migrations. Use port 5432 on the same host.
 exit 1
