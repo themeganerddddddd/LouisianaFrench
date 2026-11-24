@@ -183,3 +183,46 @@ Snapshots:   0 total
 Time:        0.479 s, estimated 1 s
 Ran all test suites matching src/identity/__tests__/connector.test.js with tests matching "does not wait forever|keeps sign-in when the profile read".
 EXIT:1
+
+
+---
+
+Detached from(), run on 59f293ff18c207ace792d3a47d460c2fc75edd95 before the call went through the client.
+The fake is a class whose from reads this.tables.profiles. getIdentity resolved username null, not Céline. The catch swallowed the TypeError from the detached method.
+
+FAIL src/identity/__tests__/connector.test.js
+  ● identity connector › reads the username with from still attached to the client
+
+    expect(received).resolves.toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "email": "ada@example.com",
+        "id": "learner-1",
+    -   "username": "Céline",
+    +   "username": null,
+      }
+
+      444 |
+      445 |     const connector = createIdentityConnector({ client: new ProfileReader() });
+    > 446 |     await expect(connector.getIdentity()).resolves.toEqual({
+          |                                                    ^
+      447 |       id: 'learner-1',
+      448 |       email: 'ada@example.com',
+      449 |       username: 'Céline'
+
+      at Object.toEqual (../LouisianaFrench/node_modules/expect/build/index.js:2140:20)
+      at Object.toEqual (src/identity/__tests__/connector.test.js:446:52)
+      at asyncGeneratorStep (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at ../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 19 skipped, 20 total
+Snapshots:   0 total
+Time:        0.455 s, estimated 1 s
+Ran all test suites matching src/identity/__tests__/connector.test.js with tests matching "reads the username with from still attached".
+EXIT:1

@@ -413,6 +413,43 @@ describe('identity connector', () => {
     };
   }
 
+  it('reads the username with from still attached to the client', async () => {
+    class ProfileReader {
+      constructor() {
+        this.tables = { profiles: { username: 'Céline' } };
+        this.auth = {
+          async getSession() {
+            return { data: { session: sessionFor() } };
+          }
+        };
+      }
+
+      from(table) {
+        const row = this.tables[table];
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  async maybeSingle() {
+                    return { data: row, error: null };
+                  }
+                };
+              }
+            };
+          }
+        };
+      }
+    }
+
+    const connector = createIdentityConnector({ client: new ProfileReader() });
+    await expect(connector.getIdentity()).resolves.toEqual({
+      id: 'learner-1',
+      email: 'ada@example.com',
+      username: 'Céline'
+    });
+  });
+
   it('does not wait forever when the profile read never settles', async () => {
     jest.useFakeTimers();
     try {
