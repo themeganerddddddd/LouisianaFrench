@@ -1,6 +1,6 @@
 command: npm test
 exit: 0
-summary: Tests: 10 skipped, 634 passed, 644 total
+summary: Tests: 10 skipped, 635 passed, 645 total
 
 command: npm run lint
 exit: 0
@@ -8,7 +8,7 @@ summary: eslint: no problems
 
 command: npm run test:changed
 exit: 0
-summary: full-suite-fallback (no related tests in the diff); Tests: 10 skipped, 634 passed, 644 total
+summary: full-suite-fallback (no related tests in the diff); Tests: 10 skipped, 635 passed, 645 total
 
 command: python -m unittest discover -s scripts -p 'test_*.py'
 exit: 0
@@ -28,7 +28,7 @@ summary: Ran 21 tests in 0.000s; OK
 
 command: npm run pr-ready
 exit: 0
-summary: pr-ready: ok; Tests: 10 skipped, 634 passed, 644 total
+summary: pr-ready: ok; Tests: 10 skipped, 635 passed, 645 total
 
 command: npm run check:ui-evidence
 exit: 0

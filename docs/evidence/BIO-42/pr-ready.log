@@ -13,10 +13,10 @@
 > jest --watchAll=false
 
 
-Test Suites: 1 skipped, 55 passed, 55 of 56 total
-Tests:       10 skipped, 634 passed, 644 total
+Test Suites: 1 skipped, 56 passed, 56 of 57 total
+Tests:       10 skipped, 635 passed, 645 total
 Snapshots:   0 total
-Time:        15.457 s
+Time:        15.256 s, estimated 16 s
 Ran all test suites.
 → agent PR gates
 → check-pr-ui-evidence
@@ -24,8 +24,8 @@ Ran all test suites.
   "ok": true,
   "reason": "non-ui-diff",
   "base": "origin/main",
-  "baseSha": "90ec56fc1dcc4088e290103e7e284e6d994e16cd",
-  "changedCount": 1,
+  "baseSha": "2d35daf0618b31dfeb26d91288a93ee904b0e21e",
+  "changedCount": 3,
   "uiFiles": []
 }
 → no --body-file; skipping PR template section check
