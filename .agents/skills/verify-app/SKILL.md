@@ -107,3 +107,4 @@ Stops the tmux Metro session and the emulator that lfv started (by the saved PID
 - Metro with `--localhost` listens on IPv6 `::1` only. Check health at `http://localhost:8097/status`, not `127.0.0.1`. The emulator reaches it through `adb reverse`.
 - Expo Go draws a floating Tools gear (`desc:Tools`) over the top-right corner. It catches taps meant for `id:home-language-flag` and covers the Lesson ⚡ counter. `open` turns it off in the developer menu ("Tools button"). If it comes back, run `$L open`.
 - `uiautomator dump` fails while an animation runs. `up` turns system animations off, and the driver retries.
+- `uiautomator dump` hangs while Speech Practice is recording. A second `tap` of the same selector repeats that control's last centre, which is how `text:Record` stops the take.
