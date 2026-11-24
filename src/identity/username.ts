@@ -99,12 +99,10 @@ export function accountName(username: string | null | undefined): string {
 
 const PROFILE_READ_MS = 5000;
 
-async function readProfileUsername(
-  from: NonNullable<ProfileClient['from']>,
-  id: string
-): Promise<string | null> {
+async function readProfileUsername(client: ProfileClient, id: string): Promise<string | null> {
+  if (!client.from) return null;
   try {
-    const { data, error } = await from('profiles').select('username').eq('id', id).maybeSingle();
+    const { data, error } = await client.from('profiles').select('username').eq('id', id).maybeSingle();
     if (error) return null;
     return usernameFromProfile(data);
   } catch {
@@ -113,12 +111,11 @@ async function readProfileUsername(
 }
 
 export async function loadProfileUsername(client: ProfileClient, id: string): Promise<string | null> {
-  const from = client.from;
-  if (!from) return null;
+  if (!client.from) return null;
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      readProfileUsername(from, id),
+      readProfileUsername(client, id),
       new Promise<null>((resolve) => {
         timer = setTimeout(() => resolve(null), PROFILE_READ_MS);
       })
