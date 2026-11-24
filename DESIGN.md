@@ -10,6 +10,8 @@ colors:
   muted: "#64748B"
   review-badge: "#FFCD00"
   danger: "#DC2626"
+  field-border: "#64748B"
+  error-text: "#B91C1C"
   cajun-sky: "#498BDC"
   cajun-accent: "#2771CB"
   cajun-complete: "#3B82F6"
@@ -94,6 +96,40 @@ components:
     typography: "{typography.label}"
     rounded: "{rounded.pill}"
     padding: "1px 6px"
+  focus-ring:
+    width: "2px"
+    offset: "2px"
+    color: "active Language accent"
+  error-border:
+    color: "{colors.danger}"
+    width: "2px"
+  disabled:
+    opacity: "55%"
+    label: "kept"
+  modal:
+    scrim: "rgba(16,42,67,0.45)"
+    rounded: "{rounded.card}"
+    padding: "{spacing.card}"
+    maxWidth: "420px"
+  button-secondary:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink}"
+    borderColor: "{colors.field-border}"
+    borderWidth: "1px"
+    typography: "{typography.title}"
+    rounded: "{rounded.control}"
+    height: "48px"
+  button-link:
+    textColor: "active Language accent"
+    typography: "{typography.title}"
+    textDecoration: "none"
+    minHeight: "44px"
+  button-destructive:
+    textColor: "{colors.error-text}"
+    confirmBackgroundColor: "{colors.danger}"
+    confirmTextColor: "{colors.white}"
+    typography: "{typography.title}"
+    rounded: "{rounded.control}"
 ---
 
 # Design System: Louisiana Languages
@@ -186,6 +222,17 @@ The form language is rounded but disciplined: 18px cards, 16px compact tiles, 12
 - **Primary:** The active Language accent with white 800-weight text and at least the native minimum touch target.
 - **Press / Focus:** Restrained scale or opacity feedback on native, a visible focus treatment on web, and an immediate state change when reduced motion is active.
 - **Disabled:** Preserve the label, expose disabled accessibility state, remove badges, and reduce prominence without hiding the control.
+
+### Account controls
+- **Field border:** `#64748B` draws the 1px edge of a text field so the control meets contrast on white.
+- **Focus ring:** A 2px ring in the active Language accent, with a 2px offset, marks the focused control.
+- **Error text:** `#B91C1C` is the message under a field that failed, always shown with an icon.
+- **Error border:** A 2px danger border marks the field that failed.
+- **Disabled:** The control drops to 55% opacity, keeps its label, and exposes the disabled state.
+- **Modal:** The account card sits on an `rgba(16,42,67,0.45)` scrim, with radius 18, padding 18, and a max width of 420.
+- **Secondary button:** White fill, a 1px field border, and ink title text, for Sign out, Back, and Keep my account.
+- **Link button:** Title text in the active Language accent, with no underline and at least a 44pt hit height.
+- **Destructive button:** Error text for the entry link, and solid danger with white text for the confirm action.
 
 ### Cards / Containers
 - **Corner Style:** Consistent 18px cards with clipped progress tracks where needed.

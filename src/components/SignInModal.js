@@ -10,6 +10,7 @@ import {
   View
 } from 'react-native';
 
+import { accentFor } from '../theme/languageAccent';
 import TBoySpeechBubble from './TBoySpeechBubble';
 
 const EMPTY = { email: '', password: '', displayName: '' };
@@ -31,7 +32,8 @@ export default function SignInModal({
   connector,
   recoveryActive,
   onRecoveryFinished,
-  onClose
+  onClose,
+  accentColor = accentFor('cajun')
 }) {
   const [mode, setMode] = useState('signIn');
   const [fields, setFields] = useState(EMPTY);
@@ -120,6 +122,8 @@ export default function SignInModal({
   }
 
   const note = TBOY_LINES[mode] || TBOY_LINES.signIn;
+  const filledStyle = [styles.primaryFilled, { backgroundColor: accentColor }];
+  const linkStyle = [styles.textAction, { color: accentColor }];
   const showSignedIn = identity && mode !== 'replace' && mode !== 'done';
   const showLogos = mode === 'signIn' || mode === 'create';
   const showEmail = showLogos || mode === 'forgot';
@@ -165,7 +169,7 @@ export default function SignInModal({
                   />
                   <TBoySpeechBubble
                     body={note}
-                    accentColor="#2771CB"
+                    accentColor={accentColor}
                     layout="row"
                     tailPosition="left"
                     testID="sign-in-tboy-bubble"
@@ -240,7 +244,7 @@ export default function SignInModal({
                     onPress={submit}
                     testID="sign-in-submit"
                     accessibilityRole="button"
-                    style={styles.primaryFilled}
+                    style={filledStyle}
                   >
                     <Text style={styles.primaryFilledText}>
                       {mode === 'create'
@@ -264,7 +268,7 @@ export default function SignInModal({
                       testID="sign-in-create-mode"
                       accessibilityRole="button"
                     >
-                      <Text style={styles.textAction}>Create an account</Text>
+                      <Text style={linkStyle}>Create an account</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => {
@@ -275,7 +279,7 @@ export default function SignInModal({
                       testID="sign-in-forgot"
                       accessibilityRole="button"
                     >
-                      <Text style={styles.textAction}>Forgot password?</Text>
+                      <Text style={linkStyle}>Forgot password?</Text>
                     </Pressable>
                   </View>
                 ) : null}
@@ -289,7 +293,7 @@ export default function SignInModal({
                     testID="sign-in-email-mode"
                     accessibilityRole="button"
                   >
-                    <Text style={styles.textAction}>Sign in</Text>
+                    <Text style={linkStyle}>Sign in</Text>
                   </Pressable>
                 ) : null}
 
@@ -298,7 +302,7 @@ export default function SignInModal({
                     onPress={close}
                     testID="sign-in-done"
                     accessibilityRole="button"
-                    style={styles.primaryFilled}
+                    style={filledStyle}
                   >
                     <Text style={styles.primaryFilledText}>Continue</Text>
                   </Pressable>
@@ -360,7 +364,6 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   primaryFilled: {
-    backgroundColor: '#2771CB',
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
@@ -375,7 +378,6 @@ const styles = StyleSheet.create({
     gap: 8
   },
   textAction: {
-    color: '#2771CB',
     fontWeight: '700',
     paddingVertical: 4
   }
