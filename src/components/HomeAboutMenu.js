@@ -7,8 +7,21 @@ const LEAVES = [
   ['faq', 'FAQ']
 ];
 
-// Identity sign-in is built but not shipping yet — keep Account out of the menu.
-const SHOW_ACCOUNT_MENU_ENTRY = false;
+// English placeholders. Louisiana French and Kouri-Vini are TBD-copy.
+const GUEST_PROMPT = 'Sign in or create one'; // TBD-copy
+const LEARNER_NAME = 'Learner'; // TBD-copy
+const INK = '#102A43';
+const MIST_BORDER = '#E2E8F0';
+
+function accountName(identity) {
+  if (!identity) return null;
+  const username = typeof identity.username === 'string' ? identity.username : '';
+  return username.length > 0 ? username : LEARNER_NAME;
+}
+
+function avatarInitial(name) {
+  return Array.from(name)[0].toUpperCase();
+}
 
 export default function HomeAboutMenu({
   visible,
@@ -16,12 +29,14 @@ export default function HomeAboutMenu({
   anchorLeft,
   accentColor,
   expanded,
-  accountDetail,
+  showAccountEntry = false,
+  identity = null,
   onAccount,
   onToggle,
   onSelect,
   onDismiss
 }) {
+  const name = accountName(identity);
   return (
     <Modal
       visible={visible}
@@ -42,25 +57,34 @@ export default function HomeAboutMenu({
           accessibilityViewIsModal
           style={[
             styles.menu,
-            { top: anchorTop, left: anchorLeft, borderColor: accentColor }
+            { top: anchorTop, left: anchorLeft, borderColor: accentColor },
+            showAccountEntry ? styles.accountCard : null
           ]}
         >
-          {SHOW_ACCOUNT_MENU_ENTRY ? (
+          {showAccountEntry ? (
             <Pressable
               testID="about-menu-account"
               accessibilityRole="button"
-              accessibilityLabel={accountDetail ? `Account, ${accountDetail}` : 'Account'}
+              accessibilityLabel={name ? `Account, ${name}` : GUEST_PROMPT}
               onPress={onAccount}
-              style={styles.sectionButton}
+              style={styles.accountRow}
             >
-              <View style={styles.accountCopy}>
-                <Text style={styles.sectionLabel}>Account</Text>
-                {accountDetail ? (
-                  <Text style={styles.accountDetail} numberOfLines={1}>
-                    {accountDetail}
-                  </Text>
-                ) : null}
-              </View>
+              {name ? (
+                <View
+                  testID="about-menu-account-avatar"
+                  style={[styles.avatar, { backgroundColor: accentColor }]}
+                >
+                  <Text style={styles.avatarInitial}>{avatarInitial(name)}</Text>
+                </View>
+              ) : (
+                <Feather
+                  testID="about-menu-account-icon"
+                  name="user"
+                  size={22}
+                  color={accentColor}
+                />
+              )}
+              <Text style={styles.accountLabel}>{name || GUEST_PROMPT}</Text>
             </Pressable>
           ) : null}
 
@@ -72,7 +96,7 @@ export default function HomeAboutMenu({
             onPress={onToggle}
             style={[
               styles.sectionButton,
-              SHOW_ACCOUNT_MENU_ENTRY ? styles.dividedSection : null
+              showAccountEntry ? styles.dividedSection : null
             ]}
           >
             <Text style={styles.sectionLabel}>About Us</Text>
@@ -141,18 +165,42 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF'
   },
+  accountCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    borderColor: MIST_BORDER
+  },
   dividedSection: {
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0'
+    borderTopColor: MIST_BORDER
   },
-  accountCopy: {
+  accountRow: {
+    minHeight: 48,
+    maxWidth: '100%',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF'
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  avatarInitial: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800'
+  },
+  accountLabel: {
     flex: 1,
-    minWidth: 0
-  },
-  accountDetail: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '700'
+    flexShrink: 1,
+    marginLeft: 12,
+    color: INK,
+    fontSize: 15,
+    fontWeight: '800'
   },
   sectionLabel: {
     color: '#102A43',

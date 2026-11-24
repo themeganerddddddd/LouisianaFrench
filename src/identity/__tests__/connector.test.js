@@ -187,8 +187,26 @@ describe('identity connector', () => {
     expect(await connector.getIdentity()).toBeNull();
     expect(await connector.getAccessToken()).toBeNull();
     expect(client.calls[0].options.redirectTo).toBe(
-      'com.westleysturhan.louisianafrench://auth/callback'
+      'com.westleysturhan.louisianafrench://auth/callback?type=recovery'
     );
+  });
+
+  it('does not exchange a recovery code on a lookalike redirect', async () => {
+    const { connector, client } = await harness();
+    const result = await connector.handleAuthUrl(
+      'com.westleysturhan.louisianafrench://auth/callbackEVIL?code=recover-code&type=recovery'
+    );
+    expect(result.kind).toBeNull();
+    expect(client.calls.filter((call) => call.method === 'exchange')).toEqual([]);
+  });
+
+  it('opens a recovery code from the fragment', async () => {
+    const { connector, client } = await harness();
+    const result = await connector.handleAuthUrl(
+      'com.westleysturhan.louisianafrench://auth/callback#code=frag-code&type=recovery'
+    );
+    expect(result).toEqual({ kind: 'recovery' });
+    expect(client.calls[0]).toEqual({ method: 'exchange', code: 'frag-code' });
   });
 
   it('opens a recovery return for a new password and ignores a provider-style return', async () => {

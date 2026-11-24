@@ -36,4 +36,17 @@ describe('SignInModal accent', () => {
     expect(screen.getByText('Forgot password?')).toHaveStyle({ color: hex });
     expect(screen.getByTestId('sign-in-tboy-bubble')).toHaveStyle({ borderColor: hex });
   });
+
+  it('does not paint Cajun blue when the caller forgets accentColor', () => {
+    render(
+      <SignInModal visible identity={null} connector={{}} onClose={() => {}} />
+    );
+    expect(screen.getByTestId('sign-in-submit')).not.toHaveStyle({ backgroundColor: accentFor('cajun') });
+  });
+
+  it('does not offer Facebook', () => {
+    renderModal(accentFor('cajun'));
+    expect(screen.queryByLabelText('Sign in with Facebook')).toBeNull();
+    expect(screen.queryByText(/Facebook/)).toBeNull();
+  });
 });

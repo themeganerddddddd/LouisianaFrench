@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 
+import { matchesAuthRedirect, parseAuthUrl, resolveAuthRedirect } from '../account/authLink';
 import { createSessionStore } from './sessionStore';
 import {
   checkUsername as checkUsernameRpc,
@@ -11,7 +14,11 @@ import {
 const UNAVAILABLE = 'Sign-in is unavailable.';
 const FAILED = 'Sign-in failed.';
 const WRONG_PASSWORD = 'That email or password is not right.';
-const AUTH_REDIRECT = 'com.westleysturhan.louisianafrench://auth/callback';
+const AUTH_REDIRECT = resolveAuthRedirect({
+  platform: Platform.OS,
+  origin: typeof globalThis.location === 'object' ? globalThis.location.origin : undefined,
+  host: Constants.appOwnership === 'expo' ? Constants.expoConfig?.hostUri || null : null
+});
 
 function toIdentity(user, fallbackEmail, username) {
   if (!user?.id) return null;
@@ -145,7 +152,7 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
     },
     async sendPasswordReset(email) {
       const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: AUTH_REDIRECT
+        redirectTo: `${AUTH_REDIRECT}?type=recovery`
       });
       if (error) {
         return { identity: null, message: learnerMessage(error) };
@@ -153,22 +160,10 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       return { identity: null, message: null };
     },
     async handleAuthUrl(url) {
-      let code = null;
-      let type = null;
-      try {
-        if (!url || !String(url).startsWith(AUTH_REDIRECT)) return { kind: null };
-        const parsed = new URL(url);
-        if (parsed.searchParams.get('error')) {
-          return { kind: null, message: FAILED };
-        }
-        code = parsed.searchParams.get('code');
-        type = parsed.searchParams.get('type');
-      } catch {
-        return { kind: null, message: FAILED };
-      }
-      if (!code || type !== 'recovery') return { kind: null };
-
-      const exchanged = await client.auth.exchangeCodeForSession(code);
+      const link = parseAuthUrl(url, AUTH_REDIRECT);
+      if (link.kind === 'failed') return { kind: null, message: FAILED };
+      if (link.kind !== 'recovery') return { kind: null };
+      const exchanged = await client.auth.exchangeCodeForSession(link.code);
       if (exchanged.error || !exchanged.data?.session) {
         return {
           kind: null,
@@ -212,7 +207,7 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       let code = null;
       try {
         const parsed = new URL(returned.url);
-        if (!returned.url.startsWith(AUTH_REDIRECT) || parsed.searchParams.get('error')) {
+        if (!matchesAuthRedirect(returned.url, AUTH_REDIRECT) || parsed.searchParams.get('error')) {
           return { identity: null, message: FAILED };
         }
         code = parsed.searchParams.get('code');

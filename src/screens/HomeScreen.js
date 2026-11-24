@@ -20,7 +20,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AboutTextModal from '../components/AboutTextModal';
 import SignInModal from '../components/SignInModal';
 import { createSupabaseIdentityConnector } from '../identity/connector';
-import { accountName } from '../identity/username';
 import BugReportButton from '../components/BugReportButton';
 import DebugCatalogModal from '../components/DebugCatalogModal';
 import HomeAboutMenu from '../components/HomeAboutMenu';
@@ -37,6 +36,9 @@ import {
 // About menu uses a fade Modal. Opening the bug-report sheet in the same turn can
 // leave Android's mail app with a bare address and no subject or Device block.
 const ABOUT_MENU_EXIT_MS = 200;
+
+// Account stays out of the menu until rollout turns this on.
+const SHOW_ACCOUNT_MENU_ENTRY = false;
 
 function getLessonButtonText(done, locked = false) {
   if (done) return 'Done';
@@ -824,7 +826,8 @@ export default function HomeScreen() {
         anchorTop={insets.top + 68}
         anchorLeft={20}
         accentColor={theme.accent}
-        accountDetail={identity ? accountName(identity.username) : ''}
+        showAccountEntry={SHOW_ACCOUNT_MENU_ENTRY}
+        identity={identity}
         expanded={aboutExpanded}
         onAccount={() => {
           setAboutMenuVisible(false);

@@ -1,0 +1,344 @@
+Hook note: the first useAccountMachine.test.ts run failed to parse because the file was .ts and contained JSX. That parse error is omitted here; it is not the behavioural red. The behavioural failure is the rerun at the end: the stub called onAuthStateChange, so listener was a function.
+The suite summary below still counts that omitted parse error as one of the 11 failures. The other ten are behavioural.
+
+FAIL src/account/__tests__/authLink.test.ts
+  ● auth links › reads a code from the query or the fragment and rejects a lookalike path
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "code": "abc",
+    +   "code": "stub",
+        "kind": "oauth",
+      }
+
+       7 | describe('auth links', () => {
+       8 |   it('reads a code from the query or the fragment and rejects a lookalike path', () => {
+    >  9 |     expect(parseAuthUrl(`${REDIRECT}?code=abc`)).toEqual({ kind: 'oauth', code: 'abc' });
+         |                                                  ^
+      10 |     expect(parseAuthUrl(`${REDIRECT}#code=frag&type=recovery`)).toEqual({ kind: 'recovery', code: 'frag' });
+      11 |     expect(parseAuthUrl(`${REDIRECT}?error=access_denied&error_description=secret`)).toEqual({ kind: 'failed' });
+      12 |     expect(parseAuthUrl(`${REDIRECT}EVIL?code=abc&type=recovery`)).toEqual({ kind: 'ignored' });
+
+      at Object.toEqual (src/account/__tests__/authLink.test.ts:9:50)
+
+  ● auth links › uses the web origin on web and exp:// when Expo Go would emit the app scheme
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "https://learn.example/auth/callback"
+    Received: "com.westleysturhan.louisianafrench://auth/callback"
+
+      16 |
+      17 |   it('uses the web origin on web and exp:// when Expo Go would emit the app scheme', () => {
+    > 18 |     expect(resolveAuthRedirect({ platform: 'web', origin: 'https://learn.example/' })).toBe(
+         |                                                                                        ^
+      19 |       'https://learn.example/auth/callback'
+      20 |     );
+      21 |     expect(resolveAuthRedirect({
+
+      at Object.toBe (src/account/__tests__/authLink.test.ts:18:88)
+
+FAIL src/identity/__tests__/connector.test.js
+  ● identity connector › sends a password reset without creating an identity
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "com.westleysturhan.louisianafrench://auth/callback?type=recovery"
+    Received: "com.westleysturhan.louisianafrench://auth/callback"
+
+      187 |     expect(await connector.getIdentity()).toBeNull();
+      188 |     expect(await connector.getAccessToken()).toBeNull();
+    > 189 |     expect(client.calls[0].options.redirectTo).toBe(
+          |                                                ^
+      190 |       'com.westleysturhan.louisianafrench://auth/callback?type=recovery'
+      191 |     );
+      192 |   });
+
+      at Object.toBe (src/identity/__tests__/connector.test.js:189:48)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● identity connector › does not exchange a recovery code on a lookalike redirect
+
+    expect(received).toBeNull()
+
+    Received: "recovery"
+
+      197 |       'com.westleysturhan.louisianafrench://auth/callbackEVIL?code=recover-code&type=recovery'
+      198 |     );
+    > 199 |     expect(result.kind).toBeNull();
+          |                         ^
+      200 |     expect(client.calls.filter((call) => call.method === 'exchange')).toEqual([]);
+      201 |   });
+      202 |
+
+      at Object.toBeNull (src/identity/__tests__/connector.test.js:199:25)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● identity connector › opens a recovery code from the fragment
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "kind": "recovery",
+    +   "kind": null,
+      }
+
+      206 |       'com.westleysturhan.louisianafrench://auth/callback#code=frag-code&type=recovery'
+      207 |     );
+    > 208 |     expect(result).toEqual({ kind: 'recovery' });
+          |                    ^
+      209 |     expect(client.calls[0]).toEqual({ method: 'exchange', code: 'frag-code' });
+      210 |   });
+      211 |
+
+      at Object.toEqual (src/identity/__tests__/connector.test.js:208:20)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › opens a recovery link only after the code exchange succeeds
+
+    expect(received).toBeNull()
+
+    Received: {"type": "recoveryLinkOpened"}
+
+      339 |       })
+      340 |     });
+    > 341 |     expect(await failed.consumeAuthUrl(`${REDIRECT}?code=crafted&type=recovery`)).toBeNull();
+          |                                                                                   ^
+      342 |     expect(calls).toEqual(['crafted']);
+      343 |
+      344 |     const recovered = createAccountConnector({
+
+      at Object.toBeNull (src/account/__tests__/accountConnector.test.ts:341:83)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › does not read a bare code as email confirmation while Google is open
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 7
+    + Received  + 2
+
+      Object {
+    -   "identity": Object {
+    -     "email": "ada@example.com",
+    -     "id": "learner-1",
+    -     "provider": "google",
+    -     "username": null,
+    -   },
+    -   "ok": true,
+    +   "failure": "oauthFailed",
+    +   "ok": false,
+      }
+
+      378 |     });
+      379 |     consume = (url) => connector.consumeAuthUrl(url);
+    > 380 |     expect(await connector.signInWithProvider('google')).toEqual({ ok: true, identity: GOOGLE });
+          |                                                          ^
+      381 |     expect(calls).toEqual(['from-google']);
+      382 |   });
+      383 |
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:380:58)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › sends the reset link back with type=recovery
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "com.westleysturhan.louisianafrench://auth/callback?type=recovery"
+    Received: "com.westleysturhan.louisianafrench://auth/callback"
+
+      393 |     });
+      394 |     expect(await connector.sendReset('ada@example.com')).toEqual({ ok: true, pending: 'passwordReset' });
+    > 395 |     expect(calls[0].redirectTo).toBe(`${REDIRECT}?type=recovery`);
+          |                                 ^
+      396 |   });
+      397 |
+      398 |   it('signs out locally after deleting the account, even when sign-out throws', async () => {
+
+      at Object.toBe (src/account/__tests__/accountConnector.test.ts:395:33)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL src/account/__tests__/runAccountEffects.test.ts
+  ● runAccountEffect › signs out when a timed-out sign-in succeeds after a failed retry
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 1
+
+    - Array [
+    -   "local",
+    - ]
+    + Array []
+
+      124 |     await first;
+      125 |     await new Promise((resolve) => setTimeout(resolve, 0));
+    > 126 |     expect(signOuts).toEqual(['local']);
+          |                      ^
+      127 |   });
+      128 |
+      129 |   it('leaves the session when a newer sign-in has already succeeded', async () => {
+
+      at Object.toEqual (src/account/__tests__/runAccountEffects.test.ts:126:22)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL src/components/__tests__/SignInModal.accent.test.js
+  ● SignInModal accent › does not paint Cajun blue when the caller forgets accentColor
+
+    expect(element).not.toHaveStyle()
+
+    Expected element not to have style:
+      backgroundColor: "#2771CB";
+    Received:
+      backgroundColor: "#2771CB";
+
+      42 |       <SignInModal visible identity={null} connector={{}} onClose={() => {}} />
+      43 |     );
+    > 44 |     expect(screen.getByTestId('sign-in-submit')).not.toHaveStyle({ backgroundColor: accentFor('cajun') });
+         |                                                      ^
+      45 |   });
+      46 |
+      47 |   it('does not offer Facebook', () => {
+
+      at Object.toHaveStyle (src/components/__tests__/SignInModal.accent.test.js:44:54)
+
+  ● SignInModal accent › does not offer Facebook
+
+    expect(received).toBeNull()
+
+    Received: {"_fiber": {"_debugHookTypes": null, "_debugInfo": null, "_debugNeedsRemount": false, "_debugOwner": [FiberNode], "_debugStack": [Error: react-stack-top-frame], "_debugTask": null, "actualDuration": 0, "actualStartTime": 1795523241629, "alternate": null, "child": [FiberNode], "childLanes": 0, "deletions": null, "dependencies": null, "elementType": "View", "flags": 0, "index": 0, "key": null, "lanes": 0, "memoizedProps": [Object], "memoizedState": null, "mode": 3, "pendingProps": [Object], "ref": null, "refCleanup": null, "return": [FiberNode], "selfBaseDuration": 0, "sibling": null, "stateNode": [Object], "subtreeFlags": 1048577, "tag": 5, "treeBaseDuration": 0, "type": "View", "updateQueue": null}}
+
+      47 |   it('does not offer Facebook', () => {
+      48 |     renderModal(accentFor('cajun'));
+    > 49 |     expect(screen.queryByLabelText('Sign in with Facebook')).toBeNull();
+         |                                                              ^
+      50 |     expect(screen.queryByText(/Facebook/)).toBeNull();
+      51 |   });
+      52 | });
+
+      at Object.toBeNull (src/components/__tests__/SignInModal.accent.test.js:49:62)
+
+Test Suites: 6 failed, 6 total
+Tests:       11 failed, 29 passed, 40 total
+Snapshots:   0 total
+Time:        1.092 s, estimated 5 s
+Ran all test suites matching src/account/__tests__/authLink.test.ts|src/account/__tests__/useAccountMachine.test.ts|src/account/__tests__/runAccountEffects.test.ts|src/account/__tests__/accountConnector.test.ts|src/identity/__tests__/connector.test.js|src/components/__tests__/SignInModal.accent.test.js.
+FAIL src/account/__tests__/useAccountMachine.test.tsx
+  ● useAccountMachine › does not open the account from an auth state change, including after unmount
+
+    expect(received).toBeNull()
+
+    Received: [Function anonymous]
+
+      25 |     }
+      26 |     const rendered = render(<Screen />);
+    > 27 |     expect(listener).toBeNull();
+         |                      ^
+      28 |     rendered.unmount();
+      29 |     if (listener) listener();
+      30 |   });
+
+      at Object.toBeNull (src/account/__tests__/useAccountMachine.test.tsx:27:22)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.35 s
+Ran all test suites matching src/account/__tests__/useAccountMachine.test.tsx.
+
+
+--- review on 52b9508: StrictMode dispatch, unmount, injected redirect ---
+These three tests were run before the fix. The hook file was the version that runs the effect inside setView and never sets alive back to true.
+
+FAIL src/account/__tests__/useAccountMachine.test.tsx
+  ● useAccountMachine › signs in once under StrictMode and shows the failure
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 6
+    + Received  + 1
+
+    - Array [
+    -   Array [
+    -     "ada@example.com",
+    -     "secret",
+    -   ],
+    - ]
+    + Array []
+
+      86 |       signInWith('ada@example.com', 'secret', ready(slot));
+      87 |     });
+    > 88 |     expect(calls).toEqual([['ada@example.com', 'secret']]);
+         |                   ^
+      89 |     expect(slot.machine?.view).toEqual({
+      90 |       kind: 'signIn',
+      91 |       email: 'ada@example.com',
+
+      at Object.toEqual (src/account/__tests__/useAccountMachine.test.tsx:88:19)
+
+  ● useAccountMachine › drops the result when the screen unmounts before sign-in settles
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 8
+
+    - Array []
+    + Array [
+    +   Array [
+    +     "Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://react.dev/link/setstate-in-render",
+    +     "Host",
+    +     "Screen",
+    +     "Screen",
+    +   ],
+    + ]
+
+      135 |     });
+      136 |     expect(renders).toBe(rendersAtUnmount);
+    > 137 |     expect(errors).toEqual([]);
+          |                    ^
+      138 |     spy.mockRestore();
+      139 |   });
+      140 | });
+
+      at Object.toEqual (src/account/__tests__/useAccountMachine.test.tsx:137:20)
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › sends the reset to the redirect the caller provides
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "https://x/auth/callback?type=recovery"
+    Received: "com.westleysturhan.louisianafrench://auth/callback?type=recovery"
+
+      394 |     });
+      395 |     expect(await connector.sendReset('ada@example.com')).toEqual({ ok: true, pending: 'passwordReset' });
+    > 396 |     expect(calls[0].redirectTo).toBe('https://x/auth/callback?type=recovery');
+          |                                 ^
+      397 |   });
+      398 |
+      399 |   it('sends the reset link back with type=recovery', async () => {
+
+      at Object.toBe (src/account/__tests__/accountConnector.test.ts:396:33)
+
+Test Suites: 2 failed, 2 total
+Tests:       3 failed, 17 skipped, 20 total
+Snapshots:   0 total
+Time:        0.214 s, estimated 1 s
+Ran all test suites matching src/account/__tests__/useAccountMachine.test.tsx|src/account/__tests__/accountConnector.test.ts with tests matching "signs in once under StrictMode|drops the result when the screen unmounts|sends the reset to the redirect".
