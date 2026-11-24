@@ -149,3 +149,37 @@ Time:        2.907 s
 Ran all test suites matching src/identity/__tests__/connector.test.js|src/account/__tests__/accountConnector.test.ts|src/components/__tests__/SignInModal.recovery.test.js with tests matching "reads the profile username|does not use the email local part|shows Learner when the signed-in profile has no username".
 EXIT:1
 HEAD:38fbd59699ed36e6d3647be1658e5dddc9b068c8
+
+
+---
+
+Profile read timeout, run on 1f22a2ac1dff6efef663c6233992935db7247a5d before the 5s race existed.
+(a) Failed for a behavioural reason: after 5s of fake time, getIdentity had not settled (settled was false). The profile read was a promise that never resolves.
+(b) Passed on that same commit, before the timeout: PGRST205, 42P01, and a thrown read each left username null and sign-in ok. The summary below is 1 failed, 3 passed.
+
+FAIL src/identity/__tests__/connector.test.js
+  ● identity connector › does not wait forever when the profile read never settles
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      426 |       });
+      427 |       await jest.advanceTimersByTimeAsync(5000);
+    > 428 |       expect(settled).toBe(true);
+          |                       ^
+      429 |       await expect(pending).resolves.toEqual({
+      430 |         id: 'learner-1',
+      431 |         email: 'ada@example.com',
+
+      at Object.toBe (src/identity/__tests__/connector.test.js:428:23)
+      at asyncGeneratorStep (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 14 skipped, 3 passed, 18 total
+Snapshots:   0 total
+Time:        0.479 s, estimated 1 s
+Ran all test suites matching src/identity/__tests__/connector.test.js with tests matching "does not wait forever|keeps sign-in when the profile read".
+EXIT:1

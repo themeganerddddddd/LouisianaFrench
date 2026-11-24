@@ -386,6 +386,93 @@ describe('identity connector', () => {
     expect(JSON.stringify(calls)).not.toContain('display_name');
   });
 
+  function profileClient(maybeSingle, session = null) {
+    return {
+      auth: {
+        async getSession() {
+          return { data: { session } };
+        },
+        async signInWithPassword() {
+          return {
+            data: { session: sessionFor() },
+            error: null
+          };
+        }
+      },
+      from() {
+        return {
+          select() {
+            return {
+              eq() {
+                return { maybeSingle };
+              }
+            };
+          }
+        };
+      }
+    };
+  }
+
+  it('does not wait forever when the profile read never settles', async () => {
+    jest.useFakeTimers();
+    try {
+      const connector = createIdentityConnector({
+        client: profileClient(() => new Promise(() => {}), sessionFor())
+      });
+      let settled = false;
+      const pending = connector.getIdentity().then((identity) => {
+        settled = true;
+        return identity;
+      });
+      await jest.advanceTimersByTimeAsync(5000);
+      expect(settled).toBe(true);
+      await expect(pending).resolves.toEqual({
+        id: 'learner-1',
+        email: 'ada@example.com',
+        username: null
+      });
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('clears the profile timer when the read settles', async () => {
+    jest.useFakeTimers();
+    try {
+      const connector = createIdentityConnector({
+        client: profileClient(
+          async () => ({ data: { username: 'Céline' }, error: null }),
+          sessionFor()
+        )
+      });
+      await expect(connector.getIdentity()).resolves.toEqual({
+        id: 'learner-1',
+        email: 'ada@example.com',
+        username: 'Céline'
+      });
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it.each([
+    ['PGRST205', async () => ({ data: null, error: { code: 'PGRST205', message: 'schema cache' } })],
+    ['42P01', async () => ({ data: null, error: { code: '42P01', message: 'undefined_table' } })],
+    ['a thrown read', async () => {
+      throw new Error('socket hang up');
+    }]
+  ])('keeps sign-in when the profile read is %s', async (_label, maybeSingle) => {
+    const connector = createIdentityConnector({ client: profileClient(maybeSingle) });
+    await expect(
+      connector.signInWithPassword({ email: 'ada@example.com', password: 'secret' })
+    ).resolves.toEqual({
+      identity: { id: 'learner-1', email: 'ada@example.com', username: null },
+      message: null
+    });
+  });
+
   it('does not use the email local part when the profile has no username', async () => {
     const client = {
       auth: {
