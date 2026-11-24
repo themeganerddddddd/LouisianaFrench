@@ -22,6 +22,8 @@ import {
 const MIN_ATTEMPT_MS = 600;
 export const SPEECH_WORD_LIMIT = 5;
 const INITIAL_STATUS = 'Play the speaker, then record yourself saying the same phrase.';
+const SAVE_FAILED_STATUS = 'Could not save this attempt. Try again.';
+const SAVED_NEXT_FAILED_STATUS = 'This attempt was saved, but the next step could not start. Try again.';
 
 export default function SpeechPracticeScreen({
   language,
@@ -52,6 +54,8 @@ export default function SpeechPracticeScreen({
   const [hasReviewedAttempt, setHasReviewedAttempt] = useState(false);
   const [status, setStatus] = useState(INITIAL_STATUS);
   const [busy, setBusy] = useState(false);
+  // Last-word accept saves XP, then the session. A retry must not award the XP again.
+  const attemptSave = useRef({ xp: false, completion: false });
 
   useEffect(() => {
     setLearnerUri(null);
@@ -177,12 +181,19 @@ export default function SpeechPracticeScreen({
     setBusy(true);
     try {
       if (scored) {
-        await recordStudyAndXp(language, 1);
+        if (!attemptSave.current.xp) {
+          await recordStudyAndXp(language, 1);
+          attemptSave.current.xp = true;
+        }
         if (acceptedCount + 1 >= wordLimit) {
-          await recordPracticeCompletion(language, 'speech');
-          onComplete?.();
+          if (!attemptSave.current.completion) {
+            await recordPracticeCompletion(language, 'speech');
+            attemptSave.current.completion = true;
+          }
+          await onComplete?.();
           return;
         }
+        attemptSave.current.xp = false;
         setAcceptedCount(acceptedCount + 1);
       } else {
         await recordPracticeCompletion(language, 'speech');
@@ -193,7 +204,7 @@ export default function SpeechPracticeScreen({
       setStatus(INITIAL_STATUS);
       setWordIndex((index) => (index + 1) % practiceWords.length);
     } catch {
-      setStatus('Could not save this attempt. Try again.');
+      setStatus(attemptSave.current.completion ? SAVED_NEXT_FAILED_STATUS : SAVE_FAILED_STATUS);
     } finally {
       setBusy(false);
     }
