@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
-import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
@@ -13,8 +12,7 @@ const WRONG_PASSWORD = 'That email or password is not right.';
 const AUTH_REDIRECT = resolveAuthRedirect({
   platform: Platform.OS,
   origin: typeof globalThis.location === 'object' ? globalThis.location.origin : undefined,
-  createURL: Constants.appOwnership === 'expo' ? (path) => Linking.createURL(path) : undefined,
-  host: Constants.expoConfig?.hostUri || null
+  host: Constants.appOwnership === 'expo' ? Constants.expoConfig?.hostUri || null : null
 });
 
 function displayNameFrom(user, fallbackEmail) {
