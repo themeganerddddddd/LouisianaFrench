@@ -1,51 +1,113 @@
 # Testing
 
-Run these from the repo root. The list matches `package.json`, `.github/workflows/ci.yml`, and `.github/workflows/pr-gates.yml` on this branch.
+Run these commands from the repository root. They are the scripts in `package.json`, the Python tests under `scripts/`, and the commands the workflows run.
 
-## Commands
+`package.json` has no `typecheck` script. `typescript` is a devDependency and `tsconfig.json` is present. No script and no workflow runs `tsc`.
 
-| Command | What it runs |
-| --- | --- |
-| `npm test` | Jest once (`jest --watchAll=false`). This includes the app tests under `src/`, `scripts/release/__tests__/plan.test.js`, and `.agents/scripts/__tests__/`. |
-| `npm run lint` | `eslint .` |
-| `npm run test:changed` | Jest files related to the diff against `origin/main`. When none match, it runs the full `npm test` suite. |
-| `npm run pr-ready` | Lint, then `npm test`, then the agent PR gates (the same checks as `pr-gates.yml`, forced on). |
-| `npm run build` | Expo export of the iOS bundle and the Android bundle (`build:ios`, then `build:android`). |
-| `python -m unittest discover -s scripts -p 'test_*.py'` | `scripts/test_generate_lessons.py`, `scripts/test_incremental_generation.py`, and `scripts/test_normalize_audio.py`. |
+## Jest
 
-`scripts/release/__tests__/` is present and is JavaScript. `npm test` runs `plan.test.js`. The Python pattern is `test_*.py`, so discovery stays on the three Python files.
+```bash
+npm test
+```
 
-`npm run validate:fixture-sep` is a local advisory scan. It is not a CI job. `npm run check:ui-evidence` and `npm run capture:ui-evidence` feed the PR evidence gate; they are not the test suite.
+`npm test` runs `jest --watchAll=false`. The suite includes the tests under `src/`, `scripts/release/__tests__/plan.test.js`, and `.agents/scripts/__tests__/validateFixtureSep.test.js`.
 
-## Timezone
+`jest.globalSetup.js` sets `TZ` to `America/Chicago` before workers start. `src/utils/__tests__/streakDst.test.js` fails when that setup did not run.
 
-`jest.globalSetup.js` sets `TZ` to `America/Chicago` before Jest starts workers. Each worker inherits that value, so `Date` in the suite uses US Central time. That still holds for `TZ=UTC npm test` and for CI, where the runner clock is UTC: setup overwrites `TZ`, then the workers start. Jest sandboxes `process.env`, so a test file cannot change the timezone after its worker has started. `src/utils/__tests__/streakDst.test.js` checks that Chicago is active (the 14 March 2027 US daylight-saving change) and fails when that setup did not run.
+## Lint
+
+```bash
+npm run lint
+```
+
+`npm run lint` runs `eslint .`.
+
+## Changed files
+
+```bash
+npm run test:changed
+```
+
+`npm run test:changed` runs `.agents/scripts/test-changed.mjs`. It diffs `HEAD` against `origin/main` and runs the Jest files tied to that diff. When the diff has no related Jest file, it runs `npm test`.
+
+## Python
+
+The Python tests use `unittest`. This is the command in the `python` job:
+
+```bash
+python -m unittest discover -s scripts -p 'test_*.py'
+```
+
+Discover loads these three files:
+
+- `scripts/test_generate_lessons.py`
+- `scripts/test_incremental_generation.py`
+- `scripts/test_normalize_audio.py`
+
+Each file also calls `unittest.main()` when you run it directly:
+
+```bash
+python scripts/test_generate_lessons.py
+python scripts/test_incremental_generation.py
+python scripts/test_normalize_audio.py
+```
+
+`scripts/release/__tests__/plan.test.js` is a Jest test. `npm test` runs it. The Python pattern is `test_*.py`, so the `python` job leaves that file for Jest.
+
+## Pull request check
+
+```bash
+npm run pr-ready
+```
+
+`npm run pr-ready` runs `npm run lint`, then `npm test`, then `.agents/scripts/pr-gates.mjs --ai`. The gates check UI evidence, the pull request headings (Why, What changed, Blast Radius, Verification), and the production line count.
+
+Two more check scripts are in `package.json`:
+
+```bash
+npm run check:ui-evidence
+npm run validate:fixture-sep
+```
+
+`npm run check:ui-evidence` runs `.agents/scripts/check-pr-ui-evidence.mjs`. The pull request gates call that script. `npm run validate:fixture-sep` is the advisory fixture check named in `AGENTS.md`. A default run exits 0. Pass `--strict` and it exits 2 when it reports a warning.
+
+The capture script is `.agents/scripts/capture-ui-evidence.mjs` (`capture:ui-evidence` in `package.json`). It takes an issue number and writes under `docs/evidence/<issue>/`. It writes screenshots for a pull request.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on a push to `main` and on a pull request to `main`. Each job uses a fresh `ubuntu-latest` runner.
+`.github/workflows/ci.yml` runs on a push to `main` and on a pull request to `main` (lines 3–7).
 
-| Job | Steps |
-| --- | --- |
-| `lint` | Node 22, `npm ci`, `npm run lint` |
-| `test` | Node 22, `npm ci`, `npm test` |
-| `python` | Python 3.12, `python -m unittest discover -s scripts -p 'test_*.py'` |
-| `build` | Node 22, `npm ci`, `npm run build` (export the iOS and Android bundles) |
+| Job | Lines | Command |
+| --- | --- | --- |
+| `lint` | 10–19 | `npm ci`, then `npm run lint` |
+| `test` | 21–30 | `npm ci`, then `npm test` |
+| `python` | 32–40 | `python -m unittest discover -s scripts -p 'test_*.py'` |
+| `build` | 42–52 | `npm ci`, then `npm run build` |
 
-`.github/workflows/pr-gates.yml` runs on a pull request to `main` when the PR is opened, updated, reopened, edited, labeled, or unlabeled. The job checks out the full history and runs `.agents/scripts/pr-gates.mjs` with the PR body, branch, and labels.
+The lint, test, and build jobs use Node 22. The python job uses Python 3.12. No step sets `continue-on-error`. A non-zero Python run fails the `python` job, which fails the workflow on pull requests to `main`.
 
-A human pull request passes that job with no extra rules. An AI-generated pull request is one with the `ai-generated` label, or an agent marker (a Cursor or Claude footer, a Cursor or Claude `Co-authored-by` trailer, or a branch prefixed `agent/`, `cursor/`, `claude/`, `codex/`, or `opencode/`). For those, the job checks three things: UI evidence when the diff touches the UI, the template sections **Why**, **What changed**, **Blast Radius**, and **Verification**, and the production line count (warning above 100 added lines, failure above 250 unless the PR has `large-pr-approved` or the local run sets `ALLOW_LARGE_PR=1`). When it finds an agent marker and the label is missing, the workflow adds `ai-generated`.
+`npm run build` is `npm run build:ios && npm run build:android` in `package.json`. The build job exports the iOS bundle and the Android bundle.
+
+```bash
+npm run build
+```
+
+`.github/workflows/pr-gates.yml` runs on a pull request to `main` for `opened`, `synchronize`, `reopened`, `edited`, `labeled`, and `unlabeled` (lines 5–8). The `pr-gates` job runs `node .agents/scripts/pr-gates.mjs` with the pull request body, branch, and labels. Jest and the Python tests stay in `ci.yml`. The agent rules in that job apply when the pull request is AI-generated.
 
 ## Manual checks
 
-These sit outside CI.
+These checks sit outside `npm test` and outside the two workflows.
 
-- Android emulator: `.agents/skills/verify-app` drives the app through `.agents/skills/verify-app/scripts/lfv.mjs`.
-- Device smoke recipes: `scripts/gate-b/`.
-- Screen grabs and short videos for a pull request: `docs/evidence/<issue>/`.
+- Android emulator: `.agents/skills/verify-app`. The driver is `.agents/skills/verify-app/scripts/lfv.mjs`. The iOS notes in that skill are marked not proven.
+- Device smoke scripts: `scripts/gate-b/`. Read `scripts/gate-b/README.md`.
+- UI evidence for a pull request: `docs/evidence/<issue>/`.
 
-## Not automated
+## Not automated yet
 
-iOS simulator runs and iOS device runs are absent from CI. None are planned right now.
+iOS device runs, iOS simulator runs, and Maestro are not automated. [ADR 0003](adr/0003-behavior-first-test-surfaces.md) says installed iOS and Android journeys will be covered with Maestro. This repository has no Maestro flow, and CI does not launch a simulator or a device.
 
-Maestro is absent too. [ADR 0003](adr/0003-behavior-first-test-surfaces.md) says installed iOS and Android journeys will be covered with Maestro. There is no Maestro suite in the repo, and no CI job runs it.
+## iOS
+
+<!-- BIO-60: add the iOS section under this heading. Keep the heading. -->
+
+Placeholder for BIO-60. iOS device runs, iOS simulator runs, and Maestro are not automated yet. BIO-60 replaces this placeholder.
