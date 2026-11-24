@@ -1,5 +1,13 @@
 -- Username lives on the profile. Clients cannot write this table.
 
+do $$
+begin
+  if current_setting('server_encoding') is distinct from 'UTF8' then
+    raise exception 'profiles username migration requires UTF8, not %', current_setting('server_encoding');
+  end if;
+end
+$$;
+
 create function public.username_key(value text)
 returns text
 language sql
@@ -30,7 +38,7 @@ as $$
   from (select normalize(value, NFC) as n) as normalized
 $$;
 
--- One server list, compared on username_key: reserved names, then blocked words.
+-- One server list, exact match on username_key. A word added later does not recheck rows already stored.
 create function public.username_is_blocked(key text)
 returns boolean
 language sql
@@ -115,9 +123,7 @@ create trigger profiles_set_username_key
 
 alter table public.profiles enable row level security;
 
-revoke all on table public.profiles from public;
-revoke insert, update, delete on table public.profiles from anon, authenticated;
-revoke select on table public.profiles from anon, authenticated;
+revoke all on table public.profiles from public, anon, authenticated;
 grant select (id, username) on table public.profiles to authenticated;
 
 create policy profiles_select_own
@@ -130,7 +136,7 @@ create function public.profiles_for_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   insert into public.profiles (id) values (new.id)
@@ -146,11 +152,16 @@ create trigger profiles_for_new_user
 revoke all on function public.profiles_for_new_user() from public, anon, authenticated;
 revoke all on function public.profiles_set_username_key() from public, anon, authenticated;
 
-create function public.migrate_profile_usernames()
-returns void
-language sql
-set search_path = public, auth
-as $$
+-- One shot. This is not a function, so the SQL editor cannot run it again and clear names.
+do $$
+begin
+  insert into public.profiles (id)
+  select u.id
+  from auth.users as u
+  where not exists (
+    select 1 from public.profiles as p where p.id = u.id
+  );
+
   with raw as (
     select
       u.id,
@@ -171,6 +182,7 @@ as $$
   ranked as (
     select
       m.id,
+      m.created_at,
       m.username,
       m.ok,
       row_number() over (
@@ -182,19 +194,9 @@ as $$
   update public.profiles as p
   set
     username = case when ranked.ok and ranked.n = 1 then ranked.username else null end,
-    username_set_at = case when ranked.ok and ranked.n = 1 then now() else null end,
+    username_set_at = case when ranked.ok and ranked.n = 1 then ranked.created_at else null end,
     username_changed_at = null
   from ranked
-  where p.id = ranked.id
+  where p.id = ranked.id;
+end
 $$;
-
-insert into public.profiles (id)
-select u.id
-from auth.users as u
-where not exists (
-  select 1 from public.profiles as p where p.id = u.id
-);
-
-select public.migrate_profile_usernames();
-
-revoke all on function public.migrate_profile_usernames() from public, anon, authenticated, service_role;

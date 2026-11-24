@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Run the username migrations and pgTAP tests against a local Postgres container.
-# Prefers the Supabase Postgres image pinned to config.toml major_version.
-# Falls back to the official image and installs pgTAP if that image cannot start.
+# Run the username migration and pgTAP tests against a local Postgres container.
+# Image: public.ecr.aws/supabase/postgres:17.12.0.002
+# The database port is not published. Every command goes through podman exec.
 # Does not use supabase start, login, link, or a hosted project.
 set -euo pipefail
 
@@ -17,16 +17,7 @@ elif [[ $# -gt 0 ]]; then
 fi
 
 name=lf-bio80-postgres
-port=55432
-major=$(awk -F= '/^major_version[[:space:]]*=/ { gsub(/[[:space:]"]/, "", $2); print $2; exit }' supabase/config.toml)
-if [[ "$major" != "17" ]]; then
-  echo "supabase/config.toml major_version is ${major:-missing}; this harness expects 17." >&2
-  exit 1
-fi
-
-supabase_image=public.ecr.aws/supabase/postgres:17.12.0.002
-official_image=docker.io/library/postgres:17
-used_image=$supabase_image
+image=public.ecr.aws/supabase/postgres:17.12.0.002
 
 cleanup() {
   podman rm -f "$name" >/dev/null 2>&1 || true
@@ -55,36 +46,21 @@ psql_file() {
 }
 
 cleanup
-echo "Starting ${supabase_image} as ${name} on port ${port}."
+echo "Starting ${image} as ${name}. The database port is not published."
 podman run -d --name "$name" \
   -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_HOST=/var/run/postgresql \
   -e POSTGRES_DB=postgres \
-  -p "${port}:5432" \
-  "$supabase_image" >/dev/null
+  "$image" >/dev/null
 
 if ! wait_ready; then
-  echo "Supabase Postgres did not stay up. Falling back to ${official_image} and installing pgTAP."
+  echo "Postgres did not become ready." >&2
   podman logs "$name" 2>&1 | tail -n 30 || true
-  podman rm -f "$name" >/dev/null 2>&1 || true
-  used_image=$official_image
-  podman run -d --name "$name" \
-    -e POSTGRES_PASSWORD=postgres \
-    -e POSTGRES_DB=postgres \
-    -p "${port}:5432" \
-    "$official_image" >/dev/null
-  if ! wait_ready; then
-    echo "Official Postgres did not become ready." >&2
-    podman logs "$name" 2>&1 | tail -n 30 || true
-    exit 1
-  fi
-  podman exec -u root "$name" apt-get update
-  podman exec -u root "$name" apt-get install -y --no-install-recommends postgresql-17-pgtap
+  exit 1
 fi
 
-echo "Image: ${used_image}"
+echo "Image: ${image}"
 echo "Container: ${name}"
-echo "Host port: ${port}"
 
 admin_user=postgres
 if podman exec "$name" psql -U postgres -d postgres -tAc "select 1 from pg_roles where rolname = 'supabase_admin'" | grep -q 1; then
@@ -93,7 +69,10 @@ fi
 echo "Admin role: ${admin_user}"
 
 echo "=== auth stub ==="
-psql_file "$admin_user" supabase/tests/stub_auth.sql
+psql_file "$admin_user" tests/fixtures/db/stub_auth.sql
+
+echo "=== auth users before migrations ==="
+psql_file postgres tests/fixtures/db/users_before_migration.sql
 
 if [[ "$skip_migrations" -eq 0 ]]; then
   echo "=== migrations from zero ==="
@@ -121,6 +100,9 @@ podman exec -i "$name" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f - < su
 status=${PIPESTATUS[0]}
 set -e
 if grep -E '^(not ok|ERROR:)' "$tmp" >/dev/null; then
+  status=1
+fi
+if grep -F 'Looks like you planned' "$tmp" >/dev/null; then
   status=1
 fi
 rm -f "$tmp"
