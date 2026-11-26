@@ -169,6 +169,24 @@ Deno.test('the user id is the verified user, never the body', async () => {
   assert.deepEqual(harnessed.calls.deleted, ['user-from-jwt'])
 })
 
+Deno.test('an auth delete that finds the user already gone is ok', async () => {
+  const harnessed = harness({ kind: 'user', user: emailUser }, { deleteAbsent: true })
+  const response = await handleDeleteAccount(post('good-token'), harnessed.deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { ok: true })
+})
+
+Deno.test('a row delete failure is unknown and does not delete the auth user', async () => {
+  const harnessed = harness({ kind: 'user', user: emailUser })
+  harnessed.deps.db.deleteCallerRows = async () => {
+    throw new Error('database')
+  }
+  const response = await handleDeleteAccount(post('good-token'), harnessed.deps)
+  assert.equal(response.status, 500)
+  assert.deepEqual(await response.json(), { ok: false, failure: 'unknown' })
+  assert.deepEqual(harnessed.calls.deleted, [])
+})
+
 Deno.test('only POST is accepted', async () => {
   const harnessed = harness({ kind: 'user', user: emailUser })
   const response = await handleDeleteAccount(
@@ -191,7 +209,7 @@ function post(token?: string, body?: unknown): Request {
   })
 }
 
-function harness(verified: GetUserResult, options: { revoke?: boolean; deleteOk?: boolean } = {}) {
+function harness(verified: GetUserResult, options: { revoke?: boolean; deleteOk?: boolean; deleteAbsent?: boolean } = {}) {
   const calls = {
     getUser: [] as string[],
     rows: [] as string[],
@@ -210,6 +228,7 @@ function harness(verified: GetUserResult, options: { revoke?: boolean; deleteOk?
       async deleteUser(id) {
         calls.deleted.push(id)
         calls.order.push('delete')
+        if (options.deleteAbsent) return { ok: false, absent: true }
         if (options.deleteOk === false) return { ok: false }
         return { ok: true }
       }

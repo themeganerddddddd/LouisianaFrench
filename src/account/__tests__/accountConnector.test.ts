@@ -477,22 +477,107 @@ describe('account connector', () => {
     });
   }, 1000);
 
-  it('signs out locally after deleting the account, even when sign-out throws', async () => {
+  it('signs out locally after delete-account accepts the access token', async () => {
     const scopes: unknown[] = [];
+    const calls: { name: string; options: unknown }[] = [];
     const connector = openConnector({
       client: client({
         signOut: async (input: { scope: string }) => {
           scopes.push(input);
           throw new Error('storage');
         }
+      }, {
+        functions: {
+          async invoke(name, options) {
+            calls.push({ name, options });
+            return { data: { ok: true }, error: null };
+          }
+        }
       })
     });
     expect(await connector.deleteAccount()).toEqual({ ok: true });
     expect(scopes).toEqual([{ scope: 'local' }]);
+    expect(calls).toEqual([{
+      name: 'delete-account',
+      options: { method: 'POST', headers: { Authorization: 'Bearer access-token' } }
+    }]);
+  });
+
+  it('maps delete-account failures and does not sign out', async () => {
+    const scopes: unknown[] = [];
+    const auth = {
+      signOut: async () => {
+        scopes.push('out');
+        return { error: null };
+      }
+    };
+    const notSignedIn = openConnector({
+      client: client({
+        ...auth,
+        async getSession() {
+          return { data: { session: null } };
+        }
+      })
+    });
+    expect(await notSignedIn.deleteAccount()).toEqual({ ok: false, failure: 'notSignedIn' });
+
+    const unknown = openConnector({
+      client: client(auth, {
+        functions: {
+          async invoke() {
+            return {
+              data: null,
+              error: {
+                name: 'FunctionsHttpError',
+                message: 'Edge Function returned a non-2xx status code',
+                context: { status: 500, json: async () => ({ ok: false, failure: 'unknown' }) }
+              }
+            };
+          }
+        }
+      })
+    });
+    expect(await unknown.deleteAccount()).toEqual({ ok: false, failure: 'unknown' });
+
+    const gateway = openConnector({
+      client: client(auth, {
+        functions: {
+          async invoke() {
+            return {
+              data: null,
+              error: {
+                name: 'FunctionsHttpError',
+                message: 'Edge Function returned a non-2xx status code',
+                context: { status: 401, json: async () => ({ msg: 'Invalid JWT' }) }
+              }
+            };
+          }
+        }
+      })
+    });
+    expect(await gateway.deleteAccount()).toEqual({ ok: false, failure: 'notSignedIn' });
+
+    const offline = openConnector({
+      client: client(auth, {
+        functions: {
+          async invoke() {
+            return {
+              data: null,
+              error: { name: 'FunctionsFetchError', message: 'Failed to send a request to the Edge Function' }
+            };
+          }
+        }
+      })
+    });
+    expect(await offline.deleteAccount()).toEqual({ ok: false, failure: 'network' });
+    expect(scopes).toEqual([]);
   });
 });
 
-function client(auth: Record<string, unknown>): AccountClient {
+function client(
+  auth: Record<string, unknown>,
+  extra: { functions?: AccountClient['functions'] } = {}
+): AccountClient {
   return {
     auth: {
       async signInWithPassword() {
@@ -513,13 +598,18 @@ function client(auth: Record<string, unknown>): AccountClient {
       async exchangeCodeForSession() {
         return { data: { session: null }, error: { message: 'missing' } };
       },
+      async getSession() {
+        return { data: { session: { access_token: 'access-token' } } };
+      },
       async signOut() {
         return { error: null };
       },
       ...auth
     },
-    async deleteAccount() {
-      return { error: null };
+    functions: extra.functions ?? {
+      async invoke() {
+        return { data: { ok: true }, error: null };
+      }
     }
-  } as AccountClient;
+  };
 }

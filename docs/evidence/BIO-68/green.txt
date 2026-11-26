@@ -1,0 +1,18 @@
+[0m[32mCheck[0m supabase/functions/delete-account/handler_test.ts
+[0m[38;5;245mrunning 12 tests from ./supabase/functions/delete-account/handler_test.ts[0m
+a missing or invalid token is 401 notSignedIn and deletes nothing ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+an email user is deleted from the verified id ... [0m[32mok[0m [0m[38;5;245m(220µs)[0m
+a Google user revokes the provider token and then deletes ... [0m[32mok[0m [0m[38;5;245m(131µs)[0m
+a Google user with no provider token still deletes and does not revoke ... [0m[32mok[0m [0m[38;5;245m(102µs)[0m
+a revoke failure still deletes and logs revoked false with no personal data ... [0m[32mok[0m [0m[38;5;245m(164µs)[0m
+a revoke throw still deletes and logs revoked false ... [0m[32mok[0m [0m[38;5;245m(208µs)[0m
+an admin delete failure is unknown and does not claim success ... [0m[32mok[0m [0m[38;5;245m(117µs)[0m
+a second call after the user is gone is ok and does not delete again ... [0m[32mok[0m [0m[38;5;245m(198µs)[0m
+the user id is the verified user, never the body ... [0m[32mok[0m [0m[38;5;245m(80µs)[0m
+an auth delete that finds the user already gone is ok ... [0m[32mok[0m [0m[38;5;245m(65µs)[0m
+a row delete failure is unknown and does not delete the auth user ... [0m[32mok[0m [0m[38;5;245m(92µs)[0m
+only POST is accepted ... [0m[32mok[0m [0m[38;5;245m(101µs)[0m
+
+[0m[32mok[0m | 12 passed | 0 failed [0m[38;5;245m(11ms)[0m
+
+exit:0
