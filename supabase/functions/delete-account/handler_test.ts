@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict'
 import { handleDeleteAccount, type DeleteAccountDeps, type GetUserResult, type VerifiedUser } from './handler.ts'
 
-const emailUser: VerifiedUser = {
-  id: 'user-from-jwt',
-  identities: [{ provider: 'email', providerToken: null }]
-}
+const emailUser: VerifiedUser = { id: 'user-from-jwt' }
 
 Deno.test('a missing or invalid token is 401 notSignedIn and deletes nothing', async () => {
   const missing = harness({ kind: 'user', user: emailUser })
@@ -34,87 +31,9 @@ Deno.test('an email user is deleted from the verified id', async () => {
   const response = await handleDeleteAccount(post('good-token'), harnessed.deps)
   assert.equal(response.status, 200)
   assert.deepEqual(await response.json(), { ok: true })
-  assert.deepEqual(harnessed.calls.revoked, [])
   assert.deepEqual(harnessed.calls.rows, ['user-from-jwt'])
   assert.deepEqual(harnessed.calls.deleted, ['user-from-jwt'])
   assert.ok(harnessed.calls.order.indexOf('rows') < harnessed.calls.order.indexOf('delete'))
-})
-
-Deno.test('a Google user revokes the provider token and then deletes', async () => {
-  const harnessed = harness({
-    kind: 'user',
-    user: {
-      id: 'user-from-jwt',
-      identities: [{ provider: 'google', providerToken: 'ya29.provider-token' }]
-    }
-  })
-  const response = await handleDeleteAccount(post('good-token'), harnessed.deps)
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ok: true })
-  assert.deepEqual(harnessed.calls.revoked, ['ya29.provider-token'])
-  assert.deepEqual(harnessed.calls.logs, [])
-  assert.deepEqual(harnessed.calls.deleted, ['user-from-jwt'])
-  assert.ok(harnessed.calls.order.indexOf('revoke') < harnessed.calls.order.indexOf('delete'))
-})
-
-Deno.test('a Google user with no provider token still deletes and does not revoke', async () => {
-  const harnessed = harness({
-    kind: 'user',
-    user: {
-      id: 'user-from-jwt',
-      identities: [{ provider: 'google', providerToken: null }]
-    }
-  })
-  const response = await handleDeleteAccount(post('good-token'), harnessed.deps)
-  assert.equal(response.status, 200)
-  assert.deepEqual(harnessed.calls.revoked, [])
-  assert.deepEqual(harnessed.calls.deleted, ['user-from-jwt'])
-  assert.deepEqual(await response.json(), { ok: true })
-})
-
-Deno.test('a revoke failure still deletes and logs revoked false with no personal data', async () => {
-  const harnessed = harness(
-    {
-      kind: 'user',
-      user: {
-        id: 'user-from-jwt',
-        identities: [{ provider: 'google', providerToken: 'ya29.provider-token' }]
-      }
-    },
-    { revoke: false }
-  )
-  const response = await handleDeleteAccount(
-    post('good-token', { email: 'ada@example.com', userId: 'from-body' }),
-    harnessed.deps
-  )
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ok: true })
-  assert.deepEqual(harnessed.calls.deleted, ['user-from-jwt'])
-  assert.deepEqual(harnessed.calls.logs, [{ revoked: false }])
-  const logged = JSON.stringify(harnessed.calls.logs)
-  assert.equal(logged.includes('ada@example.com'), false)
-  assert.equal(logged.includes('ya29.provider-token'), false)
-  assert.equal(logged.includes('user-from-jwt'), false)
-  assert.equal(logged.includes('from-body'), false)
-})
-
-Deno.test('a revoke throw still deletes and logs revoked false', async () => {
-  const harnessed = harness({
-    kind: 'user',
-    user: {
-      id: 'user-from-jwt',
-      identities: [{ provider: 'google', providerToken: 'ya29.provider-token' }]
-    }
-  })
-  harnessed.deps.revokeGoogle = async () => {
-    throw new Error('google unavailable')
-  }
-  const response = await handleDeleteAccount(post('good-token'), harnessed.deps)
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ok: true })
-  assert.deepEqual(harnessed.calls.deleted, ['user-from-jwt'])
-  assert.deepEqual(harnessed.calls.logs, [{ revoked: false }])
-  assert.equal(JSON.stringify(harnessed.calls.logs).includes('google unavailable'), false)
 })
 
 Deno.test('an admin delete failure is unknown and does not claim success', async () => {
@@ -136,20 +55,13 @@ Deno.test('a second call after the user is gone is ok and does not delete again'
         if (gone) return { kind: 'absent' }
         return { kind: 'user', user: emailUser }
       },
-      async lookupUser() {
-        return 'present'
-      },
       async deleteUser(id) {
         calls.deleted.push(id)
         gone = true
         return { ok: true }
       }
     },
-    db: { async deleteCallerRows() {} },
-    async revokeGoogle() {
-      return true
-    },
-    log() {}
+    db: { async deleteCallerRows() {} }
   }
   const first = await handleDeleteAccount(post('good-token'), deps)
   const second = await handleDeleteAccount(post('good-token'), deps)
@@ -212,13 +124,11 @@ function post(token?: string, body?: unknown): Request {
   })
 }
 
-function harness(verified: GetUserResult, options: { revoke?: boolean; deleteOk?: boolean; deleteAbsent?: boolean } = {}) {
+function harness(verified: GetUserResult, options: { deleteOk?: boolean; deleteAbsent?: boolean } = {}) {
   const calls = {
     getUser: [] as string[],
     rows: [] as string[],
     deleted: [] as string[],
-    revoked: [] as string[],
-    logs: [] as unknown[],
     order: [] as string[]
   }
   const deps: DeleteAccountDeps = {
@@ -227,9 +137,6 @@ function harness(verified: GetUserResult, options: { revoke?: boolean; deleteOk?
         calls.getUser.push(token)
         calls.order.push('getUser')
         return verified
-      },
-      async lookupUser() {
-        return 'present'
       },
       async deleteUser(id) {
         calls.deleted.push(id)
@@ -244,14 +151,6 @@ function harness(verified: GetUserResult, options: { revoke?: boolean; deleteOk?
         calls.rows.push(userId)
         calls.order.push('rows')
       }
-    },
-    async revokeGoogle(providerToken) {
-      calls.revoked.push(providerToken)
-      calls.order.push('revoke')
-      return options.revoke !== false
-    },
-    log(entry) {
-      calls.logs.push(entry)
     }
   }
   return { deps, calls }

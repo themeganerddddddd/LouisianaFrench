@@ -1,9 +1,4 @@
-import {
-  type DeleteAccountDeps,
-  type GetUserResult,
-  type LookupResult,
-  type VerifiedIdentity
-} from './handler.ts'
+import { type DeleteAccountDeps, type GetUserResult } from './handler.ts'
 
 export function accountDeps(): DeleteAccountDeps {
   const url = required('SUPABASE_URL')
@@ -11,19 +6,12 @@ export function accountDeps(): DeleteAccountDeps {
   return {
     authAdmin: {
       getUser: (token) => loadUser(url, serviceRoleKey, token),
-      lookupUser: (id) => lookupAccount(url, serviceRoleKey, id),
       deleteUser: (id) => removeUser(url, serviceRoleKey, id)
     },
     db: {
       async deleteCallerRows() {
         // public.profiles and auth.identities cascade from auth.users.
       }
-    },
-    async revokeGoogle() {
-      return false
-    },
-    log(entry) {
-      console.log(JSON.stringify(entry))
     }
   }
 }
@@ -47,36 +35,9 @@ export async function loadUser(
     await drain(response)
     return { kind: classifyGetUserStatus(response.status) }
   }
-  const body = await response.json() as { id?: unknown; identities?: unknown }
+  const body = await response.json() as { id?: unknown }
   if (typeof body.id !== 'string' || body.id.length === 0) return { kind: 'invalid' }
-  return { kind: 'user', user: { id: body.id, identities: identitiesOf(body.identities) } }
-}
-
-function identitiesOf(value: unknown): VerifiedIdentity[] {
-  if (!Array.isArray(value)) return []
-  const identities: VerifiedIdentity[] = []
-  for (const item of value) {
-    if (!item || typeof item !== 'object') continue
-    const provider = (item as { provider?: unknown }).provider
-    if (typeof provider !== 'string' || provider.length === 0) continue
-    identities.push({ provider, providerToken: null })
-  }
-  return identities
-}
-
-export async function lookupAccount(
-  url: string,
-  serviceRoleKey: string,
-  id: string,
-  fetchImpl: typeof fetch = fetch
-): Promise<LookupResult> {
-  const response = await fetchImpl(`${url}/auth/v1/admin/users/${encodeURIComponent(id)}`, {
-    headers: { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey }
-  })
-  await drain(response)
-  if (response.status === 404) return 'absent'
-  if (response.ok) return 'present'
-  return 'unavailable'
+  return { kind: 'user', user: { id: body.id } }
 }
 
 async function removeUser(url: string, serviceRoleKey: string, id: string) {

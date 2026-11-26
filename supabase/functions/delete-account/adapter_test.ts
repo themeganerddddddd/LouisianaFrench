@@ -1,13 +1,9 @@
 import assert from 'node:assert/strict'
 import { loadUser } from './adapter.ts'
-import { handleDeleteAccount, type DeleteAccountDeps, type VerifiedUser } from './handler.ts'
+import { handleDeleteAccount, type DeleteAccountDeps } from './handler.ts'
 
 const URL = 'https://example.test'
 const KEY = 'test-key'
-const emailUser: VerifiedUser = {
-  id: 'user-from-jwt',
-  identities: [{ provider: 'email', providerToken: null }]
-}
 
 Deno.test('getUser 404 is already gone', async () => {
   assert.deepEqual(await loadUser(URL, KEY, 'jwt', statusFetch(404)), { kind: 'absent' })
@@ -52,60 +48,6 @@ async function assertUnknown(fetchImpl: typeof fetch) {
   assert.deepEqual(await response.json(), { ok: false, failure: 'unknown' })
 }
 
-function depsWith(fetchImpl: typeof fetch): DeleteAccountDeps {
-  return {
-    authAdmin: {
-      getUser: (token) => loadUser(URL, KEY, token, fetchImpl),
-      async lookupUser() {
-        return 'present'
-      },
-      async deleteUser() {
-        return { ok: true }
-      }
-    },
-    db: { async deleteCallerRows() {} },
-    async revokeGoogle() {
-      return true
-    },
-    log() {}
-  }
-}
-
-Deno.test('a lost-response retry returns ok without deleting twice', async () => {
-  let gone = false
-  const lookups: string[] = []
-  const deleted: string[] = []
-  const deps: DeleteAccountDeps = {
-    authAdmin: {
-      async getUser() {
-        return { kind: 'user', user: emailUser }
-      },
-      async lookupUser(id) {
-        lookups.push(id)
-        return gone ? 'absent' : 'present'
-      },
-      async deleteUser(id) {
-        deleted.push(id)
-        gone = true
-        return { ok: true }
-      }
-    },
-    db: { async deleteCallerRows() {} },
-    async revokeGoogle() {
-      return true
-    },
-    log() {}
-  }
-  const first = await handleDeleteAccount(post('jwt'), deps)
-  const second = await handleDeleteAccount(post('jwt'), deps)
-  assert.equal(first.status, 200)
-  assert.deepEqual(await first.json(), { ok: true })
-  assert.equal(second.status, 200)
-  assert.deepEqual(await second.json(), { ok: true })
-  assert.deepEqual(lookups, ['user-from-jwt', 'user-from-jwt'])
-  assert.deepEqual(deleted, ['user-from-jwt'])
-})
-
 function post(token: string): Request {
   return new Request('http://local/delete-account', {
     method: 'POST',
@@ -118,20 +60,17 @@ function statusFetch(status: number): typeof fetch {
 }
 
 function depsFor(status: number): DeleteAccountDeps {
+  return depsWith(statusFetch(status))
+}
+
+function depsWith(fetchImpl: typeof fetch): DeleteAccountDeps {
   return {
     authAdmin: {
-      getUser: (token) => loadUser(URL, KEY, token, statusFetch(status)),
-      async lookupUser() {
-        return 'present'
-      },
+      getUser: (token) => loadUser(URL, KEY, token, fetchImpl),
       async deleteUser() {
         return { ok: true }
       }
     },
-    db: { async deleteCallerRows() {} },
-    async revokeGoogle() {
-      return true
-    },
-    log() {}
+    db: { async deleteCallerRows() {} }
   }
 }
