@@ -1,0 +1,562 @@
+FAIL scripts/db/__tests__/migrate.test.js
+  ● project ref › reads dev and prod refs from release config
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+    -   "dev": "isezzedrbdomyhfuqjak",
+    -   "prod": "ykfbvrkqzzyyeheblhye",
+    +   "dev": "",
+    +   "prod": "",
+      }
+
+      15 | describe('project ref', () => {
+      16 |   it('reads dev and prod refs from release config', () => {
+    > 17 |     expect(db.projectRefs(config)).toEqual({ dev: DEV_REF, prod: PROD_REF });
+         |                                    ^
+      18 |     expect(config.supabaseHosts.preview.split('.')[0]).toBe(DEV_REF);
+      19 |     expect(config.supabaseHosts.production.split('.')[0]).toBe(PROD_REF);
+      20 |   });
+
+      at Object.toEqual (scripts/db/__tests__/migrate.test.js:17:36)
+
+  ● project ref › accepts a session-pooler URL whose username ref matches the env
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 3
+    + Received  + 1
+
+      Object {
+    -   "host": "aws-0-us-east-1.pooler.supabase.com",
+    -   "port": "5432",
+    -   "ref": "isezzedrbdomyhfuqjak",
+    +   "ok": true,
+      }
+
+      21 |
+      22 |   it('accepts a session-pooler URL whose username ref matches the env', () => {
+    > 23 |     expect(db.assertTarget({ env: 'dev', url: databaseUrl(DEV_REF), refs: { dev: DEV_REF, prod: PROD_REF } })).toMatchObject({
+         |                                                                                                                ^
+      24 |       ref: DEV_REF,
+      25 |       port: '5432',
+      26 |       host: 'aws-0-us-east-1.pooler.supabase.com'
+
+      at Object.toMatchObject (scripts/db/__tests__/migrate.test.js:23:112)
+
+  ● project ref › uses config refs when none are passed in
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "isezzedrbdomyhfuqjak"
+    Received: undefined
+
+      35 |
+      36 |   it('uses config refs when none are passed in', () => {
+    > 37 |     expect(db.assertTarget({ env: 'dev', url: databaseUrl(DEV_REF) }).ref).toBe(DEV_REF);
+         |                                                                            ^
+      38 |   });
+      39 |
+      40 |   it('refuses a URL whose username ref belongs to the other env', () => {
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:37:76)
+
+  ● project ref › refuses a URL whose username ref belongs to the other env
+
+    expect(received).toThrow(expected)
+
+    Expected pattern: /isezzedrbdomyhfuqjak/
+
+    Received function did not throw
+
+      43 |       url: databaseUrl(PROD_REF),
+      44 |       refs: { dev: DEV_REF, prod: PROD_REF }
+    > 45 |     })).toThrow(new RegExp(DEV_REF));
+         |         ^
+      46 |     expect(() => db.assertTarget({
+      47 |       env: 'prod',
+      48 |       url: databaseUrl(DEV_REF),
+
+      at Object.toThrow (scripts/db/__tests__/migrate.test.js:45:9)
+
+  ● project ref › refuses a direct-connection username that has no project ref
+
+    expect(received).toThrow(expected)
+
+    Expected pattern: /postgres\.<project ref>/
+
+    Received function did not throw
+
+      58 |       url,
+      59 |       refs: { dev: DEV_REF, prod: PROD_REF }
+    > 60 |     })).toThrow(/postgres\.<project ref>/);
+         |         ^
+      61 |   });
+      62 |
+      63 |   it('still reads the ref when the password is percent-encoded', () => {
+
+      at Object.toThrow (scripts/db/__tests__/migrate.test.js:60:9)
+
+  ● project ref › still reads the ref when the password is percent-encoded
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "isezzedrbdomyhfuqjak"
+    Received: undefined
+
+      67 |       url,
+      68 |       refs: { dev: DEV_REF, prod: PROD_REF }
+    > 69 |     }).ref).toBe(DEV_REF);
+         |             ^
+      70 |   });
+      71 |
+      72 |   it('requires the prod ref as --confirm and ignores a matching dev URL', () => {
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:69:13)
+
+  ● project ref › requires the prod ref as --confirm and ignores a matching dev URL
+
+    expect(received).toThrow(expected)
+
+    Expected pattern: /--confirm/
+
+    Received function did not throw
+
+      72 |   it('requires the prod ref as --confirm and ignores a matching dev URL', () => {
+      73 |     const refs = { dev: DEV_REF, prod: PROD_REF };
+    > 74 |     expect(() => db.assertTarget({ env: 'prod', url: databaseUrl(PROD_REF), refs })).toThrow(/--confirm/);
+         |                                                                                      ^
+      75 |     expect(() => db.assertTarget({
+      76 |       env: 'prod',
+      77 |       url: databaseUrl(PROD_REF),
+
+      at Object.toThrow (scripts/db/__tests__/migrate.test.js:74:86)
+
+  ● session pooler port › refuses the transaction pooler and names port 5432 on the same host
+
+    expect(received).toThrow(expected)
+
+    Expected pattern: /Transaction pooler port 6543 cannot run migrations\. Use port 5432 on the same host\./
+
+    Received function did not throw
+
+      92 |
+      93 |   it('refuses the transaction pooler and names port 5432 on the same host', () => {
+    > 94 |     expect(() => db.assertTarget({ env: 'dev', url: databaseUrl(DEV_REF, 6543), refs })).toThrow(
+         |                                                                                          ^
+      95 |       /Transaction pooler port 6543 cannot run migrations\. Use port 5432 on the same host\./
+      96 |     );
+      97 |   });
+
+      at Object.toThrow (scripts/db/__tests__/migrate.test.js:94:90)
+
+  ● session pooler port › refuses any other port, including a missing one
+
+    expect(received).toThrow(expected)
+
+    Expected pattern: /5432/
+
+    Received function did not throw
+
+       98 |
+       99 |   it('refuses any other port, including a missing one', () => {
+    > 100 |     expect(() => db.assertTarget({ env: 'dev', url: databaseUrl(DEV_REF, 5433), refs })).toThrow(/5432/);
+          |                                                                                          ^
+      101 |     const bare = `postgresql://postgres.${DEV_REF}:${PASSWORD}@aws-0-us-east-1.pooler.supabase.com/postgres`;
+      102 |     expect(() => db.assertTarget({ env: 'dev', url: bare, refs })).toThrow(/5432/);
+      103 |   });
+
+      at Object.toThrow (scripts/db/__tests__/migrate.test.js:100:90)
+
+  ● redaction › removes the password and the database URL from text
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "sup3r-secret"
+    Received string:        "connect failed for postgresql://postgres.isezzedrbdomyhfuqjak:sup3r-secret@aws-0-us-east-1.pooler.supabase.com:5432/postgres password=sup3r-secret"
+
+      109 |     const text = `connect failed for ${url} password=${PASSWORD}`;
+      110 |     const out = db.redact(text, { url, password: PASSWORD });
+    > 111 |     expect(out).not.toContain(PASSWORD);
+          |                     ^
+      112 |     expect(out).not.toContain('postgresql://');
+      113 |     expect(out).toContain('[redacted]');
+      114 |   });
+
+      at Object.toContain (scripts/db/__tests__/migrate.test.js:111:21)
+
+  ● redaction › removes a percent-encoded password that is not inside the original URL
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "p@ss w/ord"
+    Received string:        "url postgresql://postgres.isezzedrbdomyhfuqjak:p%40ss%20w%2Ford@aws-0-us-east-1.pooler.supabase.com:5432/postgres raw p@ss w/ord encoded p%40ss%20w%2Ford"
+
+      120 |     const leaked = `url ${url} raw ${password} encoded ${encoded}`;
+      121 |     const out = db.redact(leaked, { url, password });
+    > 122 |     expect(out).not.toContain(password);
+          |                     ^
+      123 |     expect(out).not.toContain(encoded);
+      124 |     expect(out).not.toContain('postgresql://');
+      125 |   });
+
+      at Object.toContain (scripts/db/__tests__/migrate.test.js:122:21)
+
+  ● redaction › redacts child-process stderr before it is returned
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "sup3r-secret"
+    Received string:        "postgresql://leaked sup3r-secret"
+
+      133 |     );
+      134 |     expect(result.code).toBe(0);
+    > 135 |     expect(result.stderr).not.toContain(PASSWORD);
+          |                               ^
+      136 |     expect(result.stderr).not.toContain(url);
+      137 |     expect(result.stderr).not.toContain('postgresql://');
+      138 |     expect(result.stderr).toContain('[redacted]');
+
+      at Object.toContain (scripts/db/__tests__/migrate.test.js:135:31)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● redaction › redacts the URL when a command line is shown
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "[redacted]"
+    Received string:    "npx db push"
+
+      145 |     expect(shown).not.toContain(PASSWORD);
+      146 |     expect(shown).not.toContain(url);
+    > 147 |     expect(shown).toContain('[redacted]');
+          |                   ^
+      148 |     expect(shown).toContain(`supabase@${db.SUPABASE_CLI_VERSION}`);
+      149 |   });
+      150 | });
+
+      at Object.toContain (scripts/db/__tests__/migrate.test.js:147:19)
+
+  ● migration history › parses a migration filename into a version and a name
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"file": "20261124120000_username_rpcs.sql", "name": "username_rpcs", "version": "20261124120000"}
+    Received: null
+
+      157 |
+      158 |   it('parses a migration filename into a version and a name', () => {
+    > 159 |     expect(db.parseMigrationFileName('20261124120000_username_rpcs.sql')).toEqual({
+          |                                                                           ^
+      160 |       version: '20261124120000',
+      161 |       name: 'username_rpcs',
+      162 |       file: '20261124120000_username_rpcs.sql'
+
+      at Object.toEqual (scripts/db/__tests__/migrate.test.js:159:75)
+
+  ● migration history › allows a later pending file when earlier versions are already applied
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 6
+    + Received  + 1
+
+    - Array [
+    -   Object {
+    -     "name": "username_rpcs",
+    -     "version": "20261124120000",
+    -   },
+    - ]
+    + Array []
+
+      169 |     expect(history.ok).toBe(true);
+      170 |     expect(history.blocks).toEqual([]);
+    > 171 |     expect(history.pending).toEqual([local[1]]);
+          |                             ^
+      172 |   });
+      173 |
+      174 |   it('allows every local file when the remote history is empty', () => {
+
+      at Object.toEqual (scripts/db/__tests__/migrate.test.js:171:29)
+
+  ● migration history › allows every local file when the remote history is empty
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 10
+    + Received  +  1
+
+    - Array [
+    -   Object {
+    -     "name": "profiles_username",
+    -     "version": "20261124032500",
+    -   },
+    -   Object {
+    -     "name": "username_rpcs",
+    -     "version": "20261124120000",
+    -   },
+    - ]
+    + Array []
+
+      175 |     const history = db.checkHistory(local, []);
+      176 |     expect(history.ok).toBe(true);
+    > 177 |     expect(history.pending).toEqual(local);
+          |                             ^
+      178 |   });
+      179 |
+      180 |   it('stops on a remote-only version', () => {
+
+      at Object.toEqual (scripts/db/__tests__/migrate.test.js:177:29)
+
+  ● migration history › stops on a remote-only version
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      183 |       [local[0], { version: '20261125010101', name: 'made_on_the_server' }]
+      184 |     );
+    > 185 |     expect(history.ok).toBe(false);
+          |                        ^
+      186 |     expect(history.blocks).toEqual([
+      187 |       { kind: 'remote-only', version: '20261125010101', name: 'made_on_the_server' }
+      188 |     ]);
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:185:24)
+
+  ● migration history › stops when the same name is stored under a different version and prints fix-up SQL
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      194 |       { version: '20261124143000', name: 'username_rpcs' }
+      195 |     ]);
+    > 196 |     expect(history.ok).toBe(false);
+          |                        ^
+      197 |     expect(history.pending).toEqual([]);
+      198 |     expect(history.blocks).toEqual([{
+      199 |       kind: 'version-mismatch',
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:196:24)
+
+  ● migration history › stops on a pending file whose version is older than a remote version
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      207 |   it('stops on a pending file whose version is older than a remote version', () => {
+      208 |     const history = db.checkHistory(local, [local[1]]);
+    > 209 |     expect(history.ok).toBe(false);
+          |                        ^
+      210 |     expect(history.blocks).toEqual([{
+      211 |       kind: 'out-of-order',
+      212 |       version: '20261124032500',
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:209:24)
+
+  ● migration history › reports a version mismatch and an older pending file together
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      223 |       [{ version: '20261124143000', name: 'username_rpcs' }]
+      224 |     );
+    > 225 |     expect(history.ok).toBe(false);
+          |                        ^
+      226 |     expect(history.blocks.map((block) => block.kind)).toEqual(['version-mismatch', 'out-of-order']);
+      227 |   });
+      228 |
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:225:24)
+
+  ● migration history › stops when one version is recorded under a different name
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      232 |       name: 'not_profiles_username'
+      233 |     }]);
+    > 234 |     expect(history.ok).toBe(false);
+          |                        ^
+      235 |     expect(history.blocks[0]).toMatchObject({
+      236 |       kind: 'name-differs',
+      237 |       version: '20261124032500',
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:234:24)
+
+  ● migration history › does not run the fix-up SQL or any push when history is blocked
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      251 |     const run = jest.fn(async () => ({ code: 0 }));
+      252 |     const result = await db.runSteps({ history, commands, run });
+    > 253 |     expect(history.blocks.some((block) => block.sql)).toBe(true);
+          |                                                       ^
+      254 |     expect(result.code).not.toBe(0);
+      255 |     expect(run).not.toHaveBeenCalled();
+      256 |   });
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:253:55)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● commands › plans a dry run and applies that dry run before a real push, then verify
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "--dry-run"
+    Received string:    "supabase db push --include-all tests/db/pgtap.sql"
+
+      274 |     expect(plan).toHaveLength(1);
+      275 |     expect(planText).toContain('db push');
+    > 276 |     expect(planText).toContain('--dry-run');
+          |                      ^
+      277 |     expect(planText).toContain(`supabase@${db.SUPABASE_CLI_VERSION}`);
+      278 |     expect(planText).toContain(`--remote=${url}`);
+      279 |     expect(planText).not.toContain('--db-url');
+
+      at Object.toContain (scripts/db/__tests__/migrate.test.js:276:22)
+
+  ● commands › stops after a failed dry run and does not push
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      300 |       .mockResolvedValue({ code: 0 });
+      301 |     const result = await db.runSteps({ history, commands, run });
+    > 302 |     expect(result.code).toBe(1);
+          |                         ^
+      303 |     expect(run).toHaveBeenCalledTimes(1);
+      304 |     expect(commands[0].args).toContain('--dry-run');
+      305 |   });
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:302:25)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● commands › pins the supabase CLI at 3.3.0
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "3.3.0"
+    Received: "0.0.0"
+
+      306 |
+      307 |   it('pins the supabase CLI at 3.3.0', () => {
+    > 308 |     expect(db.SUPABASE_CLI_VERSION).toBe('3.3.0');
+          |                                     ^
+      309 |   });
+      310 | });
+      311 |
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:308:37)
+
+  ● env and history text › prefers the process environment over .env.db.local
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "from-env"
+    Received: ""
+
+      322 |       processEnv: { SUPABASE_DB_URL_DEV: 'from-env' },
+      323 |       fileText
+    > 324 |     })).toBe('from-env');
+          |         ^
+      325 |     expect(db.resolveDatabaseUrl({
+      326 |       env: 'prod',
+      327 |       processEnv: {},
+
+      at Object.toBe (scripts/db/__tests__/migrate.test.js:324:9)
+
+  ● env and history text › parses history tuples and treats a missing history table as empty
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 10
+    + Received  +  1
+
+    - Array [
+    -   Object {
+    -     "name": "profiles_username",
+    -     "version": "20261124032500",
+    -   },
+    -   Object {
+    -     "name": "username_rpcs",
+    -     "version": "20261124120000",
+    -   },
+    - ]
+    + Array []
+
+      334 |
+      335 |   it('parses history tuples and treats a missing history table as empty', () => {
+    > 336 |     expect(db.parseHistoryTuples('20261124032500|profiles_username\n\n20261124120000|username_rpcs\n')).toEqual([
+          |                                                                                                         ^
+      337 |       { version: '20261124032500', name: 'profiles_username' },
+      338 |       { version: '20261124120000', name: 'username_rpcs' }
+      339 |     ]);
+
+      at Object.toEqual (scripts/db/__tests__/migrate.test.js:336:105)
+
+  ● env and history text › reads status, plan, apply and verify with --env
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 2
+
+      Object {
+    -   "command": "plan",
+    -   "confirm": undefined,
+    -   "env": "dev",
+    +   "command": "nope",
+    +   "env": "nope",
+      }
+
+      344 |
+      345 |   it('reads status, plan, apply and verify with --env', () => {
+    > 346 |     expect(db.parseArgs(['plan', '--env', 'dev'])).toEqual({ command: 'plan', env: 'dev', confirm: undefined });
+          |                                                    ^
+      347 |     expect(db.parseArgs(['apply', '--env=prod', `--confirm=${PROD_REF}`])).toEqual({
+      348 |       command: 'apply',
+      349 |       env: 'prod',
+
+      at Object.toEqual (scripts/db/__tests__/migrate.test.js:346:52)
+
+  ● verify.sql › checks the username objects and does not write or load pgTAP
+
+    ENOENT: no such file or directory, open 'scripts/db/verify.sql'
+
+      356 |
+      357 | describe('verify.sql', () => {
+    > 358 |   const sql = () => fs.readFileSync(path.join(root, 'scripts/db/verify.sql'), 'utf8');
+          |                        ^
+      359 |
+      360 |   it('checks the username objects and does not write or load pgTAP', () => {
+      361 |     const text = sql();
+
+      at readFileSync (scripts/db/__tests__/migrate.test.js:358:24)
+      at Object.sql (scripts/db/__tests__/migrate.test.js:361:18)
+
+Test Suites: 1 failed, 1 total
+Tests:       29 failed, 1 skipped, 30 total
+Snapshots:   0 total
+Time:        0.35 s, estimated 1 s
+Ran all test suites matching scripts/db/__tests__/migrate.test.js.

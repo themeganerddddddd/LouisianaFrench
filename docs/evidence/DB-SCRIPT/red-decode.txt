@@ -1,0 +1,23 @@
+FAIL scripts/db/__tests__/migrate.test.js
+  ● redaction › redacts a decoded password when the URL still stores it encoded
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "p@ss w/rd#1"
+    Received string:        "url [redacted] raw p@ss w/rd#1 encoded [redacted]"
+
+      121 |     const leaked = `url ${url} raw ${decoded} encoded ${encoded}`;
+      122 |     const out = db.redact(leaked, secrets);
+    > 123 |     expect(out).not.toContain(decoded);
+          |                     ^
+      124 |     expect(out).not.toContain(encoded);
+      125 |     expect(out).not.toContain('postgresql://');
+      126 |   });
+
+      at Object.toContain (scripts/db/__tests__/migrate.test.js:123:21)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 29 skipped, 30 total
+Snapshots:   0 total
+Time:        0.329 s, estimated 1 s
+Ran all test suites matching scripts/db/__tests__/migrate.test.js with tests matching "redacts a decoded password".
