@@ -1,0 +1,55 @@
+# C7 delete-account — Dev deploy + smoke test
+
+- Date: Wed Nov 25, 2026, ~10:22–10:25 PM CST
+- Project: Dev `isezzedrbdomyhfuqjak` ONLY. Prod `ykfbvrkqzzyyeheblhye` was not touched (no deploy, SQL, or reads). Every connector call used project_id isezzedrbdomyhfuqjak.
+- Source: main `ea69b8ade41e05e9c620294405a7025e35c8ce50`, `supabase/functions/delete-account/{index.ts,handler.ts,adapter.ts}` (raw.githubusercontent). `adapter_test.ts`, `handler_test.ts` excluded. No shared imports; no deno.json / import map in repo.
+- Secrets: no service-role key, DB password, or user token was printed, logged or saved here. The throwaway password, tokens, and anon key lived in 0600 scratch files that were shredded after the run.
+
+## 1. Deploy (user-Supabase `deploy_edge_function`)
+- Before: `list_edge_functions` on Dev → `[]` (no functions existed).
+- Result: id `293347cc-ba63-4d38-8c88-a3a76c7c8711`, slug `delete-account`, **version 1**, status **ACTIVE**, **verify_jwt true**, import_map false, entrypoint index.ts, ezbr_sha256 `e88204df4a65abba4ba960c942120a5f3fb4f6a5f193865513f4595600757299`.
+- Read-back (`get_edge_function`): all 3 deployed files are byte-identical to the ea69b8a sources.
+
+## 2a. Gateway checks — PASS
+| Request | Auth | Status | Body |
+|---|---|---|---|
+| POST /functions/v1/delete-account | none | 401 | `{"code":"UNAUTHORIZED_NO_AUTH_HEADER","message":"Missing authorization header"}` |
+| POST /functions/v1/delete-account | apikey only (anon), no Authorization | 401 | `{"code":"UNAUTHORIZED_NO_AUTH_HEADER","message":"Missing authorization header"}` |
+| POST /functions/v1/delete-account | `Bearer garbage.token.value` | 401 | `{"code":"UNAUTHORIZED_INVALID_JWT_FORMAT","message":"Invalid JWT"}` |
+
+## 2b. Throwaway user setup — PASS (with a deviation)
+- POST /auth/v1/signup (anon) for `lf-smoke-1795666963@example.com` → **400** `email_address_invalid` (Auth rejects example.com). Dev has `mailer_autoconfirm:false` (GET /auth/v1/settings), so signing up with a real domain would have sent a confirmation email to a real third-party inbox; not done.
+- **Deviation:** created the one user directly with `execute_sql` on Dev: 1 `auth.users` row (email confirmed, bcrypt hash computed locally, so the password never went into SQL) and 1 `auth.identities` row (provider `email`). Result: `users_inserted 1, identities_inserted 1`. The `profiles_for_new_user` trigger created the profile.
+- User id `6f35838f-0576-4658-b47c-72d04b2c9f3e`.
+- POST /auth/v1/token?grant_type=password (anon) → **200**. Access and refresh tokens were redacted. `expires_in 3600`. user.id matches.
+- POST /rest/v1/rpc/set_username `{"proposed":"smoke_1795666963"}` (user JWT) → **200** `{"ok": true, "username": "smoke_1795666963"}`
+- POST /rest/v1/rpc/check_username (user JWT) → **200** `{"status": "current"}`
+- GET /auth/v1/user (user JWT) → **200**, id/email match.
+- SQL before delete: users=1, profile with username smoke_1795666963=1, identities=1 (`email`), sessions=1, refresh_tokens=1.
+
+## 2c. Delete — PASS
+- POST /functions/v1/delete-account (user JWT + anon apikey) → **200** `{"ok":true}`
+- SQL after: auth.users=0, profiles (by id)=0, profiles with username_key of smoke_1795666963=0, identities=0, sessions=0, refresh_tokens=0.
+- POST /rest/v1/rpc/check_username `{"candidate":"smoke_1795666963"}` using the deleted user's JWT, which is still signature-valid until it expires → **200** `{"status": "available"}`. The username is free.
+
+## 2d. Retry with the same access token — **FLAG: GET /user returns 403, not 404**
+| Request | Auth | Status | Body |
+|---|---|---|---|
+| GET /auth/v1/user | deleted user's JWT (anon apikey) | **403** | `{"code":403,"error_code":"user_not_found","msg":"User from sub claim in JWT does not exist"}` |
+| POST /functions/v1/delete-account (retry) | same JWT | **401** | `{"ok":false,"failure":"notSignedIn"}` |
+
+GoTrue reports a deleted user as 403 `user_not_found`. `classifyGetUserStatus` maps 403 to `invalid`, so a retry after a lost response returns 401 notSignedIn instead of ok:true. The idempotent-retry path (`absent` on 404) is never reached on Dev. Retry analysis stopped here, as instructed; per Étienne the fix needs a separate PR. (The function calls /user with the service-role key as apikey and this test used the anon key. GoTrue's user_not_found path is the same either way, but that's inferred, not observed.)
+
+## 2e. Refresh token — PASS (dead)
+- POST /auth/v1/token?grant_type=refresh_token (anon, old refresh token) → **400** `{"code":400,"error_code":"refresh_token_not_found","msg":"Invalid Refresh Token: Refresh Token Not Found"}`
+
+## 3. Cleanup — PASS
+- `auth.users where email like 'lf-smoke-%'` = 0; `profiles where username like 'smoke\_%'` = 0; `auth.identities where email like 'lf-smoke-%'` = 0. Nothing needed deleting by SQL (delete-account removed the only test user).
+- The deployed function `delete-account` v1 stays on Dev, as intended.
+
+## UNVERIFIED
+- Google-identity user deletion: not done. A real Google sign-in is needed; none was faked.
+- The retry-after-lost-response path (ok:true): **fails on Dev**. 403 → 401, see 2d.
+- The delete-account account entry/UI in the app was not exercised; this test was API only.
+- The function's `unavailable` (500) and `removeUser` 404→ok paths were not exercised against real Auth.
+- Signup through /auth/v1/signup with email confirmation wasn't tested, because example.com is rejected and a real inbox would get mail. The user was created via SQL instead.
