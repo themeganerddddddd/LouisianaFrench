@@ -4,18 +4,18 @@ Emulator `emulator-5580` only (`lf-api35`, Expo Go). `emulator-5554` was left al
 
 `SHOW_ACCOUNT_MENU_ENTRY` stays false. The modal is not mounted on Home. These shots use a local harness that is not in this commit. The harness opened first, with a Louisiana French and a Kouri-Vini switch, then one button per sheet. Close returned to the list. Google loading has no Close, so the app was reopened for the next sheet.
 
-Board names below are this pull request's reading of 1A, 1B, 2A, 2B, 4A, and 4B.
+Board names follow the review: 1B is the wrong password, 2A is Google loading, and 2B is the Kouri-Vini sign-in card. The Google failure is not a board number.
 
 ## Click path
 
 1. Harness. Louisiana French is selected (accent `#2771CB`).
 2. Tap **Sign in**. Blue Close, Continue with Google, Email, Password, Sign in, Forgot password.
-3. Tap **Google loading**. Close is gone. A spinner replaces the Google mark. Email, Password, Sign in, and Forgot password are faded.
-4. Tap **Google failed**. "Google sign-in did not finish. Try again." sits above Continue with Google. The fields are open again.
-5. Tap **Wrong password**. The password box is empty and red. The error is "That email or password is not right."
-6. Tap **Forgot**. Email only, then **Email me a link**.
+3. Tap **Wrong password**. The password box is empty and red. The error is "That email or password is not right."
+4. Tap **Google loading**. Close is gone. A spinner replaces the Google mark. Email, Password, Sign in, and Forgot password are faded.
+5. Tap **Google failed**. "Google sign-in did not finish. Try again." sits above Continue with Google. The fields are open again.
+6. Tap **Forgot**. Email only, then **Email me a link**, then **Back to sign in**. The 4A shots were taken again after that link was added.
 7. Tap **Inbox**. **Check your inbox**, and the same reply for every address.
-8. Switch to Kouri-Vini (accent `#08834C`) and repeat those six sheets. Sign in and Email me a link are green.
+8. Switch to Kouri-Vini (accent `#08834C`) and repeat those sheets. Sign in, Email me a link, and Back to sign in are green.
 
 ## Regression
 
@@ -35,15 +35,15 @@ No crash, blank screen, or stuck control on those paths. Recording was not start
 | File | What it shows |
 | --- | --- |
 | c4a-1a-sign-in-lf.png | 1A Sign in, Louisiana French |
-| c4a-1a-sign-in-kv.png | 1A Sign in, Kouri-Vini |
-| c4a-1b-google-loading-lf.png | 1B Google loading, Louisiana French |
-| c4a-1b-google-loading-kv.png | 1B Google loading, Kouri-Vini |
-| c4a-2a-google-failed-lf.png | 2A Google failure, Louisiana French |
-| c4a-2a-google-failed-kv.png | 2A Google failure, Kouri-Vini |
-| c4a-2b-wrong-password-lf.png | 2B Wrong password, Louisiana French |
-| c4a-2b-wrong-password-kv.png | 2B Wrong password, Kouri-Vini |
-| c4a-4a-forgot-lf.png | 4A Forgot, Louisiana French |
-| c4a-4a-forgot-kv.png | 4A Forgot, Kouri-Vini |
+| c4a-2b-sign-in-kv.png | 2B Sign in, Kouri-Vini |
+| c4a-1b-wrong-password-lf.png | 1B Wrong password, Louisiana French |
+| c4a-1b-wrong-password-kv.png | 1B Wrong password, Kouri-Vini |
+| c4a-2a-google-loading-lf.png | 2A Google loading, Louisiana French |
+| c4a-2a-google-loading-kv.png | 2A Google loading, Kouri-Vini |
+| c4a-google-failed-lf.png | Google failure, Louisiana French |
+| c4a-google-failed-kv.png | Google failure, Kouri-Vini |
+| c4a-4a-forgot-lf.png | 4A Forgot, with Back to sign in, Louisiana French |
+| c4a-4a-forgot-kv.png | 4A Forgot, with Back to sign in, Kouri-Vini |
 | c4a-4b-inbox-lf.png | 4B Check your inbox, Louisiana French |
 | c4a-4b-inbox-kv.png | 4B Check your inbox, Kouri-Vini |
 | regression-home.png | Home after choosing Louisiana French |
