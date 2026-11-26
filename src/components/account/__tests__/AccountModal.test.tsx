@@ -168,6 +168,20 @@ describe('AccountModal', () => {
     expect(StyleSheet.flatten(screen.getByText('Close').props.style).color).not.toBe('#2771CB');
   });
 
+  it('goes back to sign in from Forgot, and locks that link while the email is sending', () => {
+    const shown = render(<Host account={connector(async () => ({ ok: false, failure: 'unknown' }))} />);
+    fireEvent.press(screen.getByRole('link', { name: 'Forgot password?' }));
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    fireEvent.press(screen.getByRole('link', { name: 'Back to sign in' }));
+    expect(screen.getByLabelText('Password')).toBeOnTheScreen();
+    shown.unmount();
+
+    sheet({ kind: 'forgot', email: 'ada@example.com', submit: { status: 'submitting' } });
+    expect(screen.getByRole('link', { name: 'Back to sign in' }).props.accessibilityState).toMatchObject({
+      disabled: true
+    });
+  });
+
   it('asks for the email only, then shows the same inbox reply for every address', async () => {
     render(<Host account={connector(async () => ({ ok: false, failure: 'unknown' }))} />);
     fireEvent.press(screen.getByRole('link', { name: 'Forgot password?' }));
