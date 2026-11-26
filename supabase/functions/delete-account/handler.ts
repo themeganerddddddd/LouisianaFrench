@@ -47,6 +47,15 @@ export async function handleDeleteAccount(request: Request, deps: DeleteAccountD
   if (verified.kind === 'unavailable') return respond(500, { ok: false, failure: 'unknown' })
   if (verified.kind === 'absent') return respond(200, { ok: true })
 
+  let lookedUp: LookupResult
+  try {
+    lookedUp = await deps.authAdmin.lookupUser(verified.user.id)
+  } catch {
+    return respond(500, { ok: false, failure: 'unknown' })
+  }
+  if (lookedUp === 'absent') return respond(200, { ok: true })
+  if (lookedUp === 'unavailable') return respond(500, { ok: false, failure: 'unknown' })
+
   await revokeIfPresent(verified.user, deps)
   try {
     await deps.db.deleteCallerRows(verified.user.id)
