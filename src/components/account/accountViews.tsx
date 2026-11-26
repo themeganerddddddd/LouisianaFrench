@@ -1,10 +1,10 @@
-import { FontAwesome5 } from '@expo/vector-icons';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { AccountEvent, AccountView } from '../../account/accountMachine';
 import { Field, LinkButton, PrimaryButton } from './formControls';
-
-const SIGN_IN = {
+// English placeholders. Louisiana French and Kouri-Vini are TBD-copy.
+const SIGN_IN = { // TBD-copy
   google: 'Continue with Google',
   googleFailed: 'Google sign-in did not finish. Try again.',
   email: 'Email',
@@ -17,15 +17,16 @@ const SIGN_IN = {
   failed: 'Sign-in failed.'
 };
 
-const FORGOT = {
+const FORGOT = { // TBD-copy
   email: 'Email',
   submit: 'Email me a link',
+  back: 'Back to sign in',
   network: 'The network failed. Try again.',
   unavailable: 'Sign-in is unavailable.',
   failed: 'Sign-in failed.'
 };
 
-const INBOX = {
+const INBOX = { // TBD-copy
   title: 'Check your inbox',
   body: 'Check that inbox. I give the same reply for every address.',
   back: 'Sign in'
@@ -51,11 +52,7 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
   const failure = view.submit.status === 'failed' ? view.submit.failure : '';
   return (
     <View style={styles.stack}>
-      {failure === 'oauthFailed' ? (
-        <Text accessibilityRole="alert" testID="account-google-error">
-          {SIGN_IN.googleFailed}
-        </Text>
-      ) : null}
+      {failure === 'oauthFailed' ? <GoogleError /> : null}
       <Pressable
         accessibilityLabel={SIGN_IN.google}
         accessibilityRole="button"
@@ -138,8 +135,22 @@ export function ForgotView({ view, dispatch, accentColor }: { view: Forgot; disp
         loading={view.submit.status === 'submitting'}
         testID="account-send"
       />
+      <LinkButton
+        label={FORGOT.back}
+        onPress={() => dispatch({ type: 'navigated', to: 'signIn' })}
+        accentColor={accentColor}
+        disabled={locked}
+        testID="account-forgot-back"
+      />
     </View>
   );
+}
+
+function GoogleError() {
+  return <View style={styles.error}>
+    <Feather accessible={false} color="#B91C1C" name="alert-circle" size={16} />
+    <Text accessibilityRole="alert" style={styles.errorText} testID="account-google-error">{SIGN_IN.googleFailed}</Text>
+  </View>;
 }
 
 export function InboxView({ dispatch, accentColor }: { dispatch: Dispatch; accentColor: string }) {
@@ -165,5 +176,7 @@ const styles = StyleSheet.create({
   },
   googleLabel: { color: '#102A43', fontSize: 15, fontWeight: '800' },
   locked: { opacity: 0.55 },
+  error: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+  errorText: { color: '#B91C1C', flexShrink: 1, fontSize: 13, fontWeight: '700' },
   title: { color: '#102A43', fontSize: 20, fontWeight: '800' }
 });

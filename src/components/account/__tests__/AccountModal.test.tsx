@@ -93,10 +93,18 @@ describe('AccountModal', () => {
     expect(signInWithProvider).toHaveBeenCalledWith('google');
   });
 
-  it('blocks email submit, fields, and links while Google sign-in is in progress', () => {
-    const signIn = jest.fn(async (): Promise<AuthResult> => ({ ok: false, failure: 'unknown' }));
-    sheet(oauth);
-    expect(screen.getByTestId('account-google-spinner')).toBeOnTheScreen();
+  it('blocks email submit, fields, and links while Google sign-in is in progress', async () => {
+    const signIn = jest.fn(async (_email: string, _password: string): Promise<AuthResult> => ({
+      ok: false,
+      failure: 'unknown'
+    }));
+    const account = connector(signIn);
+    account.signInWithProvider = () => new Promise(() => {});
+    render(<Host account={account} />);
+    fireEvent.changeText(screen.getByLabelText('Email'), 'ada@example.com');
+    fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
+    fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+    await waitFor(() => expect(screen.getByTestId('account-google-spinner')).toBeOnTheScreen());
     expect(screen.getByLabelText('Email').props.editable).toBe(false);
     expect(screen.getByLabelText('Password').props.editable).toBe(false);
     expect(screen.getByRole('button', { name: 'Sign in' }).props.accessibilityState).toMatchObject({
@@ -108,6 +116,7 @@ describe('AccountModal', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
     fireEvent.press(screen.getByRole('link', { name: 'Forgot password?' }));
     expect(signIn).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Password')).toBeOnTheScreen();
   });
 
   it('returns to an idle form after Google is cancelled, and shows a failure above the button', async () => {
