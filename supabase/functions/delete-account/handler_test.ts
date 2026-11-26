@@ -6,7 +6,7 @@ const emailUser: VerifiedUser = { id: 'user-from-jwt' }
 Deno.test('a missing or invalid token is 401 notSignedIn and deletes nothing', async () => {
   const missing = harness({ kind: 'user', user: emailUser })
   const noHeader = await handleDeleteAccount(post(), missing.deps)
-  assert.equal(noHeader.status, 401)
+  assert.equal(noHeader.status, 400)
   assert.deepEqual(await noHeader.json(), { ok: false, failure: 'notSignedIn' })
   assert.deepEqual(missing.calls.getUser, [])
   assert.deepEqual(missing.calls.deleted, [])
