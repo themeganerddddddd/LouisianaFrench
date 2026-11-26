@@ -237,6 +237,7 @@ describe('sign in', () => {
       result: { ok: false, failure: 'wrongCredentials' }
     });
     expect(failed).toEqual({ ...signIn(), submit: { status: 'failed', failure: 'wrongCredentials' } });
+    expect(failed).toMatchObject({ password: '' });
     expect(effectFor(submitting, failed)).toBeNull();
 
     const cancelled = reduce(oauth, {

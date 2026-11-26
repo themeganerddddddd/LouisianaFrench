@@ -1,0 +1,30 @@
+C4a red, on bf77153, before the account modal. The modal file renders an empty view, so these are missing controls and a kept password, not a missing module.
+
+FAIL src/components/account/__tests__/AccountModal.test.tsx
+clears the password and shows the error under it when the password is wrong
+Unable to find an element with accessibility label: Email
+
+calls Google sign-in once when Continue with Google is tapped twice
+Unable to find an element with role: button, name: Continue with Google
+
+blocks email submit, fields, and links while Google sign-in is in progress
+Unable to find an element with testID: account-google-spinner
+
+returns to an idle form after Google is cancelled, and shows a failure above the button
+Unable to find an element with role: button, name: Continue with Google
+
+hides Close whenever the sheet cannot be dismissed
+Unable to find an element with testID: account-close
+
+paints Close and Sign in with the Language accent
+Unable to find an element with text: Close
+
+asks for the email only, then shows the same inbox reply for every address
+Unable to find an element with role: link, name: Forgot password?
+
+FAIL src/account/__tests__/accountMachine.test.ts
+sign in › settles a password sign-in to signed in, a failure, or a cancelled Google attempt
+Expected password: ""
+Received password: "secret"
+
+Tests: 8 failed, 48 skipped, 56 total
