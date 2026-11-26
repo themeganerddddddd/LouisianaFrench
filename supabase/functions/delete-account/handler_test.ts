@@ -136,6 +136,9 @@ Deno.test('a second call after the user is gone is ok and does not delete again'
         if (gone) return { kind: 'absent' }
         return { kind: 'user', user: emailUser }
       },
+      async lookupUser() {
+        return 'present'
+      },
       async deleteUser(id) {
         calls.deleted.push(id)
         gone = true
@@ -224,6 +227,9 @@ function harness(verified: GetUserResult, options: { revoke?: boolean; deleteOk?
         calls.getUser.push(token)
         calls.order.push('getUser')
         return verified
+      },
+      async lookupUser() {
+        return 'present'
       },
       async deleteUser(id) {
         calls.deleted.push(id)

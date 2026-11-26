@@ -18,12 +18,16 @@ export type GetUserResult =
   | { kind: 'user'; user: VerifiedUser }
   | { kind: 'invalid' }
   | { kind: 'absent' }
+  | { kind: 'unavailable' }
+
+export type LookupResult = 'present' | 'absent' | 'unavailable'
 
 export type DeleteUserResult = { ok: true } | { ok: false; absent?: boolean }
 
 export type DeleteAccountDeps = {
   authAdmin: {
     getUser(token: string): Promise<GetUserResult>
+    lookupUser(id: string): Promise<LookupResult>
     deleteUser(id: string): Promise<DeleteUserResult>
   }
   db: {
@@ -40,6 +44,7 @@ export async function handleDeleteAccount(request: Request, deps: DeleteAccountD
 
   const verified = await deps.authAdmin.getUser(token)
   if (verified.kind === 'invalid') return respond(401, { ok: false, failure: 'notSignedIn' })
+  if (verified.kind === 'unavailable') return respond(500, { ok: false, failure: 'unknown' })
   if (verified.kind === 'absent') return respond(200, { ok: true })
 
   await revokeIfPresent(verified.user, deps)
