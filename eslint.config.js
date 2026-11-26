@@ -6,7 +6,7 @@ const globals = require('globals');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/**', '.scratch/**', 'tmp/**']
+    ignores: ['dist/**', '.scratch/**', 'tmp/**', 'supabase/functions/**']
   },
   {
     files: ['jest.setup.js', '**/__tests__/**/*.{js,jsx,ts,tsx}'],
