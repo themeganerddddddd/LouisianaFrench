@@ -250,8 +250,8 @@ describe('runAccountEffect', () => {
   it('drops the first Ada reply when the draft goes Ada, then Adam, then Ada', async () => {
     jest.useFakeTimers();
     try {
-      const adaReplies: Array<(value: { status: 'taken' | 'available' }) => void> = [];
-      const adamReplies: Array<(value: { status: 'available' }) => void> = [];
+      const adaReplies: ((value: { status: 'taken' | 'available' }) => void)[] = [];
+      const adamReplies: ((value: { status: 'available' }) => void)[] = [];
       const connector = port({
         checkUsername: (value: string) => new Promise((resolve) => {
           if (value === 'Ada') adaReplies.push(resolve);

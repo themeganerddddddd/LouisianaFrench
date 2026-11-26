@@ -63,6 +63,11 @@ export function mapAuthFailure(error: AuthError | null | undefined): AuthFailure
   return 'unknown'
 }
 
+function hasRpc(client: AccountClient | null | undefined): client is AccountClient & {
+  rpc: NonNullable<AccountClient['rpc']>
+} {
+  return typeof client?.rpc === 'function'
+}
 function fail(error: AuthError | null | undefined): AuthResult {
   return { ok: false, failure: mapAuthFailure(error) }
 }
@@ -219,14 +224,12 @@ export function createAccountConnector({
       if (client) await client.auth.signOut({ scope: 'local' })
     },
     async setUsername(name: string) {
-      const rpc = client?.rpc
-      if (!rpc) return { ok: false as const, reason: 'network' as const }
-      return saveUsername(rpc, name)
+      if (!hasRpc(client)) return { ok: false as const, reason: 'network' as const }
+      return saveUsername((fn, args) => client.rpc(fn, args), name)
     },
     async checkUsername(candidate: string) {
-      const rpc = client?.rpc
-      if (!rpc) return { status: 'error' as const }
-      return askUsername(rpc, candidate)
+      if (!hasRpc(client)) return { status: 'error' as const }
+      return askUsername((fn, args) => client.rpc(fn, args), candidate)
     },
     beginAttempt,
     noteSuccess,

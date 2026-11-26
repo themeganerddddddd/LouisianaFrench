@@ -246,7 +246,7 @@ function applyAuth(view: FormView, result: AuthResult): AccountView {
   if ('identity' in result) {
     if (view.kind === 'setNewPassword') return { kind: 'passwordSaved' };
     if (view.kind === 'signIn' || view.kind === 'create') {
-      if (result.identity.username === null && result.profileRead !== false) return openUsername(result.identity);
+      if (result.identity.username === null && result.profileRead === true) return openUsername(result.identity);
       return { kind: 'signedIn', identity: result.identity, signingOut: false };
     }
     return view;
@@ -280,14 +280,14 @@ function openUsername(identity: Identity): UsernameView {
 }
 
 function reduceUsername(view: UsernameView, event: AccountEvent): AccountView {
-  if (view.submit.status === 'submitting') {
-    return event.type === 'usernameSettled' ? settleUsername(view, event.result) : view;
-  }
-  if (event.type === 'usernameEdited') return editUsername(view, event.value);
   if (event.type === 'usernameChecked') {
     if (event.value !== view.draft) return view;
     return { ...view, availability: { status: 'settled', value: event.value, reply: event.result.status } };
   }
+  if (view.submit.status === 'submitting') {
+    return event.type === 'usernameSettled' ? settleUsername(view, event.result) : view;
+  }
+  if (event.type === 'usernameEdited') return editUsername(view, event.value);
   if (event.type === 'usernameSaved') {
     return saveBlocked(view) ? view : { ...view, submit: { status: 'submitting' } };
   }
@@ -319,8 +319,13 @@ function settleUsername(view: UsernameView, result: SetUsernameResult): AccountV
       availability: { status: 'settled', value: view.draft, reply: result.reason }
     };
   }
-  if (result.reason === 'too_soon') return { ...view, submit: { status: 'failed', failure: 'too_soon', retryAt: result.retryAt } };
-  return { ...view, submit: { status: 'failed', failure: 'network' } };
+  if (result.reason === 'too_soon') return stopChecking(view, { status: 'failed', failure: 'too_soon', retryAt: result.retryAt });
+  return stopChecking(view, { status: 'failed', failure: 'network' });
+}
+
+function stopChecking(view: UsernameView, submit: UsernameSubmit): UsernameView {
+  if (view.availability.status !== 'checking') return { ...view, submit };
+  return { ...view, submit, availability: { status: 'settled', value: view.draft, reply: 'error' } };
 }
 
 function checking(view: AccountView): string | null {

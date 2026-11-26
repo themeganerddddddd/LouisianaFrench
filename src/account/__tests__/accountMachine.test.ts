@@ -719,11 +719,13 @@ describe('username step', () => {
   });
 
   it('does not stay on Checking after a network or too_soon save', () => {
-    const saving: AccountView = {
-      ...blankStep(),
+    const step = blankStep();
+    if (step.kind !== 'username') throw new Error('expected the username step');
+    const saving = {
+      ...step,
       draft: 'Ada',
-      availability: { status: 'checking', value: 'Ada' },
-      submit: { status: 'submitting' }
+      availability: { status: 'checking' as const, value: 'Ada' },
+      submit: { status: 'submitting' as const }
     };
     expect(reduce(saving, { type: 'usernameSettled', result: { ok: false, reason: 'network' } })).toMatchObject({
       submit: { status: 'failed', failure: 'network' },
