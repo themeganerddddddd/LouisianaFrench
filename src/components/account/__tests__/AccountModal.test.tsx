@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { act, useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
 import type { AccountConnector } from '../../../account/accountConnector';
@@ -265,6 +265,41 @@ describe('username step view', () => {
     expect(screen.getByTestId('account-username-checking')).toBeOnTheScreen();
     expect(screen.queryByText(HELPER)).toBeNull();
     expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('draws the checking ring inside the field and leaves the helper as plain text', () => {
+    openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'checking', value: 'Ada' }
+    }), jest.fn(), accentFor('cajun'));
+    const field = screen.getByTestId('account-username-field');
+    const ring = within(field).getByTestId('account-username-checking');
+    expect(StyleSheet.flatten(ring.props.style)).toMatchObject({
+      width: 18,
+      height: 18,
+      borderWidth: 2,
+      borderColor: '#2771CB',
+      borderTopColor: 'transparent'
+    });
+    const input = within(field).getByLabelText('Username');
+    expect(StyleSheet.flatten(input.props.style)).toMatchObject({ minHeight: 48, borderWidth: 1 });
+    const line = screen.getByText('Checking…');
+    expect(within(line.parent).queryByTestId('account-username-checking')).toBeNull();
+    expect(line.props.accessibilityLiveRegion).toBe('polite');
+    expect(StyleSheet.flatten(line.props.style)).toMatchObject({
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#64748B'
+    });
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+
+    screen.unmount();
+    openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'settled', value: 'Ada', reply: 'available' }
+    }));
+    expect(screen.queryByTestId('account-username-checking')).toBeNull();
+    expect(screen.getByText('Ada is available.').props.accessibilityLiveRegion).toBe('polite');
   });
 
   it('shows that the typed name is available', () => {
