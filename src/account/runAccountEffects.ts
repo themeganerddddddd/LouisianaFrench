@@ -4,9 +4,25 @@ import { firstOf, type AccountConnector } from './accountConnector'
 type Dispatch = (event: AccountEvent) => void
 const unknownAuth: AuthResult = { ok: false, failure: 'unknown' }
 const unknownDelete: DeleteResult = { ok: false, failure: 'unknown' }
-type AuthEffect = Exclude<Effect, { run: 'signOut' } | { run: 'deleteAccount' }>
+type AuthEffect = Exclude<Effect, { run: 'signOut' } | { run: 'deleteAccount' } | { run: 'checkUsername' } | { run: 'setUsername' }>
+const CHECK_WAIT_MS = 400
+let usernameCheck = 0
 
 export async function runAccountEffect(effect: Effect, connector: AccountConnector, dispatch: Dispatch, timeoutMs = 15000) {
+  if (effect.run === 'checkUsername') {
+    const mine = ++usernameCheck
+    await new Promise((resolve) => setTimeout(resolve, CHECK_WAIT_MS))
+    if (mine !== usernameCheck) return
+    const result = await connector.checkUsername(effect.value).catch(() => ({ status: 'error' as const }))
+    if (mine !== usernameCheck) return
+    dispatch({ type: 'usernameChecked', value: effect.value, result })
+    return
+  }
+  if (effect.run === 'setUsername') {
+    const result = await connector.setUsername(effect.name).catch(() => ({ ok: false as const, reason: 'network' as const }))
+    dispatch({ type: 'usernameSettled', result })
+    return
+  }
   if (effect.run === 'signOut') {
     try { await connector.signOut() } catch { /* The learner still leaves this device. */ }
     dispatch({ type: 'signedOut' })

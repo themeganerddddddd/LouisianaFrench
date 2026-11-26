@@ -192,7 +192,12 @@ export function createIdentityConnector({ client, openBrowser } = {}) {
       return { identity: null };
     },
     async setUsername(name) {
-      return setUsernameRpc((fn, args) => client.rpc(fn, args), name);
+      const result = await setUsernameRpc((fn, args) => client.rpc(fn, args), name);
+      if (result.ok && identity) {
+        identity = { ...identity, username: result.username };
+        emit();
+      }
+      return result;
     },
     async checkUsername(candidate) {
       return checkUsernameRpc((fn, args) => client.rpc(fn, args), candidate);

@@ -23,6 +23,8 @@ function connector(signIn: AccountConnector['signIn']): AccountConnector {
     signOut: async () => {},
     deleteAccount: async () => ({ ok: false, failure: 'unknown' }),
     consumeAuthUrl: async () => null,
+    setUsername: async () => ({ ok: false, reason: 'network' }),
+    checkUsername: async () => ({ status: 'error' }),
     beginAttempt: () => 1,
     noteSuccess: () => {},
     orphaned: () => true

@@ -100,6 +100,7 @@ export function accountName(username: string | null | undefined): string {
 const PROFILE_READ_MS = 5000;
 const rememberedUsernames = new WeakMap<ProfileClient, Map<string, string>>();
 type ProfileRead = { ok: true; username: string | null } | { ok: false };
+export type ProfileUsername = { ok: boolean; username: string | null };
 
 function namesFor(client: ProfileClient): Map<string, string> {
   const found = rememberedUsernames.get(client);
@@ -129,7 +130,11 @@ function remember(client: ProfileClient, id: string, read: ProfileRead): string 
 }
 
 export async function loadProfileUsername(client: ProfileClient, id: string): Promise<string | null> {
-  if (!client.from) return namesFor(client).get(id) ?? null;
+  return (await loadProfileRead(client, id)).username;
+}
+
+export async function loadProfileRead(client: ProfileClient, id: string): Promise<ProfileUsername> {
+  if (!client.from) return { ok: false, username: namesFor(client).get(id) ?? null };
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const read = await Promise.race([
@@ -138,7 +143,7 @@ export async function loadProfileUsername(client: ProfileClient, id: string): Pr
         timer = setTimeout(() => resolve({ ok: false }), PROFILE_READ_MS);
       })
     ]);
-    return remember(client, id, read);
+    return { ok: read.ok, username: remember(client, id, read) };
   } finally {
     clearTimeout(timer);
   }

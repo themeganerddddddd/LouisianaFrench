@@ -1,5 +1,5 @@
 import type { AccountEvent, AuthFailure, AuthResult, DeleteResult, Provider } from './accountMachine'
-import { loadProfileUsername } from '../identity/username'
+import { checkUsername as askUsername, loadProfileRead, setUsername as saveUsername } from '../identity/username'
 import { parseAuthUrl } from './authLink'
 
 const BY_CODE: Record<string, AuthFailure> = {
@@ -38,6 +38,7 @@ export type AccountClient = {
       options: { method: 'POST'; headers: { Authorization: string } }
     ): Promise<{ data: DeleteBody | null; error: InvokeError | null }>
   }
+  rpc?: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }>
   from?: (table: string) => {
     select: (columns: string) => {
       eq: (column: string, value: string) => {
@@ -71,8 +72,12 @@ function googleFail(error: AuthError | null | undefined): AuthResult {
 async function signedIn(client: AccountClient, user: User | null | undefined, fallback: Provider): Promise<AuthResult> {
   if (!user?.id) return { ok: false, failure: 'unknown' }
   const provider: Provider = user.app_metadata?.provider === 'google' || fallback === 'google' ? 'google' : 'email'
-  const username = await loadProfileUsername(client, user.id)
-  return { ok: true, identity: { id: user.id, email: user.email || '', username, provider } }
+  const profile = await loadProfileRead(client, user.id)
+  return {
+    ok: true,
+    profileRead: profile.ok,
+    identity: { id: user.id, email: user.email || '', username: profile.username, provider }
+  }
 }
 
 function statusOf(error: InvokeError | null | undefined): number | null {
@@ -212,6 +217,16 @@ export function createAccountConnector({
     },
     async signOut() {
       if (client) await client.auth.signOut({ scope: 'local' })
+    },
+    async setUsername(name: string) {
+      const rpc = client?.rpc
+      if (!rpc) return { ok: false as const, reason: 'network' as const }
+      return saveUsername(rpc, name)
+    },
+    async checkUsername(candidate: string) {
+      const rpc = client?.rpc
+      if (!rpc) return { status: 'error' as const }
+      return askUsername(rpc, candidate)
     },
     beginAttempt,
     noteSuccess,

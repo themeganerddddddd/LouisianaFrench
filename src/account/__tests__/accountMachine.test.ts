@@ -675,7 +675,7 @@ describe('username step', () => {
   });
 
   it('disables Save only for a bad format or a taken, reserved, or invalid reply', () => {
-    const cases: { value: string; result?: { status: string }; saves: boolean }[] = [
+    const cases: { value: string; result?: { status: 'available' | 'current' | 'error' | 'taken' | 'reserved' | 'invalid' }; saves: boolean }[] = [
       { value: 'Ad', saves: false },
       { value: 'Ada', saves: true },
       { value: 'Ada', result: { status: 'available' }, saves: true },

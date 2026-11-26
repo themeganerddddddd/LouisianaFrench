@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
 import type { AuthResult, DeleteResult, Effect, Identity } from '../accountMachine';
 import type { AccountConnector } from '../accountConnector';
@@ -259,6 +259,8 @@ function port(overrides: Partial<AccountConnector>): AccountConnector {
     signInWithProvider: async () => ({ ok: false, failure: 'unknown' }),
     signOut: async () => {},
     deleteAccount: async () => ({ ok: false, failure: 'unknown' }),
+    setUsername: async () => ({ ok: false, reason: 'network' }),
+    checkUsername: async () => ({ status: 'error' }),
     consumeAuthUrl: async () => null,
     ...overrides,
     beginAttempt() {

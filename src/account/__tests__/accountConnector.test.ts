@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
 import { createAccountConnector, type AccountClient } from '../accountConnector';
 import { runAccountEffect } from '../runAccountEffects';
@@ -84,6 +84,7 @@ describe('account connector', () => {
     });
     expect(await connector.signIn('ada@example.com', 'secret')).toEqual({
       ok: true,
+      profileRead: true,
       identity: { id: 'learner-1', email: 'ada@example.com', username: 'Céline', provider: 'email' }
     });
   });
@@ -141,6 +142,7 @@ describe('account connector', () => {
     });
     expect(await connector.signInWithProvider('google')).toEqual({
       ok: true,
+      profileRead: false,
       identity: {
         id: 'learner-1',
         email: 'ada@example.com',
@@ -173,7 +175,7 @@ describe('account connector', () => {
       }),
       openBrowser: async () => ({ url: `${REDIRECT}?code=good-code` })
     });
-    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, identity: GOOGLE });
+    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, profileRead: false, identity: GOOGLE });
     expect(JSON.stringify(calls)).not.toContain('displayName');
 
     const closed = openConnector({
@@ -230,7 +232,7 @@ describe('account connector', () => {
     const second = await connector.signInWithProvider('google');
     finishFirst({ url: `${REDIRECT}?code=first-code` });
     await first;
-    expect(second).toEqual({ ok: true, identity: GOOGLE });
+    expect(second).toEqual({ ok: true, profileRead: false, identity: GOOGLE });
     expect(calls.filter((call) => call.method === 'exchange')).toEqual([
       { method: 'exchange', code: 'second-code' }
     ]);
@@ -298,7 +300,7 @@ describe('account connector', () => {
       (event) => events.push(event),
       20
     );
-    expect(events).toEqual([{ type: 'authSettled', result: { ok: true, identity: GOOGLE } }]);
+    expect(events).toEqual([{ type: 'authSettled', result: { ok: true, profileRead: false, identity: GOOGLE } }]);
   });
 
   it('times out the code exchange and signs out if that exchange later succeeds', async () => {
@@ -360,7 +362,7 @@ describe('account connector', () => {
     releaseFirst(session);
     await first;
     expect(firstResult).toEqual({ ok: false, failure: 'network' });
-    expect(second).toEqual({ ok: true, identity: GOOGLE });
+    expect(second).toEqual({ ok: true, profileRead: false, identity: GOOGLE });
     expect(signOuts).toEqual([]);
   });
 
@@ -416,7 +418,7 @@ describe('account connector', () => {
       }
     });
     consume = (url) => connector.consumeAuthUrl(url);
-    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, identity: GOOGLE });
+    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, profileRead: false, identity: GOOGLE });
     expect(calls).toEqual(['from-google']);
   });
 
@@ -634,7 +636,7 @@ describe('account connector', () => {
 });
 
 function profileClient(
-  maybeSingle: () => Promise<unknown>,
+  maybeSingle: () => Promise<{ data: unknown; error?: { message?: string } | null }>,
   auth: Record<string, unknown>
 ): AccountClient {
   return {
