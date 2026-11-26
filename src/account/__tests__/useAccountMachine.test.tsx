@@ -90,7 +90,7 @@ describe('useAccountMachine', () => {
     expect(slot.machine?.view).toEqual({
       kind: 'signIn',
       email: 'ada@example.com',
-      password: 'secret',
+      password: '',
       submit: { status: 'failed', failure: 'wrongCredentials' }
     });
   });

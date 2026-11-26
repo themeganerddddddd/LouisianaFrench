@@ -236,7 +236,11 @@ describe('sign in', () => {
       type: 'authSettled',
       result: { ok: false, failure: 'wrongCredentials' }
     });
-    expect(failed).toEqual({ ...signIn(), submit: { status: 'failed', failure: 'wrongCredentials' } });
+    expect(failed).toEqual({
+      ...signIn(),
+      password: '',
+      submit: { status: 'failed', failure: 'wrongCredentials' }
+    });
     expect(effectFor(submitting, failed)).toBeNull();
 
     const cancelled = reduce(oauth, {

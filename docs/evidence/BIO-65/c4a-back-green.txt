@@ -1,0 +1,8 @@
+C4a back link, green.
+
+PASS src/components/account/__tests__/AccountModal.test.tsx
+AccountModal › goes back to sign in from Forgot, and locks that link while the email is sending
+
+Pressing Back to sign in returns the password field. While the reset email is sending, that link is disabled.
+
+Tests: 8 passed in AccountModal.test.tsx. Full suite: 819 passed, 828 total (9 skipped).
