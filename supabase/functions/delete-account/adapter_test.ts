@@ -34,6 +34,43 @@ Deno.test('getUser 500 and 429 are unknown', async () => {
   }
 })
 
+Deno.test('a thrown getUser is an unknown JSON response', async () => {
+  await assertUnknown(async () => {
+    throw new Error('network')
+  })
+  await assertUnknown(async () => new Response('{', { status: 200 }))
+})
+
+async function assertUnknown(fetchImpl: typeof fetch) {
+  let response: Response
+  try {
+    response = await handleDeleteAccount(post('jwt'), depsWith(fetchImpl))
+  } catch (error) {
+    assert.fail(`GET /user threw instead of returning unknown JSON: ${error}`)
+  }
+  assert.equal(response.status, 500)
+  assert.deepEqual(await response.json(), { ok: false, failure: 'unknown' })
+}
+
+function depsWith(fetchImpl: typeof fetch): DeleteAccountDeps {
+  return {
+    authAdmin: {
+      getUser: (token) => loadUser(URL, KEY, token, fetchImpl),
+      async lookupUser() {
+        return 'present'
+      },
+      async deleteUser() {
+        return { ok: true }
+      }
+    },
+    db: { async deleteCallerRows() {} },
+    async revokeGoogle() {
+      return true
+    },
+    log() {}
+  }
+}
+
 Deno.test('a lost-response retry returns ok without deleting twice', async () => {
   let gone = false
   const lookups: string[] = []
