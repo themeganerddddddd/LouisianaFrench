@@ -606,3 +606,150 @@ describe('opened', () => {
     expect(reduce(signingOut, { type: 'recoveryLinkOpened' })).toBe(signingOut);
   });
 });
+
+describe('username step', () => {
+  const unnamed: Identity = { ...googleAda, username: null };
+  const emailUnnamed: Identity = { ...ada, username: null };
+
+  function arrived(identity: Identity, profileRead = true) {
+    const oauth = reduce(signIn(), { type: 'providerChosen', provider: 'google' });
+    return reduce(oauth, { type: 'authSettled', result: { ok: true, identity, profileRead } });
+  }
+
+  function blankStep(identity: Identity = unnamed): AccountView {
+    return {
+      kind: 'username',
+      identity,
+      draft: '',
+      availability: { status: 'unchecked' },
+      submit: { status: 'editing' },
+      mode: 'first'
+    };
+  }
+
+  it('opens the step after Google or email when the profile read is null, and signed in when a name exists', () => {
+    expect(arrived(unnamed)).toEqual(blankStep());
+    expect(arrived(googleAda).kind).toBe('signedIn');
+
+    const submitting = reduce(signIn(), { type: 'submitted' });
+    expect(reduce(submitting, {
+      type: 'authSettled',
+      result: { ok: true, identity: emailUnnamed, profileRead: true }
+    })).toEqual(blankStep(emailUnnamed));
+  });
+
+  it('stays signed in when the profile read failed, even if the username is null', () => {
+    expect(arrived(unnamed, false)).toEqual({
+      kind: 'signedIn',
+      identity: unnamed,
+      signingOut: false
+    });
+  });
+
+  it('checks a valid draft and ignores a reply for an older value', () => {
+    const checking = step(blankStep(), { type: 'usernameEdited', value: 'Ada' });
+    expect(checking.effect).toEqual({ run: 'checkUsername', value: 'Ada' });
+    expect(checking.next).toMatchObject({
+      draft: 'Ada',
+      availability: { status: 'checking', value: 'Ada' }
+    });
+
+    const tooShort = step(blankStep(), { type: 'usernameEdited', value: 'Ad' });
+    expect(tooShort.effect).toBeNull();
+    expect(tooShort.next).toMatchObject({ availability: { status: 'unchecked' } });
+
+    const stale = reduce(checking.next, {
+      type: 'usernameChecked',
+      value: 'Ad',
+      result: { status: 'taken' }
+    });
+    expect(stale).toBe(checking.next);
+    const taken = reduce(checking.next, {
+      type: 'usernameChecked',
+      value: 'Ada',
+      result: { status: 'taken' }
+    });
+    expect(taken).toMatchObject({
+      availability: { status: 'settled', value: 'Ada', reply: 'taken' }
+    });
+  });
+
+  it('disables Save only for a bad format or a taken, reserved, or invalid reply', () => {
+    const cases: { value: string; result?: { status: 'available' | 'current' | 'error' | 'taken' | 'reserved' | 'invalid' }; saves: boolean }[] = [
+      { value: 'Ad', saves: false },
+      { value: 'Ada', saves: true },
+      { value: 'Ada', result: { status: 'available' }, saves: true },
+      { value: 'Ada', result: { status: 'current' }, saves: true },
+      { value: 'Ada', result: { status: 'error' }, saves: true },
+      { value: 'Ada', result: { status: 'taken' }, saves: false },
+      { value: 'Ada', result: { status: 'reserved' }, saves: false },
+      { value: 'Ada', result: { status: 'invalid' }, saves: false }
+    ];
+    for (const sample of cases) {
+      let view = step(blankStep(), { type: 'usernameEdited', value: sample.value }).next;
+      if (sample.result) {
+        view = reduce(view, { type: 'usernameChecked', value: sample.value, result: sample.result });
+      }
+      const saved = step(view, { type: 'usernameSaved' });
+      expect(saved.effect).toEqual(sample.saves ? { run: 'setUsername', name: sample.value } : null);
+    }
+  });
+
+  it('skips to signed in with no username and does not call the RPC', () => {
+    const skipped = step(blankStep(), { type: 'usernameSkipped' });
+    expect(skipped.next).toEqual({ kind: 'signedIn', identity: unnamed, signingOut: false });
+    expect(skipped.effect).toBeNull();
+  });
+
+  it('keeps a taken reply from Save as the 15C failure and blocks another save', () => {
+    const ready = reduce(blankStep(), { type: 'usernameEdited', value: 'Ada' });
+    const saving = step(ready, { type: 'usernameSaved' });
+    expect(saving.effect).toEqual({ run: 'setUsername', name: 'Ada' });
+    const failed = reduce(saving.next, {
+      type: 'usernameSettled',
+      result: { ok: false, reason: 'taken' }
+    });
+    expect(failed).toMatchObject({
+      submit: { status: 'failed', failure: 'taken' },
+      availability: { status: 'settled', value: 'Ada', reply: 'taken' }
+    });
+    expect(step(failed, { type: 'usernameSaved' }).effect).toBeNull();
+    expect(canDismiss(saving.next)).toBe(false);
+    expect(canDismiss(ready)).toBe(true);
+  });
+
+  it('does not stay on Checking after a network or too_soon save', () => {
+    const step = blankStep();
+    if (step.kind !== 'username') throw new Error('expected the username step');
+    const saving = {
+      ...step,
+      draft: 'Ada',
+      availability: { status: 'checking' as const, value: 'Ada' },
+      submit: { status: 'submitting' as const }
+    };
+    expect(reduce(saving, { type: 'usernameSettled', result: { ok: false, reason: 'network' } })).toMatchObject({
+      submit: { status: 'failed', failure: 'network' },
+      availability: { status: 'settled', value: 'Ada', reply: 'error' }
+    });
+    expect(reduce(saving, {
+      type: 'usernameSettled',
+      result: { ok: false, reason: 'too_soon', retryAt: '2026-12-24T00:00:00.000Z' }
+    })).toMatchObject({
+      submit: { status: 'failed', failure: 'too_soon', retryAt: '2026-12-24T00:00:00.000Z' },
+      availability: { status: 'settled', value: 'Ada', reply: 'error' }
+    });
+    expect(reduce(saving, {
+      type: 'usernameChecked',
+      value: 'Ada',
+      result: { status: 'available' }
+    })).toMatchObject({
+      submit: { status: 'submitting' },
+      availability: { status: 'settled', value: 'Ada', reply: 'available' }
+    });
+  });
+
+  it('stays signed in when a null username has no profileRead flag', () => {
+    const oauth = reduce(signIn(), { type: 'providerChosen', provider: 'google' });
+    expect(reduce(oauth, { type: 'authSettled', result: { ok: true, identity: unnamed } }).kind).toBe('signedIn');
+  });
+});

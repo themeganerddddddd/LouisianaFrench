@@ -81,6 +81,7 @@ describe('Android auth browser', () => {
       type: 'authSettled',
       result: {
         ok: true,
+        profileRead: false,
         identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'google' }
       }
     }]);

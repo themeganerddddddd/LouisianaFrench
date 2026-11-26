@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
 import { createAccountConnector, type AccountClient } from '../accountConnector';
 import { runAccountEffect } from '../runAccountEffects';
@@ -84,6 +84,7 @@ describe('account connector', () => {
     });
     expect(await connector.signIn('ada@example.com', 'secret')).toEqual({
       ok: true,
+      profileRead: true,
       identity: { id: 'learner-1', email: 'ada@example.com', username: 'Céline', provider: 'email' }
     });
   });
@@ -141,6 +142,7 @@ describe('account connector', () => {
     });
     expect(await connector.signInWithProvider('google')).toEqual({
       ok: true,
+      profileRead: false,
       identity: {
         id: 'learner-1',
         email: 'ada@example.com',
@@ -173,7 +175,7 @@ describe('account connector', () => {
       }),
       openBrowser: async () => ({ url: `${REDIRECT}?code=good-code` })
     });
-    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, identity: GOOGLE });
+    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, profileRead: false, identity: GOOGLE });
     expect(JSON.stringify(calls)).not.toContain('displayName');
 
     const closed = openConnector({
@@ -230,7 +232,7 @@ describe('account connector', () => {
     const second = await connector.signInWithProvider('google');
     finishFirst({ url: `${REDIRECT}?code=first-code` });
     await first;
-    expect(second).toEqual({ ok: true, identity: GOOGLE });
+    expect(second).toEqual({ ok: true, profileRead: false, identity: GOOGLE });
     expect(calls.filter((call) => call.method === 'exchange')).toEqual([
       { method: 'exchange', code: 'second-code' }
     ]);
@@ -298,7 +300,7 @@ describe('account connector', () => {
       (event) => events.push(event),
       20
     );
-    expect(events).toEqual([{ type: 'authSettled', result: { ok: true, identity: GOOGLE } }]);
+    expect(events).toEqual([{ type: 'authSettled', result: { ok: true, profileRead: false, identity: GOOGLE } }]);
   });
 
   it('times out the code exchange and signs out if that exchange later succeeds', async () => {
@@ -360,7 +362,7 @@ describe('account connector', () => {
     releaseFirst(session);
     await first;
     expect(firstResult).toEqual({ ok: false, failure: 'network' });
-    expect(second).toEqual({ ok: true, identity: GOOGLE });
+    expect(second).toEqual({ ok: true, profileRead: false, identity: GOOGLE });
     expect(signOuts).toEqual([]);
   });
 
@@ -416,7 +418,7 @@ describe('account connector', () => {
       }
     });
     consume = (url) => connector.consumeAuthUrl(url);
-    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, identity: GOOGLE });
+    expect(await connector.signInWithProvider('google')).toEqual({ ok: true, profileRead: false, identity: GOOGLE });
     expect(calls).toEqual(['from-google']);
   });
 
@@ -572,7 +574,100 @@ describe('account connector', () => {
     expect(await offline.deleteAccount()).toEqual({ ok: false, failure: 'network' });
     expect(scopes).toEqual([]);
   });
+
+  it('offers the step only after a profile read that succeeded with no username', async () => {
+    const empty = openConnector({
+      client: profileClient(async () => ({ data: { username: null }, error: null }), {
+        signInWithPassword: async () => ({
+          data: { session: { user: { id: 'learner-1', email: 'ada@example.com', app_metadata: { provider: 'google' } } } },
+          error: null
+        })
+      })
+    });
+    expect(await empty.signIn('ada@example.com', 'secret')).toEqual({
+      ok: true,
+      profileRead: true,
+      identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'google' }
+    });
+  });
+
+  it('keeps a timed-out profile read out of the username step', async () => {
+    jest.useFakeTimers();
+    try {
+      const connector = openConnector({
+        client: profileClient(() => new Promise(() => {}), {
+          signInWithPassword: async () => ({
+            data: { session: { user: { id: 'learner-1', email: 'ada@example.com' } } },
+            error: null
+          })
+        })
+      });
+      const pending = connector.signIn('ada@example.com', 'secret');
+      await jest.advanceTimersByTimeAsync(5000);
+      await expect(pending).resolves.toEqual({
+        ok: true,
+        profileRead: false,
+        identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('saves and checks a username through the same RPCs', async () => {
+    const calls: unknown[] = [];
+    const connector = openConnector({
+      client: {
+        ...client({}),
+        rpc: async (fn: string, args: Record<string, unknown>) => {
+          calls.push([fn, args]);
+          if (fn === 'check_username') return { data: { status: 'available' }, error: null };
+          return { data: { ok: false, reason: 'taken' }, error: null };
+        }
+      }
+    });
+    expect(await connector.setUsername('Ada')).toEqual({ ok: false, reason: 'taken' });
+    expect(await connector.checkUsername('Ada')).toEqual({ status: 'available' });
+    expect(calls).toEqual([
+      ['set_username', { proposed: 'Ada' }],
+      ['check_username', { candidate: 'Ada' }]
+    ]);
+  });
+
+  it('calls rpc on the client, so a class method can read this', async () => {
+    const seen: string[] = [];
+    const base = client({});
+    class BoundClient {
+      rest = 'ready';
+      auth = base.auth;
+      functions = base.functions;
+      rpc(fn: string, args: Record<string, unknown>) {
+        if (this.rest !== 'ready') throw new TypeError('rpc lost its client');
+        seen.push(`${this.rest}:${fn}`);
+        if (fn === 'check_username') return Promise.resolve({ data: { status: 'available' }, error: null });
+        return Promise.resolve({ data: { ok: true, username: args.proposed }, error: null });
+      }
+    }
+    const connector = openConnector({ client: new BoundClient() });
+    expect(await connector.setUsername('Ada')).toEqual({ ok: true, username: 'Ada' });
+    expect(await connector.checkUsername('Ada')).toEqual({ status: 'available' });
+    expect(seen).toEqual(['ready:set_username', 'ready:check_username']);
+  });
 });
+
+function profileClient(
+  maybeSingle: () => Promise<{ data: unknown; error?: { message?: string } | null }>,
+  auth: Record<string, unknown>
+): AccountClient {
+  return {
+    ...client(auth),
+    from: () => ({
+      select: () => ({
+        eq: () => ({ maybeSingle })
+      })
+    })
+  };
+}
 
 function client(
   auth: Record<string, unknown>,

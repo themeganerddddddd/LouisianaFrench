@@ -1,3 +1,4 @@
+import type { SetUsernameResult } from '../identity/username';
 import { isValidUsernameFormat } from './usernameFormat';
 
 export type Provider = 'email' | 'google';
@@ -15,6 +16,15 @@ export type Submit =
 export type Deletion =
   | { phase: 'confirm'; typed: string; failure?: 'network' | 'unknown' }
   | { phase: 'deleting' };
+export type UsernameReply = 'available' | 'current' | 'taken' | 'invalid' | 'reserved' | 'error';
+export type UsernameAvailability =
+  | { status: 'unchecked' }
+  | { status: 'checking'; value: string }
+  | { status: 'settled'; value: string; reply: UsernameReply };
+export type UsernameSubmit =
+  | { status: 'editing' }
+  | { status: 'submitting' }
+  | { status: 'failed'; failure: 'taken' | 'reserved' | 'invalid' | 'network' | 'too_soon'; retryAt?: string };
 export type AccountView =
   | { kind: 'signIn'; email: string; password: string; submit: Submit }
   | { kind: 'create'; username: string; email: string; password: string; submit: Submit }
@@ -22,11 +32,12 @@ export type AccountView =
   | { kind: 'inbox'; reason: 'passwordReset' | 'confirmSignUp' }
   | { kind: 'setNewPassword'; password: string; submit: Submit }
   | { kind: 'passwordSaved' }
+  | { kind: 'username'; identity: Identity; draft: string; availability: UsernameAvailability; submit: UsernameSubmit; mode: 'first' | 'change' }
   | { kind: 'signedIn'; identity: Identity; signingOut: boolean }
   | { kind: 'deleteAccount'; identity: Identity; deletion: Deletion }
   | { kind: 'accountDeleted' };
 export type AuthResult =
-  | { ok: true; identity: Identity }
+  | { ok: true; identity: Identity; profileRead?: boolean }
   | { ok: true; pending: 'confirmSignUp' | 'passwordReset' }
   | { ok: false; failure: AuthFailure };
 export type DeleteResult = { ok: true } | { ok: false; failure: 'network' | 'notSignedIn' | 'unknown' };
@@ -39,6 +50,11 @@ export type AccountEvent =
   | { type: 'submitted' }
   | { type: 'providerChosen'; provider: 'google' }
   | { type: 'authSettled'; result: AuthResult }
+  | { type: 'usernameEdited'; value: string }
+  | { type: 'usernameChecked'; value: string; result: { status: UsernameReply } }
+  | { type: 'usernameSaved' }
+  | { type: 'usernameSkipped' }
+  | { type: 'usernameSettled'; result: SetUsernameResult }
   | { type: 'signOutRequested' } | { type: 'signedOut' }
   | { type: 'deleteRequested' } | { type: 'deleteCancelled' }
   | { type: 'deleteConfirmed' }
@@ -50,13 +66,16 @@ export type Effect =
   | { run: 'sendReset'; email: string }
   | { run: 'updatePassword'; password: string }
   | { run: 'signOut' }
-  | { run: 'deleteAccount' };
+  | { run: 'deleteAccount' }
+  | { run: 'checkUsername'; value: string }
+  | { run: 'setUsername'; name: string };
 
 export const DELETE_WORD = 'DELETE';
 const EDITING: Submit = { status: 'editing' };
 type FormView = Extract<AccountView, { kind: 'signIn' | 'create' | 'forgot' | 'setNewPassword' }>;
 type SignedInView = Extract<AccountView, { kind: 'signedIn' }>;
 type DeleteView = Extract<AccountView, { kind: 'deleteAccount' }>;
+type UsernameView = Extract<AccountView, { kind: 'username' }>;
 
 export function initialView(identity: Identity | null): AccountView {
   if (identity) return { kind: 'signedIn', identity, signingOut: false };
@@ -74,6 +93,7 @@ export function canDismiss(view: AccountView): boolean {
     case 'signIn':
     case 'create':
     case 'forgot': return !formBusy(view.submit);
+    case 'username': return view.submit.status !== 'submitting';
     case 'inbox': return true;
     case 'setNewPassword':
     case 'passwordSaved':
@@ -88,6 +108,7 @@ export function reduce(view: AccountView, event: AccountEvent): AccountView {
   }
   if (event.type === 'opened') {
     if (formStatus(view) === 'submitting' || formStatus(view) === 'oauth') return view;
+    if (view.kind === 'username' && view.submit.status === 'submitting') return view;
     return initialView(event.identity);
   }
   if (event.type === 'recoveryLinkOpened') return { kind: 'setNewPassword', password: '', submit: EDITING };
@@ -98,6 +119,8 @@ export function reduce(view: AccountView, event: AccountEvent): AccountView {
     case 'forgot':
     case 'setNewPassword':
       return reduceForm(view, event);
+    case 'username':
+      return reduceUsername(view, event);
     case 'inbox':
     case 'passwordSaved':
     case 'accountDeleted':
@@ -127,6 +150,11 @@ export function effectFor(prev: AccountView, next: AccountView): Effect | null {
   }
   if (next.kind === 'deleteAccount' && next.deletion.phase === 'deleting' && !(prev.kind === 'deleteAccount' && prev.deletion.phase === 'deleting')) {
     return { run: 'deleteAccount' };
+  }
+  const check = checking(next);
+  if (check && check !== checking(prev)) return { run: 'checkUsername', value: check };
+  if (next.kind === 'username' && next.submit.status === 'submitting' && !(prev.kind === 'username' && prev.submit.status === 'submitting')) {
+    return { run: 'setUsername', name: next.draft };
   }
   return null;
 }
@@ -218,6 +246,7 @@ function applyAuth(view: FormView, result: AuthResult): AccountView {
   if ('identity' in result) {
     if (view.kind === 'setNewPassword') return { kind: 'passwordSaved' };
     if (view.kind === 'signIn' || view.kind === 'create') {
+      if (result.identity.username === null && result.profileRead === true) return openUsername(result.identity);
       return { kind: 'signedIn', identity: result.identity, signingOut: false };
     }
     return view;
@@ -241,6 +270,66 @@ function blank(to: 'signIn' | 'create' | 'forgot'): AccountView {
   if (to === 'create') return { kind: 'create', username: '', email: '', password: '', submit: EDITING };
   if (to === 'forgot') return { kind: 'forgot', email: '', submit: EDITING };
   return { kind: 'signIn', email: '', password: '', submit: EDITING };
+}
+
+function openUsername(identity: Identity): UsernameView {
+  return {
+    kind: 'username', identity, draft: '', mode: 'first',
+    availability: { status: 'unchecked' }, submit: { status: 'editing' }
+  };
+}
+
+function reduceUsername(view: UsernameView, event: AccountEvent): AccountView {
+  if (event.type === 'usernameChecked') {
+    if (event.value !== view.draft) return view;
+    return { ...view, availability: { status: 'settled', value: event.value, reply: event.result.status } };
+  }
+  if (view.submit.status === 'submitting') {
+    return event.type === 'usernameSettled' ? settleUsername(view, event.result) : view;
+  }
+  if (event.type === 'usernameEdited') return editUsername(view, event.value);
+  if (event.type === 'usernameSaved') {
+    return saveBlocked(view) ? view : { ...view, submit: { status: 'submitting' } };
+  }
+  if (event.type === 'usernameSkipped') {
+    return { kind: 'signedIn', identity: { ...view.identity, username: null }, signingOut: false };
+  }
+  return view;
+}
+
+function editUsername(view: UsernameView, value: string): UsernameView {
+  const submit: UsernameSubmit = { status: 'editing' };
+  if (!isValidUsernameFormat(value)) return { ...view, draft: value, submit, availability: { status: 'unchecked' } };
+  return { ...view, draft: value, submit, availability: { status: 'checking', value } };
+}
+
+function saveBlocked(view: UsernameView): boolean {
+  if (!isValidUsernameFormat(view.draft)) return true;
+  const found = view.availability;
+  if (found.status !== 'settled' || found.value !== view.draft) return false;
+  return found.reply === 'taken' || found.reply === 'reserved' || found.reply === 'invalid';
+}
+
+function settleUsername(view: UsernameView, result: SetUsernameResult): AccountView {
+  if (result.ok) return { kind: 'signedIn', identity: { ...view.identity, username: result.username }, signingOut: false };
+  if (result.reason === 'taken' || result.reason === 'reserved' || result.reason === 'invalid') {
+    return {
+      ...view,
+      submit: { status: 'failed', failure: result.reason },
+      availability: { status: 'settled', value: view.draft, reply: result.reason }
+    };
+  }
+  if (result.reason === 'too_soon') return stopChecking(view, { status: 'failed', failure: 'too_soon', retryAt: result.retryAt });
+  return stopChecking(view, { status: 'failed', failure: 'network' });
+}
+
+function stopChecking(view: UsernameView, submit: UsernameSubmit): UsernameView {
+  if (view.availability.status !== 'checking') return { ...view, submit };
+  return { ...view, submit, availability: { status: 'settled', value: view.draft, reply: 'error' } };
+}
+
+function checking(view: AccountView): string | null {
+  return view.kind === 'username' && view.availability.status === 'checking' ? view.availability.value : null;
 }
 
 function formBusy(submit: Submit): boolean {

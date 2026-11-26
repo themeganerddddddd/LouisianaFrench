@@ -1,0 +1,49 @@
+FAIL src/account/__tests__/runAccountEffects.test.ts
+  ● runAccountEffect › drops the first Ada reply when the draft goes Ada, then Adam, then Ada
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  0
+    + Received  + 14
+
+    @@ -1,8 +1,22 @@
+      Array [
+        Object {
+          "result": Object {
+    +       "status": "taken",
+    +     },
+    +     "type": "usernameChecked",
+    +     "value": "Ada",
+    +   },
+    +   Object {
+    +     "result": Object {
+    +       "status": "available",
+    +     },
+    +     "type": "usernameChecked",
+    +     "value": "Adam",
+    +   },
+    +   Object {
+    +     "result": Object {
+            "status": "available",
+          },
+          "type": "usernameChecked",
+          "value": "Ada",
+        },
+
+      272 |       adaReplies[1]({ status: 'available' });
+      273 |       await Promise.all([first, middle, last]);
+    > 274 |       expect(events).toEqual([
+          |                      ^
+      275 |         { type: 'usernameChecked', value: 'Ada', result: { status: 'available' } }
+      276 |       ]);
+      277 |     } finally {
+
+      at Object.toEqual (src/account/__tests__/runAccountEffects.test.ts:274:22)
+      at asyncGeneratorStep (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 8 skipped, 9 total
+Snapshots:   0 total
+Time:        0.329 s, estimated 1 s
+Ran all test suites matching src/account/__tests__/runAccountEffects.test.ts with tests matching "Ada, then Adam, then Ada".

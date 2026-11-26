@@ -19,6 +19,8 @@ function connector(signIn: AccountConnector['signIn']): AccountConnector {
     signOut: async () => {},
     deleteAccount: async () => ({ ok: false, failure: 'unknown' }),
     consumeAuthUrl: async () => null,
+    setUsername: async () => ({ ok: false, reason: 'network' }),
+    checkUsername: async () => ({ status: 'error' }),
     beginAttempt: () => 1,
     noteSuccess: () => {},
     orphaned: () => true
@@ -48,6 +50,8 @@ describe('useAccountMachine', () => {
       signOut: async () => {},
       deleteAccount: async () => ({ ok: false as const, failure: 'unknown' as const }),
       consumeAuthUrl: async () => null,
+      setUsername: async () => ({ ok: false as const, reason: 'network' as const }),
+      checkUsername: async () => ({ status: 'error' as const }),
       beginAttempt: () => 1,
       noteSuccess: () => {},
       orphaned: () => true,

@@ -1,0 +1,42 @@
+C4b username step, red on 1111610. The failures are the missing behaviour.
+
+username step › opens the step after Google or email when the profile read is null
+Expected kind "username" (draft "", mode "first")
+Received kind "signedIn"
+
+username step › checks a valid draft and ignores a reply for an older value
+Expected effect {"run":"checkUsername","value":"Ada"}
+Received null
+
+username step › disables Save only for a bad format or a taken, reserved, or invalid reply
+Expected effect {"run":"setUsername","name":"Ada"}
+Received null
+
+username step › skips to signed in with no username and does not call the RPC
+Expected kind "signedIn"
+Received the username view unchanged (skip is ignored)
+
+username step › keeps a taken reply from Save as the 15C failure
+Expected effect {"run":"setUsername","name":"Ada"}
+Received null
+
+identity connector › tells subscribers the new username after setUsername succeeds
+Expected length 2 (sign-in, then the new name)
+Received length 1: [{"email":"ada@example.com","id":"learner-1","username":null}]
+
+runAccountEffect › waits 400ms after the last valid draft and drops the earlier check
+Expected calls ["Adam"]
+Received []
+
+account connector › offers the step only after a profile read that succeeded with no username
+Expected profileRead true
+Received the identity only (ok true, username null, no profileRead)
+
+account connector › keeps a timed-out profile read out of the username step
+Expected profileRead false
+Received the identity only (ok true, username null, no profileRead)
+
+account connector › saves and checks a username through the same RPCs
+TypeError: connector.setUsername is not a function
+
+Tests: 10 failed, 99 passed, 109 total in these four files.

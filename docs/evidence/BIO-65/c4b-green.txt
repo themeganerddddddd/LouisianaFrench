@@ -1,0 +1,5 @@
+C4b username step, green.
+
+A Google or email sign-in whose profile read succeeded with no username opens the step. A name, or a timed-out read, lands on signed in. A valid draft is checked 400ms after the last keystroke, and an older reply is dropped. Save stays enabled while that check is in flight or returns an error, and stays disabled for a bad format or a taken, reserved, or invalid reply. Skip returns to signed in with no username and does not call the RPC. A taken reply from Save is the 15C failure. setUsername tells subscribers only when it succeeds.
+
+Full suite: 830 passed, 839 total (9 skipped). Before: 819 passed, 828 total.
