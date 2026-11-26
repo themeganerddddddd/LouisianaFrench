@@ -210,6 +210,9 @@ function applyAuth(view: FormView, result: AuthResult): AccountView {
   if (!formBusy(view.submit)) return view;
   if (!result.ok) {
     if (result.failure === 'oauthCancelled') return { ...view, submit: EDITING };
+    if (result.failure === 'wrongCredentials' && view.kind === 'signIn') {
+      return { ...view, password: '', submit: { status: 'failed', failure: 'wrongCredentials' } };
+    }
     return { ...view, submit: { status: 'failed', failure: result.failure } };
   }
   if ('identity' in result) {

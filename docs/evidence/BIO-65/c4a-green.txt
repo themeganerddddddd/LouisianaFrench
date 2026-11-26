@@ -1,0 +1,17 @@
+C4a green, after the account modal.
+
+PASS src/components/account/__tests__/AccountModal.test.tsx
+AccountModal
+  clears the password and shows the error under it when the password is wrong
+  calls Google sign-in once when Continue with Google is tapped twice
+  blocks email submit, fields, and links while Google sign-in is in progress
+  returns to an idle form after Google is cancelled, and shows a failure above the button
+  hides Close whenever the sheet cannot be dismissed
+  paints Close and Sign in with the Language accent
+  asks for the email only, then shows the same inbox reply for every address
+
+PASS src/account/__tests__/accountMachine.test.ts
+sign in › settles a password sign-in to signed in, a failure, or a cancelled Google attempt
+A wrong password now leaves password "".
+
+Tests: 7 passed in AccountModal.test.tsx. The machine suite passed with them.

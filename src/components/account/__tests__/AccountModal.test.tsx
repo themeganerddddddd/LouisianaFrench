@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { useState } from 'react';
+import { act, useState } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
@@ -67,7 +67,10 @@ const inbox: AccountView = { kind: 'inbox', reason: 'passwordReset' };
 
 describe('AccountModal', () => {
   it('clears the password and shows the error under it when the password is wrong', async () => {
-    const signIn = jest.fn(async (): Promise<AuthResult> => ({ ok: false, failure: 'wrongCredentials' }));
+    const signIn = jest.fn(async (_email: string, _password: string): Promise<AuthResult> => ({
+      ok: false,
+      failure: 'wrongCredentials'
+    }));
     render(<Host account={connector(signIn)} />);
     fireEvent.changeText(screen.getByLabelText('Email'), 'ada@example.com');
     fireEvent.changeText(screen.getByLabelText('Password'), 'secret');
@@ -79,7 +82,7 @@ describe('AccountModal', () => {
   });
 
   it('calls Google sign-in once when Continue with Google is tapped twice', async () => {
-    const signInWithProvider = jest.fn((): Promise<AuthResult> => new Promise(() => {}));
+    const signInWithProvider = jest.fn((_provider: string): Promise<AuthResult> => new Promise(() => {}));
     const account = connector(async () => ({ ok: false, failure: 'unknown' }));
     account.signInWithProvider = signInWithProvider;
     render(<Host account={account} />);
@@ -109,21 +112,24 @@ describe('AccountModal', () => {
 
   it('returns to an idle form after Google is cancelled, and shows a failure above the button', async () => {
     let release: (result: AuthResult) => void = () => {};
-    const pending = new Promise<AuthResult>((resolve) => {
+    const account = connector(async () => ({ ok: false, failure: 'unknown' }));
+    account.signInWithProvider = () => new Promise<AuthResult>((resolve) => {
       release = resolve;
     });
-    const account = connector(async () => ({ ok: false, failure: 'unknown' }));
-    account.signInWithProvider = () => pending;
     render(<Host account={account} />);
     fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
-    await actRelease(release, { ok: false, failure: 'oauthCancelled' });
+    await act(async () => {
+      release({ ok: false, failure: 'oauthCancelled' });
+    });
     expect(screen.queryByText(GOOGLE_FAILED)).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByLabelText('Email').props.editable).toBe(true);
     expect(screen.getByTestId('account-close')).toBeOnTheScreen();
 
     fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
-    await actRelease(release, { ok: false, failure: 'oauthFailed' });
+    await act(async () => {
+      release({ ok: false, failure: 'oauthFailed' });
+    });
     expect(screen.getByText(GOOGLE_FAILED)).toBeOnTheScreen();
     expect(screen.getByLabelText('Email').props.editable).toBe(true);
     expect(screen.getByRole('button', { name: 'Sign in' }).props.accessibilityState.disabled).toBeFalsy();
@@ -180,10 +186,3 @@ describe('AccountModal', () => {
     expect(screen.queryByText('other@example.com')).toBeNull();
   });
 });
-
-async function actRelease(release: (result: AuthResult) => void, result: AuthResult) {
-  const { act } = await import('react');
-  await act(async () => {
-    release(result);
-  });
-}
