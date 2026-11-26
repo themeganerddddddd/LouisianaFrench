@@ -211,3 +211,172 @@ describe('AccountModal', () => {
     expect(screen.queryByText('other@example.com')).toBeNull();
   });
 });
+
+const HELPER = '3–20 characters. Start with a letter. Letters, numbers, and underscores.';
+const LENGTH = 'Use 3 to 20 characters.';
+const CHARSET = 'Use letters, numbers, or underscores, and start with a letter.';
+const TAKEN = 'That username is taken.';
+const RESERVED = "That username isn't available. Try another.";
+
+function username(over: Partial<Extract<AccountView, { kind: 'username' }>> = {}): AccountView {
+  return {
+    kind: 'username',
+    identity: { id: 'ada', email: 'ada@example.com', username: null, provider: 'google' },
+    draft: '',
+    availability: { status: 'unchecked' },
+    submit: { status: 'editing' },
+    mode: 'first',
+    ...over
+  };
+}
+
+function openUsername(view: AccountView, dispatch = jest.fn(), accent = accentFor('cajun')) {
+  render(<AccountModal visible view={view} dispatch={dispatch} accentColor={accent} onClose={() => {}} />);
+  return dispatch;
+}
+
+describe('username step view', () => {
+  it('starts empty for Google and email, with the rules and Save disabled', () => {
+    openUsername(username());
+    expect(screen.getByText('Choose a username')).toBeOnTheScreen();
+    expect(screen.getByText('Pick a username so people know you on the board. You can skip and set it later.')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Username').props.value).toBe('');
+    expect(screen.getByLabelText('Username').props.placeholder).toBe('your_username');
+    expect(screen.getByText(HELPER)).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState).toMatchObject({
+      disabled: true
+    });
+    expect(screen.getByRole('link', { name: 'Skip for now' })).toBeOnTheScreen();
+    expect(screen.queryByText('ada@example.com')).toBeNull();
+
+    screen.unmount();
+    openUsername(username({
+      identity: { id: 'ada', email: 'ada@example.com', username: null, provider: 'email' }
+    }));
+    expect(screen.getByLabelText('Username').props.value).toBe('');
+  });
+
+  it('shows Checking while a check is in flight and keeps Save enabled', () => {
+    openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'checking', value: 'Ada' }
+    }));
+    expect(screen.getByText('Checking…')).toBeOnTheScreen();
+    expect(screen.getByTestId('account-username-checking')).toBeOnTheScreen();
+    expect(screen.queryByText(HELPER)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('shows that the typed name is available', () => {
+    openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'settled', value: 'Ada', reply: 'available' }
+    }), jest.fn(), accentFor('kreole'));
+    expect(screen.getByText('Ada is available.')).toBeOnTheScreen();
+    expect(StyleSheet.flatten(screen.getByTestId('account-username-available').props.style).color).toBe('#08834C');
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('shows only the rules when the availability check cannot reach the server', () => {
+    openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'settled', value: 'Ada', reply: 'error' }
+    }));
+    expect(screen.getByText(HELPER)).toBeOnTheScreen();
+    expect(screen.queryByText('Checking…')).toBeNull();
+    expect(screen.queryByText('Ada is available.')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('shows a format error with an icon, and disables Save', () => {
+    openUsername(username({ draft: 'lo' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(LENGTH);
+    expect(screen.getByTestId('account-username-error-icon')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(true);
+
+    screen.unmount();
+    openUsername(username({ draft: 'a'.repeat(21) }));
+    expect(screen.getByRole('alert')).toHaveTextContent(LENGTH);
+
+    screen.unmount();
+    openUsername(username({ draft: 'logan!' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(CHARSET);
+    expect(screen.getByTestId('account-username-error-icon')).toBeOnTheScreen();
+
+    screen.unmount();
+    openUsername(username({ draft: '1ada' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(CHARSET);
+  });
+
+  it('shows taken, reserved, and invalid with an icon, and disables Save', () => {
+    openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'settled', value: 'Ada', reply: 'taken' },
+      submit: { status: 'failed', failure: 'taken' }
+    }));
+    expect(screen.getByRole('alert')).toHaveTextContent(TAKEN);
+    expect(screen.getByTestId('account-username-error-icon')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(true);
+
+    screen.unmount();
+    for (const reply of ['reserved', 'invalid'] as const) {
+      openUsername(username({
+        draft: 'Ada',
+        availability: { status: 'settled', value: 'Ada', reply }
+      }));
+      expect(screen.getByRole('alert')).toHaveTextContent(RESERVED);
+      expect(screen.getByTestId('account-username-error-icon')).toBeOnTheScreen();
+      screen.unmount();
+    }
+  });
+
+  it('keeps Save enabled when the reply is current', () => {
+    openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'settled', value: 'Ada', reply: 'current' }
+    }));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('dispatches Skip, Close, edit, and Save', () => {
+    const skipped = openUsername(username());
+    fireEvent.press(screen.getByRole('link', { name: 'Skip for now' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+    expect(skipped).toHaveBeenNthCalledWith(1, { type: 'usernameSkipped' });
+    expect(skipped).toHaveBeenNthCalledWith(2, { type: 'usernameSkipped' });
+    screen.unmount();
+
+    const edited = openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'settled', value: 'Ada', reply: 'available' }
+    }));
+    fireEvent.changeText(screen.getByLabelText('Username'), 'Adam');
+    fireEvent.press(screen.getByRole('button', { name: 'Save username' }));
+    expect(edited).toHaveBeenNthCalledWith(1, { type: 'usernameEdited', value: 'Adam' });
+    expect(edited).toHaveBeenNthCalledWith(2, { type: 'usernameSaved' });
+    screen.unmount();
+
+    const blocked = openUsername(username({ draft: 'lo' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Save username' }));
+    expect(blocked).not.toHaveBeenCalled();
+  });
+
+  it('locks the field, Skip, and Close while Save is running', () => {
+    openUsername(username({
+      draft: 'Ada',
+      availability: { status: 'settled', value: 'Ada', reply: 'available' },
+      submit: { status: 'submitting' }
+    }));
+    expect(screen.getByLabelText('Username').props.editable).toBe(false);
+    expect(screen.getByRole('link', { name: 'Skip for now' }).props.accessibilityState).toMatchObject({
+      disabled: true
+    });
+    expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState).toMatchObject({
+      busy: true,
+      disabled: true
+    });
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+  });
+});
