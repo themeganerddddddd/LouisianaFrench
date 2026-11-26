@@ -1,0 +1,103 @@
+FAIL src/components/account/__tests__/AccountModal.test.tsx
+  ● username step view › draws the checking ring inside the field and leaves the helper as plain text
+
+    Unable to find an element with testID: account-username-field
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<Text>[39m
+              [0mChoose a username[0m
+            [36m</Text>[39m
+            [36m<Text>[39m
+              [0mPick a username so people know you on the board. You can skip and set it later.[0m
+            [36m</Text>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mUsername[0m
+              [36m</Text>[39m
+              [36m<TextInput[39m
+                [33maccessibilityLabel[39m=[32m"Username"[39m
+                [33meditable[39m=[32m{true}[39m
+                [33mplaceholder[39m=[32m"your_username"[39m
+                [33mtestID[39m=[32m"account-username"[39m
+                [33mvalue[39m=[32m"Ada"[39m
+              [36m/>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<ActivityIndicator[39m
+                [33mtestID[39m=[32m"account-username-checking"[39m
+              [36m/>[39m
+              [36m<Text>[39m
+                [0mChecking…[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-save"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSave username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-skip"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSkip for now[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      273 |       availability: { status: 'checking', value: 'Ada' }
+      274 |     }), jest.fn(), accentFor('cajun'));
+    > 275 |     const field = screen.getByTestId('account-username-field');
+          |                          ^
+      276 |     const ring = within(field).getByTestId('account-username-checking');
+      277 |     expect(StyleSheet.flatten(ring.props.style)).toMatchObject({
+      278 |       width: 18,
+
+      at Object.getByTestId (src/components/account/__tests__/AccountModal.test.tsx:275:26)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 17 skipped, 18 total
+Snapshots:   0 total
+Time:        2.719 s
+Ran all test suites matching src/components/account/__tests__/AccountModal.test.tsx with tests matching "draws the checking ring".

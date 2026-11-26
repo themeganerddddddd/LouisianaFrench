@@ -1,5 +1,6 @@
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { usernameSaveBlocked, type AccountEvent, type AccountView } from '../../account/accountMachine';
 import { usernameFormatIssue } from '../../account/usernameFormat';
@@ -177,6 +178,19 @@ export function ForgotView({ view, dispatch, accentColor }: { view: Forgot; disp
   );
 }
 
+function CheckingRing({ color }: { color: string }) {
+  const turn = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const spin = Animated.loop(Animated.timing(turn, {
+      toValue: 1, duration: 900, easing: Easing.linear, useNativeDriver: true
+    }));
+    spin.start();
+    return () => spin.stop();
+  }, [turn]);
+  const rotate = turn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  return <Animated.View testID="account-username-checking" style={[styles.ring, { borderColor: color, transform: [{ rotate }] }]} />;
+}
+
 function GoogleError() {
   return <View style={styles.error}>
     <Feather accessible={false} color="#B91C1C" name="alert-circle" size={16} />
@@ -201,17 +215,17 @@ export function UsernameView({ view, dispatch, accentColor }: { view: Username; 
         autoCapitalize="none"
         error={message.kind === 'error' ? message.text : undefined}
         testID="account-username"
+        trailing={message.kind === 'checking' ? <CheckingRing color={accentColor} /> : undefined}
       />
       {message.kind === 'checking' ? (
-        <View style={styles.status}>
-          <ActivityIndicator color={accentColor} testID="account-username-checking" />
-          <Text>{message.text}</Text>
+        <View>
+          <Text accessibilityLiveRegion="polite" style={styles.checking}>{message.text}</Text>
         </View>
       ) : null}
       {message.kind === 'available' ? (
         <View style={styles.status}>
           <Feather accessible={false} color={accentColor} name="check" size={16} />
-          <Text style={[styles.available, { color: accentColor }]} testID="account-username-available">{message.text}</Text>
+          <Text accessibilityLiveRegion="polite" style={[styles.available, { color: accentColor }]} testID="account-username-available">{message.text}</Text>
         </View>
       ) : null}
       {message.kind === 'helper' ? <Text>{message.text}</Text> : null}
@@ -259,6 +273,10 @@ const styles = StyleSheet.create({
   locked: { opacity: 0.55 },
   error: { alignItems: 'center', flexDirection: 'row', gap: 6 },
   status: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+  checking: { color: '#64748B', fontSize: 13, fontWeight: '600' },
+  ring: {
+    borderRadius: 9, borderTopColor: 'transparent', borderWidth: 2, height: 18, width: 18
+  },
   available: { flexShrink: 1, fontSize: 13, fontWeight: '700' },
   errorText: { color: '#B91C1C', flexShrink: 1, fontSize: 13, fontWeight: '700' },
   title: { color: '#102A43', fontSize: 20, fontWeight: '800' }

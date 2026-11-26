@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Feather } from '@expo/vector-icons';
 import {
   ActivityIndicator,
@@ -31,6 +31,7 @@ type FieldProps = {
   autoCapitalize?: TextInputProps['autoCapitalize'];
   keyboardType?: TextInputProps['keyboardType'];
   editable?: boolean;
+  trailing?: ReactNode;
 };
 
 type ButtonProps = {
@@ -89,6 +90,8 @@ const labelStyle: TextStyle = { color: INK, fontSize: 12, fontWeight: '700', mar
 const errorText: TextStyle = { color: ERROR_TEXT, flexShrink: 1, fontSize: 13, fontWeight: '700' };
 const errorRow: ViewStyle = { alignItems: 'flex-start', flexDirection: 'row', gap: 6, marginTop: 6 };
 const title: TextStyle = { flexShrink: 1, fontSize: 15, fontWeight: '800' };
+const fieldWrap: ViewStyle = { justifyContent: 'center' };
+const trailingSlot: ViewStyle = { bottom: 0, justifyContent: 'center', position: 'absolute', top: 0 };
 const frame: ViewStyle = {
   alignItems: 'center',
   borderRadius: 12,
@@ -111,27 +114,33 @@ export function Field({
   secureTextEntry,
   autoCapitalize,
   keyboardType,
-  editable
+  editable,
+  trailing
 }: FieldProps) {
   const { focused, onFocus, onBlur } = useFocused();
+  const inputStyle = fieldStyle(focused, Boolean(error), accentColor);
+  const pad = typeof inputStyle.paddingHorizontal === 'number' ? inputStyle.paddingHorizontal : INSET;
   return (
     <View>
       <Text accessible={false} style={labelStyle}>{label}</Text>
-      <TextInput
-        accessibilityHint={error}
-        accessibilityLabel={label}
-        autoCapitalize={autoCapitalize}
-        editable={editable}
-        keyboardType={keyboardType}
-        onBlur={onBlur}
-        onChangeText={onChangeText}
-        onFocus={onFocus}
-        placeholder={placeholder}
-        secureTextEntry={secureTextEntry}
-        style={fieldStyle(focused, Boolean(error), accentColor)}
-        testID={testID}
-        value={value}
-      />
+      <View style={fieldWrap} testID={testID ? `${testID}-field` : undefined}>
+        <TextInput
+          accessibilityHint={error}
+          accessibilityLabel={label}
+          autoCapitalize={autoCapitalize}
+          editable={editable}
+          keyboardType={keyboardType}
+          onBlur={onBlur}
+          onChangeText={onChangeText}
+          onFocus={onFocus}
+          placeholder={placeholder}
+          secureTextEntry={secureTextEntry}
+          style={trailing ? [inputStyle, { paddingRight: pad + 26 }] : inputStyle}
+          testID={testID}
+          value={value}
+        />
+        {trailing ? <View pointerEvents="none" style={[trailingSlot, { right: pad }]}>{trailing}</View> : null}
+      </View>
       {error ? (
         <View style={errorRow}>
           <Feather
