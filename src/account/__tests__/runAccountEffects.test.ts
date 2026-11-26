@@ -219,6 +219,33 @@ describe('runAccountEffect', () => {
       { type: 'opened', identity: ada }
     ]);
   });
+
+  it('waits 400ms after the last valid draft and drops the earlier check', async () => {
+    jest.useFakeTimers();
+    try {
+      const calls: string[] = [];
+      const connector = port({
+        checkUsername: async (value: string) => {
+          calls.push(value);
+          return { status: 'available' };
+        }
+      });
+      const events: unknown[] = [];
+      const first = runAccountEffect({ run: 'checkUsername', value: 'Ada' }, connector, (event) => events.push(event));
+      await jest.advanceTimersByTimeAsync(200);
+      const second = runAccountEffect({ run: 'checkUsername', value: 'Adam' }, connector, (event) => events.push(event));
+      await jest.advanceTimersByTimeAsync(200);
+      expect(calls).toEqual([]);
+      await jest.advanceTimersByTimeAsync(200);
+      await Promise.all([first, second]);
+      expect(calls).toEqual(['Adam']);
+      expect(events).toEqual([
+        { type: 'usernameChecked', value: 'Adam', result: { status: 'available' } }
+      ]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
 
 function port(overrides: Partial<AccountConnector>): AccountConnector {

@@ -572,7 +572,80 @@ describe('account connector', () => {
     expect(await offline.deleteAccount()).toEqual({ ok: false, failure: 'network' });
     expect(scopes).toEqual([]);
   });
+
+  it('offers the step only after a profile read that succeeded with no username', async () => {
+    const empty = openConnector({
+      client: profileClient(async () => ({ data: { username: null }, error: null }), {
+        signInWithPassword: async () => ({
+          data: { session: { user: { id: 'learner-1', email: 'ada@example.com', app_metadata: { provider: 'google' } } } },
+          error: null
+        })
+      })
+    });
+    expect(await empty.signIn('ada@example.com', 'secret')).toEqual({
+      ok: true,
+      profileRead: true,
+      identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'google' }
+    });
+  });
+
+  it('keeps a timed-out profile read out of the username step', async () => {
+    jest.useFakeTimers();
+    try {
+      const connector = openConnector({
+        client: profileClient(() => new Promise(() => {}), {
+          signInWithPassword: async () => ({
+            data: { session: { user: { id: 'learner-1', email: 'ada@example.com' } } },
+            error: null
+          })
+        })
+      });
+      const pending = connector.signIn('ada@example.com', 'secret');
+      await jest.advanceTimersByTimeAsync(5000);
+      await expect(pending).resolves.toEqual({
+        ok: true,
+        profileRead: false,
+        identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('saves and checks a username through the same RPCs', async () => {
+    const calls: unknown[] = [];
+    const connector = openConnector({
+      client: {
+        ...client({}),
+        rpc: async (fn: string, args: Record<string, unknown>) => {
+          calls.push([fn, args]);
+          if (fn === 'check_username') return { data: { status: 'available' }, error: null };
+          return { data: { ok: false, reason: 'taken' }, error: null };
+        }
+      }
+    });
+    expect(await connector.setUsername('Ada')).toEqual({ ok: false, reason: 'taken' });
+    expect(await connector.checkUsername('Ada')).toEqual({ status: 'available' });
+    expect(calls).toEqual([
+      ['set_username', { proposed: 'Ada' }],
+      ['check_username', { candidate: 'Ada' }]
+    ]);
+  });
 });
+
+function profileClient(
+  maybeSingle: () => Promise<unknown>,
+  auth: Record<string, unknown>
+): AccountClient {
+  return {
+    ...client(auth),
+    from: () => ({
+      select: () => ({
+        eq: () => ({ maybeSingle })
+      })
+    })
+  };
+}
 
 function client(
   auth: Record<string, unknown>,

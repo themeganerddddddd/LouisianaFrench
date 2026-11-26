@@ -541,6 +541,47 @@ describe('identity connector', () => {
     });
   });
 
+  it('tells subscribers the new username after setUsername succeeds, and stays quiet when it fails', async () => {
+    let outcome = { data: { ok: true, username: 'Céline' }, error: null };
+    const client = {
+      auth: {
+        async getSession() {
+          return { data: { session: null } };
+        },
+        async signInWithPassword() {
+          return {
+            data: {
+              session: {
+                access_token: 'access-token-value',
+                user: { id: 'learner-1', email: 'ada@example.com' }
+              }
+            },
+            error: null
+          };
+        }
+      },
+      async rpc() {
+        return outcome;
+      }
+    };
+    const connector = createIdentityConnector({ client });
+    const seen = [];
+    connector.subscribe((identity) => seen.push(identity));
+    await connector.signInWithPassword({ email: 'ada@example.com', password: 'secret' });
+    const afterSignIn = seen.length;
+    await connector.setUsername('Céline');
+    expect(seen).toHaveLength(afterSignIn + 1);
+    expect(seen.at(-1)).toEqual({
+      id: 'learner-1',
+      email: 'ada@example.com',
+      username: 'Céline'
+    });
+    outcome = { data: { ok: false, reason: 'taken' }, error: null };
+    await connector.setUsername('Taken');
+    expect(seen).toHaveLength(afterSignIn + 1);
+    expect(seen.at(-1).username).toBe('Céline');
+  });
+
   it('calls set_username and check_username on the client', async () => {
     const calls = [];
     const client = {
