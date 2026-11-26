@@ -5,11 +5,34 @@ import { handleDeleteAccount, type DeleteAccountDeps } from './handler.ts'
 const URL = 'https://example.test'
 const KEY = 'test-key'
 
-Deno.test('getUser 404 is already gone', async () => {
-  assert.deepEqual(await loadUser(URL, KEY, 'jwt', statusFetch(404)), { kind: 'absent' })
-  const response = await handleDeleteAccount(post('jwt'), depsFor(404))
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ok: true })
+Deno.test('a deleted user retry is ok and other auth errors stay notSignedIn', async () => {
+  const gone = await handleDeleteAccount(post('jwt'), depsWith(jsonFetch(403, {
+    code: 403,
+    error_code: 'user_not_found',
+    msg: 'User from sub claim in JWT does not exist'
+  })))
+  assert.equal(gone.status, 200)
+  assert.deepEqual(await gone.json(), { ok: true })
+
+  const session = await handleDeleteAccount(post('jwt'), depsWith(jsonFetch(403, {
+    code: 403,
+    error_code: 'session_not_found',
+    msg: 'User from sub claim in JWT does not exist'
+  })))
+  assert.equal(session.status, 401)
+  assert.deepEqual(await session.json(), { ok: false, failure: 'notSignedIn' })
+
+  const empty = await handleDeleteAccount(post('jwt'), depsWith(async () => new Response(null, { status: 403 })))
+  assert.equal(empty.status, 401)
+  assert.deepEqual(await empty.json(), { ok: false, failure: 'notSignedIn' })
+
+  const broken = await handleDeleteAccount(post('jwt'), depsWith(async () => new Response('{', { status: 403 })))
+  assert.equal(broken.status, 401)
+  assert.deepEqual(await broken.json(), { ok: false, failure: 'notSignedIn' })
+
+  const unauthorized = await handleDeleteAccount(post('jwt'), depsWith(async () => new Response(null, { status: 401 })))
+  assert.equal(unauthorized.status, 401)
+  assert.deepEqual(await unauthorized.json(), { ok: false, failure: 'notSignedIn' })
 })
 
 Deno.test('getUser 401 and 403 are notSignedIn', async () => {
@@ -57,6 +80,13 @@ function post(token: string): Request {
 
 function statusFetch(status: number): typeof fetch {
   return async () => new Response(null, { status })
+}
+
+function jsonFetch(status: number, body: unknown): typeof fetch {
+  return async () => new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' }
+  })
 }
 
 function depsFor(status: number): DeleteAccountDeps {
