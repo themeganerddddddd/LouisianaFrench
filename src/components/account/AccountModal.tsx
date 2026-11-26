@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 
 import { canDismiss, type AccountEvent, type AccountView } from '../../account/accountMachine';
-import { ForgotView, InboxView, SignInView } from './accountViews';
+import { ForgotView, InboxView, SignInView, UsernameView } from './accountViews';
 
 type Props = {
   visible: boolean;
@@ -14,7 +14,9 @@ type Props = {
 export function AccountModal({ visible, view, dispatch, onClose, accentColor }: Props) {
   const dismiss = canDismiss(view);
   function close() {
-    if (dismiss) onClose();
+    if (!dismiss) return;
+    if (view.kind === 'username') dispatch({ type: 'usernameSkipped' });
+    onClose();
   }
 
   return (
@@ -39,6 +41,9 @@ export function AccountModal({ visible, view, dispatch, onClose, accentColor }: 
             <ForgotView view={view} dispatch={dispatch} accentColor={accentColor} />
           ) : null}
           {view.kind === 'inbox' ? <InboxView dispatch={dispatch} accentColor={accentColor} /> : null}
+          {view.kind === 'username' ? (
+            <UsernameView view={view} dispatch={dispatch} accentColor={accentColor} />
+          ) : null}
         </Pressable>
       </Pressable>
     </Modal>

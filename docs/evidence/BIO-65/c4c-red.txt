@@ -1,0 +1,367 @@
+FAIL src/account/__tests__/accountMachine.test.ts
+  ● username step › leaves the username step when the session signs out
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  3
+    + Received  + 12
+
+      Object {
+    -   "email": "",
+    -   "kind": "signIn",
+    -   "password": "",
+    +   "availability": Object {
+    +     "status": "unchecked",
+    +   },
+    +   "draft": "",
+    +   "identity": Object {
+    +     "email": "ada@example.com",
+    +     "id": "learner-1",
+    +     "provider": "google",
+    +     "username": null,
+    +   },
+    +   "kind": "username",
+    +   "mode": "first",
+        "submit": Object {
+          "status": "editing",
+        },
+      }
+
+      756 |   it('leaves the username step when the session signs out', () => {
+      757 |     const guest = { kind: 'signIn', email: '', password: '', submit: { status: 'editing' } };
+    > 758 |     expect(reduce(blankStep(), { type: 'signedOut' })).toEqual(guest);
+          |                                                        ^
+      759 |     const saving = { ...blankStep(), draft: 'Ada', submit: { status: 'submitting' as const } };
+      760 |     expect(reduce(saving, { type: 'signedOut' })).toEqual(guest);
+      761 |   });
+
+      at Object.toEqual (src/account/__tests__/accountMachine.test.ts:758:56)
+
+FAIL src/components/account/__tests__/AccountModal.test.tsx
+  ● username step view › starts empty for Google and email, with the rules and Save disabled
+
+    Unable to find an element with text: Choose a username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      239 |   it('starts empty for Google and email, with the rules and Save disabled', () => {
+      240 |     openUsername(username());
+    > 241 |     expect(screen.getByText('Choose a username')).toBeOnTheScreen();
+          |                   ^
+      242 |     expect(screen.getByText('Pick a username so people know you on the board. You can skip and set it later.')).toBeOnTheScreen();
+      243 |     expect(screen.getByLabelText('Username').props.value).toBe('');
+      244 |     expect(screen.getByLabelText('Username').props.placeholder).toBe('your_username');
+
+      at Object.getByText (src/components/account/__tests__/AccountModal.test.tsx:241:19)
+
+  ● username step view › shows Checking while a check is in flight and keeps Save enabled
+
+    Unable to find an element with text: Checking…
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      262 |       availability: { status: 'checking', value: 'Ada' }
+      263 |     }));
+    > 264 |     expect(screen.getByText('Checking…')).toBeOnTheScreen();
+          |                   ^
+      265 |     expect(screen.getByTestId('account-username-checking')).toBeOnTheScreen();
+      266 |     expect(screen.queryByText(HELPER)).toBeNull();
+      267 |     expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+
+      at Object.getByText (src/components/account/__tests__/AccountModal.test.tsx:264:19)
+
+  ● username step view › shows that the typed name is available
+
+    Unable to find an element with text: Ada is available.
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      273 |       availability: { status: 'settled', value: 'Ada', reply: 'available' }
+      274 |     }), jest.fn(), accentFor('kreole'));
+    > 275 |     expect(screen.getByText('Ada is available.')).toBeOnTheScreen();
+          |                   ^
+      276 |     expect(StyleSheet.flatten(screen.getByTestId('account-username-available').props.style).color).toBe('#08834C');
+      277 |     expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+      278 |   });
+
+      at Object.getByText (src/components/account/__tests__/AccountModal.test.tsx:275:19)
+
+  ● username step view › shows only the rules when the availability check cannot reach the server
+
+    Unable to find an element with text: 3–20 characters. Start with a letter. Letters, numbers, and underscores.
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      283 |       availability: { status: 'settled', value: 'Ada', reply: 'error' }
+      284 |     }));
+    > 285 |     expect(screen.getByText(HELPER)).toBeOnTheScreen();
+          |                   ^
+      286 |     expect(screen.queryByText('Checking…')).toBeNull();
+      287 |     expect(screen.queryByText('Ada is available.')).toBeNull();
+      288 |     expect(screen.queryByRole('alert')).toBeNull();
+
+      at Object.getByText (src/components/account/__tests__/AccountModal.test.tsx:285:19)
+
+  ● username step view › shows a format error with an icon, and disables Save
+
+    Unable to find an element with role: alert
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      292 |   it('shows a format error with an icon, and disables Save', () => {
+      293 |     openUsername(username({ draft: 'lo' }));
+    > 294 |     expect(screen.getByRole('alert')).toHaveTextContent(LENGTH);
+          |                   ^
+      295 |     expect(screen.getByTestId('account-username-error-icon')).toBeOnTheScreen();
+      296 |     expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(true);
+      297 |
+
+      at Object.getByRole (src/components/account/__tests__/AccountModal.test.tsx:294:19)
+
+  ● username step view › shows taken, reserved, and invalid with an icon, and disables Save
+
+    Unable to find an element with role: alert
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      316 |       submit: { status: 'failed', failure: 'taken' }
+      317 |     }));
+    > 318 |     expect(screen.getByRole('alert')).toHaveTextContent(TAKEN);
+          |                   ^
+      319 |     expect(screen.getByTestId('account-username-error-icon')).toBeOnTheScreen();
+      320 |     expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(true);
+      321 |
+
+      at Object.getByRole (src/components/account/__tests__/AccountModal.test.tsx:318:19)
+
+  ● username step view › keeps Save enabled when the reply is current
+
+    Unable to find an element with role: button, name: Save username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      338 |     }));
+      339 |     expect(screen.queryByRole('alert')).toBeNull();
+    > 340 |     expect(screen.getByRole('button', { name: 'Save username' }).props.accessibilityState.disabled).toBe(false);
+          |                   ^
+      341 |   });
+      342 |
+      343 |   it('dispatches Skip, Close, edit, and Save', () => {
+
+      at Object.getByRole (src/components/account/__tests__/AccountModal.test.tsx:340:19)
+
+  ● username step view › dispatches Skip, Close, edit, and Save
+
+    Unable to find an element with role: link, name: Skip for now
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      343 |   it('dispatches Skip, Close, edit, and Save', () => {
+      344 |     const skipped = openUsername(username());
+    > 345 |     fireEvent.press(screen.getByRole('link', { name: 'Skip for now' }));
+          |                            ^
+      346 |     fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+      347 |     expect(skipped).toHaveBeenNthCalledWith(1, { type: 'usernameSkipped' });
+      348 |     expect(skipped).toHaveBeenNthCalledWith(2, { type: 'usernameSkipped' });
+
+      at Object.getByRole (src/components/account/__tests__/AccountModal.test.tsx:345:28)
+
+  ● username step view › locks the field, Skip, and Close while Save is running
+
+    Unable to find an element with accessibility label: Username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m/>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      370 |       submit: { status: 'submitting' }
+      371 |     }));
+    > 372 |     expect(screen.getByLabelText('Username').props.editable).toBe(false);
+          |                   ^
+      373 |     expect(screen.getByRole('link', { name: 'Skip for now' }).props.accessibilityState).toMatchObject({
+      374 |       disabled: true
+      375 |     });
+
+      at Object.getByLabelText (src/components/account/__tests__/AccountModal.test.tsx:372:19)
+
+Test Suites: 2 failed, 2 total
+Tests:       10 failed, 65 skipped, 75 total
+Snapshots:   0 total
+Time:        0.741 s, estimated 7 s
+Ran all test suites matching src/components/account/__tests__/AccountModal.test.tsx|src/account/__tests__/accountMachine.test.ts with tests matching "username step view|leaves the username step".

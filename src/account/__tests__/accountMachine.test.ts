@@ -752,4 +752,11 @@ describe('username step', () => {
     const oauth = reduce(signIn(), { type: 'providerChosen', provider: 'google' });
     expect(reduce(oauth, { type: 'authSettled', result: { ok: true, identity: unnamed } }).kind).toBe('signedIn');
   });
+
+  it('leaves the username step when the session signs out', () => {
+    const guest = { kind: 'signIn', email: '', password: '', submit: { status: 'editing' } };
+    expect(reduce(blankStep(), { type: 'signedOut' })).toEqual(guest);
+    const saving = { ...blankStep(), draft: 'Ada', submit: { status: 'submitting' as const } };
+    expect(reduce(saving, { type: 'signedOut' })).toEqual(guest);
+  });
 });

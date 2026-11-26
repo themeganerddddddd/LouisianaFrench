@@ -25,6 +25,7 @@ type FieldProps = {
   onChangeText: (text: string) => void;
   accentColor: string;
   error?: string;
+  placeholder?: string;
   testID?: string;
   secureTextEntry?: boolean;
   autoCapitalize?: TextInputProps['autoCapitalize'];
@@ -105,6 +106,7 @@ export function Field({
   onChangeText,
   accentColor,
   error,
+  placeholder,
   testID,
   secureTextEntry,
   autoCapitalize,
@@ -124,6 +126,7 @@ export function Field({
         onBlur={onBlur}
         onChangeText={onChangeText}
         onFocus={onFocus}
+        placeholder={placeholder}
         secureTextEntry={secureTextEntry}
         style={fieldStyle(focused, Boolean(error), accentColor)}
         testID={testID}

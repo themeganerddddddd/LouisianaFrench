@@ -1,7 +1,8 @@
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { AccountEvent, AccountView } from '../../account/accountMachine';
+import { usernameSaveBlocked, type AccountEvent, type AccountView } from '../../account/accountMachine';
+import { usernameFormatIssue } from '../../account/usernameFormat';
 import { Field, LinkButton, PrimaryButton } from './formControls';
 // English placeholders. Louisiana French and Kouri-Vini are TBD-copy.
 const SIGN_IN = { // TBD-copy
@@ -32,9 +33,39 @@ const INBOX = { // TBD-copy
   back: 'Sign in'
 };
 
+const USERNAME = { // TBD-copy
+  title: 'Choose a username',
+  body: 'Pick a username so people know you on the board. You can skip and set it later.',
+  label: 'Username',
+  placeholder: 'your_username',
+  helper: '3–20 characters. Start with a letter. Letters, numbers, and underscores.',
+  checking: 'Checking…',
+  length: 'Use 3 to 20 characters.',
+  charset: 'Use letters, numbers, or underscores, and start with a letter.',
+  taken: 'That username is taken.',
+  reserved: "That username isn't available. Try another.",
+  skip: 'Skip for now',
+  save: 'Save username'
+};
+
 type Dispatch = (event: AccountEvent) => void;
 type SignIn = Extract<AccountView, { kind: 'signIn' }>;
 type Forgot = Extract<AccountView, { kind: 'forgot' }>;
+type Username = Extract<AccountView, { kind: 'username' }>;
+
+function usernameMessage(view: Username): { kind: 'error' | 'checking' | 'available' | 'helper'; text: string } {
+  const issue = usernameFormatIssue(view.draft);
+  if (issue === 'length') return { kind: 'error', text: USERNAME.length };
+  if (issue === 'charset') return { kind: 'error', text: USERNAME.charset };
+  const found = view.availability;
+  if (found.status === 'checking' && found.value === view.draft) return { kind: 'checking', text: USERNAME.checking };
+  if (found.status === 'settled' && found.value === view.draft) {
+    if (found.reply === 'available') return { kind: 'available', text: `${view.draft} is available.` };
+    if (found.reply === 'taken') return { kind: 'error', text: USERNAME.taken };
+    if (found.reply === 'reserved' || found.reply === 'invalid') return { kind: 'error', text: USERNAME.reserved };
+  }
+  return { kind: 'helper', text: USERNAME.helper };
+}
 
 function busy(status: string): boolean {
   return status === 'submitting' || status === 'oauth';
@@ -153,6 +184,56 @@ function GoogleError() {
   </View>;
 }
 
+export function UsernameView({ view, dispatch, accentColor }: { view: Username; dispatch: Dispatch; accentColor: string }) {
+  const locked = view.submit.status === 'submitting';
+  const message = usernameMessage(view);
+  return (
+    <View style={styles.stack}>
+      <Text style={styles.title}>{USERNAME.title}</Text>
+      <Text>{USERNAME.body}</Text>
+      <Field
+        label={USERNAME.label}
+        value={view.draft}
+        placeholder={USERNAME.placeholder}
+        onChangeText={(value) => dispatch({ type: 'usernameEdited', value })}
+        accentColor={accentColor}
+        editable={!locked}
+        autoCapitalize="none"
+        error={message.kind === 'error' ? message.text : undefined}
+        testID="account-username"
+      />
+      {message.kind === 'checking' ? (
+        <View style={styles.status}>
+          <ActivityIndicator color={accentColor} testID="account-username-checking" />
+          <Text>{message.text}</Text>
+        </View>
+      ) : null}
+      {message.kind === 'available' ? (
+        <View style={styles.status}>
+          <Feather accessible={false} color={accentColor} name="check" size={16} />
+          <Text style={[styles.available, { color: accentColor }]} testID="account-username-available">{message.text}</Text>
+        </View>
+      ) : null}
+      {message.kind === 'helper' ? <Text>{message.text}</Text> : null}
+      <PrimaryButton
+        label={USERNAME.save}
+        onPress={() => dispatch({ type: 'usernameSaved' })}
+        accentColor={accentColor}
+        disabled={usernameSaveBlocked(view)}
+        loading={locked}
+        testID="account-username-save"
+      />
+      <LinkButton
+        label={USERNAME.skip}
+        onPress={() => dispatch({ type: 'usernameSkipped' })}
+        accentColor={accentColor}
+        disabled={locked}
+        testID="account-username-skip"
+      />
+    </View>
+  );
+}
+
 export function InboxView({ dispatch, accentColor }: { dispatch: Dispatch; accentColor: string }) {
   return (
     <View style={styles.stack}>
@@ -177,6 +258,8 @@ const styles = StyleSheet.create({
   googleLabel: { color: '#102A43', fontSize: 15, fontWeight: '800' },
   locked: { opacity: 0.55 },
   error: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+  status: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+  available: { flexShrink: 1, fontSize: 13, fontWeight: '700' },
   errorText: { color: '#B91C1C', flexShrink: 1, fontSize: 13, fontWeight: '700' },
   title: { color: '#102A43', fontSize: 20, fontWeight: '800' }
 });
