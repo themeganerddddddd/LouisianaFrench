@@ -1,0 +1,90 @@
+Dev read-only gate. apply was not run. Prod was not used.
+head 3e5aeba2e77e4797356886b7b7cb47bd1a5daea7
+ref isezzedrbdomyhfuqjak
+port 5432
+commands:
+node scripts/db/migrate.mjs status --env dev
+node scripts/db/migrate.mjs plan --env dev
+node scripts/db/migrate.mjs verify --env dev
+
+=== status ===
+started 2026-11-25T18:05:02-06:00
+finished 2026-11-25T18:05:03-06:00
+exit 0
+timed_out 0
+ps_samples 11
+ps_samples_seeing_db_client 11
+ps_password_hits 0
+output:
+env dev
+ref isezzedrbdomyhfuqjak
+host [redacted]
+port 5432
+history ok
+
+=== plan ===
+started 2026-11-25T18:05:03-06:00
+finished 2026-11-25T18:05:06-06:00
+exit 0
+timed_out 0
+ps_samples 40
+ps_samples_seeing_db_client 39
+ps_password_hits 0
+output:
+env dev
+ref isezzedrbdomyhfuqjak
+host [redacted]
+port 5432
+history ok
+→ npx --yes supabase@3.3.0 --yes --agent=no db push --skip-vault --workdir=. --remote=[redacted] --dry-run
+Remote database is up to date.
+Target: custom Postgres ([redacted]:5432)
+DRY RUN: migrations will *not* be pushed to the database.
+A new version of Supabase CLI is available: v3.4.0 (currently installed v3.3.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+
+=== verify ===
+started 2026-11-25T18:05:06-06:00
+finished 2026-11-25T18:05:09-06:00
+exit 0
+timed_out 0
+ps_samples 34
+ps_samples_seeing_db_client 34
+ps_password_hits 0
+output:
+env dev
+ref isezzedrbdomyhfuqjak
+host [redacted]
+port 5432
+→ psql [redacted] -X -v ON_ERROR_STOP=1 -c set default_transaction_read_only = on -f scripts/db/verify/20261124032500.sql
+SET
+SET
+DO
+ schema_name | table_name |     policy_name     | command | using_expression  | check_expression 
+-------------+------------+---------------------+---------+-------------------+------------------
+ public      | profiles   | profiles_select_own | r       | (id = auth.uid()) | 
+(1 row)
+
+→ psql [redacted] -X -v ON_ERROR_STOP=1 -c set default_transaction_read_only = on -f scripts/db/verify/20261124120000.sql
+SET
+SET
+DO
+
+=== counts before redaction ===
+password_stored 0
+password_decoded 0
+password_encoded 0
+pooler_host 7
+postgresql_scheme 3
+ps_password_hits_total 0
+
+=== counts in this file ===
+password_stored 0
+password_decoded 0
+password_encoded 0
+pooler_host 0
+postgresql_scheme 0
+
+Earlier evidence at the parent commit:
+https://raw.githubusercontent.com/themeganerddddddd/LouisianaFrench/3e5aeba2e77e4797356886b7b7cb47bd1a5daea7/docs/evidence/DB-SCRIPT/dev-negative.txt
+https://raw.githubusercontent.com/themeganerddddddd/LouisianaFrench/3e5aeba2e77e4797356886b7b7cb47bd1a5daea7/docs/evidence/DB-SCRIPT/red-decode.txt
