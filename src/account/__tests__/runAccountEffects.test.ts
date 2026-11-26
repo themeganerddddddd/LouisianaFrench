@@ -246,6 +246,38 @@ describe('runAccountEffect', () => {
       jest.useRealTimers();
     }
   });
+
+  it('drops the first Ada reply when the draft goes Ada, then Adam, then Ada', async () => {
+    jest.useFakeTimers();
+    try {
+      const adaReplies: Array<(value: { status: 'taken' | 'available' }) => void> = [];
+      const adamReplies: Array<(value: { status: 'available' }) => void> = [];
+      const connector = port({
+        checkUsername: (value: string) => new Promise((resolve) => {
+          if (value === 'Ada') adaReplies.push(resolve);
+          else adamReplies.push(resolve);
+        })
+      });
+      const events: unknown[] = [];
+      const first = runAccountEffect({ run: 'checkUsername', value: 'Ada' }, connector, (event) => events.push(event));
+      await jest.advanceTimersByTimeAsync(400);
+      const middle = runAccountEffect({ run: 'checkUsername', value: 'Adam' }, connector, (event) => events.push(event));
+      await jest.advanceTimersByTimeAsync(400);
+      const last = runAccountEffect({ run: 'checkUsername', value: 'Ada' }, connector, (event) => events.push(event));
+      await jest.advanceTimersByTimeAsync(400);
+      expect(adaReplies).toHaveLength(2);
+      expect(adamReplies).toHaveLength(1);
+      adaReplies[0]({ status: 'taken' });
+      adamReplies[0]({ status: 'available' });
+      adaReplies[1]({ status: 'available' });
+      await Promise.all([first, middle, last]);
+      expect(events).toEqual([
+        { type: 'usernameChecked', value: 'Ada', result: { status: 'available' } }
+      ]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
 
 function port(overrides: Partial<AccountConnector>): AccountConnector {

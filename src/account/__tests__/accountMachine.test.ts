@@ -717,4 +717,37 @@ describe('username step', () => {
     expect(canDismiss(saving.next)).toBe(false);
     expect(canDismiss(ready)).toBe(true);
   });
+
+  it('does not stay on Checking after a network or too_soon save', () => {
+    const saving: AccountView = {
+      ...blankStep(),
+      draft: 'Ada',
+      availability: { status: 'checking', value: 'Ada' },
+      submit: { status: 'submitting' }
+    };
+    expect(reduce(saving, { type: 'usernameSettled', result: { ok: false, reason: 'network' } })).toMatchObject({
+      submit: { status: 'failed', failure: 'network' },
+      availability: { status: 'settled', value: 'Ada', reply: 'error' }
+    });
+    expect(reduce(saving, {
+      type: 'usernameSettled',
+      result: { ok: false, reason: 'too_soon', retryAt: '2026-12-24T00:00:00.000Z' }
+    })).toMatchObject({
+      submit: { status: 'failed', failure: 'too_soon', retryAt: '2026-12-24T00:00:00.000Z' },
+      availability: { status: 'settled', value: 'Ada', reply: 'error' }
+    });
+    expect(reduce(saving, {
+      type: 'usernameChecked',
+      value: 'Ada',
+      result: { status: 'available' }
+    })).toMatchObject({
+      submit: { status: 'submitting' },
+      availability: { status: 'settled', value: 'Ada', reply: 'available' }
+    });
+  });
+
+  it('stays signed in when a null username has no profileRead flag', () => {
+    const oauth = reduce(signIn(), { type: 'providerChosen', provider: 'google' });
+    expect(reduce(oauth, { type: 'authSettled', result: { ok: true, identity: unnamed } }).kind).toBe('signedIn');
+  });
 });

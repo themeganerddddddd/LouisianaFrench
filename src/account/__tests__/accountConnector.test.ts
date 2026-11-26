@@ -633,6 +633,26 @@ describe('account connector', () => {
       ['check_username', { candidate: 'Ada' }]
     ]);
   });
+
+  it('calls rpc on the client, so a class method can read this', async () => {
+    const seen: string[] = [];
+    const base = client({});
+    class BoundClient {
+      rest = 'ready';
+      auth = base.auth;
+      functions = base.functions;
+      rpc(fn: string, args: Record<string, unknown>) {
+        if (this.rest !== 'ready') throw new TypeError('rpc lost its client');
+        seen.push(`${this.rest}:${fn}`);
+        if (fn === 'check_username') return Promise.resolve({ data: { status: 'available' }, error: null });
+        return Promise.resolve({ data: { ok: true, username: args.proposed }, error: null });
+      }
+    }
+    const connector = openConnector({ client: new BoundClient() });
+    expect(await connector.setUsername('Ada')).toEqual({ ok: true, username: 'Ada' });
+    expect(await connector.checkUsername('Ada')).toEqual({ status: 'available' });
+    expect(seen).toEqual(['ready:set_username', 'ready:check_username']);
+  });
 });
 
 function profileClient(

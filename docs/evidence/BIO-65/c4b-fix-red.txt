@@ -1,0 +1,79 @@
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › calls rpc on the client, so a class method can read this
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+    -   "ok": true,
+    -   "username": "Ada",
+    +   "ok": false,
+    +   "reason": "network",
+      }
+
+      650 |     }
+      651 |     const connector = openConnector({ client: new BoundClient() });
+    > 652 |     expect(await connector.setUsername('Ada')).toEqual({ ok: true, username: 'Ada' });
+          |                                                ^
+      653 |     expect(await connector.checkUsername('Ada')).toEqual({ status: 'available' });
+      654 |     expect(seen).toEqual(['ready:set_username', 'ready:check_username']);
+      655 |   });
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:652:48)
+      at asyncGeneratorStep (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL src/account/__tests__/accountMachine.test.ts
+  ● username step › does not stay on Checking after a network or too_soon save
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 2
+    + Received  + 1
+
+    @@ -1,9 +1,8 @@
+      Object {
+        "availability": Object {
+    -     "reply": "error",
+    -     "status": "settled",
+    +     "status": "checking",
+          "value": "Ada",
+        },
+        "submit": Object {
+          "failure": "network",
+          "status": "failed",
+
+      726 |       submit: { status: 'submitting' }
+      727 |     };
+    > 728 |     expect(reduce(saving, { type: 'usernameSettled', result: { ok: false, reason: 'network' } })).toMatchObject({
+          |                                                                                                   ^
+      729 |       submit: { status: 'failed', failure: 'network' },
+      730 |       availability: { status: 'settled', value: 'Ada', reply: 'error' }
+      731 |     });
+
+      at Object.toMatchObject (src/account/__tests__/accountMachine.test.ts:728:99)
+
+  ● username step › stays signed in when a null username has no profileRead flag
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "signedIn"
+    Received: "username"
+
+      749 |   it('stays signed in when a null username has no profileRead flag', () => {
+      750 |     const oauth = reduce(signIn(), { type: 'providerChosen', provider: 'google' });
+    > 751 |     expect(reduce(oauth, { type: 'authSettled', result: { ok: true, identity: unnamed } }).kind).toBe('signedIn');
+          |                                                                                                  ^
+      752 |   });
+      753 | });
+      754 |
+
+      at Object.toBe (src/account/__tests__/accountMachine.test.ts:751:98)
+
+Test Suites: 2 failed, 1 passed, 3 total
+Tests:       3 failed, 88 skipped, 1 passed, 92 total
+Snapshots:   0 total
+Time:        0.468 s, estimated 1 s
+Ran all test suites matching src/account/__tests__/accountConnector.test.ts|src/account/__tests__/accountMachine.test.ts|src/account/__tests__/runAccountEffects.test.ts with tests matching "class method can read this|does not stay on Checking|no profileRead flag|Ada, then Adam, then Ada".
