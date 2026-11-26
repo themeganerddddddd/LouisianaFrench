@@ -16,9 +16,12 @@ export function accountDeps(): DeleteAccountDeps {
   }
 }
 
-export function classifyGetUserStatus(status: number): 'invalid' | 'absent' | 'unavailable' {
+export function classifyGetUserStatus(
+  status: number,
+  errorCode: string | null
+): 'invalid' | 'absent' | 'unavailable' {
+  if (status === 403 && errorCode === 'user_not_found') return 'absent'
   if (status === 401 || status === 403) return 'invalid'
-  if (status === 404) return 'absent'
   return 'unavailable'
 }
 
@@ -32,8 +35,9 @@ export async function loadUser(
     headers: { Authorization: `Bearer ${token}`, apikey: serviceRoleKey }
   })
   if (!response.ok) {
-    await drain(response)
-    return { kind: classifyGetUserStatus(response.status) }
+    const errorCode = response.status === 403 ? await errorCodeOf(response) : null
+    if (response.status !== 403) await drain(response)
+    return { kind: classifyGetUserStatus(response.status, errorCode) }
   }
   const body = await response.json() as { id?: unknown }
   if (typeof body.id !== 'string' || body.id.length === 0) return { kind: 'invalid' }
@@ -55,6 +59,17 @@ function required(name: string): string {
   const value = Deno.env.get(name)
   if (!value) throw new Error(`Missing ${name}`)
   return value
+}
+
+async function errorCodeOf(response: Response): Promise<string | null> {
+  try {
+    const body = await response.json()
+    if (!body || typeof body !== 'object') return null
+    const code = (body as { error_code?: unknown }).error_code
+    return typeof code === 'string' ? code : null
+  } catch {
+    return null
+  }
 }
 
 function drain(response: Response) {

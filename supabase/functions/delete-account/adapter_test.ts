@@ -5,13 +5,6 @@ import { handleDeleteAccount, type DeleteAccountDeps } from './handler.ts'
 const URL = 'https://example.test'
 const KEY = 'test-key'
 
-Deno.test('getUser 404 is already gone', async () => {
-  assert.deepEqual(await loadUser(URL, KEY, 'jwt', statusFetch(404)), { kind: 'absent' })
-  const response = await handleDeleteAccount(post('jwt'), depsFor(404))
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ok: true })
-})
-
 Deno.test('a deleted user retry is ok and other auth errors stay notSignedIn', async () => {
   const gone = await handleDeleteAccount(post('jwt'), depsWith(jsonFetch(403, {
     code: 403,
