@@ -1,0 +1,57 @@
+FAIL src/screens/__tests__/SpeechPracticeScreen.test.js (9.088 s)
+  ● speech practice screen › Daily Speech Practice › awards 1 XP per accepted attempt and stops after 5 accepts
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      at _getError (../LouisianaFrench/node_modules/jest-circus/build/jestAdapterInit.js:1985:12)
+          at Array.map (<anonymous>)
+
+    Cause:
+        thrown: "Exceeded timeout of 5000 ms for a test.
+        Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+          74 |
+          75 |   describe('Daily Speech Practice', () => {
+        > 76 |     it('awards 1 XP per accepted attempt and stops after 5 accepts', async () => {
+             |     ^
+          77 |       makeRecorder();
+          78 |       const onComplete = jest.fn();
+          79 |       render(<SpeechPracticeScreen language="cajun" scored wordLimit={5} onComplete={onComplete} />);
+
+          at it (src/screens/__tests__/SpeechPracticeScreen.test.js:76:5)
+          at describe (src/screens/__tests__/SpeechPracticeScreen.test.js:75:3)
+          at Object.describe (src/screens/__tests__/SpeechPracticeScreen.test.js:67:1)
+
+Summary of all failing tests
+FAIL src/screens/__tests__/SpeechPracticeScreen.test.js (9.088 s)
+  ● speech practice screen › Daily Speech Practice › awards 1 XP per accepted attempt and stops after 5 accepts
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      at _getError (../LouisianaFrench/node_modules/jest-circus/build/jestAdapterInit.js:1985:12)
+          at Array.map (<anonymous>)
+
+    Cause:
+        thrown: "Exceeded timeout of 5000 ms for a test.
+        Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+          74 |
+          75 |   describe('Daily Speech Practice', () => {
+        > 76 |     it('awards 1 XP per accepted attempt and stops after 5 accepts', async () => {
+             |     ^
+          77 |       makeRecorder();
+          78 |       const onComplete = jest.fn();
+          79 |       render(<SpeechPracticeScreen language="cajun" scored wordLimit={5} onComplete={onComplete} />);
+
+          at it (src/screens/__tests__/SpeechPracticeScreen.test.js:76:5)
+          at describe (src/screens/__tests__/SpeechPracticeScreen.test.js:75:3)
+          at Object.describe (src/screens/__tests__/SpeechPracticeScreen.test.js:67:1)
+
+
+Test Suites: 1 failed, 1 skipped, 74 passed, 75 of 76 total
+Tests:       1 failed, 9 skipped, 843 passed, 853 total
+Snapshots:   0 total
+Time:        20.964 s, estimated 21 s
+Ran all test suites.

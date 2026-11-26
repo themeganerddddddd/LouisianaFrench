@@ -280,6 +280,7 @@ function openUsername(identity: Identity): UsernameView {
 }
 
 function reduceUsername(view: UsernameView, event: AccountEvent): AccountView {
+  if (event.type === 'signedOut') return initialView(null);
   if (event.type === 'usernameChecked') {
     if (event.value !== view.draft) return view;
     return { ...view, availability: { status: 'settled', value: event.value, reply: event.result.status } };
@@ -301,6 +302,10 @@ function editUsername(view: UsernameView, value: string): UsernameView {
   const submit: UsernameSubmit = { status: 'editing' };
   if (!isValidUsernameFormat(value)) return { ...view, draft: value, submit, availability: { status: 'unchecked' } };
   return { ...view, draft: value, submit, availability: { status: 'checking', value } };
+}
+
+export function usernameSaveBlocked(view: AccountView): boolean {
+  return view.kind === 'username' && saveBlocked(view);
 }
 
 function saveBlocked(view: UsernameView): boolean {
