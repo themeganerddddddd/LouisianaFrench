@@ -284,6 +284,7 @@ describe('username step view', () => {
     const input = within(field).getByLabelText('Username');
     expect(StyleSheet.flatten(input.props.style)).toMatchObject({ minHeight: 48, borderWidth: 1 });
     const line = screen.getByText('Checking…');
+    if (!line.parent) throw new Error('Checking line has no row');
     expect(within(line.parent).queryByTestId('account-username-checking')).toBeNull();
     expect(line.props.accessibilityLiveRegion).toBe('polite');
     expect(StyleSheet.flatten(line.props.style)).toMatchObject({
