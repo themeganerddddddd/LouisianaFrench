@@ -10,6 +10,11 @@ const BY_CODE: Record<string, AuthFailure> = {
 
 type User = { id?: string; email?: string; app_metadata?: { provider?: string } }
 type AuthError = { code?: string; message?: string }
+type InvokeError = AuthError & {
+  name?: string
+  context?: { status?: number; json?: () => Promise<unknown> }
+}
+type DeleteBody = { ok: true } | { ok: false; failure: 'notSignedIn' | 'unknown' }
 type AuthCall = {
   data?: { session?: { user?: User | null } | null; user?: User | null; url?: string } | null
   error?: AuthError | null
@@ -24,9 +29,15 @@ export type AccountClient = {
     updateUser(input: { password: string }): Promise<AuthCall>
     signInWithOAuth(input: { provider: 'google'; options: { redirectTo: string; skipBrowserRedirect: boolean } }): Promise<AuthCall>
     exchangeCodeForSession(code: string): Promise<AuthCall>
+    getSession(): Promise<{ data?: { session?: { access_token?: string } | null } | null }>
     signOut(input: { scope: 'local' }): Promise<{ error?: AuthError | null }>
   }
-  deleteAccount(): Promise<{ error?: AuthError | null }>
+  functions: {
+    invoke(
+      name: 'delete-account',
+      options: { method: 'POST'; headers: { Authorization: string } }
+    ): Promise<{ data: DeleteBody | null; error: InvokeError | null }>
+  }
   from?: (table: string) => {
     select: (columns: string) => {
       eq: (column: string, value: string) => {
@@ -62,6 +73,38 @@ async function signedIn(client: AccountClient, user: User | null | undefined, fa
   const provider: Provider = user.app_metadata?.provider === 'google' || fallback === 'google' ? 'google' : 'email'
   const username = await loadProfileUsername(client, user.id)
   return { ok: true, identity: { id: user.id, email: user.email || '', username, provider } }
+}
+
+function statusOf(error: InvokeError | null | undefined): number | null {
+  const status = error?.context?.status
+  return typeof status === 'number' ? status : null
+}
+
+async function readDeleteBody(error: InvokeError | null): Promise<DeleteBody | null> {
+  const read = error?.context?.json
+  if (!read) return null
+  try {
+    return asDeleteBody(await read.call(error.context))
+  } catch {
+    return null
+  }
+}
+
+function asDeleteBody(value: unknown): DeleteBody | null {
+  if (!value || typeof value !== 'object') return null
+  const body = value as { ok?: unknown; failure?: unknown }
+  if (body.ok === true) return { ok: true }
+  if (body.ok === false && (body.failure === 'notSignedIn' || body.failure === 'unknown')) {
+    return { ok: false, failure: body.failure }
+  }
+  return null
+}
+
+function isNetwork(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const named = error as { name?: string; message?: string }
+  if (named.name === 'FunctionsFetchError') return true
+  return mapAuthFailure({ message: named.message }) === 'network'
 }
 
 function isAuthError(error: unknown): error is AuthError {
@@ -191,18 +234,24 @@ export function createAccountConnector({
     async deleteAccount(): Promise<DeleteResult> {
       if (!client) return { ok: false, failure: 'notSignedIn' }
       try {
-        const { error } = await client.deleteAccount()
-        if (error) {
-          if (mapAuthFailure(error) === 'network') return { ok: false, failure: 'network' }
-          if (error.code === 'session_not_found' || /jwt|not signed in/i.test(error.message || '')) {
-            return { ok: false, failure: 'notSignedIn' }
-          }
-          return { ok: false, failure: 'unknown' }
+        const session = await client.auth.getSession()
+        const token = session.data?.session?.access_token
+        if (!token) return { ok: false, failure: 'notSignedIn' }
+        const invoked = await client.functions.invoke('delete-account', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const body = invoked.data ?? await readDeleteBody(invoked.error)
+        if (body?.ok) {
+          try { await client.auth.signOut({ scope: 'local' }) } catch { /* The server account is already gone. */ }
+          return { ok: true }
         }
-        try { await client.auth.signOut({ scope: 'local' }) } catch { /* The server account is already gone. */ }
-        return { ok: true }
-      } catch {
+        if (body && !body.ok) return { ok: false, failure: body.failure }
+        if (statusOf(invoked.error) === 401) return { ok: false, failure: 'notSignedIn' }
+        if (isNetwork(invoked.error)) return { ok: false, failure: 'network' }
         return { ok: false, failure: 'unknown' }
+      } catch (error) {
+        return { ok: false, failure: isNetwork(error) ? 'network' : 'unknown' }
       }
     }
   }

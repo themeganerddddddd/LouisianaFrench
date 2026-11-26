@@ -1,0 +1,75 @@
+Image: public.ecr.aws/supabase/postgres:17.12.0.002
+Same image as tests/db/run-local.sh. The database port is not published.
+Migrations: supabase/migrations/*.sql
+SQL: tests/db/proof/delete_account_cascade.sql
+auth.identities is not in this image (newest auth migration 20180125194653), so this run does not delete an identity row.
+
+-- 20261124032500_profiles_username.sql
+DO
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE TABLE
+CREATE INDEX
+CREATE FUNCTION
+CREATE TRIGGER
+ALTER TABLE
+REVOKE
+GRANT
+CREATE POLICY
+CREATE FUNCTION
+CREATE TRIGGER
+REVOKE
+REVOKE
+DO
+-- 20261124120000_username_rpcs.sql
+CREATE FUNCTION
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+GRANT
+-- delete_account_cascade.sql
+ identities_table 
+------------------
+ absent
+(1 row)
+
+ newest_auth_migration 
+-----------------------
+ 20180125194653
+(1 row)
+
+                       profiles_user_fk                       
+--------------------------------------------------------------
+ FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+(1 row)
+
+INSERT 0 2
+UPDATE 1
+UPDATE 1
+                  id                  | username | username_key 
+--------------------------------------+----------+--------------
+ aaaaaaaa-0000-4000-8000-00000000000a | Ada_1    | ada_1
+ aaaaaaaa-0000-4000-8000-00000000000b | Bea_2    | bea_2
+(2 rows)
+
+DELETE 1
+ deleted_user_profile_rows 
+---------------------------
+                         0
+(1 row)
+
+                  id                  | username | username_key 
+--------------------------------------+----------+--------------
+ aaaaaaaa-0000-4000-8000-00000000000b | Bea_2    | bea_2
+(1 row)
+
+UPDATE 1
+                  id                  | username | freed_key 
+--------------------------------------+----------+-----------
+ aaaaaaaa-0000-4000-8000-00000000000b | Ada_1    | ada_1
+(1 row)
+
+DO
+exit:0

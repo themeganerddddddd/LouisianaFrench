@@ -35,12 +35,17 @@ function client(): AccountClient {
           error: code === 'from-google' ? null : { message: 'missing' }
         };
       },
+      async getSession() {
+        return { data: { session: null } };
+      },
       async signOut() {
         return { error: null };
       }
     },
-    async deleteAccount() {
-      return { error: null };
+    functions: {
+      async invoke() {
+        return { data: null, error: { message: 'missing' } };
+      }
     }
   };
 }
