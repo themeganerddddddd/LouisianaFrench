@@ -14,10 +14,8 @@ describe('auth links', () => {
     expect(matchesAuthRedirect(`${REDIRECT}?code=abc`, REDIRECT)).toBe(true);
   });
 
-  it('uses the web origin on web and exp:// when Expo Go would emit the app scheme', () => {
-    expect(resolveAuthRedirect({ platform: 'web', origin: 'https://learn.example/' })).toBe(
-      'https://learn.example/auth/callback'
-    );
+  it('has no web output and uses exp:// when Expo Go would emit the app scheme', () => {
+    expect(resolveAuthRedirect({ platform: 'web', origin: 'https://learn.example/' } as never)).toBe(REDIRECT);
     expect(resolveAuthRedirect({
       createURL: () => REDIRECT,
       host: 'abc.ngrok.io'
