@@ -39,6 +39,7 @@ type ButtonProps = {
   onPress: () => void;
   accentColor: string;
   disabled?: boolean;
+  loading?: boolean;
   testID?: string;
 };
 
@@ -176,7 +177,7 @@ function Control({
   loading,
   confirm,
   kind
-}: ButtonProps & { loading?: boolean; confirm?: boolean; kind: Kind }) {
+}: ButtonProps & { confirm?: boolean; kind: Kind }) {
   const blocked = Boolean(disabled || loading);
   const { focused, onFocus, onBlur } = useFocused();
   const colors = paint(kind, Boolean(confirm), accentColor);
@@ -202,7 +203,7 @@ function Control({
       testID={testID}
     >
       {loading ? (
-        <ActivityIndicator color={WHITE} testID={testID ? `${testID}-spinner` : undefined} />
+        <ActivityIndicator color={colors.color} testID={testID ? `${testID}-spinner` : undefined} />
       ) : null}
       {kind === 'destructive' && !confirm ? (
         <Feather
@@ -222,7 +223,7 @@ function Control({
   );
 }
 
-export function PrimaryButton(props: ButtonProps & { loading?: boolean }) {
+export function PrimaryButton(props: ButtonProps) {
   return <Control {...props} kind="primary" />;
 }
 

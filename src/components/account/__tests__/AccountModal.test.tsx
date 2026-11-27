@@ -504,7 +504,7 @@ describe('create account view', () => {
     expect(StyleSheet.flatten(screen.getByRole('button', { name: 'Create account' }).props.style).backgroundColor).toBe('#08834C');
   });
 
-  it('cannot dismiss Set new password by backdrop or Android back, and left-aligns its heading', () => {
+  it('cannot dismiss Set new password by backdrop or Android back, and shows its heading', () => {
     const onClose = jest.fn();
     sheet(replacing, accentFor('cajun'), onClose);
     fireEvent.press(screen.getByTestId('account-backdrop'));
@@ -512,7 +512,7 @@ describe('create account view', () => {
     expect(screen.queryByTestId('account-close')).toBeNull();
     screen.UNSAFE_getByType(Modal).props.onRequestClose();
     expect(onClose).not.toHaveBeenCalled();
-    expect(StyleSheet.flatten(screen.getByText('Set a new password').props.style).textAlign).toBe('left');
+    expect(screen.getByText('Set a new password')).toBeOnTheScreen();
   });
 
   it('saves a new password, shows Password saved, and Continue opens the identity then closes', async () => {
@@ -555,7 +555,8 @@ describe('create account view', () => {
     expect(screen.getByText('ada@example.com')).toBeOnTheScreen();
     expect(screen.getByText(how)).toBeOnTheScreen();
     expect(screen.getByText('Your progress stays on this device.')).toBeOnTheScreen();
-    expect(screen.getByText(username ? 'Change username' : 'Set a username')).toBeOnTheScreen();
+    const entry = screen.getByRole('link', { name: username ? 'Change username' : 'Set a username' });
+    expect(entry.props.accessibilityState.disabled).toBe(true);
     expect(screen.queryByText(username ? 'Set a username' : 'Change username')).toBeNull();
     expect(screen.getByText('Delete account')).toBeOnTheScreen();
   });
@@ -581,7 +582,8 @@ describe('create account view', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Sign out' }));
     fireEvent.press(screen.getByRole('button', { name: 'Sign out' }));
     expect(signOut).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Sign out' }).props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByRole('button', { name: 'Sign out' }).props.accessibilityState).toEqual({ disabled: true, busy: true });
+    expect(screen.getByTestId('account-sign-out-spinner')).toBeOnTheScreen();
     expect(screen.queryByTestId('account-close')).toBeNull();
     await act(async () => { release(); });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Sign in' })).toBeOnTheScreen());

@@ -463,14 +463,14 @@ export function SignedInView({ view, dispatch, accentColor }: { view: SignedIn; 
         label={SIGNED_IN.signOut}
         onPress={() => dispatch({ type: 'signOutRequested' })}
         accentColor={accentColor}
-        disabled={signingOut}
+        loading={signingOut}
         testID="account-sign-out"
       />
       <LinkButton
         label={identity.username === null ? SIGNED_IN.setUsername : SIGNED_IN.changeUsername}
         onPress={() => {}}
         accentColor={accentColor}
-        disabled={signingOut}
+        disabled
         testID="account-username-entry"
       />
       <DestructiveButton label={SIGNED_IN.delete} onPress={() => {}} accentColor={accentColor} disabled testID="account-delete" />
@@ -497,5 +497,5 @@ const styles = StyleSheet.create({
   },
   available: { flexShrink: 1, fontSize: 13, fontWeight: '700' },
   errorText: { color: '#B91C1C', flexShrink: 1, fontSize: 13, fontWeight: '700' },
-  title: { color: '#102A43', fontSize: 20, fontWeight: '800', textAlign: 'left' }
+  title: { color: '#102A43', fontSize: 20, fontWeight: '800' }
 });
