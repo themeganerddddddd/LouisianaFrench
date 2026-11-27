@@ -2,7 +2,7 @@ import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { usernameSaveBlocked, type AccountEvent, type AccountView } from '../../account/accountMachine';
+import { usernameSaveBlocked, type AccountEvent, type AccountView, type Submit, type SubmitFailure } from '../../account/accountMachine';
 import { usernameFormatIssue } from '../../account/usernameFormat';
 import { Field, LinkButton, PrimaryButton } from './formControls';
 // English placeholders. Louisiana French and Kouri-Vini are TBD-copy.
@@ -73,10 +73,14 @@ type Inbox = Extract<AccountView, { kind: 'inbox' }>;
 type Forgot = Extract<AccountView, { kind: 'forgot' }>;
 type Username = Extract<AccountView, { kind: 'username' }>;
 
+function formatError(draft: string): string | undefined {
+  const issue = usernameFormatIssue(draft);
+  return issue ? USERNAME[issue] : undefined;
+}
+
 function usernameMessage(view: Username): { kind: 'error' | 'checking' | 'available' | 'helper'; text: string } {
-  const issue = usernameFormatIssue(view.draft);
-  if (issue === 'length') return { kind: 'error', text: USERNAME.length };
-  if (issue === 'charset') return { kind: 'error', text: USERNAME.charset };
+  const invalid = formatError(view.draft);
+  if (invalid) return { kind: 'error', text: invalid };
   const found = view.availability;
   if (found.status === 'checking' && found.value === view.draft) return { kind: 'checking', text: USERNAME.checking };
   if (found.status === 'settled' && found.value === view.draft) {
@@ -91,6 +95,20 @@ function busy(status: string): boolean {
   return status === 'submitting' || status === 'oauth';
 }
 
+type Site = 'google' | 'username' | 'email' | 'password';
+const SITE: Record<SubmitFailure, Site> = {
+  oauthFailed: 'google', invalidUsername: 'username', weakPassword: 'password', wrongCredentials: 'password',
+  emailTaken: 'email', emailNotConfirmed: 'email', rateLimited: 'email', network: 'email', unavailable: 'email', unknown: 'email'
+};
+
+function failedAt(submit: Submit, site: Site): boolean {
+  return submit.status === 'failed' && SITE[submit.failure] === site;
+}
+
+function errorAt(submit: Submit, site: Site, text: (failure: SubmitFailure) => string | undefined): string | undefined {
+  return submit.status === 'failed' && failedAt(submit, site) ? text(submit.failure) : undefined;
+}
+
 function otherFailure(failure: string, copy: { network: string; unavailable: string; failed: string }): string {
   if (failure === 'network') return copy.network;
   if (failure === 'unavailable') return copy.unavailable;
@@ -100,10 +118,9 @@ function otherFailure(failure: string, copy: { network: string; unavailable: str
 export function SignInView({ view, dispatch, accentColor }: { view: SignIn; dispatch: Dispatch; accentColor: string }) {
   const locked = busy(view.submit.status);
   const oauth = view.submit.status === 'oauth';
-  const failure = view.submit.status === 'failed' ? view.submit.failure : '';
   return (
     <View style={styles.stack}>
-      {failure === 'oauthFailed' ? <GoogleError /> : null}
+      {failedAt(view.submit, 'google') ? <GoogleError /> : null}
       <GoogleButton locked={locked} oauth={oauth} dispatch={dispatch} accentColor={accentColor} />
       <Field
         label={SIGN_IN.email}
@@ -113,7 +130,7 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
         editable={!locked}
         autoCapitalize="none"
         keyboardType="email-address"
-        error={failure && failure !== 'wrongCredentials' && failure !== 'oauthFailed' ? otherFailure(failure, SIGN_IN) : undefined}
+        error={errorAt(view.submit, 'email', (failure) => otherFailure(failure, SIGN_IN))}
         testID="account-email"
       />
       <Field
@@ -123,7 +140,7 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
         accentColor={accentColor}
         editable={!locked}
         secureTextEntry
-        error={failure === 'wrongCredentials' ? SIGN_IN.wrongPassword : undefined}
+        error={errorAt(view.submit, 'password', () => SIGN_IN.wrongPassword)}
         testID="account-password"
       />
       <PrimaryButton
@@ -152,18 +169,12 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
   );
 }
 
-function formatError(draft: string): string | undefined {
-  const issue = usernameFormatIssue(draft);
-  return issue ? USERNAME[issue] : undefined;
-}
-
 export function CreateView({ view, dispatch, accentColor }: { view: Create; dispatch: Dispatch; accentColor: string }) {
   const locked = busy(view.submit.status);
-  const failure = view.submit.status === 'failed' ? view.submit.failure : '';
-  const other = failure && !['oauthFailed', 'invalidUsername', 'emailTaken', 'weakPassword'].includes(failure);
+  const weak = errorAt(view.submit, 'password', () => CREATE.passwordHint);
   return (
     <View style={styles.stack}>
-      {failure === 'oauthFailed' ? <GoogleError /> : null}
+      {failedAt(view.submit, 'google') ? <GoogleError /> : null}
       <GoogleButton locked={locked} oauth={view.submit.status === 'oauth'} dispatch={dispatch} accentColor={accentColor} />
       <Field
         label={CREATE.username}
@@ -173,7 +184,7 @@ export function CreateView({ view, dispatch, accentColor }: { view: Create; disp
         accentColor={accentColor}
         editable={!locked}
         autoCapitalize="none"
-        error={failure === 'invalidUsername' ? formatError(view.username) : undefined}
+        error={errorAt(view.submit, 'username', () => formatError(view.username))}
         testID="account-username"
       />
       <Field
@@ -184,7 +195,7 @@ export function CreateView({ view, dispatch, accentColor }: { view: Create; disp
         editable={!locked}
         autoCapitalize="none"
         keyboardType="email-address"
-        error={failure === 'emailTaken' ? CREATE.emailTaken : other ? otherFailure(failure, CREATE) : undefined}
+        error={errorAt(view.submit, 'email', (failure) => failure === 'emailTaken' ? CREATE.emailTaken : otherFailure(failure, CREATE))}
         testID="account-email"
       />
       <Field
@@ -194,10 +205,10 @@ export function CreateView({ view, dispatch, accentColor }: { view: Create; disp
         accentColor={accentColor}
         editable={!locked}
         secureTextEntry
-        error={failure === 'weakPassword' ? CREATE.passwordHint : undefined}
+        error={weak}
         testID="account-password"
       />
-      {failure === 'weakPassword' ? null : <Text>{CREATE.passwordHint}</Text>}
+      {weak ? null : <Text>{CREATE.passwordHint}</Text>}
       <PrimaryButton
         label={CREATE.submit}
         onPress={() => dispatch({ type: 'submitted' })}
