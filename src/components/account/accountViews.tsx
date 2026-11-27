@@ -171,7 +171,7 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
 
 export function CreateView({ view, dispatch, accentColor }: { view: Create; dispatch: Dispatch; accentColor: string }) {
   const locked = busy(view.submit.status);
-  const weak = errorAt(view.submit, 'password', () => CREATE.passwordHint);
+  const weak = errorAt(view.submit, 'password', (failure) => failure === 'weakPassword' ? CREATE.passwordHint : undefined);
   return (
     <View style={styles.stack}>
       {failedAt(view.submit, 'google') ? <GoogleError /> : null}

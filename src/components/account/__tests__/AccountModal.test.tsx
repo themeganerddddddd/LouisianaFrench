@@ -450,6 +450,11 @@ describe('create account view', () => {
     expect(screen.getByLabelText('Password').props.accessibilityHint).toBe('At least 8 characters.');
   });
 
+  it('does not show the password hint as an error for a wrong-credentials failure', () => {
+    sheet(createView({ submit: { status: 'failed', failure: 'wrongCredentials' } }));
+    expect(screen.getByLabelText('Password').props.accessibilityHint).toBeUndefined();
+  });
+
   it('sends the typed name to sign-up and goes on without the step when it was saved', async () => {
     const signUp = jest.fn(async (_e: string, _p: string, _u: string | null): Promise<AuthResult> => ({
       ok: true, profileRead: false, identity: { ...ada, username: 'Elise' }
