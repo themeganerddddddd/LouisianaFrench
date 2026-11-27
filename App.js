@@ -2,15 +2,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { setAudioModeAsync } from 'expo-audio';
 import { StatusBar } from 'expo-status-bar';
-import * as WebBrowser from 'expo-web-browser';
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
 import {
   initialWindowMetrics,
   SafeAreaProvider
 } from 'react-native-safe-area-context';
 
-import { completeWebAuth } from './src/account/webAuth';
 import AdvancedScreen from './src/screens/AdvancedScreen';
 import DailyReviewScreen from './src/screens/DailyReviewScreen';
 import DictionaryScreen from './src/screens/DictionaryScreen';
@@ -22,10 +19,6 @@ import LoadingScreen from './src/screens/LoadingScreen';
 import MistakeReviewScreen from './src/screens/MistakeReviewScreen';
 
 const Stack = createStackNavigator();
-
-completeWebAuth(Platform.OS, () => {
-  WebBrowser.maybeCompleteAuthSession();
-});
 
 export default function App() {
   useEffect(() => {

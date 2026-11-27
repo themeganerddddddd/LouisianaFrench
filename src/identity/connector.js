@@ -17,8 +17,6 @@ const UNAVAILABLE = 'Sign-in is unavailable.';
 const FAILED = 'Sign-in failed.';
 const WRONG_PASSWORD = 'That email or password is not right.';
 const AUTH_REDIRECT = resolveAuthRedirect({
-  platform: Platform.OS,
-  origin: typeof globalThis.location === 'object' ? globalThis.location.origin : undefined,
   host: Constants.appOwnership === 'expo' ? Constants.expoConfig?.hostUri || null : null
 });
 
