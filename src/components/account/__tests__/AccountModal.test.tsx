@@ -1,10 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { act, useState } from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { Modal, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { AccountConnector } from '../../../account/accountConnector';
-import type { AccountView, AuthResult } from '../../../account/accountMachine';
+import type { AccountEvent, AccountView, AuthResult, Identity } from '../../../account/accountMachine';
 import { useAccountMachine } from '../../../account/useAccountMachine';
 import { accentFor } from '../../../theme/languageAccent';
 import { AccountModal } from '../AccountModal';
@@ -65,6 +66,7 @@ const submitting: AccountView = {
   submit: { status: 'submitting' }
 };
 const replacing: AccountView = { kind: 'setNewPassword', password: '', submit: { status: 'editing' } };
+const learner: Identity = { id: 'learner-1', email: 'ada@example.com', username: 'Ada', provider: 'email' };
 const inbox: AccountView = { kind: 'inbox', reason: 'passwordReset' };
 
 describe('AccountModal', () => {
@@ -500,5 +502,89 @@ describe('create account view', () => {
     screen.unmount();
     sheet(createView(), accentFor('kreole'));
     expect(StyleSheet.flatten(screen.getByRole('button', { name: 'Create account' }).props.style).backgroundColor).toBe('#08834C');
+  });
+
+  it('cannot dismiss Set new password by backdrop or Android back, and left-aligns its heading', () => {
+    const onClose = jest.fn();
+    sheet(replacing, accentFor('cajun'), onClose);
+    fireEvent.press(screen.getByTestId('account-backdrop'));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('account-close')).toBeNull();
+    screen.UNSAFE_getByType(Modal).props.onRequestClose();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(StyleSheet.flatten(screen.getByText('Set a new password').props.style).textAlign).toBe('left');
+  });
+
+  it('saves a new password, shows Password saved, and Continue opens the identity then closes', async () => {
+    const onClose = jest.fn();
+    const updatePassword = jest.fn(async (_password: string): Promise<AuthResult> => ({ ok: true, identity: learner }));
+    const dispatched: AccountEvent[] = [];
+    let open: () => void = () => {};
+    function Flow() {
+      const [account] = useState(() => ({ ...connector(async () => ({ ok: false, failure: 'unknown' })), updatePassword }));
+      const { view, dispatch } = useAccountMachine(account, null);
+      open = () => dispatch({ type: 'recoveryLinkOpened' });
+      return (
+        <AccountModal
+          visible
+          view={view}
+          dispatch={(event) => { dispatched.push(event); dispatch(event); }}
+          accentColor={accentFor('cajun')}
+          onClose={onClose}
+        />
+      );
+    }
+    render(<Flow />);
+    act(() => open());
+    fireEvent.changeText(screen.getByLabelText('New password'), 'longenough1');
+    fireEvent.press(screen.getByRole('button', { name: 'Save password' }));
+    await waitFor(() => expect(screen.getByText('Password saved')).toBeOnTheScreen());
+    expect(updatePassword).toHaveBeenCalledWith('longenough1');
+    fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(dispatched).toContainEqual({ type: 'opened', identity: learner });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['email', 'Ada', 'A', 'Signed in with Email'],
+    ['google', null, 'L', 'Signed in with Google']
+  ] as const)('shows Signed in for %s with username %s', (provider, username, initial, how) => {
+    sheet({ kind: 'signedIn', identity: { ...learner, provider, username }, signingOut: false });
+    expect(screen.getByTestId('account-avatar')).toHaveTextContent(initial);
+    expect(screen.getByText(username ?? 'Learner')).toBeOnTheScreen();
+    expect(screen.getByText('ada@example.com')).toBeOnTheScreen();
+    expect(screen.getByText(how)).toBeOnTheScreen();
+    expect(screen.getByText('Your progress stays on this device.')).toBeOnTheScreen();
+    expect(screen.getByText(username ? 'Change username' : 'Set a username')).toBeOnTheScreen();
+    expect(screen.queryByText(username ? 'Set a username' : 'Change username')).toBeNull();
+    expect(screen.getByText('Delete account')).toBeOnTheScreen();
+  });
+
+  it('paints the Sign out label differently from its background', () => {
+    sheet({ kind: 'signedIn', identity: learner, signingOut: false });
+    const button = StyleSheet.flatten(screen.getByRole('button', { name: 'Sign out' }).props.style);
+    const label = StyleSheet.flatten(screen.getByText('Sign out').props.style);
+    expect(label.color).not.toBe(button.backgroundColor);
+    expect(button.borderWidth).toBe(1);
+  });
+
+  it('signs out to the guest view, leaves Learner Progress alone, and locks while signing out', async () => {
+    await AsyncStorage.setItem('learner-progress', '{"xp":42}');
+    let release: () => void = () => {};
+    const signOut = jest.fn(() => new Promise<void>((resolve) => { release = resolve; }));
+    function Out() {
+      const [account] = useState(() => ({ ...connector(async () => ({ ok: false, failure: 'unknown' })), signOut }));
+      const { view, dispatch } = useAccountMachine(account, learner);
+      return <AccountModal visible view={view} dispatch={dispatch} accentColor={accentFor('cajun')} onClose={() => {}} />;
+    }
+    render(<Out />);
+    fireEvent.press(screen.getByRole('button', { name: 'Sign out' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Sign out' }));
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Sign out' }).props.accessibilityState.disabled).toBe(true);
+    expect(screen.queryByTestId('account-close')).toBeNull();
+    await act(async () => { release(); });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign in' })).toBeOnTheScreen());
+    expect(await AsyncStorage.getItem('learner-progress')).toBe('{"xp":42}');
   });
 });
