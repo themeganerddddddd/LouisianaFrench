@@ -481,8 +481,9 @@ describe('change username view', () => {
     fireEvent.changeText(screen.getByLabelText('Username'), 'Elisa');
     await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
     fireEvent.press(save());
-    await waitFor(() => expect(screen.getByText(/^You can change your username again on .*2026\.$/)).toBeOnTheScreen());
-    expect(screen.getByText(/December 24, 2026/)).toBeOnTheScreen();
+    const date = new Date('2026-12-24T12:00:00.000Z').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    await waitFor(() => expect(screen.getByText(`You can change your username again on ${date}.`)).toBeOnTheScreen());
+    expect(date).toContain('2026');
   });
 });
 
