@@ -416,3 +416,84 @@ describe('username step view', () => {
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
   });
 });
+
+describe('create account view', () => {
+  const createView = (over: Partial<Extract<AccountView, { kind: 'create' }>> = {}): AccountView => ({
+    kind: 'create', username: '', email: '', password: '', submit: { status: 'editing' }, ...over
+  });
+  const ada = { id: 'ada', email: 'ada@example.com', username: null, provider: 'email' as const };
+  const base = connector(async () => ({ ok: false, failure: 'unknown' }));
+
+  function fill(name: string) {
+    fireEvent.press(screen.getByRole('link', { name: 'Create account' }));
+    if (name) fireEvent.changeText(screen.getByLabelText('Username'), name);
+    fireEvent.changeText(screen.getByLabelText('Email'), 'ada@example.com');
+    fireEvent.changeText(screen.getByLabelText('Password'), 'secret12');
+    fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
+  }
+
+  it('shows Username, Email, Password with the hint, Google, and no Display name', () => {
+    sheet(createView());
+    expect(screen.getByLabelText('Username')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Email')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Password')).toBeOnTheScreen();
+    expect(screen.getByText('At least 8 characters.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Display name')).toBeNull();
+  });
+
+  it('shows emailTaken under Email and the hint as an error for a weak password', () => {
+    sheet(createView({ submit: { status: 'failed', failure: 'emailTaken' } }));
+    expect(screen.getByLabelText('Email').props.accessibilityHint).toBe('That email is already registered.');
+    screen.unmount();
+    sheet(createView({ submit: { status: 'failed', failure: 'weakPassword' } }));
+    expect(screen.getByLabelText('Password').props.accessibilityHint).toBe('At least 8 characters.');
+  });
+
+  it('sends the typed name to sign-up and goes on without the step when it was saved', async () => {
+    const signUp = jest.fn(async (_e: string, _p: string, _u: string | null): Promise<AuthResult> => ({
+      ok: true, profileRead: false, identity: { ...ada, username: 'Elise' }
+    }));
+    render(<Host account={{ ...base, signUp }} />);
+    fill('Elise');
+    await waitFor(() => expect(signUp).toHaveBeenCalledWith('ada@example.com', 'secret12', 'Elise'));
+    expect(screen.queryByText('Choose a username')).toBeNull();
+  });
+
+  it('lands in the step with the typed value and the taken error when set_username failed', async () => {
+    const signUp = async (): Promise<AuthResult> => ({
+      ok: true, profileRead: false, identity: ada, usernameFailed: { ok: false, reason: 'taken' }
+    });
+    render(<Host account={{ ...base, signUp }} />);
+    fill('Elise');
+    await waitFor(() => expect(screen.getByText('Choose a username')).toBeOnTheScreen());
+    expect(screen.getByLabelText('Username').props.value).toBe('Elise');
+    expect(screen.getAllByText('That username is taken.').length).toBeGreaterThan(0);
+  });
+
+  it('lands in the step for an empty username with a session', async () => {
+    const signUp = async (): Promise<AuthResult> => ({ ok: true, profileRead: true, identity: ada });
+    render(<Host account={{ ...base, signUp }} />);
+    fill('');
+    await waitFor(() => expect(screen.getByText('Choose a username')).toBeOnTheScreen());
+    expect(screen.getByLabelText('Username').props.value).toBe('');
+  });
+
+  it('shows Confirm your email for confirmSignUp and calls no RPC', async () => {
+    const setUsername = jest.fn(async () => ({ ok: false as const, reason: 'network' as const }));
+    const signUp = async (): Promise<AuthResult> => ({ ok: true, pending: 'confirmSignUp' });
+    render(<Host account={{ ...base, signUp, setUsername }} />);
+    fill('Elise');
+    await waitFor(() => expect(screen.getByText('Confirm your email')).toBeOnTheScreen());
+    expect(screen.queryByText('Check your inbox')).toBeNull();
+    expect(setUsername).not.toHaveBeenCalled();
+  });
+
+  it('paints Create account with the accent of each Language', () => {
+    sheet(createView(), accentFor('cajun'));
+    expect(StyleSheet.flatten(screen.getByRole('button', { name: 'Create account' }).props.style).backgroundColor).toBe('#2771CB');
+    screen.unmount();
+    sheet(createView(), accentFor('kreole'));
+    expect(StyleSheet.flatten(screen.getByRole('button', { name: 'Create account' }).props.style).backgroundColor).toBe('#08834C');
+  });
+});

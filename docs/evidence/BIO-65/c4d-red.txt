@@ -1,0 +1,690 @@
+FAIL src/account/__tests__/accountMachine.test.ts
+  ● create account results › opens the step with the typed value and the taken failure when set_username failed
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 12
+    + Received  +  2
+
+      Object {
+    -   "availability": Object {
+    -     "reply": "taken",
+    -     "status": "settled",
+    -     "value": "Élise_1",
+    -   },
+    -   "draft": "Élise_1",
+        "identity": Object {
+          "email": "ada@example.com",
+          "id": "learner-1",
+          "provider": "email",
+          "username": null,
+        },
+    -   "kind": "username",
+    -   "mode": "first",
+    -   "submit": Object {
+    -     "failure": "taken",
+    -     "status": "failed",
+    -   },
+    +   "kind": "signedIn",
+    +   "signingOut": false,
+      }
+
+      777 |       result: { ok: true, identity: unnamed, profileRead: false, usernameFailed: { ok: false, reason: 'taken' } }
+      778 |     });
+    > 779 |     expect(next).toEqual({
+          |                  ^
+      780 |       kind: 'username', identity: unnamed, draft: 'Élise_1', mode: 'first',
+      781 |       availability: { status: 'settled', value: 'Élise_1', reply: 'taken' },
+      782 |       submit: { status: 'failed', failure: 'taken' }
+
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › sign-up with a session › calls set_username once and returns the saved name
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 1
+    Received number of calls: 0
+
+      119 |       const { rpc, connector } = withRpc({ ok: true, username: 'Élise_1' });
+      120 |       const result = await connector.signUp('ada@example.com', 'secret12', 'Élise_1');
+    > 121 |       expect(rpc).toHaveBeenCalledTimes(1);
+          |                   ^
+      122 |       expect(rpc).toHaveBeenCalledWith('set_username', { proposed: 'Élise_1' });
+      123 |       expect(result).toMatchObject({ ok: true, identity: { username: 'Élise_1' } });
+      124 |     });
+
+
+  ● account connector › sign-up with a session › reports a failed set_username on the result
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 4
+    + Received  + 0
+
+      Object {
+        "identity": Object {
+          "username": null,
+        },
+        "ok": true,
+    -   "usernameFailed": Object {
+    -     "ok": false,
+    -     "reason": "taken",
+    -   },
+      }
+
+      126 |     it('reports a failed set_username on the result', async () => {
+      127 |       const { connector } = withRpc({ ok: false, reason: 'taken' });
+    > 128 |       expect(await connector.signUp('ada@example.com', 'secret12', 'Élise_1')).toMatchObject({
+          |                                                                                ^
+      129 |         ok: true, identity: { username: null }, usernameFailed: { ok: false, reason: 'taken' }
+      130 |       });
+      131 |     });
+
+
+FAIL src/components/account/__tests__/AccountModal.test.tsx
+  ● create account view › shows Username, Email, Password with the hint, Google, and no Display name
+
+    Unable to find an element with accessibility label: Username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      435 |   it('shows Username, Email, Password with the hint, Google, and no Display name', () => {
+      436 |     sheet(createView());
+    > 437 |     expect(screen.getByLabelText('Username')).toBeOnTheScreen();
+          |                   ^
+      438 |     expect(screen.getByLabelText('Email')).toBeOnTheScreen();
+      439 |     expect(screen.getByLabelText('Password')).toBeOnTheScreen();
+      440 |     expect(screen.getByText('At least 8 characters.')).toBeOnTheScreen();
+
+
+  ● create account view › shows emailTaken under Email and the hint as an error for a weak password
+
+    Unable to find an element with accessibility label: Email
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      445 |   it('shows emailTaken under Email and the hint as an error for a weak password', () => {
+      446 |     sheet(createView({ submit: { status: 'failed', failure: 'emailTaken' } }));
+    > 447 |     expect(screen.getByLabelText('Email').props.accessibilityHint).toBe('That email is already registered.');
+          |                   ^
+      448 |     screen.unmount();
+      449 |     sheet(createView({ submit: { status: 'failed', failure: 'weakPassword' } }));
+      450 |     expect(screen.getByLabelText('Password').props.accessibilityHint).toBe('At least 8 characters.');
+
+
+  ● create account view › sends the typed name to sign-up and goes on without the step when it was saved
+
+    Unable to find an element with role: link, name: Create account
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33maccessibilityLabel[39m=[32m"Continue with Google"[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-google"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"google"[39m
+              [36m>[39m
+                [0mgoogle[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mContinue with Google[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mEmail[0m
+              [36m</Text>[39m
+              [36m<View[39m
+                [33mtestID[39m=[32m"account-email-field"[39m
+              [36m>[39m
+                [36m<TextInput[39m
+                  [33maccessibilityLabel[39m=[32m"Email"[39m
+                  [33meditable[39m=[32m{true}[39m
+                  [33mtestID[39m=[32m"account-email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mPassword[0m
+              [36m</Text>[39m
+              [36m<View[39m
+                [33mtestID[39m=[32m"account-password-field"[39m
+              [36m>[39m
+                [36m<TextInput[39m
+                  [33maccessibilityLabel[39m=[32m"Password"[39m
+                  [33meditable[39m=[32m{true}[39m
+                  [33mtestID[39m=[32m"account-password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-submit"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign in[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-forgot"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mForgot password?[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      426 |
+      427 |   function fill(name: string) {
+    > 428 |     fireEvent.press(screen.getByRole('link', { name: 'Create account' }));
+          |                            ^
+      429 |     if (name) fireEvent.changeText(screen.getByLabelText('Username'), name);
+      430 |     fireEvent.changeText(screen.getByLabelText('Email'), 'ada@example.com');
+      431 |     fireEvent.changeText(screen.getByLabelText('Password'), 'secret12');
+
+
+  ● create account view › lands in the step with the typed value and the taken error when set_username failed
+
+    Unable to find an element with role: link, name: Create account
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33maccessibilityLabel[39m=[32m"Continue with Google"[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-google"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"google"[39m
+              [36m>[39m
+                [0mgoogle[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mContinue with Google[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mEmail[0m
+              [36m</Text>[39m
+              [36m<View[39m
+                [33mtestID[39m=[32m"account-email-field"[39m
+              [36m>[39m
+                [36m<TextInput[39m
+                  [33maccessibilityLabel[39m=[32m"Email"[39m
+                  [33meditable[39m=[32m{true}[39m
+                  [33mtestID[39m=[32m"account-email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mPassword[0m
+              [36m</Text>[39m
+              [36m<View[39m
+                [33mtestID[39m=[32m"account-password-field"[39m
+              [36m>[39m
+                [36m<TextInput[39m
+                  [33maccessibilityLabel[39m=[32m"Password"[39m
+                  [33meditable[39m=[32m{true}[39m
+                  [33mtestID[39m=[32m"account-password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-submit"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign in[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-forgot"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mForgot password?[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      426 |
+      427 |   function fill(name: string) {
+    > 428 |     fireEvent.press(screen.getByRole('link', { name: 'Create account' }));
+          |                            ^
+      429 |     if (name) fireEvent.changeText(screen.getByLabelText('Username'), name);
+      430 |     fireEvent.changeText(screen.getByLabelText('Email'), 'ada@example.com');
+      431 |     fireEvent.changeText(screen.getByLabelText('Password'), 'secret12');
+
+
+  ● create account view › lands in the step for an empty username with a session
+
+    Unable to find an element with role: link, name: Create account
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33maccessibilityLabel[39m=[32m"Continue with Google"[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-google"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"google"[39m
+              [36m>[39m
+                [0mgoogle[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mContinue with Google[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mEmail[0m
+              [36m</Text>[39m
+              [36m<View[39m
+                [33mtestID[39m=[32m"account-email-field"[39m
+              [36m>[39m
+                [36m<TextInput[39m
+                  [33maccessibilityLabel[39m=[32m"Email"[39m
+                  [33meditable[39m=[32m{true}[39m
+                  [33mtestID[39m=[32m"account-email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mPassword[0m
+              [36m</Text>[39m
+              [36m<View[39m
+                [33mtestID[39m=[32m"account-password-field"[39m
+              [36m>[39m
+                [36m<TextInput[39m
+                  [33maccessibilityLabel[39m=[32m"Password"[39m
+                  [33meditable[39m=[32m{true}[39m
+                  [33mtestID[39m=[32m"account-password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-submit"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign in[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-forgot"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mForgot password?[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      426 |
+      427 |   function fill(name: string) {
+    > 428 |     fireEvent.press(screen.getByRole('link', { name: 'Create account' }));
+          |                            ^
+      429 |     if (name) fireEvent.changeText(screen.getByLabelText('Username'), name);
+      430 |     fireEvent.changeText(screen.getByLabelText('Email'), 'ada@example.com');
+      431 |     fireEvent.changeText(screen.getByLabelText('Password'), 'secret12');
+
+
+  ● create account view › shows Confirm your email for confirmSignUp and calls no RPC
+
+    Unable to find an element with role: link, name: Create account
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33maccessibilityLabel[39m=[32m"Continue with Google"[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-google"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"google"[39m
+              [36m>[39m
+                [0mgoogle[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mContinue with Google[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mEmail[0m
+              [36m</Text>[39m
+              [36m<View[39m
+                [33mtestID[39m=[32m"account-email-field"[39m
+              [36m>[39m
+                [36m<TextInput[39m
+                  [33maccessibilityLabel[39m=[32m"Email"[39m
+                  [33meditable[39m=[32m{true}[39m
+                  [33mtestID[39m=[32m"account-email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text[39m
+                [33maccessible[39m=[32m{false}[39m
+              [36m>[39m
+                [0mPassword[0m
+              [36m</Text>[39m
+              [36m<View[39m
+                [33mtestID[39m=[32m"account-password-field"[39m
+              [36m>[39m
+                [36m<TextInput[39m
+                  [33maccessibilityLabel[39m=[32m"Password"[39m
+                  [33meditable[39m=[32m{true}[39m
+                  [33mtestID[39m=[32m"account-password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-submit"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign in[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-forgot"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mForgot password?[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      426 |
+      427 |   function fill(name: string) {
+    > 428 |     fireEvent.press(screen.getByRole('link', { name: 'Create account' }));
+          |                            ^
+      429 |     if (name) fireEvent.changeText(screen.getByLabelText('Username'), name);
+      430 |     fireEvent.changeText(screen.getByLabelText('Email'), 'ada@example.com');
+      431 |     fireEvent.changeText(screen.getByLabelText('Password'), 'secret12');
+
+
+  ● create account view › paints Create account with the accent of each Language
+
+    Unable to find an element with role: button, name: Create account
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      492 |   it('paints Create account with the accent of each Language', () => {
+      493 |     sheet(createView(), accentFor('cajun'));
+    > 494 |     expect(StyleSheet.flatten(screen.getByRole('button', { name: 'Create account' }).props.style).backgroundColor).toBe('#2771CB');
+          |                                      ^
+      495 |     screen.unmount();
+      496 |     sheet(createView(), accentFor('kreole'));
+      497 |     expect(StyleSheet.flatten(screen.getByRole('button', { name: 'Create account' }).props.style).backgroundColor).toBe('#08834C');
+
+
+Test Suites: 3 failed, 6 passed, 9 total
+Tests:       10 failed, 140 passed, 150 total
+Snapshots:   0 total
+Time:        5.058 s
+Ran all test suites matching src/account|src/components/account.
