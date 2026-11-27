@@ -8,15 +8,7 @@ export type AuthLink =
   | { kind: 'ignored' }
   | { kind: 'failed' }
 
-export function resolveAuthRedirect(input?: {
-  platform?: string
-  origin?: string
-  createURL?: (path: string) => string
-  host?: string | null
-}) {
-  if (input?.platform === 'web') {
-    return `${(input.origin || 'http://localhost').replace(/\/$/, '')}/auth/callback`
-  }
+export function resolveAuthRedirect(input?: { createURL?: (path: string) => string; host?: string | null }) {
   const created = input?.createURL?.('auth/callback') || NATIVE
   if (created.startsWith(SCHEME) && input?.host) {
     return `exp://${input.host.replace(/\/$/, '')}/--/auth/callback`

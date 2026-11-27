@@ -446,7 +446,7 @@ describe('account connector', () => {
     const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc`)).toEqual({
       type: 'opened',
-      identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
+      identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'google' }
     });
   });
 

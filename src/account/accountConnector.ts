@@ -187,9 +187,19 @@ export function createAccountConnector({
     },
     async updatePassword(password: string): Promise<AuthResult> {
       if (!client) return unavailable
-      const { data, error } = await client.auth.updateUser({ password })
-      const user = data?.user || data?.session?.user
-      if (error || !user) return fail(error)
+      const mine = beginAttempt()
+      const pending = caught(client.auth.updateUser({ password }))
+      const updated = await firstOf(pending, timeoutMs)
+      if (updated === 'timeout') {
+        void pending.then((result) => {
+          if (!(result.data?.user || result.data?.session?.user) || !orphaned(mine) || !client) return
+          void client.auth.signOut({ scope: 'local' }).catch(() => undefined)
+        })
+        return { ok: false, failure: 'network' }
+      }
+      const user = updated.data?.user || updated.data?.session?.user
+      if (updated.error || !user) return fail(updated.error)
+      noteSuccess(mine)
       return signedIn(client, user, 'email')
     },
     async signInWithProvider(provider: string): Promise<AuthResult> {
@@ -252,7 +262,9 @@ export function createAccountConnector({
         return { type: 'linkFailed', failure: failure === 'oauthCancelled' ? 'unknown' : failure }
       }
       noteSuccess(mine)
-      return link.kind === 'recovery' ? { type: 'recoveryLinkOpened' } : null
+      if (link.kind === 'recovery') return { type: 'recoveryLinkOpened' }
+      const result = await signedIn(client, exchanged.data.session.user, link.kind === 'oauth' ? 'google' : 'email')
+      return result.ok && 'identity' in result ? { type: 'opened', identity: result.identity } : { type: 'linkFailed', failure: 'unknown' }
     },
     async deleteAccount(): Promise<DeleteResult> {
       if (!client) return { ok: false, failure: 'notSignedIn' }
