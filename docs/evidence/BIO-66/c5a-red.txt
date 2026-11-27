@@ -1,0 +1,110 @@
+FAIL src/account/__tests__/authLink.test.ts
+  ● auth links › has no web output and uses exp:// when Expo Go would emit the app scheme
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "com.westleysturhan.louisianafrench://auth/callback"
+    Received: "https://learn.example/auth/callback"
+
+      16 |
+      17 |   it('has no web output and uses exp:// when Expo Go would emit the app scheme', () => {
+    > 18 |     expect(resolveAuthRedirect({ platform: 'web', origin: 'https://learn.example/' } as never)).toBe(REDIRECT);
+         |                                                                                                 ^
+      19 |     expect(resolveAuthRedirect({
+      20 |       createURL: () => REDIRECT,
+      21 |       host: 'abc.ngrok.io'
+
+      at Object.toBe (src/account/__tests__/authLink.test.ts:18:97)
+
+FAIL src/account/__tests__/accountConnector.test.ts (10.403 s)
+  ● account connector › opens the modal for a confirmed link after the exchange succeeds
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"identity": {"email": "ada@example.com", "id": "learner-1", "provider": "email", "username": null}, "type": "opened"}
+    Received: null
+
+      404 |   it('opens the modal for a confirmed link after the exchange succeeds', async () => {
+      405 |     const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
+    > 406 |     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=signup`)).toEqual({
+          |                                                                                ^
+      407 |       type: 'opened',
+      408 |       identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
+      409 |     });
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:406:80)
+      at asyncGeneratorStep (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › opens the modal for an oauth link when no oauth attempt is in flight
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"identity": {"email": "ada@example.com", "id": "learner-1", "provider": "email", "username": null}, "type": "opened"}
+    Received: null
+
+      412 |   it('opens the modal for an oauth link when no oauth attempt is in flight', async () => {
+      413 |     const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
+    > 414 |     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc`)).toEqual({
+          |                                                                    ^
+      415 |       type: 'opened',
+      416 |       identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
+      417 |     });
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:414:68)
+      at asyncGeneratorStep (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● account connector › updatePassword settling › signs out locally when a late success follows a timeout
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      at _getError (../../../node_modules/jest-circus/build/jestAdapterInit.js:1985:12)
+          at Array.map (<anonymous>)
+
+    Cause:
+        thrown: "Exceeded timeout of 5000 ms for a test.
+        Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+          472 |     }
+          473 |
+        > 474 |     it('signs out locally when a late success follows a timeout', async () => {
+              |       ^
+          475 |       const { connector, signOuts, release } = lateUpdate();
+          476 |       expect(await connector.updatePassword('new-password')).toEqual({ ok: false, failure: 'network' });
+          477 |       release();
+
+          at src/account/__tests__/accountConnector.test.ts:474:7
+          at src/account/__tests__/accountConnector.test.ts:452:11
+          at Object.<anonymous> (src/account/__tests__/accountConnector.test.ts:18:9)
+
+  ● account connector › updatePassword settling › keeps the session when a newer attempt succeeded before the late success
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      at _getError (../../../node_modules/jest-circus/build/jestAdapterInit.js:1985:12)
+          at Array.map (<anonymous>)
+
+    Cause:
+        thrown: "Exceeded timeout of 5000 ms for a test.
+        Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+          480 |     });
+          481 |
+        > 482 |     it('keeps the session when a newer attempt succeeded before the late success', async () => {
+              |       ^
+          483 |       const { connector, signOuts, release } = lateUpdate();
+          484 |       expect(await connector.updatePassword('new-password')).toEqual({ ok: false, failure: 'network' });
+          485 |       expect(await connector.updatePassword('new-password')).toMatchObject({ ok: true });
+
+          at src/account/__tests__/accountConnector.test.ts:482:7
+          at src/account/__tests__/accountConnector.test.ts:452:11
+          at Object.<anonymous> (src/account/__tests__/accountConnector.test.ts:18:9)
+
+Test Suites: 2 failed, 5 passed, 7 total
+Tests:       5 failed, 102 passed, 107 total
+Snapshots:   0 total
+Time:        10.697 s, estimated 11 s
+Ran all test suites matching src/account.
