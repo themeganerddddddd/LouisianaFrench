@@ -37,7 +37,7 @@ export type AccountView =
   | { kind: 'deleteAccount'; identity: Identity; deletion: Deletion }
   | { kind: 'accountDeleted' };
 export type AuthResult =
-  | { ok: true; identity: Identity; profileRead?: boolean }
+  | { ok: true; identity: Identity; profileRead?: boolean; usernameFailed?: Extract<SetUsernameResult, { ok: false }> }
   | { ok: true; pending: 'confirmSignUp' | 'passwordReset' }
   | { ok: false; failure: AuthFailure };
 export type DeleteResult = { ok: true } | { ok: false; failure: 'network' | 'notSignedIn' | 'unknown' };
@@ -245,6 +245,9 @@ function applyAuth(view: FormView, result: AuthResult): AccountView {
   }
   if ('identity' in result) {
     if (view.kind === 'setNewPassword') return { kind: 'passwordSaved' };
+    if (view.kind === 'create' && result.usernameFailed) {
+      return settleUsername(openUsername(result.identity, view.username), result.usernameFailed);
+    }
     if (view.kind === 'signIn' || view.kind === 'create') {
       if (result.identity.username === null && result.profileRead === true) return openUsername(result.identity);
       return { kind: 'signedIn', identity: result.identity, signingOut: false };
@@ -272,9 +275,9 @@ function blank(to: 'signIn' | 'create' | 'forgot'): AccountView {
   return { kind: 'signIn', email: '', password: '', submit: EDITING };
 }
 
-function openUsername(identity: Identity): UsernameView {
+function openUsername(identity: Identity, draft = ''): UsernameView {
   return {
-    kind: 'username', identity, draft: '', mode: 'first',
+    kind: 'username', identity, draft, mode: 'first',
     availability: { status: 'unchecked' }, submit: { status: 'editing' }
   };
 }

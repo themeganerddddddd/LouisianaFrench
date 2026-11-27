@@ -6,17 +6,34 @@ import { usernameSaveBlocked, type AccountEvent, type AccountView } from '../../
 import { usernameFormatIssue } from '../../account/usernameFormat';
 import { Field, LinkButton, PrimaryButton } from './formControls';
 // English placeholders. Louisiana French and Kouri-Vini are TBD-copy.
+const GOOGLE = { // TBD-copy
+  label: 'Continue with Google',
+  failed: 'Google sign-in did not finish. Try again.'
+};
+
 const SIGN_IN = { // TBD-copy
-  google: 'Continue with Google',
-  googleFailed: 'Google sign-in did not finish. Try again.',
   email: 'Email',
   password: 'Password',
   submit: 'Sign in',
   forgot: 'Forgot password?',
+  create: 'Create account',
   wrongPassword: 'That email or password is not right.',
   network: 'The network failed. Try again.',
   unavailable: 'Sign-in is unavailable.',
   failed: 'Sign-in failed.'
+};
+
+const CREATE = { // TBD-copy
+  username: 'Username',
+  email: 'Email',
+  password: 'Password',
+  passwordHint: 'At least 8 characters.',
+  emailTaken: 'That email is already registered.',
+  submit: 'Create account',
+  back: 'Sign in',
+  network: 'The network failed. Try again.',
+  unavailable: 'Sign-in is unavailable.',
+  failed: 'Sign-up failed.'
 };
 
 const FORGOT = { // TBD-copy
@@ -29,8 +46,8 @@ const FORGOT = { // TBD-copy
 };
 
 const INBOX = { // TBD-copy
-  title: 'Check your inbox',
-  body: 'Check that inbox. I give the same reply for every address.',
+  passwordReset: { title: 'Check your inbox', body: 'Check that inbox. I give the same reply for every address.' },
+  confirmSignUp: { title: 'Confirm your email', body: 'Open the link in your email to finish creating your account.' },
   back: 'Sign in'
 };
 
@@ -51,6 +68,8 @@ const USERNAME = { // TBD-copy
 
 type Dispatch = (event: AccountEvent) => void;
 type SignIn = Extract<AccountView, { kind: 'signIn' }>;
+type Create = Extract<AccountView, { kind: 'create' }>;
+type Inbox = Extract<AccountView, { kind: 'inbox' }>;
 type Forgot = Extract<AccountView, { kind: 'forgot' }>;
 type Username = Extract<AccountView, { kind: 'username' }>;
 
@@ -85,24 +104,7 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
   return (
     <View style={styles.stack}>
       {failure === 'oauthFailed' ? <GoogleError /> : null}
-      <Pressable
-        accessibilityLabel={SIGN_IN.google}
-        accessibilityRole="button"
-        accessibilityState={{ busy: oauth, disabled: locked }}
-        disabled={locked}
-        onPress={() => {
-          if (!locked) dispatch({ type: 'providerChosen', provider: 'google' });
-        }}
-        style={[styles.google, locked ? styles.locked : null]}
-        testID="account-google"
-      >
-        {oauth ? (
-          <ActivityIndicator color={accentColor} testID="account-google-spinner" />
-        ) : (
-          <FontAwesome5 name="google" size={18} color="#DB4437" />
-        )}
-        <Text style={styles.googleLabel}>{SIGN_IN.google}</Text>
-      </Pressable>
+      <GoogleButton locked={locked} oauth={oauth} dispatch={dispatch} accentColor={accentColor} />
       <Field
         label={SIGN_IN.email}
         value={view.email}
@@ -138,6 +140,78 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
         accentColor={accentColor}
         disabled={locked}
         testID="account-forgot"
+      />
+      <LinkButton
+        label={SIGN_IN.create}
+        onPress={() => dispatch({ type: 'navigated', to: 'create' })}
+        accentColor={accentColor}
+        disabled={locked}
+        testID="account-create"
+      />
+    </View>
+  );
+}
+
+function formatError(draft: string): string | undefined {
+  const issue = usernameFormatIssue(draft);
+  return issue ? USERNAME[issue] : undefined;
+}
+
+export function CreateView({ view, dispatch, accentColor }: { view: Create; dispatch: Dispatch; accentColor: string }) {
+  const locked = busy(view.submit.status);
+  const failure = view.submit.status === 'failed' ? view.submit.failure : '';
+  const other = failure && !['oauthFailed', 'invalidUsername', 'emailTaken', 'weakPassword'].includes(failure);
+  return (
+    <View style={styles.stack}>
+      {failure === 'oauthFailed' ? <GoogleError /> : null}
+      <GoogleButton locked={locked} oauth={view.submit.status === 'oauth'} dispatch={dispatch} accentColor={accentColor} />
+      <Field
+        label={CREATE.username}
+        value={view.username}
+        placeholder={USERNAME.placeholder}
+        onChangeText={(value) => dispatch({ type: 'edited', field: 'username', value })}
+        accentColor={accentColor}
+        editable={!locked}
+        autoCapitalize="none"
+        error={failure === 'invalidUsername' ? formatError(view.username) : undefined}
+        testID="account-username"
+      />
+      <Field
+        label={CREATE.email}
+        value={view.email}
+        onChangeText={(value) => dispatch({ type: 'edited', field: 'email', value })}
+        accentColor={accentColor}
+        editable={!locked}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        error={failure === 'emailTaken' ? CREATE.emailTaken : other ? otherFailure(failure, CREATE) : undefined}
+        testID="account-email"
+      />
+      <Field
+        label={CREATE.password}
+        value={view.password}
+        onChangeText={(value) => dispatch({ type: 'edited', field: 'password', value })}
+        accentColor={accentColor}
+        editable={!locked}
+        secureTextEntry
+        error={failure === 'weakPassword' ? CREATE.passwordHint : undefined}
+        testID="account-password"
+      />
+      {failure === 'weakPassword' ? null : <Text>{CREATE.passwordHint}</Text>}
+      <PrimaryButton
+        label={CREATE.submit}
+        onPress={() => dispatch({ type: 'submitted' })}
+        accentColor={accentColor}
+        disabled={locked}
+        loading={view.submit.status === 'submitting'}
+        testID="account-submit"
+      />
+      <LinkButton
+        label={CREATE.back}
+        onPress={() => dispatch({ type: 'navigated', to: 'signIn' })}
+        accentColor={accentColor}
+        disabled={locked}
+        testID="account-create-back"
       />
     </View>
   );
@@ -191,10 +265,35 @@ function CheckingRing({ color }: { color: string }) {
   return <Animated.View testID="account-username-checking" style={[styles.ring, { borderColor: color, transform: [{ rotate }] }]} />;
 }
 
+function GoogleButton({ locked, oauth, dispatch, accentColor }: {
+  locked: boolean; oauth: boolean; dispatch: Dispatch; accentColor: string;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={GOOGLE.label}
+      accessibilityRole="button"
+      accessibilityState={{ busy: oauth, disabled: locked }}
+      disabled={locked}
+      onPress={() => {
+        if (!locked) dispatch({ type: 'providerChosen', provider: 'google' });
+      }}
+      style={[styles.google, locked ? styles.locked : null]}
+      testID="account-google"
+    >
+      {oauth ? (
+        <ActivityIndicator color={accentColor} testID="account-google-spinner" />
+      ) : (
+        <FontAwesome5 name="google" size={18} color="#DB4437" />
+      )}
+      <Text style={styles.googleLabel}>{GOOGLE.label}</Text>
+    </Pressable>
+  );
+}
+
 function GoogleError() {
   return <View style={styles.error}>
     <Feather accessible={false} color="#B91C1C" name="alert-circle" size={16} />
-    <Text accessibilityRole="alert" style={styles.errorText} testID="account-google-error">{SIGN_IN.googleFailed}</Text>
+    <Text accessibilityRole="alert" style={styles.errorText} testID="account-google-error">{GOOGLE.failed}</Text>
   </View>;
 }
 
@@ -248,11 +347,12 @@ export function UsernameView({ view, dispatch, accentColor }: { view: Username; 
   );
 }
 
-export function InboxView({ dispatch, accentColor }: { dispatch: Dispatch; accentColor: string }) {
+export function InboxView({ view, dispatch, accentColor }: { view: Inbox; dispatch: Dispatch; accentColor: string }) {
+  const copy = INBOX[view.reason];
   return (
     <View style={styles.stack}>
-      <Text style={styles.title}>{INBOX.title}</Text>
-      <Text>{INBOX.body}</Text>
+      <Text style={styles.title}>{copy.title}</Text>
+      <Text>{copy.body}</Text>
       <LinkButton
         label={INBOX.back}
         onPress={() => dispatch({ type: 'navigated', to: 'signIn' })}
