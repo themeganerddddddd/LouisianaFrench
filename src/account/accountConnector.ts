@@ -160,6 +160,12 @@ export function createAccountConnector({
   function orphaned(id: number) {
     return !(succeeded > id)
   }
+  function settleLate<R>(pending: Promise<R>, mine: number, hasUser: (result: R) => boolean) {
+    void pending.then((result) => {
+      if (!hasUser(result) || !orphaned(mine) || !client) return
+      void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => onIdentity(null))
+    })
+  }
   function announce<T extends AuthResult>(result: T): T {
     if (result.ok && 'identity' in result) onIdentity(result.identity)
     return result
@@ -197,10 +203,7 @@ export function createAccountConnector({
       const pending = caught(client.auth.updateUser({ password }))
       const updated = await firstOf(pending, timeoutMs)
       if (updated === 'timeout') {
-        void pending.then((result) => {
-          if (!(result.data?.user || result.data?.session?.user) || !orphaned(mine) || !client) return
-          void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => onIdentity(null))
-        })
+        settleLate(pending, mine, (result) => !!(result.data?.user || result.data?.session?.user))
         return { ok: false, failure: 'network' }
       }
       const user = updated.data?.user || updated.data?.session?.user
@@ -233,10 +236,7 @@ export function createAccountConnector({
       const pending = caught(client.auth.exchangeCodeForSession(link.code))
       const exchanged = await firstOf(pending, timeoutMs)
       if (exchanged === 'timeout') {
-        void pending.then((result) => {
-          if (!result.data?.session?.user || !orphaned(mine) || !client) return
-          void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => onIdentity(null))
-        })
+        settleLate(pending, mine, (result) => !!result.data?.session?.user)
         return { ok: false, failure: 'network' }
       }
       if (mine !== attempt) return { ok: false, failure: 'oauthCancelled' }
@@ -271,10 +271,7 @@ export function createAccountConnector({
       const pending = caught(client.auth.exchangeCodeForSession(link.code))
       const exchanged = await firstOf(pending, timeoutMs)
       if (exchanged === 'timeout') {
-        void pending.then((result) => {
-          if (!result.data?.session?.user || !orphaned(mine) || !client) return
-          void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => onIdentity(null))
-        })
+        settleLate(pending, mine, (result) => !!result.data?.session?.user)
         return { type: 'linkFailed', failure: 'network' }
       }
       if (exchanged.error || !exchanged.data?.session?.user) {
