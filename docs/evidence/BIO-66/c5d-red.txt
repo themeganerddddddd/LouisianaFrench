@@ -1,0 +1,6 @@
+FAIL src/components/__tests__/noSignInModal.test.js
+FAIL src/account/__tests__/accountEmits.test.ts
+FAIL src/identity/__tests__/identityEmit.test.js
+FAIL src/screens/__tests__/homeAccountMachine.test.js (6.181 s)
+Test Suites: 4 failed, 4 total
+Tests:       15 failed, 2 passed, 17 total
