@@ -484,6 +484,67 @@ describe('account connector', () => {
     }
   });
 
+  it('announces the session identity when a recovery link opens', async () => {
+    const heard: unknown[] = [];
+    const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }), onIdentity: (next) => heard.push(next) });
+    expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`)).toEqual({ type: 'recoveryLinkOpened' });
+    expect(heard).toEqual([{ id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }]);
+  });
+
+  describe('email link late success', () => {
+    function lateLink() {
+      const signOuts: unknown[] = [];
+      const heard: unknown[] = [];
+      let releaseFirst: (value: unknown) => void = () => {};
+      let calls = 0;
+      const connector = openConnector({
+        timeoutMs: 20,
+        onIdentity: (next) => heard.push(next),
+        client: client({
+          exchangeCodeForSession: () => {
+            calls += 1;
+            if (calls === 1) return new Promise((resolve) => { releaseFirst = resolve; });
+            return exchangeOk();
+          },
+          signOut: async (input: unknown) => {
+            signOuts.push(input);
+            return { error: null };
+          }
+        })
+      });
+      return { connector, signOuts, heard, release: () => releaseFirst({ data: { session: { user: SESSION_USER } }, error: null }) };
+    }
+    const URL = `${REDIRECT}?code=abc&type=signup`;
+
+    it('signs out locally and announces a guest when the exchange succeeds late', async () => {
+      const { connector, signOuts, heard, release } = lateLink();
+      expect(await connector.consumeAuthUrl(URL)).toEqual({ type: 'linkFailed', failure: 'network' });
+      release();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(signOuts).toEqual([{ scope: 'local' }]);
+      expect(heard).toEqual([null]);
+    });
+
+    it('keeps the session when a newer link succeeded first', async () => {
+      const { connector, signOuts, release } = lateLink();
+      expect(await connector.consumeAuthUrl(URL)).toEqual({ type: 'linkFailed', failure: 'network' });
+      expect(await connector.consumeAuthUrl(URL)).toMatchObject({ type: 'opened' });
+      release();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(signOuts).toEqual([]);
+    });
+  });
+
+  it('signOut announces a guest even when the local sign-out rejects', async () => {
+    const heard: unknown[] = [];
+    const connector = openConnector({
+      client: client({ signOut: async () => { throw new Error('offline'); } }),
+      onIdentity: (next) => heard.push(next)
+    });
+    await expect(connector.signOut()).resolves.toBeUndefined();
+    expect(heard).toEqual([null]);
+  });
+
   describe('updatePassword settling', () => {
     function lateUpdate() {
       const signOuts: unknown[] = [];

@@ -11,6 +11,7 @@ const RECOVERY_URL = 'https://x/auth/callback?code=abc&type=recovery';
 const mockConsumeAuthUrl = jest.fn();
 const mockUpdatePassword = jest.fn();
 const mockListeners = new Set();
+let mockSession = null;
 function mockEmit(identity) {
   act(() => {
     for (const listener of mockListeners) listener(identity);
@@ -27,7 +28,7 @@ jest.mock('../../components/HomeAboutMenu', () => {
 jest.mock('../../identity/connector', () => ({
   createSupabaseIdentityConnector: () => ({
     async getIdentity() {
-      return null;
+      return mockSession;
     },
     subscribe(listener) {
       mockListeners.add(listener);
@@ -56,6 +57,7 @@ jest.mock('../../identity/connector', () => ({
 describe('Home account modal', () => {
   beforeEach(() => {
     mockListeners.clear();
+    mockSession = null;
     mockConsumeAuthUrl.mockReset();
     mockConsumeAuthUrl.mockResolvedValue({ type: 'recoveryLinkOpened' });
     mockUpdatePassword.mockReset();
@@ -90,6 +92,15 @@ describe('Home account modal', () => {
 
     mockEmit(ADA);
     expect(screen.getByTestId('home-identity')).toHaveTextContent('ada@example.com');
+  });
+
+  it('shows the recovery session identity after Continue', async () => {
+    await homeWithLink({ type: 'recoveryLinkOpened' });
+    mockSession = ADA;
+    fireEvent.changeText(await screen.findByTestId('account-new-password'), 'new-secret-1');
+    fireEvent.press(screen.getByTestId('account-submit'));
+    fireEvent.press(await screen.findByTestId('account-continue'));
+    await waitFor(() => expect(screen.getByTestId('home-identity')).toHaveTextContent('ada@example.com'));
   });
 
   it('opens Signed in from a confirm link', async () => {

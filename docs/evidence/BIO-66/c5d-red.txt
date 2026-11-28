@@ -4,3 +4,24 @@ FAIL src/identity/__tests__/identityEmit.test.js
 FAIL src/screens/__tests__/homeAccountMachine.test.js (6.181 s)
 Test Suites: 4 failed, 4 total
 Tests:       15 failed, 2 passed, 17 total
+
+
+## Sign-in-state fixes (recovery announce, email link late success, signOut)
+  ● account connector › announces the session identity when a recovery link opens
+    expect(received).toEqual(expected) // deep equality
+    - Expected  - 8
+    + Received  + 1
+      490 |     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`)).toEqual({ type: 'recoveryLinkOpened' });
+    > 491 |     expect(heard).toEqual([{ id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }]);
+  ● account connector › email link late success › signs out locally and announces a guest when the exchange succeeds late
+    expect(received).toEqual(expected) // deep equality
+    - Expected  - 5
+    + Received  + 1
+    > 524 |       expect(signOuts).toEqual([{ scope: 'local' }]);
+      525 |       expect(heard).toEqual([null]);
+  ● account connector › signOut announces a guest even when the local sign-out rejects
+    expect(received).resolves.toBeUndefined()
+    Received promise rejected instead of resolved
+    > 544 |     await expect(connector.signOut()).resolves.toBeUndefined();
+      545 |     expect(heard).toEqual([null]);
+Tests:       3 failed, 43 passed, 46 total
