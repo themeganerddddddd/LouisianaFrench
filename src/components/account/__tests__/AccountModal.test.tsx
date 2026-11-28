@@ -485,6 +485,19 @@ describe('change username view', () => {
     await waitFor(() => expect(screen.getByText(`You can change your username again on ${date}.`)).toBeOnTheScreen());
     expect(date).toContain('2026');
   });
+
+  it.each([
+    ['taken' as const, 'That username is taken.'],
+    ['reserved' as const, "That username isn't available. Try another."]
+  ])('shows the %s copy and stays in change mode when Save is refused', async (reason, copy) => {
+    changing(jest.fn(async () => ({ ok: false as const, reason })));
+    fireEvent.changeText(screen.getByLabelText('Username'), 'Elisa');
+    await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+    fireEvent.press(save());
+    await waitFor(() => expect(screen.getByText(copy)).toBeOnTheScreen());
+    expect(screen.getByText('Change username')).toBeOnTheScreen();
+    expect(save().props.accessibilityState.disabled).toBe(true);
+  });
 });
 
 describe('create account view', () => {
