@@ -1,7 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import { act, render } from '@testing-library/react-native';
+import { createElement } from 'react';
 
 import { createAccountConnector, type AccountClient } from '../accountConnector';
+import { canDismiss } from '../accountMachine';
 import { runAccountEffect } from '../runAccountEffects';
+import { useAccountMachine } from '../useAccountMachine';
 
 function openConnector(options: Omit<Parameters<typeof createAccountConnector>[0], 'redirectTo'> & { redirectTo?: string }) {
   return createAccountConnector({ redirectTo: REDIRECT, ...options });
@@ -596,6 +600,63 @@ describe('account connector', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(signOuts).toEqual([]);
     });
+  });
+
+  it('leaves set-new-password when a late recovery save signs the session out', async () => {
+    const signOuts: unknown[] = [];
+    let releaseFirst: (value: unknown) => void = () => {};
+    let calls = 0;
+    const connector = openConnector({
+      timeoutMs: 20,
+      client: client({
+        updateUser: () => {
+          calls += 1;
+          if (calls === 1) return new Promise((resolve) => { releaseFirst = resolve; });
+          return Promise.resolve({ data: { user: null }, error: { message: 'Auth session missing!' } });
+        },
+        signOut: async (input: unknown) => {
+          signOuts.push(input);
+          return { error: null };
+        }
+      })
+    });
+    const slot: {
+      view?: ReturnType<typeof useAccountMachine>['view'];
+      dispatch?: ReturnType<typeof useAccountMachine>['dispatch'];
+    } = {};
+    function Screen() {
+      const machine = useAccountMachine(connector, null);
+      slot.view = machine.view;
+      slot.dispatch = machine.dispatch;
+      return null;
+    }
+    render(createElement(Screen));
+    const dispatch = slot.dispatch;
+    if (!dispatch) throw new Error('the screen did not render');
+    await act(async () => {
+      dispatch({ type: 'recoveryLinkOpened' });
+      dispatch({ type: 'edited', field: 'password', value: 'new-password' });
+      dispatch({ type: 'submitted' });
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    });
+    const timedOut = slot.view;
+    if (!timedOut || timedOut.kind !== 'setNewPassword') throw new Error('recovery did not reach set-new-password');
+    expect(timedOut.submit).toEqual({ status: 'failed', failure: 'network' });
+    expect(canDismiss(timedOut)).toBe(false);
+
+    await act(async () => {
+      releaseFirst({ data: { user: SESSION_USER }, error: null });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const retry = await connector.updatePassword('new-password');
+    const settled = slot.view;
+    if (!settled) throw new Error('the screen disappeared');
+    expect(signOuts).toEqual([{ scope: 'local' }]);
+    expect({
+      kind: settled.kind,
+      dismiss: canDismiss(settled),
+      retryOk: retry.ok
+    }).toEqual({ kind: 'signIn', dismiss: true, retryOk: false });
   });
 
   it('does not read a bare code as email confirmation while Google is open', async () => {
