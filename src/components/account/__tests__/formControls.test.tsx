@@ -171,7 +171,7 @@ describe('account buttons', () => {
 
   it('locks the destructive control and marks it busy while loading', () => {
     const onPress = jest.fn();
-    render(<DestructiveButton label=Delete onPress={onPress} accentColor={ACCENT} confirm loading testID=del />);
+    render(<DestructiveButton label="Delete" onPress={onPress} accentColor={ACCENT} confirm loading testID="del" />);
     fireEvent.press(screen.getByTestId('del'));
     expect(onPress).not.toHaveBeenCalled();
     expect(screen.getByTestId('del-spinner')).toBeOnTheScreen();

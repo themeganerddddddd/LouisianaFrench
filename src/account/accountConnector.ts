@@ -133,6 +133,27 @@ function caught(work: Promise<AuthCall>): Promise<AuthCall> {
   return work.catch((error: unknown) => ({ error: isAuthError(error) ? error : { message: 'unknown' } }))
 }
 
+async function invokeDelete(client: AccountClient | null): Promise<DeleteResult> {
+  if (!client) return { ok: false, failure: 'notSignedIn' }
+  try {
+    const session = await client.auth.getSession()
+    const token = session.data?.session?.access_token
+    if (!token) return { ok: false, failure: 'notSignedIn' }
+    const invoked = await client.functions.invoke('delete-account', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const body = invoked.data ?? await readDeleteBody(invoked.error)
+    if (body?.ok) return { ok: true }
+    if (body && !body.ok) return { ok: false, failure: body.failure }
+    if (statusOf(invoked.error) === 401) return { ok: false, failure: 'notSignedIn' }
+    if (isNetwork(invoked.error)) return { ok: false, failure: 'network' }
+    return { ok: false, failure: 'unknown' }
+  } catch (error) {
+    return { ok: false, failure: isNetwork(error) ? 'network' : 'unknown' }
+  }
+}
+
 export function createAccountConnector({
   client,
   openBrowser,
@@ -173,6 +194,12 @@ export function createAccountConnector({
   async function setName(name: string): Promise<SetUsernameResult> {
     if (!hasRpc(client)) return { ok: false, reason: 'network' }
     return saveUsername((fn, args) => client.rpc(fn, args), name)
+  }
+  async function endLocalSession() {
+    if (client) {
+      try { await client.auth.signOut({ scope: 'local' }) } catch { /* The learner still leaves this device. */ }
+    }
+    onIdentity(null)
   }
   return {
     async signIn(email: string, password: string): Promise<AuthResult> {
@@ -245,10 +272,7 @@ export function createAccountConnector({
       return announce(await signedIn(client, exchanged.data.session.user, 'google'))
     },
     async signOut() {
-      if (client) {
-        try { await client.auth.signOut({ scope: 'local' }) } catch { /* The learner still leaves this device. */ }
-      }
-      onIdentity(null)
+      await endLocalSession()
     },
     async setUsername(name: string): Promise<SetUsernameResult> {
       const saved = await setName(name)
@@ -287,28 +311,9 @@ export function createAccountConnector({
       return result.ok && 'identity' in result ? { type: 'opened', identity: result.identity, profileRead: result.profileRead } : { type: 'linkFailed', failure: 'unknown' }
     },
     async deleteAccount(): Promise<DeleteResult> {
-      if (!client) return { ok: false, failure: 'notSignedIn' }
-      try {
-        const session = await client.auth.getSession()
-        const token = session.data?.session?.access_token
-        if (!token) return { ok: false, failure: 'notSignedIn' }
-        const invoked = await client.functions.invoke('delete-account', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const body = invoked.data ?? await readDeleteBody(invoked.error)
-        if (body?.ok) {
-          try { await client.auth.signOut({ scope: 'local' }) } catch { /* The server account is already gone. */ }
-          onIdentity(null)
-          return { ok: true }
-        }
-        if (body && !body.ok) return { ok: false, failure: body.failure }
-        if (statusOf(invoked.error) === 401) return { ok: false, failure: 'notSignedIn' }
-        if (isNetwork(invoked.error)) return { ok: false, failure: 'network' }
-        return { ok: false, failure: 'unknown' }
-      } catch (error) {
-        return { ok: false, failure: isNetwork(error) ? 'network' : 'unknown' }
-      }
+      const result = await invokeDelete(client)
+      if (result.ok || result.failure === 'notSignedIn') await endLocalSession()
+      return result
     }
   }
 }
