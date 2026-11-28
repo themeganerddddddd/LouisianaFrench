@@ -52,6 +52,7 @@ export type AccountEvent =
   | { type: 'authSettled'; result: AuthResult }
   | { type: 'usernameEdited'; value: string }
   | { type: 'usernameChecked'; value: string; result: { status: UsernameReply } }
+  | { type: 'usernameEntryChosen' }
   | { type: 'usernameSaved' }
   | { type: 'usernameSkipped' }
   | { type: 'usernameSettled'; result: SetUsernameResult }
@@ -175,6 +176,11 @@ function reduceForm(view: FormView, event: AccountEvent): AccountView {
 function reduceSignedIn(view: SignedInView, event: AccountEvent): AccountView {
   if (event.type === 'signOutRequested') return view.signingOut ? view : { ...view, signingOut: true };
   if (event.type === 'signedOut') return view.signingOut ? initialView(null) : view;
+  if (event.type === 'usernameEntryChosen') {
+    if (view.signingOut) return view;
+    const { username } = view.identity;
+    return { ...openUsername(view.identity, username ?? ''), mode: username === null ? 'first' : 'change' };
+  }
   if (event.type === 'deleteRequested') {
     if (view.signingOut) return view;
     return { kind: 'deleteAccount', identity: view.identity, deletion: { phase: 'confirm', typed: '' } };
@@ -296,7 +302,8 @@ function reduceUsername(view: UsernameView, event: AccountEvent): AccountView {
     return saveBlocked(view) ? view : { ...view, submit: { status: 'submitting' } };
   }
   if (event.type === 'usernameSkipped') {
-    return { kind: 'signedIn', identity: { ...view.identity, username: null }, signingOut: false };
+    const identity = view.mode === 'change' ? view.identity : { ...view.identity, username: null };
+    return { kind: 'signedIn', identity, signingOut: false };
   }
   return view;
 }
@@ -312,7 +319,7 @@ export function usernameSaveBlocked(view: AccountView): boolean {
 }
 
 function saveBlocked(view: UsernameView): boolean {
-  if (!isValidUsernameFormat(view.draft)) return true;
+  if (!isValidUsernameFormat(view.draft) || view.draft === view.identity.username) return true;
   const found = view.availability;
   if (found.status !== 'settled' || found.value !== view.draft) return false;
   return found.reply === 'taken' || found.reply === 'reserved' || found.reply === 'invalid';

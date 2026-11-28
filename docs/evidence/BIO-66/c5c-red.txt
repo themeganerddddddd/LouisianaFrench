@@ -1,0 +1,832 @@
+FAIL src/account/__tests__/changeUsername.test.ts
+  ● change username › opens change mode from Signed in with the current name as the draft
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 9
+    + Received  + 2
+
+      Object {
+    -   "availability": Object {
+    -     "status": "unchecked",
+    -   },
+    -   "draft": "Elise",
+        "identity": Object {
+          "email": "ada@example.com",
+          "id": "learner-1",
+          "provider": "email",
+          "username": "Elise",
+        },
+    -   "kind": "username",
+    -   "mode": "change",
+    -   "submit": Object {
+    -     "status": "editing",
+    -   },
+    +   "kind": "signedIn",
+    +   "signingOut": false,
+      }
+
+      22 | describe('change username', () => {
+      23 |   it('opens change mode from Signed in with the current name as the draft', () => {
+    > 24 |     expect(open).toEqual({
+         |                  ^
+      25 |       kind: 'username', identity: named, draft: 'Elise', mode: 'change',
+      26 |       availability: { status: 'unchecked' }, submit: { status: 'editing' }
+      27 |     });
+
+
+  ● change username › opens first mode with an empty draft when there is no username
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 3
+    + Received  + 1
+
+      Object {
+    -   "draft": "",
+        "identity": Object {
+          "email": "ada@example.com",
+          "id": "learner-1",
+          "provider": "email",
+          "username": null,
+        },
+    -   "kind": "username",
+    -   "mode": "first",
+    +   "kind": "signedIn",
+      }
+
+      29 |
+      30 |   it('opens first mode with an empty draft when there is no username', () => {
+    > 31 |     expect(reduce({ kind: 'signedIn', identity: unnamed, signingOut: false }, { type: 'usernameEntryChosen' })).toMatchObject({
+         |                                                                                                                 ^
+      32 |       kind: 'username', identity: unnamed, draft: '', mode: 'first'
+      33 |     });
+      34 |   });
+
+
+  ● change username › blocks Save and the RPC for a byte-identical draft
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      42 |
+      43 |   it('blocks Save and the RPC for a byte-identical draft', () => {
+    > 44 |     expect(usernameSaveBlocked(open)).toBe(true);
+         |                                       ^
+      45 |     expect(step(open, { type: 'usernameSaved' })).toEqual({ next: open, effect: null });
+      46 |   });
+      47 |
+
+
+  ● change username › keeps Save enabled for a re-cased draft once it reads current, and calls the RPC
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"run": "checkUsername", "value": "élise"}
+    Received: null
+
+      48 |   it('keeps Save enabled for a re-cased draft once it reads current, and calls the RPC', () => {
+      49 |     const edited = step(open, { type: 'usernameEdited', value: 'élise' });
+    > 50 |     expect(edited.effect).toEqual({ run: 'checkUsername', value: 'élise' });
+         |                           ^
+      51 |     const current = reduce(edited.next, { type: 'usernameChecked', value: 'élise', result: { status: 'current' } });
+      52 |     expect(usernameSaveBlocked(current)).toBe(false);
+      53 |     expect(step(current, { type: 'usernameSaved' }).effect).toEqual({ run: 'setUsername', name: 'élise' });
+
+
+  ● change username › returns to Signed in with the new name on success
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 5
+
+      Object {
+    +   "draft": "Céline",
+        "identity": Object {
+          "email": "ada@example.com",
+          "id": "learner-1",
+          "provider": "email",
+    -     "username": "Céline",
+    +     "username": "Elise",
+        },
+        "kind": "signedIn",
+        "signingOut": false,
+    +   "submit": Object {
+    +     "status": "submitting",
+    +   },
+      }
+
+      60 |   it('returns to Signed in with the new name on success', () => {
+      61 |     const saving: AccountView = { ...(open as Extract<AccountView, { kind: 'username' }>), draft: 'Céline', submit: { status: 'submitting' } };
+    > 62 |     expect(reduce(saving, { type: 'usernameSettled', result: { ok: true, username: 'Céline' } })).toEqual({
+         |                                                                                                   ^
+      63 |       kind: 'signedIn', identity: { ...named, username: 'Céline' }, signingOut: false
+      64 |     });
+      65 |   });
+
+
+FAIL src/components/account/__tests__/AccountModal.test.tsx
+  ● change username view › opens from Signed in with the current name, the 17A helper and Save disabled
+
+    Unable to find an element with text: You can fix a typo for 24 hours after you first set your username. After that, you can change it once every 30 days.
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mE[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mElise[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      439 |   it('opens from Signed in with the current name, the 17A helper and Save disabled', () => {
+      440 |     changing(jest.fn(async () => ({ ok: false as const, reason: 'network' as const })));
+    > 441 |     expect(screen.getByText(HELPER_17A)).toBeOnTheScreen();
+          |                   ^
+      442 |     expect(screen.getByLabelText('Username').props.value).toBe('Elise');
+      443 |     expect(save().props.accessibilityState.disabled).toBe(true);
+      444 |     fireEvent.press(save());
+
+
+  ● change username view › does not call the RPC for an identical value, and cancels back to Signed in
+
+    Unable to find an element with role: button, name: Save username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mE[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mElise[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      435 |   }
+      436 |
+    > 437 |   const save = () => screen.getByRole('button', { name: 'Save username' });
+          |                             ^
+      438 |
+      439 |   it('opens from Signed in with the current name, the 17A helper and Save disabled', () => {
+      440 |     changing(jest.fn(async () => ({ ok: false as const, reason: 'network' as const })));
+
+
+  ● change username view › enables Save for a re-cased value, calls the RPC and returns to Signed in with the new name
+
+    Unable to find an element with accessibility label: Username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mE[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mElise[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      458 |     const setUsername = jest.fn(async (name: string) => ({ ok: true as const, username: name }));
+      459 |     changing(setUsername);
+    > 460 |     fireEvent.changeText(screen.getByLabelText('Username'), 'ELISE');
+          |                                 ^
+      461 |     await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+      462 |     fireEvent.press(save());
+      463 |     expect(setUsername).toHaveBeenCalledWith('ELISE');
+
+
+  ● change username view › shows the taken copy when Save is refused
+
+    Unable to find an element with accessibility label: Username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mE[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mElise[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      471 |   ] as const)('shows the %s copy when Save is refused', async (reason, copy) => {
+      472 |     changing(jest.fn(async () => ({ ok: false as const, reason })));
+    > 473 |     fireEvent.changeText(screen.getByLabelText('Username'), 'Elisa');
+          |                                 ^
+      474 |     await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+      475 |     fireEvent.press(save());
+      476 |     await waitFor(() => expect(screen.getByText(copy)).toBeOnTheScreen());
+
+
+  ● change username view › shows the reserved copy when Save is refused
+
+    Unable to find an element with accessibility label: Username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mE[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mElise[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      471 |   ] as const)('shows the %s copy when Save is refused', async (reason, copy) => {
+      472 |     changing(jest.fn(async () => ({ ok: false as const, reason })));
+    > 473 |     fireEvent.changeText(screen.getByLabelText('Username'), 'Elisa');
+          |                                 ^
+      474 |     await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+      475 |     fireEvent.press(save());
+      476 |     await waitFor(() => expect(screen.getByText(copy)).toBeOnTheScreen());
+
+
+  ● change username view › shows the date from retryAt when a change is too soon
+
+    Unable to find an element with accessibility label: Username
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mE[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mElise[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      479 |   it('shows the date from retryAt when a change is too soon', async () => {
+      480 |     changing(jest.fn(async () => ({ ok: false as const, reason: 'too_soon' as const, retryAt: '2026-12-24T12:00:00.000Z' })));
+    > 481 |     fireEvent.changeText(screen.getByLabelText('Username'), 'Elisa');
+          |                                 ^
+      482 |     await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+      483 |     fireEvent.press(save());
+      484 |     await waitFor(() => expect(screen.getByText(/^You can change your username again on .*2026\.$/)).toBeOnTheScreen());
+
+
+  ● create account view › shows Signed in for email with username Ada
+
+    expect(received).toBeFalsy()
+
+    Received: true
+
+      624 |     expect(screen.getByText('Your progress stays on this device.')).toBeOnTheScreen();
+      625 |     const entry = screen.getByRole('link', { name: username ? 'Change username' : 'Set a username' });
+    > 626 |     expect(entry.props.accessibilityState.disabled).toBeFalsy();
+          |                                                     ^
+      627 |     expect(screen.queryByText(username ? 'Set a username' : 'Change username')).toBeNull();
+      628 |     expect(screen.getByText('Delete account')).toBeOnTheScreen();
+      629 |   });
+
+
+  ● create account view › shows Signed in for google with username null
+
+    expect(received).toBeFalsy()
+
+    Received: true
+
+      624 |     expect(screen.getByText('Your progress stays on this device.')).toBeOnTheScreen();
+      625 |     const entry = screen.getByRole('link', { name: username ? 'Change username' : 'Set a username' });
+    > 626 |     expect(entry.props.accessibilityState.disabled).toBeFalsy();
+          |                                                     ^
+      627 |     expect(screen.queryByText(username ? 'Set a username' : 'Change username')).toBeNull();
+      628 |     expect(screen.getByText('Delete account')).toBeOnTheScreen();
+      629 |   });
+
+
+Test Suites: 2 failed, 2 total
+Tests:       13 failed, 32 passed, 45 total
+Snapshots:   0 total
+Time:        4.753 s
+Ran all test suites matching src/account/__tests__/changeUsername.test.ts|src/components/account/__tests__/AccountModal.test.tsx.

@@ -419,6 +419,87 @@ describe('username step view', () => {
   });
 });
 
+describe('change username view', () => {
+  const HELPER_17A = 'You can fix a typo for 24 hours after you first set your username. After that, you can change it once every 30 days.';
+  const named: Identity = { ...learner, username: 'Elise' };
+
+  function Flow({ account }: { account: AccountConnector }) {
+    const [stable] = useState(() => account);
+    const { view, dispatch } = useAccountMachine(stable, named);
+    return <AccountModal visible view={view} dispatch={dispatch} accentColor={accentFor('cajun')} onClose={() => {}} />;
+  }
+
+  function changing(setUsername: AccountConnector['setUsername'], checkUsername: AccountConnector['checkUsername'] = async () => ({ status: 'current' })) {
+    render(<Flow account={{ ...connector(async () => ({ ok: false, failure: 'unknown' })), setUsername, checkUsername }} />);
+    fireEvent.press(screen.getByRole('link', { name: 'Change username' }));
+  }
+
+  const save = () => screen.getByRole('button', { name: 'Save username' });
+
+  it('opens from Signed in with the current name, the 17A helper and Save disabled', () => {
+    changing(jest.fn(async () => ({ ok: false as const, reason: 'network' as const })));
+    expect(screen.getByText(HELPER_17A)).toBeOnTheScreen();
+    expect(screen.getByLabelText('Username').props.value).toBe('Elise');
+    expect(save().props.accessibilityState.disabled).toBe(true);
+    fireEvent.press(save());
+  });
+
+  it('does not call the RPC for an identical value, and cancels back to Signed in', () => {
+    const setUsername = jest.fn(async () => ({ ok: false as const, reason: 'network' as const }));
+    changing(setUsername);
+    fireEvent.press(save());
+    expect(setUsername).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByRole('link', { name: 'Cancel' }));
+    expect(screen.getByText('Elise')).toBeOnTheScreen();
+    expect(screen.getByRole('link', { name: 'Change username' })).toBeOnTheScreen();
+  });
+
+  it('enables Save for a re-cased value, calls the RPC and returns to Signed in with the new name', async () => {
+    const setUsername = jest.fn(async (name: string) => ({ ok: true as const, username: name }));
+    changing(setUsername);
+    fireEvent.changeText(screen.getByLabelText('Username'), 'ELISE');
+    await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+    fireEvent.press(save());
+    expect(setUsername).toHaveBeenCalledWith('ELISE');
+    await waitFor(() => expect(screen.getByTestId('account-avatar')).toHaveTextContent('E'));
+    expect(screen.getByText('ELISE')).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['taken', 'That username is taken.'],
+    ['reserved', "That username isn't available. Try another."]
+  ] as const)('shows the %s copy when Save is refused', async (reason, copy) => {
+    changing(jest.fn(async () => ({ ok: false as const, reason })));
+    fireEvent.changeText(screen.getByLabelText('Username'), 'Elisa');
+    await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+    fireEvent.press(save());
+    await waitFor(() => expect(screen.getByText(copy)).toBeOnTheScreen());
+  });
+
+  it('shows the date from retryAt when a change is too soon', async () => {
+    changing(jest.fn(async () => ({ ok: false as const, reason: 'too_soon' as const, retryAt: '2026-12-24T12:00:00.000Z' })));
+    fireEvent.changeText(screen.getByLabelText('Username'), 'Elisa');
+    await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+    fireEvent.press(save());
+    const date = new Date('2026-12-24T12:00:00.000Z').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    await waitFor(() => expect(screen.getByText(`You can change your username again on ${date}.`)).toBeOnTheScreen());
+    expect(date).toContain('2026');
+  });
+
+  it.each([
+    ['taken' as const, 'That username is taken.'],
+    ['reserved' as const, "That username isn't available. Try another."]
+  ])('shows the %s copy and stays in change mode when Save is refused', async (reason, copy) => {
+    changing(jest.fn(async () => ({ ok: false as const, reason })));
+    fireEvent.changeText(screen.getByLabelText('Username'), 'Elisa');
+    await waitFor(() => expect(save().props.accessibilityState.disabled).toBeFalsy());
+    fireEvent.press(save());
+    await waitFor(() => expect(screen.getByText(copy)).toBeOnTheScreen());
+    expect(screen.getByText('Change username')).toBeOnTheScreen();
+    expect(save().props.accessibilityState.disabled).toBe(true);
+  });
+});
+
 describe('create account view', () => {
   const createView = (over: Partial<Extract<AccountView, { kind: 'create' }>> = {}): AccountView => ({
     kind: 'create', username: '', email: '', password: '', submit: { status: 'editing' }, ...over
@@ -556,7 +637,7 @@ describe('create account view', () => {
     expect(screen.getByText(how)).toBeOnTheScreen();
     expect(screen.getByText('Your progress stays on this device.')).toBeOnTheScreen();
     const entry = screen.getByRole('link', { name: username ? 'Change username' : 'Set a username' });
-    expect(entry.props.accessibilityState.disabled).toBe(true);
+    expect(entry.props.accessibilityState.disabled).toBeFalsy();
     expect(screen.queryByText(username ? 'Set a username' : 'Change username')).toBeNull();
     expect(screen.getByText('Delete account')).toBeOnTheScreen();
   });

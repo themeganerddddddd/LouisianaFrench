@@ -63,7 +63,13 @@ const USERNAME = { // TBD-copy
   taken: 'That username is taken.',
   reserved: "That username isn't available. Try another.",
   skip: 'Skip for now',
-  save: 'Save username'
+  save: 'Save username',
+  change: {
+    title: 'Change username',
+    body: 'You can fix a typo for 24 hours after you first set your username. After that, you can change it once every 30 days.',
+    skip: 'Cancel'
+  },
+  tooSoon: (date: string) => `You can change your username again on ${date}.`
 };
 
 const NEW_PASSWORD = { // TBD-copy
@@ -111,6 +117,10 @@ function formatError(draft: string): string | undefined {
 function usernameMessage(view: Username): { kind: 'error' | 'checking' | 'available' | 'helper'; text: string } {
   const invalid = formatError(view.draft);
   if (invalid) return { kind: 'error', text: invalid };
+  if (view.submit.status === 'failed' && view.submit.failure === 'too_soon' && view.submit.retryAt) {
+    const date = new Date(view.submit.retryAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    return { kind: 'error', text: USERNAME.tooSoon(date) };
+  }
   const found = view.availability;
   if (found.status === 'checking' && found.value === view.draft) return { kind: 'checking', text: USERNAME.checking };
   if (found.status === 'settled' && found.value === view.draft) {
@@ -341,10 +351,11 @@ function GoogleError() {
 export function UsernameView({ view, dispatch, accentColor }: { view: Username; dispatch: Dispatch; accentColor: string }) {
   const locked = view.submit.status === 'submitting';
   const message = usernameMessage(view);
+  const changing = view.mode === 'change';
   return (
     <View style={styles.stack}>
-      <Text style={styles.title}>{USERNAME.title}</Text>
-      <Text>{USERNAME.body}</Text>
+      <Text style={styles.title}>{changing ? USERNAME.change.title : USERNAME.title}</Text>
+      <Text>{changing ? USERNAME.change.body : USERNAME.body}</Text>
       <Field
         label={USERNAME.label}
         value={view.draft}
@@ -378,7 +389,7 @@ export function UsernameView({ view, dispatch, accentColor }: { view: Username; 
         testID="account-username-save"
       />
       <LinkButton
-        label={USERNAME.skip}
+        label={changing ? USERNAME.change.skip : USERNAME.skip}
         onPress={() => dispatch({ type: 'usernameSkipped' })}
         accentColor={accentColor}
         disabled={locked}
@@ -468,9 +479,9 @@ export function SignedInView({ view, dispatch, accentColor }: { view: SignedIn; 
       />
       <LinkButton
         label={identity.username === null ? SIGNED_IN.setUsername : SIGNED_IN.changeUsername}
-        onPress={() => {}}
+        onPress={() => dispatch({ type: 'usernameEntryChosen' })}
         accentColor={accentColor}
-        disabled
+        disabled={signingOut}
         testID="account-username-entry"
       />
       <DestructiveButton label={SIGNED_IN.delete} onPress={() => {}} accentColor={accentColor} disabled testID="account-delete" />
