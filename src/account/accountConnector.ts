@@ -280,7 +280,7 @@ export function createAccountConnector({
       }
       noteSuccess(mine)
       if (link.kind === 'recovery') {
-        announce(await signedIn(client, exchanged.data.session.user, 'email'))
+        void signedIn(client, exchanged.data.session.user, 'email').then(announce)
         return { type: 'recoveryLinkOpened' }
       }
       const result = announce(await signedIn(client, exchanged.data.session.user, link.kind === 'oauth' ? 'google' : 'email'))

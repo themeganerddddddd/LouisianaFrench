@@ -70,6 +70,7 @@ describe('account connector identity notifications', () => {
 
     const recovery = watched();
     await recovery.connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`);
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(recovery.onIdentity).toHaveBeenCalledTimes(1);
   });
 
