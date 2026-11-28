@@ -671,3 +671,93 @@ describe('create account view', () => {
     expect(await AsyncStorage.getItem('learner-progress')).toBe('{"xp":42}');
   });
 });
+
+describe('delete account', () => {
+  const googleLearner: Identity = { ...learner, provider: 'google' };
+
+  function Deleting({ account, identity = learner, onClose = () => {} }: { account: AccountConnector; identity?: Identity; onClose?: () => void }) {
+    const [stable] = useState(() => account);
+    const { view, dispatch } = useAccountMachine(stable, identity);
+    return <AccountModal visible view={view} dispatch={dispatch} accentColor={accentFor('cajun')} onClose={onClose} />;
+  }
+
+  function withDelete(deleteAccount: AccountConnector['deleteAccount']): AccountConnector {
+    return { ...connector(async () => ({ ok: false, failure: 'unknown' })), deleteAccount };
+  }
+
+  function openConfirm() {
+    fireEvent.press(screen.getByTestId('account-delete'));
+  }
+
+  it('explains what goes and what stays, with no password field, and Keep my account goes back', () => {
+    render(<Deleting account={withDelete(async () => ({ ok: true }))} />);
+    openConfirm();
+    expect(screen.getByText(/your email and username/i)).toBeOnTheScreen();
+    expect(screen.getByText(/lessons and progress stay on this phone/i)).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    fireEvent.press(screen.getByTestId('account-delete-keep'));
+    expect(screen.getByTestId('account-sign-out')).toBeOnTheScreen();
+  });
+
+  it.each([['delete', true], ['DELETE ', true], ['DELETE', false]])('arms Delete for %j only when exact (disabled=%s)', (typed, disabled) => {
+    const invoke = jest.fn(async () => ({ ok: true as const }));
+    render(<Deleting account={withDelete(invoke)} />);
+    openConfirm();
+    fireEvent.changeText(screen.getByTestId('account-delete-input'), typed);
+    const button = screen.getByTestId('account-delete-confirm');
+    expect(Boolean(button.props.accessibilityState.disabled)).toBe(disabled);
+    fireEvent.press(button);
+    expect(invoke).toHaveBeenCalledTimes(disabled ? 0 : 1);
+  });
+
+  it('locks Back, Close and the input while deleting, and a double tap sends one invoke', async () => {
+    let release: () => void = () => {};
+    const invoke = jest.fn(() => new Promise<{ ok: true }>((resolve) => { release = () => resolve({ ok: true }); }));
+    render(<Deleting account={withDelete(invoke)} />);
+    openConfirm();
+    fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+    fireEvent.press(screen.getByTestId('account-delete-confirm'));
+    fireEvent.press(screen.getByTestId('account-delete-confirm'));
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Deleting account…')).toBeOnTheScreen();
+    expect(screen.getByTestId('account-delete-confirm').props.accessibilityState).toEqual({ disabled: true, busy: true });
+    expect(screen.getByTestId('account-delete-keep').props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByTestId('account-delete-input').props.editable).toBe(false);
+    expect(screen.queryByTestId('account-close')).toBeNull();
+    await act(async () => { release(); });
+  });
+
+  it.each([['email', learner], ['google', googleLearner]])('deletes a %s user, shows Account deleted, and Back to lessons opens as guest and closes with progress kept', async (_name, identity) => {
+    await AsyncStorage.setItem('learner-progress', '{"xp":42}');
+    const onClose = jest.fn();
+    render(<Deleting account={withDelete(async () => ({ ok: true }))} identity={identity} onClose={onClose} />);
+    openConfirm();
+    fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+    fireEvent.press(screen.getByTestId('account-delete-confirm'));
+    expect(await screen.findByText("You're learning as a guest now.")).toBeOnTheScreen();
+    expect(screen.queryByTestId('account-close')).toBeNull();
+    fireEvent.press(screen.getByTestId('account-deleted-back'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign in' })).toBeOnTheScreen());
+    expect(await AsyncStorage.getItem('learner-progress')).toBe('{"xp":42}');
+  });
+
+  it('returns to Confirm with the error and stays signed in after a network failure', async () => {
+    render(<Deleting account={withDelete(async () => ({ ok: false, failure: 'network' }))} />);
+    openConfirm();
+    fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+    fireEvent.press(screen.getByTestId('account-delete-confirm'));
+    expect(await screen.findByText('The network failed. Try again.')).toBeOnTheScreen();
+    expect(screen.getByTestId('account-delete-input').props.value).toBe('');
+    fireEvent.press(screen.getByTestId('account-delete-keep'));
+    expect(screen.getByTestId('account-sign-out')).toBeOnTheScreen();
+  });
+
+  it('shows an unknown failure in Confirm', async () => {
+    render(<Deleting account={withDelete(async () => ({ ok: false, failure: 'unknown' }))} />);
+    openConfirm();
+    fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+    fireEvent.press(screen.getByTestId('account-delete-confirm'));
+    expect(await screen.findByText('Could not delete the account. Try again.')).toBeOnTheScreen();
+  });
+});

@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 
 import { canDismiss, type AccountEvent, type AccountView } from '../../account/accountMachine';
-import { CreateView, ForgotView, InboxView, PasswordSavedView, SetNewPasswordView, SignedInView, SignInView, UsernameView } from './accountViews';
+import { AccountDeletedView, CreateView, DeleteAccountView, ForgotView, InboxView, PasswordSavedView, SetNewPasswordView, SignedInView, SignInView, UsernameView } from './accountViews';
 
 type Props = {
   visible: boolean;
@@ -58,6 +58,18 @@ export function AccountModal({ visible, view, dispatch, onClose, accentColor }: 
             />
           ) : null}
           {view.kind === 'signedIn' ? <SignedInView view={view} dispatch={dispatch} accentColor={accentColor} /> : null}
+          {view.kind === 'deleteAccount' ? (
+            <DeleteAccountView view={view} dispatch={dispatch} accentColor={accentColor} />
+          ) : null}
+          {view.kind === 'accountDeleted' ? (
+            <AccountDeletedView
+              accentColor={accentColor}
+              onBack={() => {
+                dispatch({ type: 'opened', identity: null });
+                onClose();
+              }}
+            />
+          ) : null}
           {view.kind === 'username' ? (
             <UsernameView view={view} dispatch={dispatch} accentColor={accentColor} />
           ) : null}

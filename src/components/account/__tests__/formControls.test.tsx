@@ -169,6 +169,15 @@ describe('account buttons', () => {
     expect(flat(button.props.style).backgroundColor).toBe(ACCENT);
   });
 
+  it('locks the destructive control and marks it busy while loading', () => {
+    const onPress = jest.fn();
+    render(<DestructiveButton label="Delete" onPress={onPress} accentColor={ACCENT} confirm loading testID="del" />);
+    fireEvent.press(screen.getByTestId('del'));
+    expect(onPress).not.toHaveBeenCalled();
+    expect(screen.getByTestId('del-spinner')).toBeOnTheScreen();
+    expect(screen.getByTestId('del').props.accessibilityState).toEqual({ disabled: true, busy: true });
+  });
+
   it('calls onPress once per press when the primary button is idle', () => {
     const onPress = jest.fn();
     render(<PrimaryButton label="Sign in" onPress={onPress} accentColor={ACCENT} testID="sign-in" />);

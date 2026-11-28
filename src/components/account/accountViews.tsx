@@ -2,7 +2,7 @@ import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { usernameSaveBlocked, type AccountEvent, type AccountView, type Submit, type SubmitFailure } from '../../account/accountMachine';
+import { DELETE_WORD, isDeleteArmed, usernameSaveBlocked, type AccountEvent, type AccountView, type Submit, type SubmitFailure } from '../../account/accountMachine';
 import { usernameFormatIssue } from '../../account/usernameFormat';
 import { DestructiveButton, Field, LinkButton, PrimaryButton, SecondaryButton } from './formControls';
 // English placeholders. Louisiana French and Kouri-Vini are TBD-copy.
@@ -99,6 +99,21 @@ const SIGNED_IN = { // TBD-copy
   delete: 'Delete account'
 };
 
+const DELETE = { // TBD-copy
+  title: 'Delete your account?',
+  goes: 'This deletes your login: your email and username.',
+  stays: 'Your lessons and progress stay on this phone.',
+  label: 'Type DELETE to confirm',
+  confirm: 'Delete account',
+  deleting: 'Deleting account…',
+  keep: 'Keep my account',
+  network: 'The network failed. Try again.',
+  unknown: 'Could not delete the account. Try again.',
+  doneTitle: 'Account deleted',
+  done: "You're learning as a guest now.",
+  back: 'Back to lessons'
+};
+
 type Dispatch = (event: AccountEvent) => void;
 type SignIn = Extract<AccountView, { kind: 'signIn' }>;
 type Create = Extract<AccountView, { kind: 'create' }>;
@@ -108,6 +123,7 @@ type Username = Extract<AccountView, { kind: 'username' }>;
 type NewPassword = Extract<AccountView, { kind: 'setNewPassword' }>;
 type Saved = Extract<AccountView, { kind: 'passwordSaved' }>;
 type SignedIn = Extract<AccountView, { kind: 'signedIn' }>;
+type DeleteAccount = Extract<AccountView, { kind: 'deleteAccount' }>;
 
 function formatError(draft: string): string | undefined {
   const issue = usernameFormatIssue(draft);
@@ -484,7 +500,55 @@ export function SignedInView({ view, dispatch, accentColor }: { view: SignedIn; 
         disabled={signingOut}
         testID="account-username-entry"
       />
-      <DestructiveButton label={SIGNED_IN.delete} onPress={() => {}} accentColor={accentColor} disabled testID="account-delete" />
+      <DestructiveButton label={SIGNED_IN.delete} onPress={() => dispatch({ type: 'deleteRequested' })} accentColor={accentColor} disabled={signingOut} testID="account-delete" />
+    </View>
+  );
+}
+
+export function DeleteAccountView({ view, dispatch, accentColor }: { view: DeleteAccount; dispatch: Dispatch; accentColor: string }) {
+  const { deletion } = view;
+  const deleting = deletion.phase === 'deleting';
+  return (
+    <View style={styles.stack}>
+      <Text style={styles.title}>{DELETE.title}</Text>
+      <Text>{DELETE.goes}</Text>
+      <Text>{DELETE.stays}</Text>
+      <Field
+        label={DELETE.label}
+        value={deleting ? DELETE_WORD : deletion.typed}
+        onChangeText={(value) => dispatch({ type: 'edited', field: 'typed', value })}
+        accentColor={accentColor}
+        autoCapitalize="characters"
+        editable={!deleting}
+        error={!deleting && deletion.failure ? DELETE[deletion.failure] : undefined}
+        testID="account-delete-input"
+      />
+      <DestructiveButton
+        label={deleting ? DELETE.deleting : DELETE.confirm}
+        onPress={() => dispatch({ type: 'deleteConfirmed' })}
+        accentColor={accentColor}
+        disabled={!isDeleteArmed(deletion)}
+        loading={deleting}
+        confirm
+        testID="account-delete-confirm"
+      />
+      <SecondaryButton
+        label={DELETE.keep}
+        onPress={() => dispatch({ type: 'deleteCancelled' })}
+        accentColor={accentColor}
+        disabled={deleting}
+        testID="account-delete-keep"
+      />
+    </View>
+  );
+}
+
+export function AccountDeletedView({ onBack, accentColor }: { onBack: () => void; accentColor: string }) {
+  return (
+    <View style={styles.stack}>
+      <Text style={styles.title}>{DELETE.doneTitle}</Text>
+      <Text>{DELETE.done}</Text>
+      <PrimaryButton label={DELETE.back} onPress={onBack} accentColor={accentColor} testID="account-deleted-back" />
     </View>
   );
 }

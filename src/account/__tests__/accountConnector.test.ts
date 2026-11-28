@@ -705,7 +705,7 @@ describe('account connector', () => {
     }]);
   });
 
-  it('maps delete-account failures and does not sign out', async () => {
+  it('maps delete-account failures and signs out locally only for notSignedIn', async () => {
     const scopes: unknown[] = [];
     const auth = {
       signOut: async () => {
@@ -772,7 +772,66 @@ describe('account connector', () => {
       })
     });
     expect(await offline.deleteAccount()).toEqual({ ok: false, failure: 'network' });
-    expect(scopes).toEqual([]);
+    expect(scopes).toEqual(['out', 'out']);
+  });
+
+  it('ends as guest on notSignedIn: local signOut, even if it throws, and a null announce', async () => {
+    const onIdentity = jest.fn();
+    const scopes: unknown[] = [];
+    const expired = openConnector({
+      onIdentity,
+      client: client({
+        async signOut(input: unknown) { scopes.push(input); throw new Error('storage'); }
+      }, {
+        functions: {
+          async invoke() {
+            return { data: null, error: { name: 'FunctionsHttpError', message: 'x', context: { status: 401, json: async () => ({ ok: false, failure: 'notSignedIn' }) } } };
+          }
+        }
+      })
+    });
+    expect(await expired.deleteAccount()).toEqual({ ok: false, failure: 'notSignedIn' });
+    expect(scopes).toEqual([{ scope: 'local' }]);
+    expect(onIdentity).toHaveBeenCalledWith(null);
+  });
+
+  it('keeps the session on network and unknown failures', async () => {
+    const onIdentity = jest.fn();
+    const signOut = jest.fn(async () => ({ error: null }));
+    for (const error of [
+      { name: 'FunctionsFetchError', message: 'Failed to send a request to the Edge Function' },
+      { name: 'FunctionsHttpError', message: 'x', context: { status: 500, json: async () => ({}) } }
+    ]) {
+      const connector = openConnector({
+        onIdentity,
+        client: client({ signOut }, { functions: { async invoke() { return { data: null, error }; } } })
+      });
+      await connector.deleteAccount();
+    }
+    expect(signOut).not.toHaveBeenCalled();
+    expect(onIdentity).not.toHaveBeenCalled();
+  });
+
+  it('ends as guest when a timed-out delete succeeded late and the retry finds no session', async () => {
+    let signedOut = false;
+    const onIdentity = jest.fn();
+    const connector = openConnector({
+      onIdentity,
+      client: client({
+        async getSession() { return { data: { session: signedOut ? null : { access_token: 'access-token' } } }; },
+        async signOut() { signedOut = true; return { error: null }; }
+      }, {
+        functions: {
+          async invoke() {
+            return { data: null, error: { name: 'FunctionsFetchError', message: 'Failed to send a request to the Edge Function' } };
+          }
+        }
+      })
+    });
+    expect(await connector.deleteAccount()).toEqual({ ok: false, failure: 'network' });
+    signedOut = true;
+    expect(await connector.deleteAccount()).toEqual({ ok: false, failure: 'notSignedIn' });
+    expect(onIdentity).toHaveBeenCalledWith(null);
   });
 
   it('offers the step only after a profile read that succeeded with no username', async () => {
