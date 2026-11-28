@@ -1,29 +1,28 @@
 # C5a Dev check: `?type=recovery` survives the Supabase link
 
-Status: PENDING. Not run, nothing here is faked.
+Status: RUN on Nov 27, 2026, against the Dev project (`isezzedrbdomyhfuqjak`), never Prod. The service-role key came from a local gitignored env file and was not printed or committed.
 
-Why pending:
+## What was run
 
-- No Dev service-role key is available to the agent. The local gitignored env files (`.env.preview`, `.env.local`, `.env.db.local`) hold only the anon key and a DB URL, and the Supabase CLI is not installed.
-- Logan's action is also open: add `com.westleysturhan.louisianafrench://auth/callback` (and the Expo Go `exp://` callback on Dev) to Supabase Redirect URLs. Without it Supabase falls back to the Site URL and the check would be meaningless.
+- User: an existing confirmed Dev test alias (email redacted). No user was created and no email was sent.
+- `POST /auth/v1/admin/generate_link` with `type: recovery` and `redirect_to: com.westleysturhan.louisianafrench://auth/callback?type=recovery`. This is the REST form of `auth.admin.generateLink`.
+- `GET` on `properties.action_link` without following redirects, then reading `Location`.
+- `parseAuthUrl` from this branch, run on that `Location`.
 
-## Command to run (Dev project only, never Prod)
+## Result (tokens and email redacted)
 
-Keep the Dev service-role key in a shell variable for this one command. Do not commit or print it.
+- `properties.redirect_to`: `com.westleysturhan.louisianafrench://auth/callback?type=recovery`
+- Verify response: `303`, with this `Location`:
+  `com.westleysturhan.louisianafrench://auth/callback?type=recovery#access_token=<redacted>&expires_at=…&expires_in=3600&refresh_token=<redacted>&sb=&token_type=bearer&type=recovery`
+- `parseAuthUrl(<that Location>)`: `{ kind: 'ignored' }`
 
-```sh
-curl -s -X POST "$DEV_SUPABASE_URL/auth/v1/admin/generate_link" \
-  -H "apikey: $DEV_SERVICE_ROLE_KEY" -H "Authorization: Bearer $DEV_SERVICE_ROLE_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{"type":"recovery","email":"<dev test user>","redirect_to":"com.westleysturhan.louisianafrench://auth/callback?type=recovery"}'
-```
+## What this proves
 
-This is the REST form of `auth.admin.generateLink({ type: 'recovery', email, options: { redirectTo } })`. Request `properties.action_link` without following redirects (`curl -sI`) and read its `Location`.
+- The Redirect URLs allow-list on Dev accepts the native callback. Supabase redirected to the app scheme, not to the Site URL.
+- `?type=recovery` is kept in the query of the final redirect.
 
-## Record here after running
+## What it does not prove, and why
 
-- `redirect_to` (token and email redacted): expected `com.westleysturhan.louisianafrench://auth/callback?type=recovery&code=<redacted>`
-- `parseAuthUrl(<that URL>)`: expected `{ kind: 'recovery', code: <redacted> }`
-- If `?type=recovery` is dropped or the link lands on the Site URL, allow-list `com.westleysturhan.louisianafrench://auth/callback**` instead.
-
-Unit coverage already in the repo: `parseAuthUrl` returns `recovery` for `...?code=x&type=recovery` and for the fragment form (`src/account/__tests__/authLink.test.ts`).
+- An admin-generated link uses the implicit flow, so the session arrives as tokens in the `#` fragment with no `code`. `parseAuthUrl` needs a `code` and correctly ignores this form.
+- The app uses PKCE (`flowType: 'pkce'` in `src/identity/connector.js`), so the email that `sendReset` sends redirects to the same URL with `code=<…>` added. `parseAuthUrl` returns `recovery` for that exact shape (`…?type=recovery&code=pkce`), and `ignored` for the token-only form above. Both are pinned in `src/account/__tests__/authLink.test.ts`.
+- To see the PKCE `code` form end to end on Dev, a real `resetPasswordForEmail` to a test inbox is needed (BIO-10). That is out of scope for C5a.
