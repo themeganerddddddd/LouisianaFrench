@@ -1,5 +1,5 @@
 import type { AccountEvent, AuthFailure, AuthResult, DeleteResult, Provider } from './accountMachine'
-import { checkUsername as askUsername, loadProfileRead, setUsername as saveUsername } from '../identity/username'
+import { checkUsername as askUsername, loadProfileRead, setUsername as saveUsername, type SetUsernameResult } from '../identity/username'
 import { parseAuthUrl } from './authLink'
 
 const BY_CODE: Record<string, AuthFailure> = {
@@ -158,6 +158,10 @@ export function createAccountConnector({
   function orphaned(id: number) {
     return !(succeeded > id)
   }
+  async function setName(name: string): Promise<SetUsernameResult> {
+    if (!hasRpc(client)) return { ok: false, reason: 'network' }
+    return saveUsername((fn, args) => client.rpc(fn, args), name)
+  }
   return {
     async signIn(email: string, password: string): Promise<AuthResult> {
       if (!client) return unavailable
@@ -165,12 +169,16 @@ export function createAccountConnector({
       if (error || !data?.session?.user) return fail(error)
       return signedIn(client, data.session.user, 'email')
     },
-    async signUp(email: string, password: string, _username: string | null): Promise<AuthResult> {
+    async signUp(email: string, password: string, username: string | null): Promise<AuthResult> {
       if (!client) return unavailable
       const { data, error } = await client.auth.signUp({ email, password })
       if (error) return fail(error)
       if (!data?.session?.user) return { ok: true, pending: 'confirmSignUp' }
-      return signedIn(client, data.session.user, 'email')
+      const result = await signedIn(client, data.session.user, 'email')
+      if (!result.ok || !username || !('identity' in result)) return result
+      const saved = await setName(username)
+      if (!saved.ok) return { ...result, usernameFailed: saved }
+      return { ...result, identity: { ...result.identity, username: saved.username } }
     },
     async sendReset(email: string): Promise<AuthResult> {
       if (!client) return unavailable
@@ -223,10 +231,7 @@ export function createAccountConnector({
     async signOut() {
       if (client) await client.auth.signOut({ scope: 'local' })
     },
-    async setUsername(name: string) {
-      if (!hasRpc(client)) return { ok: false as const, reason: 'network' as const }
-      return saveUsername((fn, args) => client.rpc(fn, args), name)
-    },
+    setUsername: setName,
     async checkUsername(candidate: string) {
       if (!hasRpc(client)) return { status: 'error' as const }
       return askUsername((fn, args) => client.rpc(fn, args), candidate)

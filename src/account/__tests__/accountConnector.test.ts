@@ -107,6 +107,39 @@ describe('account connector', () => {
     expect(JSON.stringify(calls)).not.toContain('Élise_1');
   });
 
+  describe('sign-up with a session', () => {
+    const session = { data: { session: { user: { id: 'learner-1', email: 'ada@example.com' } } }, error: null };
+    function withRpc(reply: unknown) {
+      const rpc = jest.fn(async (_fn: string, _args: Record<string, unknown>) => ({ data: reply, error: null }));
+      const account = client({ signUp: async () => session });
+      return { rpc, connector: openConnector({ client: { ...account, rpc } }) };
+    }
+
+    it('calls set_username once and returns the saved name', async () => {
+      const { rpc, connector } = withRpc({ ok: true, username: 'Élise_1' });
+      const result = await connector.signUp('ada@example.com', 'secret12', 'Élise_1');
+      expect(rpc).toHaveBeenCalledTimes(1);
+      expect(rpc).toHaveBeenCalledWith('set_username', { proposed: 'Élise_1' });
+      expect(result).toMatchObject({ ok: true, identity: { username: 'Élise_1' } });
+    });
+
+    it('reports a failed set_username on the result', async () => {
+      const { connector } = withRpc({ ok: false, reason: 'taken' });
+      expect(await connector.signUp('ada@example.com', 'secret12', 'Élise_1')).toMatchObject({
+        ok: true, identity: { username: null }, usernameFailed: { ok: false, reason: 'taken' }
+      });
+    });
+
+    it('does not call set_username without a typed name or without a session', async () => {
+      const { rpc, connector } = withRpc({ ok: true, username: 'x' });
+      await connector.signUp('ada@example.com', 'secret12', null);
+      expect(rpc).not.toHaveBeenCalled();
+      const pending = openConnector({ client: { ...client({}), rpc } });
+      expect(await pending.signUp('ada@example.com', 'secret12', 'Élise_1')).toEqual({ ok: true, pending: 'confirmSignUp' });
+      expect(rpc).not.toHaveBeenCalled();
+    });
+  });
+
   it('returns oauthFailed for a provider other than google and does not call Supabase', async () => {
     const calls: unknown[] = [];
     const connector = openConnector({

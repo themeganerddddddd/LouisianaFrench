@@ -1,0 +1,6 @@
+
+Test Suites: 9 passed, 9 total
+Tests:       150 passed, 150 total
+Snapshots:   0 total
+Time:        1.315 s, estimated 2 s
+Ran all test suites matching src/account|src/components/account.

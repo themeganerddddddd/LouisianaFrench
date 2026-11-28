@@ -760,3 +760,46 @@ describe('username step', () => {
     expect(reduce(saving, { type: 'signedOut' })).toEqual(guest);
   });
 });
+
+describe('create account results', () => {
+  const named: Identity = { ...ada, username: 'Élise_1' };
+  const unnamed: Identity = { ...ada, username: null };
+  const submitting = () => reduce(create('Élise_1'), { type: 'submitted' });
+
+  it('lands in signed in with the name once set_username succeeded', () => {
+    expect(reduce(submitting(), { type: 'authSettled', result: { ok: true, identity: named, profileRead: true } }))
+      .toEqual({ kind: 'signedIn', identity: named, signingOut: false });
+  });
+
+  it('opens the step with the typed value and the taken failure when set_username failed', () => {
+    const next = reduce(submitting(), {
+      type: 'authSettled',
+      result: { ok: true, identity: unnamed, profileRead: false, usernameFailed: { ok: false, reason: 'taken' } }
+    });
+    expect(next).toEqual({
+      kind: 'username', identity: unnamed, draft: 'Élise_1', mode: 'first',
+      availability: { status: 'settled', value: 'Élise_1', reply: 'taken' },
+      submit: { status: 'failed', failure: 'taken' }
+    });
+  });
+
+  it('opens the step for an empty username after a successful null read', () => {
+    const next = reduce(reduce(create(''), { type: 'submitted' }), {
+      type: 'authSettled', result: { ok: true, identity: unnamed, profileRead: true }
+    });
+    expect(next).toMatchObject({ kind: 'username', draft: '', submit: { status: 'editing' } });
+  });
+
+  it('shows the confirm-your-email view for confirmSignUp and runs nothing', () => {
+    const { next, effect } = step(submitting(), { type: 'authSettled', result: { ok: true, pending: 'confirmSignUp' } });
+    expect(next).toEqual({ kind: 'inbox', reason: 'confirmSignUp' });
+    expect(effect).toBeNull();
+  });
+
+  it('keeps emailTaken and weakPassword on the form', () => {
+    for (const failure of ['emailTaken', 'weakPassword'] as const) {
+      expect(reduce(submitting(), { type: 'authSettled', result: { ok: false, failure } }))
+        .toMatchObject({ kind: 'create', submit: { status: 'failed', failure } });
+    }
+  });
+});

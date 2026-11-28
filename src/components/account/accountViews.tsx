@@ -2,21 +2,38 @@ import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { usernameSaveBlocked, type AccountEvent, type AccountView } from '../../account/accountMachine';
+import { usernameSaveBlocked, type AccountEvent, type AccountView, type Submit, type SubmitFailure } from '../../account/accountMachine';
 import { usernameFormatIssue } from '../../account/usernameFormat';
 import { Field, LinkButton, PrimaryButton } from './formControls';
 // English placeholders. Louisiana French and Kouri-Vini are TBD-copy.
+const GOOGLE = { // TBD-copy
+  label: 'Continue with Google',
+  failed: 'Google sign-in did not finish. Try again.'
+};
+
 const SIGN_IN = { // TBD-copy
-  google: 'Continue with Google',
-  googleFailed: 'Google sign-in did not finish. Try again.',
   email: 'Email',
   password: 'Password',
   submit: 'Sign in',
   forgot: 'Forgot password?',
+  create: 'Create account',
   wrongPassword: 'That email or password is not right.',
   network: 'The network failed. Try again.',
   unavailable: 'Sign-in is unavailable.',
   failed: 'Sign-in failed.'
+};
+
+const CREATE = { // TBD-copy
+  username: 'Username',
+  email: 'Email',
+  password: 'Password',
+  passwordHint: 'At least 8 characters.',
+  emailTaken: 'That email is already registered.',
+  submit: 'Create account',
+  back: 'Sign in',
+  network: 'The network failed. Try again.',
+  unavailable: 'Sign-in is unavailable.',
+  failed: 'Sign-up failed.'
 };
 
 const FORGOT = { // TBD-copy
@@ -29,8 +46,8 @@ const FORGOT = { // TBD-copy
 };
 
 const INBOX = { // TBD-copy
-  title: 'Check your inbox',
-  body: 'Check that inbox. I give the same reply for every address.',
+  passwordReset: { title: 'Check your inbox', body: 'Check that inbox. I give the same reply for every address.' },
+  confirmSignUp: { title: 'Confirm your email', body: 'Open the link in your email to finish creating your account.' },
   back: 'Sign in'
 };
 
@@ -51,13 +68,19 @@ const USERNAME = { // TBD-copy
 
 type Dispatch = (event: AccountEvent) => void;
 type SignIn = Extract<AccountView, { kind: 'signIn' }>;
+type Create = Extract<AccountView, { kind: 'create' }>;
+type Inbox = Extract<AccountView, { kind: 'inbox' }>;
 type Forgot = Extract<AccountView, { kind: 'forgot' }>;
 type Username = Extract<AccountView, { kind: 'username' }>;
 
+function formatError(draft: string): string | undefined {
+  const issue = usernameFormatIssue(draft);
+  return issue ? USERNAME[issue] : undefined;
+}
+
 function usernameMessage(view: Username): { kind: 'error' | 'checking' | 'available' | 'helper'; text: string } {
-  const issue = usernameFormatIssue(view.draft);
-  if (issue === 'length') return { kind: 'error', text: USERNAME.length };
-  if (issue === 'charset') return { kind: 'error', text: USERNAME.charset };
+  const invalid = formatError(view.draft);
+  if (invalid) return { kind: 'error', text: invalid };
   const found = view.availability;
   if (found.status === 'checking' && found.value === view.draft) return { kind: 'checking', text: USERNAME.checking };
   if (found.status === 'settled' && found.value === view.draft) {
@@ -72,6 +95,20 @@ function busy(status: string): boolean {
   return status === 'submitting' || status === 'oauth';
 }
 
+type Site = 'google' | 'username' | 'email' | 'password';
+const SITE: Record<SubmitFailure, Site> = {
+  oauthFailed: 'google', invalidUsername: 'username', weakPassword: 'password', wrongCredentials: 'password',
+  emailTaken: 'email', emailNotConfirmed: 'email', rateLimited: 'email', network: 'email', unavailable: 'email', unknown: 'email'
+};
+
+function failedAt(submit: Submit, site: Site): boolean {
+  return submit.status === 'failed' && SITE[submit.failure] === site;
+}
+
+function errorAt(submit: Submit, site: Site, text: (failure: SubmitFailure) => string | undefined): string | undefined {
+  return submit.status === 'failed' && failedAt(submit, site) ? text(submit.failure) : undefined;
+}
+
 function otherFailure(failure: string, copy: { network: string; unavailable: string; failed: string }): string {
   if (failure === 'network') return copy.network;
   if (failure === 'unavailable') return copy.unavailable;
@@ -81,28 +118,10 @@ function otherFailure(failure: string, copy: { network: string; unavailable: str
 export function SignInView({ view, dispatch, accentColor }: { view: SignIn; dispatch: Dispatch; accentColor: string }) {
   const locked = busy(view.submit.status);
   const oauth = view.submit.status === 'oauth';
-  const failure = view.submit.status === 'failed' ? view.submit.failure : '';
   return (
     <View style={styles.stack}>
-      {failure === 'oauthFailed' ? <GoogleError /> : null}
-      <Pressable
-        accessibilityLabel={SIGN_IN.google}
-        accessibilityRole="button"
-        accessibilityState={{ busy: oauth, disabled: locked }}
-        disabled={locked}
-        onPress={() => {
-          if (!locked) dispatch({ type: 'providerChosen', provider: 'google' });
-        }}
-        style={[styles.google, locked ? styles.locked : null]}
-        testID="account-google"
-      >
-        {oauth ? (
-          <ActivityIndicator color={accentColor} testID="account-google-spinner" />
-        ) : (
-          <FontAwesome5 name="google" size={18} color="#DB4437" />
-        )}
-        <Text style={styles.googleLabel}>{SIGN_IN.google}</Text>
-      </Pressable>
+      {failedAt(view.submit, 'google') ? <GoogleError /> : null}
+      <GoogleButton locked={locked} oauth={oauth} dispatch={dispatch} accentColor={accentColor} />
       <Field
         label={SIGN_IN.email}
         value={view.email}
@@ -111,7 +130,7 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
         editable={!locked}
         autoCapitalize="none"
         keyboardType="email-address"
-        error={failure && failure !== 'wrongCredentials' && failure !== 'oauthFailed' ? otherFailure(failure, SIGN_IN) : undefined}
+        error={errorAt(view.submit, 'email', (failure) => otherFailure(failure, SIGN_IN))}
         testID="account-email"
       />
       <Field
@@ -121,7 +140,7 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
         accentColor={accentColor}
         editable={!locked}
         secureTextEntry
-        error={failure === 'wrongCredentials' ? SIGN_IN.wrongPassword : undefined}
+        error={errorAt(view.submit, 'password', () => SIGN_IN.wrongPassword)}
         testID="account-password"
       />
       <PrimaryButton
@@ -138,6 +157,72 @@ export function SignInView({ view, dispatch, accentColor }: { view: SignIn; disp
         accentColor={accentColor}
         disabled={locked}
         testID="account-forgot"
+      />
+      <LinkButton
+        label={SIGN_IN.create}
+        onPress={() => dispatch({ type: 'navigated', to: 'create' })}
+        accentColor={accentColor}
+        disabled={locked}
+        testID="account-create"
+      />
+    </View>
+  );
+}
+
+export function CreateView({ view, dispatch, accentColor }: { view: Create; dispatch: Dispatch; accentColor: string }) {
+  const locked = busy(view.submit.status);
+  const weak = errorAt(view.submit, 'password', (failure) => failure === 'weakPassword' ? CREATE.passwordHint : undefined);
+  return (
+    <View style={styles.stack}>
+      {failedAt(view.submit, 'google') ? <GoogleError /> : null}
+      <GoogleButton locked={locked} oauth={view.submit.status === 'oauth'} dispatch={dispatch} accentColor={accentColor} />
+      <Field
+        label={CREATE.username}
+        value={view.username}
+        placeholder={USERNAME.placeholder}
+        onChangeText={(value) => dispatch({ type: 'edited', field: 'username', value })}
+        accentColor={accentColor}
+        editable={!locked}
+        autoCapitalize="none"
+        error={errorAt(view.submit, 'username', () => formatError(view.username))}
+        testID="account-username"
+      />
+      <Field
+        label={CREATE.email}
+        value={view.email}
+        onChangeText={(value) => dispatch({ type: 'edited', field: 'email', value })}
+        accentColor={accentColor}
+        editable={!locked}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        error={errorAt(view.submit, 'email', (failure) => failure === 'emailTaken' ? CREATE.emailTaken : otherFailure(failure, CREATE))}
+        testID="account-email"
+      />
+      <Field
+        label={CREATE.password}
+        value={view.password}
+        onChangeText={(value) => dispatch({ type: 'edited', field: 'password', value })}
+        accentColor={accentColor}
+        editable={!locked}
+        secureTextEntry
+        error={weak}
+        testID="account-password"
+      />
+      {weak ? null : <Text>{CREATE.passwordHint}</Text>}
+      <PrimaryButton
+        label={CREATE.submit}
+        onPress={() => dispatch({ type: 'submitted' })}
+        accentColor={accentColor}
+        disabled={locked}
+        loading={view.submit.status === 'submitting'}
+        testID="account-submit"
+      />
+      <LinkButton
+        label={CREATE.back}
+        onPress={() => dispatch({ type: 'navigated', to: 'signIn' })}
+        accentColor={accentColor}
+        disabled={locked}
+        testID="account-create-back"
       />
     </View>
   );
@@ -191,10 +276,35 @@ function CheckingRing({ color }: { color: string }) {
   return <Animated.View testID="account-username-checking" style={[styles.ring, { borderColor: color, transform: [{ rotate }] }]} />;
 }
 
+function GoogleButton({ locked, oauth, dispatch, accentColor }: {
+  locked: boolean; oauth: boolean; dispatch: Dispatch; accentColor: string;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={GOOGLE.label}
+      accessibilityRole="button"
+      accessibilityState={{ busy: oauth, disabled: locked }}
+      disabled={locked}
+      onPress={() => {
+        if (!locked) dispatch({ type: 'providerChosen', provider: 'google' });
+      }}
+      style={[styles.google, locked ? styles.locked : null]}
+      testID="account-google"
+    >
+      {oauth ? (
+        <ActivityIndicator color={accentColor} testID="account-google-spinner" />
+      ) : (
+        <FontAwesome5 name="google" size={18} color="#DB4437" />
+      )}
+      <Text style={styles.googleLabel}>{GOOGLE.label}</Text>
+    </Pressable>
+  );
+}
+
 function GoogleError() {
   return <View style={styles.error}>
     <Feather accessible={false} color="#B91C1C" name="alert-circle" size={16} />
-    <Text accessibilityRole="alert" style={styles.errorText} testID="account-google-error">{SIGN_IN.googleFailed}</Text>
+    <Text accessibilityRole="alert" style={styles.errorText} testID="account-google-error">{GOOGLE.failed}</Text>
   </View>;
 }
 
@@ -248,11 +358,12 @@ export function UsernameView({ view, dispatch, accentColor }: { view: Username; 
   );
 }
 
-export function InboxView({ dispatch, accentColor }: { dispatch: Dispatch; accentColor: string }) {
+export function InboxView({ view, dispatch, accentColor }: { view: Inbox; dispatch: Dispatch; accentColor: string }) {
+  const copy = INBOX[view.reason];
   return (
     <View style={styles.stack}>
-      <Text style={styles.title}>{INBOX.title}</Text>
-      <Text>{INBOX.body}</Text>
+      <Text style={styles.title}>{copy.title}</Text>
+      <Text>{copy.body}</Text>
       <LinkButton
         label={INBOX.back}
         onPress={() => dispatch({ type: 'navigated', to: 'signIn' })}
