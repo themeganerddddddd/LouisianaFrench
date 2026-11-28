@@ -438,6 +438,7 @@ describe('account connector', () => {
     const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=signup`)).toEqual({
       type: 'opened',
+      profileRead: false,
       identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
     });
   });
@@ -446,6 +447,7 @@ describe('account connector', () => {
     const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc`)).toEqual({
       type: 'opened',
+      profileRead: false,
       identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'google' }
     });
   });

@@ -99,7 +99,7 @@ describe('Home account modal', () => {
   });
 
   it('opens the username step from a confirm link without a username, and an emit does not move it', async () => {
-    await homeWithLink({ type: 'opened', identity: NAMELESS });
+    await homeWithLink({ type: 'opened', identity: NAMELESS, profileRead: true });
     expect(await screen.findByTestId('account-username-save')).toBeOnTheScreen();
 
     mockEmit(NAMELESS);

@@ -361,9 +361,6 @@ export default function HomeScreen() {
       if (!live || !event) return;
       if (event.type === 'recoveryLinkOpened') recovering.current = true;
       dispatchAccount(event);
-      if (event.type === 'opened' && event.identity?.username === null) {
-        dispatchAccount({ type: 'usernameEntryChosen' });
-      }
       setAccountVisible(true);
     }
 

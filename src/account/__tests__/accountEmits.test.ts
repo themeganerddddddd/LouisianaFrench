@@ -102,4 +102,86 @@ describe('account connector identity notifications', () => {
     await connector.updatePassword('a-new-password');
     expect(onIdentity).toHaveBeenCalledWith(ADA);
   });
+
+  it('announces a guest when a late password success signs out locally', async () => {
+    let release: (value: unknown) => void = () => {};
+    const { connector, onIdentity } = watched({
+      updateUser: () => new Promise((resolve) => { release = resolve; })
+    });
+    const slow = createAccountConnector({ client: client({ updateUser: () => new Promise((resolve) => { release = resolve; }) }), redirectTo: REDIRECT, timeoutMs: 20, onIdentity })
+    expect(await slow.updatePassword('new-password')).toEqual({ ok: false, failure: 'network' })
+    release({ data: { user: USER }, error: null })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(onIdentity).toHaveBeenCalledWith(null)
+    expect(connector).toBeDefined()
+  });
+
+  it('announces a guest when a late Google exchange signs out locally', async () => {
+    let release: (value: unknown) => void = () => {};
+    const onIdentity = jest.fn<(next: unknown) => void>();
+    const slow = createAccountConnector({
+      client: client({ exchangeCodeForSession: () => new Promise((resolve) => { release = resolve; }) }),
+      openBrowser: async () => ({ url: `${REDIRECT}?code=late` }),
+      redirectTo: REDIRECT,
+      timeoutMs: 20,
+      onIdentity
+    })
+    expect(await slow.signInWithProvider('google')).toEqual({ ok: false, failure: 'network' })
+    release({ data: { session: { user: USER } }, error: null })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(onIdentity).toHaveBeenCalledWith(null)
+  });
+
+  it('opens the first username step from a link only when the profile read succeeded', async () => {
+    const read = (found: boolean, username: string | null) => {
+      const base = client({})
+      return { ...base, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => found ? { data: { username }, error: null } : { data: null, error: { message: 'down' } } }) }) }) } as AccountClient
+    }
+    const link = (c: AccountClient) => createAccountConnector({ client: c, redirectTo: REDIRECT }).consumeAuthUrl(`${REDIRECT}?code=abc&type=signup`)
+    expect(await link(read(true, null))).toMatchObject({ type: 'opened', profileRead: true, identity: { username: null } })
+    expect(await link(read(false, null))).toMatchObject({ type: 'opened', profileRead: false })
+    expect(await link(read(true, 'Ada'))).toMatchObject({ type: 'opened', identity: { username: 'Ada' } })
+  });
+
+  it('announces a guest when a late password success signs out locally', async () => {
+    let release: (value: unknown) => void = () => {};
+    const onIdentity = jest.fn<(next: unknown) => void>();
+    const slow = createAccountConnector({
+      client: client({ updateUser: () => new Promise((resolve) => { release = resolve; }) }),
+      redirectTo: REDIRECT,
+      timeoutMs: 20,
+      onIdentity
+    });
+    expect(await slow.updatePassword('new-password')).toEqual({ ok: false, failure: 'network' });
+    release({ data: { user: USER }, error: null });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(onIdentity).toHaveBeenCalledWith(null);
+  });
+
+  it('announces a guest when a late Google exchange signs out locally', async () => {
+    let release: (value: unknown) => void = () => {};
+    const onIdentity = jest.fn<(next: unknown) => void>();
+    const slow = createAccountConnector({
+      client: client({ exchangeCodeForSession: () => new Promise((resolve) => { release = resolve; }) }),
+      openBrowser: async () => ({ url: `${REDIRECT}?code=late` }),
+      redirectTo: REDIRECT,
+      timeoutMs: 20,
+      onIdentity
+    });
+    expect(await slow.signInWithProvider('google')).toEqual({ ok: false, failure: 'network' });
+    release({ data: { session: { user: USER } }, error: null });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(onIdentity).toHaveBeenCalledWith(null);
+  });
+
+  it('carries the profile read on a link sign-in', async () => {
+    const withProfile = (read: () => Promise<unknown>) => ({
+      ...client({}),
+      from: () => ({ select: () => ({ eq: () => ({ maybeSingle: read }) }) })
+    }) as AccountClient;
+    const link = (c: AccountClient) => createAccountConnector({ client: c, redirectTo: REDIRECT }).consumeAuthUrl(`${REDIRECT}?code=abc&type=signup`);
+    expect(await link(withProfile(async () => ({ data: { username: null }, error: null })))).toMatchObject({ type: 'opened', profileRead: true, identity: { username: null } });
+    expect(await link(withProfile(async () => ({ data: null, error: { message: 'down' } })))).toMatchObject({ type: 'opened', profileRead: false });
+  });
 });
+

@@ -199,7 +199,7 @@ export function createAccountConnector({
       if (updated === 'timeout') {
         void pending.then((result) => {
           if (!(result.data?.user || result.data?.session?.user) || !orphaned(mine) || !client) return
-          void client.auth.signOut({ scope: 'local' }).catch(() => undefined)
+          void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => onIdentity(null))
         })
         return { ok: false, failure: 'network' }
       }
@@ -235,7 +235,7 @@ export function createAccountConnector({
       if (exchanged === 'timeout') {
         void pending.then((result) => {
           if (!result.data?.session?.user || !orphaned(mine) || !client) return
-          void client.auth.signOut({ scope: 'local' }).catch(() => undefined)
+          void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => onIdentity(null))
         })
         return { ok: false, failure: 'network' }
       }
@@ -275,7 +275,7 @@ export function createAccountConnector({
       noteSuccess(mine)
       if (link.kind === 'recovery') return { type: 'recoveryLinkOpened' }
       const result = announce(await signedIn(client, exchanged.data.session.user, link.kind === 'oauth' ? 'google' : 'email'))
-      return result.ok && 'identity' in result ? { type: 'opened', identity: result.identity } : { type: 'linkFailed', failure: 'unknown' }
+      return result.ok && 'identity' in result ? { type: 'opened', identity: result.identity, profileRead: result.profileRead } : { type: 'linkFailed', failure: 'unknown' }
     },
     async deleteAccount(): Promise<DeleteResult> {
       if (!client) return { ok: false, failure: 'notSignedIn' }
