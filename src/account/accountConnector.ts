@@ -245,7 +245,9 @@ export function createAccountConnector({
       return announce(await signedIn(client, exchanged.data.session.user, 'google'))
     },
     async signOut() {
-      if (client) await client.auth.signOut({ scope: 'local' })
+      if (client) {
+        try { await client.auth.signOut({ scope: 'local' }) } catch { /* The learner still leaves this device. */ }
+      }
       onIdentity(null)
     },
     async setUsername(name: string): Promise<SetUsernameResult> {
@@ -266,14 +268,24 @@ export function createAccountConnector({
       if (link.kind !== 'recovery' && link.kind !== 'confirmed' && link.kind !== 'oauth') return null
       if (!client) return null
       const mine = beginAttempt()
-      const exchanged = await firstOf(caught(client.auth.exchangeCodeForSession(link.code)), timeoutMs)
-      if (exchanged === 'timeout') return { type: 'linkFailed', failure: 'network' }
+      const pending = caught(client.auth.exchangeCodeForSession(link.code))
+      const exchanged = await firstOf(pending, timeoutMs)
+      if (exchanged === 'timeout') {
+        void pending.then((result) => {
+          if (!result.data?.session?.user || !orphaned(mine) || !client) return
+          void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => onIdentity(null))
+        })
+        return { type: 'linkFailed', failure: 'network' }
+      }
       if (exchanged.error || !exchanged.data?.session?.user) {
         const failure = exchanged.error ? mapAuthFailure(exchanged.error) : 'unknown'
         return { type: 'linkFailed', failure: failure === 'oauthCancelled' ? 'unknown' : failure }
       }
       noteSuccess(mine)
-      if (link.kind === 'recovery') return { type: 'recoveryLinkOpened' }
+      if (link.kind === 'recovery') {
+        announce(await signedIn(client, exchanged.data.session.user, 'email'))
+        return { type: 'recoveryLinkOpened' }
+      }
       const result = announce(await signedIn(client, exchanged.data.session.user, link.kind === 'oauth' ? 'google' : 'email'))
       return result.ok && 'identity' in result ? { type: 'opened', identity: result.identity, profileRead: result.profileRead } : { type: 'linkFailed', failure: 'unknown' }
     },

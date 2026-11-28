@@ -63,14 +63,14 @@ describe('account connector identity notifications', () => {
     expect(onIdentity).toHaveBeenCalledWith({ ...ADA, provider: 'google' });
   });
 
-  it('announces a link sign-in but not a recovery link', async () => {
+  it('announces a link sign-in and a recovery link session', async () => {
     const link = watched();
     await link.connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=signup`);
     expect(link.onIdentity).toHaveBeenCalledWith(ADA);
 
     const recovery = watched();
     await recovery.connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`);
-    expect(recovery.onIdentity).not.toHaveBeenCalled();
+    expect(recovery.onIdentity).toHaveBeenCalledTimes(1);
   });
 
   it('announces the saved username by updating the identity it was given', async () => {
