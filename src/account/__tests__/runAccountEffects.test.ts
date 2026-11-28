@@ -304,7 +304,8 @@ function port(overrides: Partial<AccountConnector>): AccountConnector {
     },
     orphaned(id: number) {
       return !(succeeded > id);
-    }
+    },
+    bind() {}
   };
 }
 

@@ -20,6 +20,9 @@ export function useAccountMachine(connector: AccountConnector, identity: Identit
   }, [connector])
   dispatchRef.current = dispatch
   useEffect(() => {
+    connector.bind((event) => dispatchRef.current(event))
+  }, [connector])
+  useEffect(() => {
     alive.current = true
     return () => { alive.current = false }
   }, [])

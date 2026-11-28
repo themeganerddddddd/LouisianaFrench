@@ -150,6 +150,7 @@ export function createAccountConnector({
   let attempt = 0
   let succeeded = 0
   let oauthInFlight = false
+  let onLate: (event: AccountEvent) => void = () => {}
   function beginAttempt() {
     attempt += 1
     return attempt
@@ -160,10 +161,13 @@ export function createAccountConnector({
   function orphaned(id: number) {
     return !(succeeded > id)
   }
-  function settleLate<R>(pending: Promise<R>, mine: number, hasUser: (result: R) => boolean) {
+  function settleLate<R>(pending: Promise<R>, mine: number, hasUser: (result: R) => boolean, leave?: AccountEvent) {
     void pending.then((result) => {
       if (!hasUser(result) || !orphaned(mine) || !client) return
-      void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => onIdentity(null))
+      void client.auth.signOut({ scope: 'local' }).catch(() => undefined).then(() => {
+        onIdentity(null)
+        if (leave) onLate(leave)
+      })
     })
   }
   function announce<T extends AuthResult>(result: T): T {
@@ -203,7 +207,8 @@ export function createAccountConnector({
       const pending = caught(client.auth.updateUser({ password }))
       const updated = await firstOf(pending, timeoutMs)
       if (updated === 'timeout') {
-        settleLate(pending, mine, (result) => !!(result.data?.user || result.data?.session?.user))
+        // The late save signs the recovery session out. Sign in can be dismissed.
+        settleLate(pending, mine, (result) => !!(result.data?.user || result.data?.session?.user), { type: 'opened', identity: null })
         return { ok: false, failure: 'network' }
       }
       const user = updated.data?.user || updated.data?.session?.user
@@ -258,6 +263,9 @@ export function createAccountConnector({
     async checkUsername(candidate: string) {
       if (!hasRpc(client)) return { status: 'error' as const }
       return askUsername((fn, args) => client.rpc(fn, args), candidate)
+    },
+    bind(listener: (event: AccountEvent) => void) {
+      onLate = listener
     },
     beginAttempt,
     noteSuccess,

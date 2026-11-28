@@ -28,7 +28,8 @@ function connector(signIn: AccountConnector['signIn']): AccountConnector {
     checkUsername: async () => ({ status: 'error' }),
     beginAttempt: () => 1,
     noteSuccess: () => {},
-    orphaned: () => true
+    orphaned: () => true,
+    bind: () => {}
   };
 }
 

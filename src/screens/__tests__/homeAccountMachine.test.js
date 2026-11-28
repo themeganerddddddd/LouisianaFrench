@@ -49,7 +49,8 @@ jest.mock('../../identity/connector', () => ({
       checkUsername: async () => ({ status: 'error' }),
       beginAttempt: () => 1,
       noteSuccess: () => {},
-      orphaned: () => false
+      orphaned: () => false,
+      bind: () => {}
     }
   })
 }));
