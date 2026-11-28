@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AboutTextModal from '../components/AboutTextModal';
-import SignInModal from '../components/SignInModal';
+import { AccountModal } from '../components/account/AccountModal';
 import { useAccountMachine } from '../account/useAccountMachine';
 import { createSupabaseIdentityConnector } from '../identity/connector';
 import BugReportButton from '../components/BugReportButton';
@@ -40,6 +40,8 @@ const ABOUT_MENU_EXIT_MS = 200;
 
 // Account stays out of the menu until rollout turns this on.
 const SHOW_ACCOUNT_MENU_ENTRY = false;
+
+const RESET_ON_CLOSE = new Set(['signIn', 'create', 'forgot', 'inbox']);
 
 function asAccountIdentity(identity) {
   if (!identity?.id) return null;
@@ -332,7 +334,7 @@ export default function HomeScreen() {
   const [bugReportVisible, setBugReportVisible] = useState(false);
   const bugReportOpenTimerRef = useRef(null);
   const [identity, setIdentity] = useState(null);
-  const [signInVisible, setSignInVisible] = useState(false);
+  const [accountVisible, setAccountVisible] = useState(false);
   const connectorRef = useRef(null);
   if (!connectorRef.current) {
     connectorRef.current = createSupabaseIdentityConnector();
@@ -341,7 +343,6 @@ export default function HomeScreen() {
     connectorRef.current.account,
     null
   );
-  const accountKind = useRef(accountView.kind);
   const recovering = useRef(false);
   const initialExpansionLanguage = useRef(null);
   const tboyTapRef = useRef({ count: 0, lastTapAt: 0 });
@@ -350,10 +351,7 @@ export default function HomeScreen() {
     let live = true;
     const connector = connectorRef.current;
     function rememberIdentity(next) {
-      if (!live || recovering.current) return;
-      setIdentity(next);
-      if (!next?.id) return;
-      dispatchAccount({ type: 'opened', identity: asAccountIdentity(next) });
+      if (live && !recovering.current) setIdentity(next);
     }
     connector.getIdentity().then(rememberIdentity);
     const unsubscribe = connector.subscribe(rememberIdentity);
@@ -363,7 +361,10 @@ export default function HomeScreen() {
       if (!live || !event) return;
       if (event.type === 'recoveryLinkOpened') recovering.current = true;
       dispatchAccount(event);
-      if (event.type === 'recoveryLinkOpened' || event.type === 'linkFailed') setSignInVisible(true);
+      if (event.type === 'opened' && event.identity?.username === null) {
+        dispatchAccount({ type: 'usernameEntryChosen' });
+      }
+      setAccountVisible(true);
     }
 
     Linking.getInitialURL().then((url) => {
@@ -379,12 +380,6 @@ export default function HomeScreen() {
       linking.remove();
     };
   }, [dispatchAccount]);
-
-  useEffect(() => {
-    if (accountView.kind === 'signedIn') setIdentity(accountView.identity);
-    if (accountKind.current === 'signedIn' && accountView.kind === 'signIn') setIdentity(null);
-    accountKind.current = accountView.kind;
-  }, [accountView]);
 
   useEffect(
     () => () => {
@@ -858,7 +853,7 @@ export default function HomeScreen() {
           setAboutMenuVisible(false);
           setAboutExpanded(false);
           dispatchAccount({ type: 'opened', identity: asAccountIdentity(identity) });
-          setSignInVisible(true);
+          setAccountVisible(true);
         }}
         onToggle={() => setAboutExpanded((expanded) => !expanded)}
         onSelect={selectAbout}
@@ -878,16 +873,18 @@ export default function HomeScreen() {
         />
       ) : null}
 
-      <SignInModal
-        visible={signInVisible}
+      <AccountModal
+        visible={accountVisible}
         view={accountView}
         dispatch={dispatchAccount}
         accentColor={theme.accent}
         onClose={() => {
-          setSignInVisible(false);
-          if (accountView.kind !== 'signedIn' && accountView.kind !== 'deleteAccount') {
-            dispatchAccount({ type: 'opened', identity: null });
+          setAccountVisible(false);
+          if (recovering.current) {
+            recovering.current = false;
+            connectorRef.current.getIdentity().then(setIdentity);
           }
+          if (RESET_ON_CLOSE.has(accountView.kind)) dispatchAccount({ type: 'opened', identity: null });
         }}
       />
 

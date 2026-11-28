@@ -48,14 +48,8 @@ describe('Supabase identity connector', () => {
     const connector = createSupabaseIdentityConnector({});
     expect(createClient).not.toHaveBeenCalled();
     expect(
-      await connector.signInWithPassword({
-        email: 'ada@example.com',
-        password: 'secret'
-      })
-    ).toEqual({
-      identity: null,
-      message: 'Sign-in is unavailable.'
-    });
+      await connector.account.signIn('ada@example.com', 'secret')
+    ).toEqual({ ok: false, failure: 'unavailable' });
   });
 
   it('reads the public URL and publishable key directly when no env object is passed', () => {
@@ -91,14 +85,8 @@ describe('Supabase identity connector', () => {
       const connector = createSupabaseIdentityConnector({});
       expect(createClient).not.toHaveBeenCalled();
       expect(
-        await connector.signInWithPassword({
-          email: 'ada@example.com',
-          password: 'secret'
-        })
-      ).toEqual({
-        identity: null,
-        message: 'Sign-in is unavailable.'
-      });
+        await connector.account.signIn('ada@example.com', 'secret')
+    ).toEqual({ ok: false, failure: 'unavailable' });
     } finally {
       restorePublicEnv(previousUrl, previousKey);
     }

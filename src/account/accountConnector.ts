@@ -1,4 +1,4 @@
-import type { AccountEvent, AuthFailure, AuthResult, DeleteResult, Provider } from './accountMachine'
+import type { AccountEvent, AuthFailure, AuthResult, DeleteResult, Identity, Provider } from './accountMachine'
 import { checkUsername as askUsername, loadProfileRead, setUsername as saveUsername, type SetUsernameResult } from '../identity/username'
 import { parseAuthUrl } from './authLink'
 
@@ -137,12 +137,14 @@ export function createAccountConnector({
   client,
   openBrowser,
   timeoutMs = 15000,
-  redirectTo
+  redirectTo,
+  onIdentity = () => {}
 }: {
   client: AccountClient | null
   openBrowser?: Browser
   timeoutMs?: number
   redirectTo: string
+  onIdentity?: (next: Identity | null | ((previous: Identity | null) => Identity | null)) => void
 }) {
   const unavailable: AuthResult = { ok: false, failure: 'unavailable' }
   let attempt = 0
@@ -158,6 +160,10 @@ export function createAccountConnector({
   function orphaned(id: number) {
     return !(succeeded > id)
   }
+  function announce<T extends AuthResult>(result: T): T {
+    if (result.ok && 'identity' in result) onIdentity(result.identity)
+    return result
+  }
   async function setName(name: string): Promise<SetUsernameResult> {
     if (!hasRpc(client)) return { ok: false, reason: 'network' }
     return saveUsername((fn, args) => client.rpc(fn, args), name)
@@ -167,7 +173,7 @@ export function createAccountConnector({
       if (!client) return unavailable
       const { data, error } = await client.auth.signInWithPassword({ email, password })
       if (error || !data?.session?.user) return fail(error)
-      return signedIn(client, data.session.user, 'email')
+      return announce(await signedIn(client, data.session.user, 'email'))
     },
     async signUp(email: string, password: string, username: string | null): Promise<AuthResult> {
       if (!client) return unavailable
@@ -175,10 +181,10 @@ export function createAccountConnector({
       if (error) return fail(error)
       if (!data?.session?.user) return { ok: true, pending: 'confirmSignUp' }
       const result = await signedIn(client, data.session.user, 'email')
-      if (!result.ok || !username || !('identity' in result)) return result
+      if (!result.ok || !username || !('identity' in result)) return announce(result)
       const saved = await setName(username)
-      if (!saved.ok) return { ...result, usernameFailed: saved }
-      return { ...result, identity: { ...result.identity, username: saved.username } }
+      if (!saved.ok) return announce({ ...result, usernameFailed: saved })
+      return announce({ ...result, identity: { ...result.identity, username: saved.username } })
     },
     async sendReset(email: string): Promise<AuthResult> {
       if (!client) return unavailable
@@ -200,7 +206,7 @@ export function createAccountConnector({
       const user = updated.data?.user || updated.data?.session?.user
       if (updated.error || !user) return fail(updated.error)
       noteSuccess(mine)
-      return signedIn(client, user, 'email')
+      return announce(await signedIn(client, user, 'email'))
     },
     async signInWithProvider(provider: string): Promise<AuthResult> {
       if (provider !== 'google') return { ok: false, failure: 'oauthFailed' }
@@ -236,12 +242,17 @@ export function createAccountConnector({
       if (mine !== attempt) return { ok: false, failure: 'oauthCancelled' }
       if (exchanged.error || !exchanged.data?.session?.user) return googleFail(exchanged.error)
       noteSuccess(mine)
-      return signedIn(client, exchanged.data.session.user, 'google')
+      return announce(await signedIn(client, exchanged.data.session.user, 'google'))
     },
     async signOut() {
       if (client) await client.auth.signOut({ scope: 'local' })
+      onIdentity(null)
     },
-    setUsername: setName,
+    async setUsername(name: string): Promise<SetUsernameResult> {
+      const saved = await setName(name)
+      if (saved.ok) onIdentity((previous) => previous && { ...previous, username: saved.username })
+      return saved
+    },
     async checkUsername(candidate: string) {
       if (!hasRpc(client)) return { status: 'error' as const }
       return askUsername((fn, args) => client.rpc(fn, args), candidate)
@@ -263,7 +274,7 @@ export function createAccountConnector({
       }
       noteSuccess(mine)
       if (link.kind === 'recovery') return { type: 'recoveryLinkOpened' }
-      const result = await signedIn(client, exchanged.data.session.user, link.kind === 'oauth' ? 'google' : 'email')
+      const result = announce(await signedIn(client, exchanged.data.session.user, link.kind === 'oauth' ? 'google' : 'email'))
       return result.ok && 'identity' in result ? { type: 'opened', identity: result.identity } : { type: 'linkFailed', failure: 'unknown' }
     },
     async deleteAccount(): Promise<DeleteResult> {
@@ -279,6 +290,7 @@ export function createAccountConnector({
         const body = invoked.data ?? await readDeleteBody(invoked.error)
         if (body?.ok) {
           try { await client.auth.signOut({ scope: 'local' }) } catch { /* The server account is already gone. */ }
+          onIdentity(null)
           return { ok: true }
         }
         if (body && !body.ok) return { ok: false, failure: body.failure }
