@@ -488,7 +488,20 @@ describe('account connector', () => {
     const heard: unknown[] = [];
     const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }), onIdentity: (next) => heard.push(next) });
     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`)).toEqual({ type: 'recoveryLinkOpened' });
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(heard).toEqual([{ id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }]);
+  });
+
+  it('opens a recovery link without waiting for a stalled profile read', async () => {
+    const heard: unknown[] = [];
+    const connector = openConnector({
+      client: profileClient(() => new Promise(() => {}), { exchangeCodeForSession: exchangeOk }),
+      onIdentity: (next) => heard.push(next)
+    });
+    const opened = connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`);
+    const first = await Promise.race([opened, new Promise((resolve) => setTimeout(() => resolve('stalled'), 50))]);
+    expect(first).toEqual({ type: 'recoveryLinkOpened' });
+    expect(heard).toEqual([]);
   });
 
   describe('email link late success', () => {
