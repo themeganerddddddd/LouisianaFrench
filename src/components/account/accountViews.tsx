@@ -4,7 +4,7 @@ import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text, View 
 
 import { usernameSaveBlocked, type AccountEvent, type AccountView, type Submit, type SubmitFailure } from '../../account/accountMachine';
 import { usernameFormatIssue } from '../../account/usernameFormat';
-import { Field, LinkButton, PrimaryButton } from './formControls';
+import { DestructiveButton, Field, LinkButton, PrimaryButton, SecondaryButton } from './formControls';
 // English placeholders. Louisiana French and Kouri-Vini are TBD-copy.
 const GOOGLE = { // TBD-copy
   label: 'Continue with Google',
@@ -66,12 +66,42 @@ const USERNAME = { // TBD-copy
   save: 'Save username'
 };
 
+const NEW_PASSWORD = { // TBD-copy
+  title: 'Set a new password',
+  label: 'New password',
+  hint: 'At least 8 characters.',
+  submit: 'Save password',
+  network: 'The network failed. Try again.',
+  unavailable: 'Sign-in is unavailable.',
+  failed: 'Could not save the password.'
+};
+
+const SAVED = { // TBD-copy
+  title: 'Password saved',
+  body: 'Your password is updated and you are signed in.',
+  next: 'Continue'
+};
+
+const SIGNED_IN = { // TBD-copy
+  guest: 'Learner',
+  email: 'Signed in with Email',
+  google: 'Signed in with Google',
+  note: 'Your progress stays on this device.',
+  signOut: 'Sign out',
+  setUsername: 'Set a username',
+  changeUsername: 'Change username',
+  delete: 'Delete account'
+};
+
 type Dispatch = (event: AccountEvent) => void;
 type SignIn = Extract<AccountView, { kind: 'signIn' }>;
 type Create = Extract<AccountView, { kind: 'create' }>;
 type Inbox = Extract<AccountView, { kind: 'inbox' }>;
 type Forgot = Extract<AccountView, { kind: 'forgot' }>;
 type Username = Extract<AccountView, { kind: 'username' }>;
+type NewPassword = Extract<AccountView, { kind: 'setNewPassword' }>;
+type Saved = Extract<AccountView, { kind: 'passwordSaved' }>;
+type SignedIn = Extract<AccountView, { kind: 'signedIn' }>;
 
 function formatError(draft: string): string | undefined {
   const issue = usernameFormatIssue(draft);
@@ -374,7 +404,84 @@ export function InboxView({ view, dispatch, accentColor }: { view: Inbox; dispat
   );
 }
 
+export function SetNewPasswordView({ view, dispatch, accentColor }: { view: NewPassword; dispatch: Dispatch; accentColor: string }) {
+  const locked = busy(view.submit.status);
+  const error = view.submit.status === 'failed'
+    ? view.submit.failure === 'weakPassword' ? NEW_PASSWORD.hint : otherFailure(view.submit.failure, NEW_PASSWORD)
+    : undefined;
+  return (
+    <View style={styles.stack}>
+      <Text style={styles.title}>{NEW_PASSWORD.title}</Text>
+      <Field
+        label={NEW_PASSWORD.label}
+        value={view.password}
+        onChangeText={(value) => dispatch({ type: 'edited', field: 'password', value })}
+        accentColor={accentColor}
+        editable={!locked}
+        secureTextEntry
+        error={error}
+        testID="account-new-password"
+      />
+      {error ? null : <Text>{NEW_PASSWORD.hint}</Text>}
+      <PrimaryButton
+        label={NEW_PASSWORD.submit}
+        onPress={() => dispatch({ type: 'submitted' })}
+        accentColor={accentColor}
+        disabled={locked}
+        loading={view.submit.status === 'submitting'}
+        testID="account-submit"
+      />
+    </View>
+  );
+}
+
+export function PasswordSavedView({ view, onContinue, accentColor }: { view: Saved; onContinue: (identity: Saved['identity']) => void; accentColor: string }) {
+  return (
+    <View style={styles.stack}>
+      <Text style={styles.title}>{SAVED.title}</Text>
+      <Text>{SAVED.body}</Text>
+      <PrimaryButton label={SAVED.next} onPress={() => onContinue(view.identity)} accentColor={accentColor} testID="account-continue" />
+    </View>
+  );
+}
+
+export function SignedInView({ view, dispatch, accentColor }: { view: SignedIn; dispatch: Dispatch; accentColor: string }) {
+  const { identity, signingOut } = view;
+  const name = identity.username ?? SIGNED_IN.guest;
+  return (
+    <View style={styles.stack}>
+      <View style={styles.profile}>
+        <View style={[styles.avatar, { backgroundColor: accentColor }]}>
+          <Text style={styles.initial} testID="account-avatar">{name.charAt(0).toUpperCase()}</Text>
+        </View>
+        <Text style={styles.title}>{name}</Text>
+        <Text>{identity.email}</Text>
+        <Text>{identity.provider === 'google' ? SIGNED_IN.google : SIGNED_IN.email}</Text>
+      </View>
+      <Text>{SIGNED_IN.note}</Text>
+      <SecondaryButton
+        label={SIGNED_IN.signOut}
+        onPress={() => dispatch({ type: 'signOutRequested' })}
+        accentColor={accentColor}
+        loading={signingOut}
+        testID="account-sign-out"
+      />
+      <LinkButton
+        label={identity.username === null ? SIGNED_IN.setUsername : SIGNED_IN.changeUsername}
+        onPress={() => {}}
+        accentColor={accentColor}
+        disabled
+        testID="account-username-entry"
+      />
+      <DestructiveButton label={SIGNED_IN.delete} onPress={() => {}} accentColor={accentColor} disabled testID="account-delete" />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  profile: { alignItems: 'center', gap: 4 },
+  avatar: { alignItems: 'center', borderRadius: 28, height: 56, justifyContent: 'center', width: 56 },
+  initial: { color: '#FFFFFF', fontSize: 24, fontWeight: '800' },
   stack: { gap: 12 },
   google: {
     alignItems: 'center', backgroundColor: '#FFFFFF', borderColor: '#64748B', borderRadius: 12,

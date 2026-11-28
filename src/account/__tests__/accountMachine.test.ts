@@ -444,7 +444,7 @@ describe('recovery password', () => {
     expect(reduce(started.next, {
       type: 'authSettled',
       result: { ok: true, identity: ada }
-    })).toEqual({ kind: 'passwordSaved' });
+    })).toEqual({ kind: 'passwordSaved', identity: ada });
     expect(reduce(started.next, {
       type: 'authSettled',
       result: { ok: true, pending: 'passwordReset' }
@@ -463,7 +463,7 @@ describe('recovery password', () => {
   });
 
   it('keeps passwordSaved on screen until the shell closes it', () => {
-    const view: AccountView = { kind: 'passwordSaved' };
+    const view: AccountView = { kind: 'passwordSaved', identity: ada };
     expect(canDismiss(view)).toBe(false);
     expect(reduce(view, { type: 'submitted' })).toBe(view);
     expect(reduce(view, { type: 'navigated', to: 'signIn' })).toBe(view);
@@ -574,7 +574,7 @@ describe('ignored events', () => {
     ['forgot', forgot(), { type: 'providerChosen', provider: 'google' }],
     ['inbox', { kind: 'inbox', reason: 'passwordReset' }, { type: 'submitted' }],
     ['setNewPassword', setNewPassword(), { type: 'navigated', to: 'create' }],
-    ['passwordSaved', { kind: 'passwordSaved' }, { type: 'submitted' }],
+    ['passwordSaved', { kind: 'passwordSaved', identity: ada }, { type: 'submitted' }],
     ['signedIn', signedIn(), { type: 'submitted' }],
     ['delete confirm', confirmDelete('DELETE'), { type: 'providerChosen', provider: 'google' }],
     ['deleting', deleting(), { type: 'edited', field: 'typed', value: 'DELETE' }],

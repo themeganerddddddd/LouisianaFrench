@@ -31,7 +31,7 @@ export type AccountView =
   | { kind: 'forgot'; email: string; submit: Submit }
   | { kind: 'inbox'; reason: 'passwordReset' | 'confirmSignUp' }
   | { kind: 'setNewPassword'; password: string; submit: Submit }
-  | { kind: 'passwordSaved' }
+  | { kind: 'passwordSaved'; identity: Identity }
   | { kind: 'username'; identity: Identity; draft: string; availability: UsernameAvailability; submit: UsernameSubmit; mode: 'first' | 'change' }
   | { kind: 'signedIn'; identity: Identity; signingOut: boolean }
   | { kind: 'deleteAccount'; identity: Identity; deletion: Deletion }
@@ -244,7 +244,7 @@ function applyAuth(view: FormView, result: AuthResult): AccountView {
     return { ...view, submit: { status: 'failed', failure: result.failure } };
   }
   if ('identity' in result) {
-    if (view.kind === 'setNewPassword') return { kind: 'passwordSaved' };
+    if (view.kind === 'setNewPassword') return { kind: 'passwordSaved', identity: result.identity };
     if (view.kind === 'create' && result.usernameFailed) {
       return settleUsername(openUsername(result.identity, view.username), result.usernameFailed);
     }

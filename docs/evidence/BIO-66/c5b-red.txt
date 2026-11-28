@@ -1,0 +1,240 @@
+FAIL src/account/__tests__/accountMachine.test.ts
+  ● recovery password › saves a new password and ignores navigation
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 6
+    + Received  + 0
+
+      Object {
+    -   "identity": Object {
+    -     "email": "ada@example.com",
+    -     "id": "learner-1",
+    -     "provider": "email",
+    -     "username": "Elise",
+    -   },
+        "kind": "passwordSaved",
+      }
+
+      445 |       type: 'authSettled',
+      446 |       result: { ok: true, identity: ada }
+    > 447 |     })).toEqual({ kind: 'passwordSaved', identity: ada });
+          |         ^
+      448 |     expect(reduce(started.next, {
+      449 |       type: 'authSettled',
+      450 |       result: { ok: true, pending: 'passwordReset' }
+
+      at Object.toEqual (src/account/__tests__/accountMachine.test.ts:447:9)
+
+FAIL src/components/account/__tests__/AccountModal.test.tsx
+  ● create account view › cannot dismiss Set new password by backdrop or Android back, and left-aligns its heading
+
+    Unable to find an element with text: Set a new password
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m/>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      513 |     screen.UNSAFE_getByType(Modal).props.onRequestClose();
+      514 |     expect(onClose).not.toHaveBeenCalled();
+    > 515 |     expect(StyleSheet.flatten(screen.getByText('Set a new password').props.style).textAlign).toBe('left');
+          |                                      ^
+      516 |   });
+      517 |
+      518 |   it('saves a new password, shows Password saved, and Continue opens the identity then closes', async () => {
+
+      at Object.getByText (src/components/account/__tests__/AccountModal.test.tsx:515:38)
+
+  ● create account view › saves a new password, shows Password saved, and Continue opens the identity then closes
+
+    Unable to find an element with accessibility label: New password
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m/>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      537 |     render(<Flow />);
+      538 |     act(() => open());
+    > 539 |     fireEvent.changeText(screen.getByLabelText('New password'), 'longenough1');
+          |                                 ^
+      540 |     fireEvent.press(screen.getByRole('button', { name: 'Save password' }));
+      541 |     await waitFor(() => expect(screen.getByText('Password saved')).toBeOnTheScreen());
+      542 |     expect(updatePassword).toHaveBeenCalledWith('longenough1');
+
+      at Object.getByLabelText (src/components/account/__tests__/AccountModal.test.tsx:539:33)
+      at asyncGeneratorStep (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at ../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ● create account view › shows Signed in for email with username Ada
+
+    Unable to find an element with testID: account-avatar
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      551 |   ] as const)('shows Signed in for %s with username %s', (provider, username, initial, how) => {
+      552 |     sheet({ kind: 'signedIn', identity: { ...learner, provider, username }, signingOut: false });
+    > 553 |     expect(screen.getByTestId('account-avatar')).toHaveTextContent(initial);
+          |                   ^
+      554 |     expect(screen.getByText(username ?? 'Learner')).toBeOnTheScreen();
+      555 |     expect(screen.getByText('ada@example.com')).toBeOnTheScreen();
+      556 |     expect(screen.getByText(how)).toBeOnTheScreen();
+
+      at getByTestId (src/components/account/__tests__/AccountModal.test.tsx:553:19)
+
+  ● create account view › shows Signed in for google with username null
+
+    Unable to find an element with testID: account-avatar
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      551 |   ] as const)('shows Signed in for %s with username %s', (provider, username, initial, how) => {
+      552 |     sheet({ kind: 'signedIn', identity: { ...learner, provider, username }, signingOut: false });
+    > 553 |     expect(screen.getByTestId('account-avatar')).toHaveTextContent(initial);
+          |                   ^
+      554 |     expect(screen.getByText(username ?? 'Learner')).toBeOnTheScreen();
+      555 |     expect(screen.getByText('ada@example.com')).toBeOnTheScreen();
+      556 |     expect(screen.getByText(how)).toBeOnTheScreen();
+
+      at getByTestId (src/components/account/__tests__/AccountModal.test.tsx:553:19)
+
+  ● create account view › paints the Sign out label differently from its background
+
+    Unable to find an element with role: button, name: Sign out
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      563 |   it('paints the Sign out label differently from its background', () => {
+      564 |     sheet({ kind: 'signedIn', identity: learner, signingOut: false });
+    > 565 |     const button = StyleSheet.flatten(screen.getByRole('button', { name: 'Sign out' }).props.style);
+          |                                              ^
+      566 |     const label = StyleSheet.flatten(screen.getByText('Sign out').props.style);
+      567 |     expect(label.color).not.toBe(button.backgroundColor);
+      568 |     expect(button.borderWidth).toBe(1);
+
+      at Object.getByRole (src/components/account/__tests__/AccountModal.test.tsx:565:46)
+
+  ● create account view › signs out to the guest view, leaves Learner Progress alone, and locks while signing out
+
+    Unable to find an element with role: button, name: Sign out
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      579 |     }
+      580 |     render(<Out />);
+    > 581 |     fireEvent.press(screen.getByRole('button', { name: 'Sign out' }));
+          |                            ^
+      582 |     fireEvent.press(screen.getByRole('button', { name: 'Sign out' }));
+      583 |     expect(signOut).toHaveBeenCalledTimes(1);
+      584 |     expect(screen.getByRole('button', { name: 'Sign out' }).props.accessibilityState.disabled).toBe(true);
+
+      at Object.getByRole (src/components/account/__tests__/AccountModal.test.tsx:581:28)
+      at asyncGeneratorStep (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 2 failed, 1 passed, 3 total
+Tests:       7 failed, 104 passed, 111 total
+Snapshots:   0 total
+Time:        1.203 s, estimated 2 s
+Ran all test suites matching src/account/__tests__/accountMachine.test.ts|src/components/account.
