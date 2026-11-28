@@ -10,14 +10,14 @@ describe('auth links', () => {
     expect(parseAuthUrl(`${REDIRECT}#code=frag&type=recovery`)).toEqual({ kind: 'recovery', code: 'frag' });
     expect(parseAuthUrl(`${REDIRECT}?error=access_denied&error_description=secret`)).toEqual({ kind: 'failed' });
     expect(parseAuthUrl(`${REDIRECT}EVIL?code=abc&type=recovery`)).toEqual({ kind: 'ignored' });
+    expect(parseAuthUrl(`${REDIRECT}?type=recovery&code=pkce`)).toEqual({ kind: 'recovery', code: 'pkce' });
+    expect(parseAuthUrl(`${REDIRECT}?type=recovery#access_token=t&refresh_token=r&type=recovery`)).toEqual({ kind: 'ignored' });
     expect(matchesAuthRedirect(`${REDIRECT}EVIL?code=abc`, REDIRECT)).toBe(false);
     expect(matchesAuthRedirect(`${REDIRECT}?code=abc`, REDIRECT)).toBe(true);
   });
 
-  it('uses the web origin on web and exp:// when Expo Go would emit the app scheme', () => {
-    expect(resolveAuthRedirect({ platform: 'web', origin: 'https://learn.example/' })).toBe(
-      'https://learn.example/auth/callback'
-    );
+  it('has no web output and uses exp:// when Expo Go would emit the app scheme', () => {
+    expect(resolveAuthRedirect({ platform: 'web', origin: 'https://learn.example/' } as never)).toBe(REDIRECT);
     expect(resolveAuthRedirect({
       createURL: () => REDIRECT,
       host: 'abc.ngrok.io'

@@ -431,6 +431,97 @@ describe('account connector', () => {
     });
   });
 
+  const SESSION_USER = { id: 'learner-1', email: 'ada@example.com' };
+  const exchangeOk = async () => ({ data: { session: { user: SESSION_USER } }, error: null });
+
+  it('opens the modal for a confirmed link after the exchange succeeds', async () => {
+    const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
+    expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=signup`)).toEqual({
+      type: 'opened',
+      identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
+    });
+  });
+
+  it('opens the modal for an oauth link when no oauth attempt is in flight', async () => {
+    const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
+    expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc`)).toEqual({
+      type: 'opened',
+      identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'google' }
+    });
+  });
+
+  it('ignores an oauth link while an oauth attempt is in flight', async () => {
+    const exchanged: string[] = [];
+    let consume: (url: string) => Promise<unknown> = async () => 'unset';
+    const connector = openConnector({
+      client: client({
+        signInWithOAuth: async () => ({ data: { url: 'https://accounts.example' }, error: null }),
+        exchangeCodeForSession: async (code: string) => {
+          exchanged.push(code);
+          return exchangeOk();
+        }
+      }),
+      openBrowser: async () => {
+        expect(await consume(`${REDIRECT}?code=bare`)).toBeNull();
+        return { url: `${REDIRECT}?code=from-google` };
+      }
+    });
+    consume = (url) => connector.consumeAuthUrl(url);
+    await connector.signInWithProvider('google');
+    expect(exchanged).toEqual(['from-google']);
+  });
+
+  it('reports linkFailed when a confirmed or oauth exchange fails', async () => {
+    const connector = openConnector({
+      client: client({
+        exchangeCodeForSession: async () => ({ data: { session: null }, error: { message: 'bad code' } })
+      })
+    });
+    for (const url of [`${REDIRECT}?code=a&type=signup`, `${REDIRECT}?code=a`]) {
+      expect(await connector.consumeAuthUrl(url)).toEqual({ type: 'linkFailed', failure: 'unknown' });
+    }
+  });
+
+  describe('updatePassword settling', () => {
+    function lateUpdate() {
+      const signOuts: unknown[] = [];
+      let releaseFirst: (value: unknown) => void = () => {};
+      let calls = 0;
+      const connector = openConnector({
+        timeoutMs: 20,
+        client: client({
+          updateUser: () => {
+            calls += 1;
+            if (calls === 1) return new Promise((resolve) => { releaseFirst = resolve; });
+            return Promise.resolve({ data: { user: SESSION_USER }, error: null });
+          },
+          signOut: async (input: unknown) => {
+            signOuts.push(input);
+            return { error: null };
+          }
+        })
+      });
+      return { connector, signOuts, release: () => releaseFirst({ data: { user: SESSION_USER }, error: null }) };
+    }
+
+    it('signs out locally when a late success follows a timeout', async () => {
+      const { connector, signOuts, release } = lateUpdate();
+      expect(await connector.updatePassword('new-password')).toEqual({ ok: false, failure: 'network' });
+      release();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(signOuts).toEqual([{ scope: 'local' }]);
+    });
+
+    it('keeps the session when a newer attempt succeeded before the late success', async () => {
+      const { connector, signOuts, release } = lateUpdate();
+      expect(await connector.updatePassword('new-password')).toEqual({ ok: false, failure: 'network' });
+      expect(await connector.updatePassword('new-password')).toMatchObject({ ok: true });
+      release();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(signOuts).toEqual([]);
+    });
+  });
+
   it('does not read a bare code as email confirmation while Google is open', async () => {
     const calls: string[] = [];
     let consume: (url: string) => Promise<unknown> = async () => null;
