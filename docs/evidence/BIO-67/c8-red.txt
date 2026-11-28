@@ -1,0 +1,1944 @@
+FAIL src/components/account/__tests__/formControls.test.tsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation, specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    SyntaxError: /home/logandelafosse/Personal-Projects/LouisianaFrench/.claude/worktrees/agent-aac629448b6e3a82f/src/components/account/__tests__/formControls.test.tsx: JSX value should be either an expression or a quoted JSX text. (174:36)
+
+      172 |   it('locks the destructive control and marks it busy while loading', () => {
+      173 |     const onPress = jest.fn();
+    > 174 |     render(<DestructiveButton label=Delete onPress={onPress} accentColor={ACCENT} confirm loading testID=del />);
+          |                                     ^
+      175 |     fireEvent.press(screen.getByTestId('del'));
+      176 |     expect(onPress).not.toHaveBeenCalled();
+      177 |     expect(screen.getByTestId('del-spinner')).toBeOnTheScreen();
+
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › maps delete-account failures and signs out locally only for notSignedIn
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 1
+
+    - Array [
+    -   "out",
+    -   "out",
+    - ]
+    + Array []
+
+      760 |     });
+      761 |     expect(await offline.deleteAccount()).toEqual({ ok: false, failure: 'network' });
+    > 762 |     expect(scopes).toEqual(['out', 'out']);
+          |                    ^
+      763 |   });
+      764 |
+      765 |   it('ends as guest on notSignedIn: local signOut, even if it throws, and a null announce', async () => {
+
+
+  ● account connector › ends as guest on notSignedIn: local signOut, even if it throws, and a null announce
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 5
+    + Received  + 1
+
+    - Array [
+    -   Object {
+    -     "scope": "local",
+    -   },
+    - ]
+    + Array []
+
+      779 |     });
+      780 |     expect(await expired.deleteAccount()).toEqual({ ok: false, failure: 'notSignedIn' });
+    > 781 |     expect(scopes).toEqual([{ scope: 'local' }]);
+          |                    ^
+      782 |     expect(onIdentity).toHaveBeenCalledWith(null);
+      783 |   });
+      784 |
+
+
+  ● account connector › ends as guest when a timed-out delete succeeded late and the retry finds no session
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: null
+
+    Number of calls: 0
+
+      819 |     signedOut = true;
+      820 |     expect(await connector.deleteAccount()).toEqual({ ok: false, failure: 'notSignedIn' });
+    > 821 |     expect(onIdentity).toHaveBeenCalledWith(null);
+          |                        ^
+      822 |   });
+      823 |
+      824 |   it('offers the step only after a profile read that succeeded with no username', async () => {
+
+
+FAIL src/components/account/__tests__/AccountModal.test.tsx (5.26 s)
+  ● delete account › explains what goes and what stays, with no password field, and Keep my account goes back
+
+    Unable to find an element with text: /your email and username/i
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      693 |     render(<Deleting account={withDelete(async () => ({ ok: true }))} />);
+      694 |     openConfirm();
+    > 695 |     expect(screen.getByText(/your email and username/i)).toBeOnTheScreen();
+          |                   ^
+      696 |     expect(screen.getByText(/lessons and progress stay on this phone/i)).toBeOnTheScreen();
+      697 |     expect(screen.queryByLabelText('Password')).toBeNull();
+      698 |     fireEvent.press(screen.getByTestId('account-delete-keep'));
+
+
+  ● delete account › arms Delete for "delete" only when exact (disabled=true)
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      704 |     render(<Deleting account={withDelete(invoke)} />);
+      705 |     openConfirm();
+    > 706 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), typed);
+          |                                 ^
+      707 |     const button = screen.getByTestId('account-delete-confirm');
+      708 |     expect(Boolean(button.props.accessibilityState.disabled)).toBe(disabled);
+      709 |     fireEvent.press(button);
+
+
+  ● delete account › arms Delete for "DELETE " only when exact (disabled=true)
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      704 |     render(<Deleting account={withDelete(invoke)} />);
+      705 |     openConfirm();
+    > 706 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), typed);
+          |                                 ^
+      707 |     const button = screen.getByTestId('account-delete-confirm');
+      708 |     expect(Boolean(button.props.accessibilityState.disabled)).toBe(disabled);
+      709 |     fireEvent.press(button);
+
+
+  ● delete account › arms Delete for "DELETE" only when exact (disabled=false)
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      704 |     render(<Deleting account={withDelete(invoke)} />);
+      705 |     openConfirm();
+    > 706 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), typed);
+          |                                 ^
+      707 |     const button = screen.getByTestId('account-delete-confirm');
+      708 |     expect(Boolean(button.props.accessibilityState.disabled)).toBe(disabled);
+      709 |     fireEvent.press(button);
+
+
+  ● delete account › locks Back, Close and the input while deleting, and a double tap sends one invoke
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      716 |     render(<Deleting account={withDelete(invoke)} />);
+      717 |     openConfirm();
+    > 718 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+          |                                 ^
+      719 |     fireEvent.press(screen.getByTestId('account-delete-confirm'));
+      720 |     fireEvent.press(screen.getByTestId('account-delete-confirm'));
+      721 |     expect(invoke).toHaveBeenCalledTimes(1);
+
+
+  ● delete account › deletes a email user, shows Account deleted, and Back to lessons opens as guest and closes with progress kept
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      733 |     render(<Deleting account={withDelete(async () => ({ ok: true }))} identity={identity} onClose={onClose} />);
+      734 |     openConfirm();
+    > 735 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+          |                                 ^
+      736 |     fireEvent.press(screen.getByTestId('account-delete-confirm'));
+      737 |     expect(await screen.findByText("You're learning as a guest now.")).toBeOnTheScreen();
+      738 |     expect(screen.queryByTestId('account-close')).toBeNull();
+
+
+  ● delete account › deletes a google user, shows Account deleted, and Back to lessons opens as guest and closes with progress kept
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Google[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      733 |     render(<Deleting account={withDelete(async () => ({ ok: true }))} identity={identity} onClose={onClose} />);
+      734 |     openConfirm();
+    > 735 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+          |                                 ^
+      736 |     fireEvent.press(screen.getByTestId('account-delete-confirm'));
+      737 |     expect(await screen.findByText("You're learning as a guest now.")).toBeOnTheScreen();
+      738 |     expect(screen.queryByTestId('account-close')).toBeNull();
+
+
+  ● delete account › returns to Confirm with the error and stays signed in after a network failure
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      746 |     render(<Deleting account={withDelete(async () => ({ ok: false, failure: 'network' }))} />);
+      747 |     openConfirm();
+    > 748 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+          |                                 ^
+      749 |     fireEvent.press(screen.getByTestId('account-delete-confirm'));
+      750 |     expect(await screen.findByText('The network failed. Try again.')).toBeOnTheScreen();
+      751 |     expect(screen.getByTestId('account-delete-input').props.value).toBe('');
+
+
+  ● delete account › shows an unknown failure in Confirm
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<Modal>[39m
+      [36m<View[39m
+        [33maccessible[39m=[32m{true}[39m
+        [33mtestID[39m=[32m"account-backdrop"[39m
+      [36m>[39m
+        [36m<View[39m
+          [33maccessible[39m=[32m{true}[39m
+          [33mtestID[39m=[32m"account-modal"[39m
+        [36m>[39m
+          [36m<View[39m
+            [33maccessibilityLabel[39m=[32m"Close"[39m
+            [33maccessibilityRole[39m=[32m"button"[39m
+            [33maccessible[39m=[32m{true}[39m
+            [33mtestID[39m=[32m"account-close"[39m
+          [36m>[39m
+            [36m<Text>[39m
+              [0mClose[0m
+            [36m</Text>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text[39m
+                  [33mtestID[39m=[32m"account-avatar"[39m
+                [36m>[39m
+                  [0mA[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<Text>[39m
+                [0mAda[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mada@example.com[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mSigned in with Email[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<Text>[39m
+              [0mYour progress stays on this device.[0m
+            [36m</Text>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-sign-out"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mSign out[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"link"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": false,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-username-entry"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mChange username[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33maccessibilityRole[39m=[32m"button"[39m
+              [33maccessibilityState[39m=[32m{
+                {
+                  "busy": false,
+                  "disabled": true,
+                }
+              }[39m
+              [33maccessible[39m=[32m{true}[39m
+              [33mtestID[39m=[32m"account-delete"[39m
+            [36m>[39m
+              [36m<Text[39m
+                [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                [33maccessible[39m=[32m{false}[39m
+                [33mtestID[39m=[32m"account-delete-icon"[39m
+              [36m>[39m
+                [0mtrash-2[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mDelete account[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</Modal>[39m
+
+      757 |     render(<Deleting account={withDelete(async () => ({ ok: false, failure: 'unknown' }))} />);
+      758 |     openConfirm();
+    > 759 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+          |                                 ^
+      760 |     fireEvent.press(screen.getByTestId('account-delete-confirm'));
+      761 |     expect(await screen.findByText('Could not delete the account. Try again.')).toBeOnTheScreen();
+      762 |   });
+
+
+FAIL src/screens/__tests__/homeAccountMachine.test.js (6.403 s)
+  ● Console
+
+    console.error
+      An update to StackView inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+
+    console.error
+      An update to StackView inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+
+    console.error
+      An update to StackView inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+
+  ● Home account modal › returns Home to a guest after Delete account, with Learner Progress kept
+
+    Unable to find an element with testID: account-delete-input
+
+    [36m<View>[39m
+      [36m<View>[39m
+        [36m<View>[39m
+          [36m<View[39m
+            [33mpointerEvents[39m=[32m"box-none"[39m
+          [36m/>[39m
+          [36m<RNSScreenContainer>[39m
+            [36m<RNSScreen[39m
+              [33mpointerEvents[39m=[32m"box-none"[39m
+            [36m>[39m
+              [36m<View[39m
+                [33maria-hidden[39m=[32m{false}[39m
+                [33mpointerEvents[39m=[32m"box-none"[39m
+              [36m>[39m
+                [36m<View />[39m
+                [36m<View[39m
+                  [33mpointerEvents[39m=[32m"box-none"[39m
+                [36m>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33mpointerEvents[39m=[32m"auto"[39m
+                    [36m>[39m
+                      [36m<View[39m
+                        [33mpointerEvents[39m=[32m"box-none"[39m
+                      [36m>[39m
+                        [36m<View>[39m
+                          [36m<View>[39m
+                            [36m<View>[39m
+                              [36m<ViewManagerAdapter_ExpoLinearGradient[39m
+                                [33mtestID[39m=[32m"home-top-bar"[39m
+                              [36m>[39m
+                                [36m<View>[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"About menu"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessibilityState[39m=[32m{
+                                        {
+                                          "expanded": false,
+                                        }
+                                      }[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"home-pelican"[39m
+                                    [36m>[39m
+                                      [36m<Image[39m
+                                        [33mpointerEvents[39m=[32m"none"[39m
+                                        [33mtestID[39m=[32m"home-pelican-image"[39m
+                                      [36m/>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<Text>[39m
+                                        [0mLouisiana French[0m
+                                      [36m</Text>[39m
+                                      [36m<Text[39m
+                                        [33mtestID[39m=[32m"home-stats"[39m
+                                      [36m>[39m
+                                        [0mWelcome! Let's learn new words.[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View[39m
+                                    [33maccessibilityLabel[39m=[32m"Louisiana French flag"[39m
+                                    [33maccessibilityRole[39m=[32m"button"[39m
+                                    [33maccessible[39m=[32m{true}[39m
+                                    [33mtestID[39m=[32m"home-language-flag"[39m
+                                  [36m>[39m
+                                    [36m<Image[39m
+                                      [33mtestID[39m=[32m"home-language-flag-image"[39m
+                                    [36m/>[39m
+                                  [36m</View>[39m
+                                [36m</View>[39m
+                                [36m<View>[39m
+                                  [36m<View[39m
+                                    [33maccessibilityLabel[39m=[32m"Review"[39m
+                                    [33maccessibilityRole[39m=[32m"button"[39m
+                                    [33maccessibilityState[39m=[32m{
+                                      {
+                                        "disabled": true,
+                                      }
+                                    }[39m
+                                    [33maccessible[39m=[32m{true}[39m
+                                    [33mtestID[39m=[32m"home-review-control"[39m
+                                  [36m>[39m
+                                    [36m<View[39m
+                                      [33mtestID[39m=[32m"home-review-circle"[39m
+                                    [36m>[39m
+                                      [36m<Text[39m
+                                        [33maccessibilityLabel[39m=[32m"refresh-cw"[39m
+                                        [33mtestID[39m=[32m"home-review-icon"[39m
+                                      [36m>[39m
+                                        [0mrefresh-cw[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                    [36m<Text>[39m
+                                      [0mReview[0m
+                                    [36m</Text>[39m
+                                  [36m</View>[39m
+                                  [36m<View[39m
+                                    [33maccessibilityLabel[39m=[32m"Dictionary"[39m
+                                    [33maccessibilityRole[39m=[32m"button"[39m
+                                    [33maccessibilityState[39m=[32m{
+                                      {
+                                        "disabled": false,
+                                      }
+                                    }[39m
+                                    [33maccessible[39m=[32m{true}[39m
+                                    [33mtestID[39m=[32m"home-dictionary-control"[39m
+                                  [36m>[39m
+                                    [36m<View[39m
+                                      [33mtestID[39m=[32m"home-dictionary-circle"[39m
+                                    [36m>[39m
+                                      [36m<Text[39m
+                                        [33maccessibilityLabel[39m=[32m"book-open"[39m
+                                        [33mtestID[39m=[32m"home-dictionary-icon"[39m
+                                      [36m>[39m
+                                        [0mbook-open[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                    [36m<Text>[39m
+                                      [0mDictionary[0m
+                                    [36m</Text>[39m
+                                  [36m</View>[39m
+                                  [36m<View[39m
+                                    [33maccessibilityLabel[39m=[32m"Hub"[39m
+                                    [33maccessibilityRole[39m=[32m"button"[39m
+                                    [33maccessibilityState[39m=[32m{
+                                      {
+                                        "disabled": false,
+                                      }
+                                    }[39m
+                                    [33maccessible[39m=[32m{true}[39m
+                                    [33mtestID[39m=[32m"home-hub-control"[39m
+                                  [36m>[39m
+                                    [36m<View[39m
+                                      [33mtestID[39m=[32m"home-hub-circle"[39m
+                                    [36m>[39m
+                                      [36m<Text[39m
+                                        [33maccessibilityLabel[39m=[32m"layers"[39m
+                                        [33mtestID[39m=[32m"home-hub-icon"[39m
+                                      [36m>[39m
+                                        [0mlayers[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                    [36m<Text>[39m
+                                      [0mHub[0m
+                                    [36m</Text>[39m
+                                  [36m</View>[39m
+                                  [36m<View[39m
+                                    [33maccessibilityLabel[39m=[32m"Mistakes, none pending"[39m
+                                    [33maccessibilityRole[39m=[32m"button"[39m
+                                    [33maccessibilityState[39m=[32m{
+                                      {
+                                        "disabled": true,
+                                      }
+                                    }[39m
+                                    [33maccessible[39m=[32m{true}[39m
+                                    [33mtestID[39m=[32m"home-mistakes-control"[39m
+                                  [36m>[39m
+                                    [36m<View[39m
+                                      [33mtestID[39m=[32m"home-mistakes-circle"[39m
+                                    [36m>[39m
+                                      [36m<Text[39m
+                                        [33maccessibilityLabel[39m=[32m"alert-triangle"[39m
+                                        [33mtestID[39m=[32m"home-mistakes-icon"[39m
+                                      [36m>[39m
+                                        [0malert-triangle[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                    [36m<Text>[39m
+                                      [0mMistakes[0m
+                                    [36m</Text>[39m
+                                  [36m</View>[39m
+                                [36m</View>[39m
+                              [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                              [36m<RCTScrollView[39m
+                                [33mtestID[39m=[32m"home-scroll"[39m
+                              [36m>[39m
+                                [36m<View>[39m
+                                  [36m<View[39m
+                                    [33mtestID[39m=[32m"home-plan"[39m
+                                  [36m>[39m
+                                    [36m<View>[39m
+                                      [36m<Text[39m
+                                        [33mtestID[39m=[32m"home-plan-title"[39m
+                                      [36m>[39m
+                                        [0mToday's plan[0m
+                                      [36m</Text>[39m
+                                      [36m<Text[39m
+                                        [33mtestID[39m=[32m"home-plan-status"[39m
+                                      [36m>[39m
+                                        [0mDay 1[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Day 1"[39m
+                                      [33mtestID[39m=[32m"home-plan-stepper"[39m
+                                    [36m>[39m
+                                      [36m<View[39m
+                                        [33mtestID[39m=[32m"home-plan-step-lesson-1"[39m
+                                      [36m>[39m
+                                        [36m<View[39m
+                                          [33mtestID[39m=[32m"home-plan-circle-lesson-1"[39m
+                                        [36m>[39m
+                                          [36m<Text>[39m
+                                            [0m1[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<Text>[39m
+                                          [0mLesson[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                      [36m<View[39m
+                                        [33mtestID[39m=[32m"home-plan-connector-0"[39m
+                                      [36m/>[39m
+                                      [36m<View[39m
+                                        [33mtestID[39m=[32m"home-plan-step-lesson-2"[39m
+                                      [36m>[39m
+                                        [36m<View[39m
+                                          [33mtestID[39m=[32m"home-plan-circle-lesson-2"[39m
+                                        [36m>[39m
+                                          [36m<Text>[39m
+                                            [0m2[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<Text>[39m
+                                          [0mLesson[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                      [36m<View[39m
+                                        [33mtestID[39m=[32m"home-plan-connector-1"[39m
+                                      [36m/>[39m
+                                      [36m<View[39m
+                                        [33maccessibilityState[39m=[32m{
+                                          {
+                                            "disabled": true,
+                                          }
+                                        }[39m
+                                        [33mtestID[39m=[32m"home-plan-step-review"[39m
+                                      [36m>[39m
+                                        [36m<View[39m
+                                          [33mtestID[39m=[32m"home-plan-circle-review"[39m
+                                        [36m>[39m
+                                          [36m<Text>[39m
+                                            [0m–[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<Text>[39m
+                                          [0mNo review[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                    [36m</View>[39m
+                                    [36m<Text[39m
+                                      [33mtestID[39m=[32m"home-plan-helper"[39m
+                                    [36m>[39m
+                                      [0mReviews unlock once you've learned new words.[0m
+                                    [36m</Text>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Start your new lesson"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"home-plan-cta"[39m
+                                    [36m>[39m
+                                      [36m<Text>[39m
+                                        [0mStart your new lesson[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View>[39m
+                                    [36m<Text[39m
+                                      [33maccessibilityLabel[39m=[32m"arrow-right"[39m
+                                      [33mtestID[39m=[32m"home-current-unit-arrow"[39m
+                                    [36m>[39m
+                                      [0marrow-right[0m
+                                    [36m</Text>[39m
+                                    [36m<Text>[39m
+                                      [0mSTART HERE[0m
+                                    [36m</Text>[39m
+                                  [36m</View>[39m
+                                  [36m<View[39m
+                                    [33mtestID[39m=[32m"home-current-unit"[39m
+                                  [36m>[39m
+                                    [36m<ViewManagerAdapter_ExpoLinearGradient[39m
+                                      [33mtestID[39m=[32m"home-current-unit-header"[39m
+                                    [36m>[39m
+                                      [36m<View>[39m
+                                        [36m<Text>[39m
+                                          [0mUnit 1[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                      [36m<View>[39m
+                                        [36m<Text>[39m
+                                          [0mGreetings & Politeness[0m
+                                        [36m</Text>[39m
+                                        [36m<Text>[39m
+                                          [0m0[0m
+                                          [0m / [0m
+                                          [0m28[0m
+                                          [0m words ·[0m
+                                          [0m [0m
+                                          [0m0[0m
+                                          [0m / [0m
+                                          [0m7[0m
+                                          [0m lessons[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                    [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                                    [36m<View>[39m
+                                      [36m<View[39m
+                                        [33mtestID[39m=[32m"home-current-unit-progress"[39m
+                                      [36m/>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View>[39m
+                                        [36m<Text>[39m
+                                          [0mPart 1 — Hello!, How’s it going?, Is it going okay?[0m
+                                        [36m</Text>[39m
+                                        [36m<Text>[39m
+                                          [0mNew lesson · 5 words[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                      [36m<View[39m
+                                        [33maccessibilityLabel[39m=[32m"Start Part 1 — Hello!, How’s it going?, Is it going okay?"[39m
+                                        [33maccessibilityRole[39m=[32m"button"[39m
+                                        [33maccessible[39m=[32m{true}[39m
+                                        [33mtestID[39m=[32m"home-current-unit-continue"[39m
+                                      [36m>[39m
+                                        [36m<Text>[39m
+                                          [0mStart[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View[39m
+                                    [33maccessibilityLabel[39m=[32m"T-Boy"[39m
+                                    [33maccessibilityRole[39m=[32m"button"[39m
+                                    [33maccessible[39m=[32m{true}[39m
+                                    [33mtestID[39m=[32m"home-tboy"[39m
+                                  [36m>[39m
+                                    [36m<Image />[39m
+                                  [36m</View>[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Toggle Greetings & Politeness"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessibilityState[39m=[32m{
+                                        {
+                                          "expanded": false,
+                                        }
+                                      }[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"unit-toggle-u01"[39m
+                                    [36m>[39m
+                                      [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mUnit 1[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mGreetings & Politeness[0m
+                                          [36m</Text>[39m
+                                          [36m<Text>[39m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m28[0m
+                                            [0m words mastered ·[0m
+                                            [0m [0m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m7[0m
+                                            [0m lessons done[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0m+[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                      [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View />[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Toggle Names & Introductions"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessibilityState[39m=[32m{
+                                        {
+                                          "expanded": false,
+                                        }
+                                      }[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"unit-toggle-u02"[39m
+                                    [36m>[39m
+                                      [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mUnit 2[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mNames & Introductions[0m
+                                          [36m</Text>[39m
+                                          [36m<Text>[39m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m27[0m
+                                            [0m words mastered ·[0m
+                                            [0m [0m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m7[0m
+                                            [0m lessons done[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0m+[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                      [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View />[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Toggle To Be & Adjectives"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessibilityState[39m=[32m{
+                                        {
+                                          "expanded": false,
+                                        }
+                                      }[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"unit-toggle-u03"[39m
+                                    [36m>[39m
+                                      [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mUnit 3[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mTo Be & Adjectives[0m
+                                          [36m</Text>[39m
+                                          [36m<Text>[39m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m31[0m
+                                            [0m words mastered ·[0m
+                                            [0m [0m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m8[0m
+                                            [0m lessons done[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0m+[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                      [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View />[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Toggle To Have & Expressions"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessibilityState[39m=[32m{
+                                        {
+                                          "expanded": false,
+                                        }
+                                      }[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"unit-toggle-u04"[39m
+                                    [36m>[39m
+                                      [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mUnit 4[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mTo Have & Expressions[0m
+                                          [36m</Text>[39m
+                                          [36m<Text>[39m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m27[0m
+                                            [0m words mastered ·[0m
+                                            [0m [0m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m7[0m
+                                            [0m lessons done[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0m+[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                      [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View />[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Toggle ER verbs & Preferences"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessibilityState[39m=[32m{
+                                        {
+                                          "expanded": false,
+                                        }
+                                      }[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"unit-toggle-u05"[39m
+                                    [36m>[39m
+                                      [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mUnit 5[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mER verbs & Preferences[0m
+                                          [36m</Text>[39m
+                                          [36m<Text>[39m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m35[0m
+                                            [0m words mastered ·[0m
+                                            [0m [0m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m8[0m
+                                            [0m lessons done[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0m+[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                      [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View />[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Toggle Pronoun “They” & To Be Able To"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessibilityState[39m=[32m{
+                                        {
+                                          "expanded": false,
+                                        }
+                                      }[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"unit-toggle-u06"[39m
+                                    [36m>[39m
+                                      [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mUnit 6[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mPronoun “They” & To Be Able To[0m
+                                          [36m</Text>[39m
+                                          [36m<Text>[39m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m34[0m
+                                            [0m words mastered ·[0m
+                                            [0m [0m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m10[0m
+                                            [0m lessons done[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0m+[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                      [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View />[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Toggle To Do/Make & Expressions"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessibilityState[39m=[32m{
+                                        {
+                                          "expanded": false,
+                                        }
+                                      }[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"unit-toggle-u07"[39m
+                                    [36m>[39m
+                                      [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mUnit 7[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0mTo Do/Make & Expressions[0m
+                                          [36m</Text>[39m
+                                          [36m<Text>[39m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m30[0m
+                                            [0m words mastered ·[0m
+                                            [0m [0m
+                                            [0m0[0m
+                                            [0m / [0m
+                                            [0m7[0m
+                                            [0m lessons done[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text>[39m
+                                            [0m+[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                      [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View />[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<Image />[39m
+                                  [36m<View>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Report a bug"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                    [36m>[39m
+                                      [36m<Text>[39m
+                                        [0mReport a bug[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                  [36m<View />[39m
+                                [36m</View>[39m
+                              [36m</RCTScrollView>[39m
+                              [36m<Text[39m
+                                [33mtestID[39m=[32m"home-identity"[39m
+                              [36m>[39m
+                                [0mada@example.com[0m
+                              [36m</Text>[39m
+                              [36m<Modal>[39m
+                                [36m<View[39m
+                                  [33maccessible[39m=[32m{true}[39m
+                                  [33mtestID[39m=[32m"account-backdrop"[39m
+                                [36m>[39m
+                                  [36m<View[39m
+                                    [33maccessible[39m=[32m{true}[39m
+                                    [33mtestID[39m=[32m"account-modal"[39m
+                                  [36m>[39m
+                                    [36m<View[39m
+                                      [33maccessibilityLabel[39m=[32m"Close"[39m
+                                      [33maccessibilityRole[39m=[32m"button"[39m
+                                      [33maccessible[39m=[32m{true}[39m
+                                      [33mtestID[39m=[32m"account-close"[39m
+                                    [36m>[39m
+                                      [36m<Text>[39m
+                                        [0mClose[0m
+                                      [36m</Text>[39m
+                                    [36m</View>[39m
+                                    [36m<View>[39m
+                                      [36m<View>[39m
+                                        [36m<View>[39m
+                                          [36m<Text[39m
+                                            [33mtestID[39m=[32m"account-avatar"[39m
+                                          [36m>[39m
+                                            [0mA[0m
+                                          [36m</Text>[39m
+                                        [36m</View>[39m
+                                        [36m<Text>[39m
+                                          [0mAda[0m
+                                        [36m</Text>[39m
+                                        [36m<Text>[39m
+                                          [0mada@example.com[0m
+                                        [36m</Text>[39m
+                                        [36m<Text>[39m
+                                          [0mSigned in with Email[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                      [36m<Text>[39m
+                                        [0mYour progress stays on this device.[0m
+                                      [36m</Text>[39m
+                                      [36m<View[39m
+                                        [33maccessibilityRole[39m=[32m"button"[39m
+                                        [33maccessibilityState[39m=[32m{
+                                          {
+                                            "busy": false,
+                                            "disabled": false,
+                                          }
+                                        }[39m
+                                        [33maccessible[39m=[32m{true}[39m
+                                        [33mtestID[39m=[32m"account-sign-out"[39m
+                                      [36m>[39m
+                                        [36m<Text>[39m
+                                          [0mSign out[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                      [36m<View[39m
+                                        [33maccessibilityRole[39m=[32m"link"[39m
+                                        [33maccessibilityState[39m=[32m{
+                                          {
+                                            "busy": false,
+                                            "disabled": false,
+                                          }
+                                        }[39m
+                                        [33maccessible[39m=[32m{true}[39m
+                                        [33mtestID[39m=[32m"account-username-entry"[39m
+                                      [36m>[39m
+                                        [36m<Text>[39m
+                                          [0mChange username[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                      [36m<View[39m
+                                        [33maccessibilityRole[39m=[32m"button"[39m
+                                        [33maccessibilityState[39m=[32m{
+                                          {
+                                            "busy": false,
+                                            "disabled": true,
+                                          }
+                                        }[39m
+                                        [33maccessible[39m=[32m{true}[39m
+                                        [33mtestID[39m=[32m"account-delete"[39m
+                                      [36m>[39m
+                                        [36m<Text[39m
+                                          [33maccessibilityLabel[39m=[32m"trash-2"[39m
+                                          [33maccessible[39m=[32m{false}[39m
+                                          [33mtestID[39m=[32m"account-delete-icon"[39m
+                                        [36m>[39m
+                                          [0mtrash-2[0m
+                                        [36m</Text>[39m
+                                        [36m<Text>[39m
+                                          [0mDelete account[0m
+                                        [36m</Text>[39m
+                                      [36m</View>[39m
+                                    [36m</View>[39m
+                                  [36m</View>[39m
+                                [36m</View>[39m
+                              [36m</Modal>[39m
+                            [36m</View>[39m
+                          [36m</View>[39m
+                        [36m</View>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</RNSScreen>[39m
+          [36m</RNSScreenContainer>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</View>[39m
+
+      141 |     mockEmit(ADA);
+      142 |     fireEvent.press(await screen.findByTestId('account-delete'));
+    > 143 |     fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+          |                                 ^
+      144 |     fireEvent.press(screen.getByTestId('account-delete-confirm'));
+      145 |     fireEvent.press(await screen.findByTestId('account-deleted-back'));
+      146 |     await waitFor(() => expect(screen.queryByTestId('account-modal')).toBeNull());
+
+
+Test Suites: 4 failed, 7 passed, 11 total
+Tests:       13 failed, 187 passed, 200 total
+Snapshots:   0 total
+Time:        6.769 s
+Ran all test suites matching src/account|src/components/account|src/screens/__tests__/homeAccountMachine.test.js.

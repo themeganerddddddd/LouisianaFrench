@@ -2,6 +2,8 @@ import { jest } from '@jest/globals';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { renderApp } from '../../test/renderApp';
 
 const ADA = { id: 'learner-1', email: 'ada@example.com', username: 'Ada', provider: 'email' };
@@ -10,6 +12,7 @@ const RECOVERY_URL = 'https://x/auth/callback?code=abc&type=recovery';
 
 const mockConsumeAuthUrl = jest.fn();
 const mockUpdatePassword = jest.fn();
+const mockDeleteAccount = jest.fn();
 const mockListeners = new Set();
 let mockSession = null;
 function mockEmit(identity) {
@@ -43,7 +46,7 @@ jest.mock('../../identity/connector', () => ({
       signOut: async () => {
         mockEmit(null);
       },
-      deleteAccount: async () => ({ ok: false, failure: 'unknown' }),
+      deleteAccount: () => mockDeleteAccount(),
       consumeAuthUrl: (url) => mockConsumeAuthUrl(url),
       setUsername: async () => ({ ok: false, reason: 'network' }),
       checkUsername: async () => ({ status: 'error' }),
@@ -60,6 +63,7 @@ describe('Home account modal', () => {
     mockSession = null;
     mockConsumeAuthUrl.mockReset();
     mockConsumeAuthUrl.mockResolvedValue({ type: 'recoveryLinkOpened' });
+    mockDeleteAccount.mockReset();
     mockUpdatePassword.mockReset();
     mockUpdatePassword.mockResolvedValue({ ok: true, identity: ADA });
     jest.spyOn(Linking, 'getInitialURL').mockResolvedValue(RECOVERY_URL);
@@ -125,5 +129,22 @@ describe('Home account modal', () => {
 
     fireEvent.press(await screen.findByTestId('account-sign-out'));
     await waitFor(() => expect(screen.getByTestId('home-identity')).toHaveTextContent('guest'));
+  });
+
+  it('returns Home to a guest after Delete account, with Learner Progress kept', async () => {
+    await AsyncStorage.setItem('learner-progress', '{"xp":42}');
+    mockDeleteAccount.mockImplementation(async () => {
+      mockEmit(null);
+      return { ok: true };
+    });
+    await homeWithLink({ type: 'opened', identity: ADA });
+    mockEmit(ADA);
+    fireEvent.press(await screen.findByTestId('account-delete'));
+    fireEvent.changeText(screen.getByTestId('account-delete-input'), 'DELETE');
+    fireEvent.press(screen.getByTestId('account-delete-confirm'));
+    fireEvent.press(await screen.findByTestId('account-deleted-back'));
+    await waitFor(() => expect(screen.queryByTestId('account-modal')).toBeNull());
+    expect(screen.getByTestId('home-identity')).toHaveTextContent('guest');
+    expect(await AsyncStorage.getItem('learner-progress')).toBe('{"xp":42}');
   });
 });
