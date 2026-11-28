@@ -1,0 +1,53 @@
+FAIL src/components/__tests__/noSignInModal.test.js
+FAIL src/account/__tests__/accountEmits.test.ts
+FAIL src/identity/__tests__/identityEmit.test.js
+FAIL src/screens/__tests__/homeAccountMachine.test.js (6.181 s)
+Test Suites: 4 failed, 4 total
+Tests:       15 failed, 2 passed, 17 total
+
+
+## Sign-in-state fixes (recovery announce, email link late success, signOut)
+  ● account connector › announces the session identity when a recovery link opens
+    expect(received).toEqual(expected) // deep equality
+    - Expected  - 8
+    + Received  + 1
+      490 |     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`)).toEqual({ type: 'recoveryLinkOpened' });
+    > 491 |     expect(heard).toEqual([{ id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }]);
+  ● account connector › email link late success › signs out locally and announces a guest when the exchange succeeds late
+    expect(received).toEqual(expected) // deep equality
+    - Expected  - 5
+    + Received  + 1
+    > 524 |       expect(signOuts).toEqual([{ scope: 'local' }]);
+      525 |       expect(heard).toEqual([null]);
+  ● account connector › signOut announces a guest even when the local sign-out rejects
+    expect(received).resolves.toBeUndefined()
+    Received promise rejected instead of resolved
+    > 544 |     await expect(connector.signOut()).resolves.toBeUndefined();
+      545 |     expect(heard).toEqual([null]);
+Tests:       3 failed, 43 passed, 46 total
+
+
+## Recovery link must not wait for the profile read (red)
+
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › opens a recovery link without waiting for a stalled profile read
+    expect(received).toEqual(expected) // deep equality
+    Expected: {"type": "recoveryLinkOpened"}
+    Received: "stalled"
+      501 |     const opened = connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`);
+      502 |     const first = await Promise.race([opened, new Promise((resolve) => setTimeout(() => resolve('stalled'), 50))]);
+    > 503 |     expect(first).toEqual({ type: 'recoveryLinkOpened' });
+          |                   ^
+      504 |     expect(heard).toEqual([]);
+      505 |   });
+      506 |
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:503:19)
+      at asyncGeneratorStep (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../../node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 37 skipped, 2 passed, 40 total
+Snapshots:   0 total
+Time:        0.566 s, estimated 1 s
+Ran all test suites matching src/account/__tests__/accountConnector.test.ts with tests matching "recovery link".
+Jest did not exit one second after the test run has completed.
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

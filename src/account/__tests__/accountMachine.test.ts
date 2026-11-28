@@ -592,6 +592,14 @@ describe('opened', () => {
     expect(reduce(signIn(), { type: 'opened', identity: ada })).toEqual(signedIn());
   });
 
+  it('opens the first username step only for a successful read with no name', () => {
+    const nameless: Identity = { ...ada, username: null };
+    expect(reduce(signIn(), { type: 'opened', identity: nameless, profileRead: true }).kind).toBe('username');
+    expect(reduce(signIn(), { type: 'opened', identity: nameless, profileRead: false }).kind).toBe('signedIn');
+    expect(reduce(signIn(), { type: 'opened', identity: nameless }).kind).toBe('signedIn');
+    expect(reduce(signIn(), { type: 'opened', identity: ada, profileRead: true }).kind).toBe('signedIn');
+  });
+
   it('ignores opened while deleting or signing out', () => {
     const deletingView = deleting();
     const signingOut = signedIn(true);

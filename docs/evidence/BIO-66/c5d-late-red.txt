@@ -1,0 +1,33 @@
+FAIL src/account/__tests__/accountConnector.test.ts
+  ● account connector › leaves set-new-password when a late recovery save signs the session out
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+    -   "dismiss": true,
+    -   "kind": "signIn",
+    +   "dismiss": false,
+    +   "kind": "setNewPassword",
+        "retryOk": false,
+      }
+
+      657 |       dismiss: canDismiss(settled),
+      658 |       retryOk: retry.ok
+    > 659 |     }).toEqual({ kind: 'signIn', dismiss: true, retryOk: false });
+          |        ^
+      660 |   });
+      661 |
+      662 |   it('does not read a bare code as email confirmation while Google is open', async () => {
+
+      at Object.toEqual (src/account/__tests__/accountConnector.test.ts:659:8)
+      at asyncGeneratorStep (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../LouisianaFrench/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 40 skipped, 41 total
+Snapshots:   0 total
+Time:        0.738 s
+Ran all test suites matching src/account/__tests__/accountConnector.test.ts with tests matching "leaves set-new-password".

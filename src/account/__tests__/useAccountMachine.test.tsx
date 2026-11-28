@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { act, StrictMode, useState } from 'react';
 
-import SignInModal from '../../components/SignInModal';
+import { AccountModal } from '../../components/account/AccountModal';
 import type { AccountConnector } from '../accountConnector';
 import type { AuthResult, Identity } from '../accountMachine';
 import { useAccountMachine } from '../useAccountMachine';
@@ -23,7 +23,8 @@ function connector(signIn: AccountConnector['signIn']): AccountConnector {
     checkUsername: async () => ({ status: 'error' }),
     beginAttempt: () => 1,
     noteSuccess: () => {},
-    orphaned: () => true
+    orphaned: () => true,
+    bind: () => {}
   };
 }
 
@@ -55,6 +56,7 @@ describe('useAccountMachine', () => {
       beginAttempt: () => 1,
       noteSuccess: () => {},
       orphaned: () => true,
+      bind: () => {},
       onAuthStateChange(next: () => void) {
         listener = next;
         return () => {};
@@ -160,7 +162,7 @@ describe('useAccountMachine', () => {
     function Screen() {
       const { view, dispatch } = useAccountMachine(account, null);
       return (
-        <SignInModal
+        <AccountModal
           visible
           view={view}
           dispatch={dispatch}
@@ -174,9 +176,9 @@ describe('useAccountMachine', () => {
       );
     }
     render(<Screen />);
-    await user.press(screen.getByTestId('sign-in-google'));
-    expect(screen.queryByLabelText('Close sign in')).toBeNull();
-    await user.press(screen.getByTestId('sign-in-backdrop'));
+    await user.press(screen.getByTestId('account-google'));
+    expect(screen.queryByTestId('account-close')).toBeNull();
+    await user.press(screen.getByTestId('account-backdrop'));
     await act(async () => {
       release({ ok: true, identity: ada });
       await pending;

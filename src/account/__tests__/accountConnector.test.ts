@@ -1,7 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import { act, render } from '@testing-library/react-native';
+import { createElement } from 'react';
 
 import { createAccountConnector, type AccountClient } from '../accountConnector';
+import { canDismiss } from '../accountMachine';
 import { runAccountEffect } from '../runAccountEffects';
+import { useAccountMachine } from '../useAccountMachine';
 
 function openConnector(options: Omit<Parameters<typeof createAccountConnector>[0], 'redirectTo'> & { redirectTo?: string }) {
   return createAccountConnector({ redirectTo: REDIRECT, ...options });
@@ -438,6 +442,7 @@ describe('account connector', () => {
     const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=signup`)).toEqual({
       type: 'opened',
+      profileRead: false,
       identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }
     });
   });
@@ -446,6 +451,7 @@ describe('account connector', () => {
     const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }) });
     expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc`)).toEqual({
       type: 'opened',
+      profileRead: false,
       identity: { id: 'learner-1', email: 'ada@example.com', username: null, provider: 'google' }
     });
   });
@@ -480,6 +486,80 @@ describe('account connector', () => {
     for (const url of [`${REDIRECT}?code=a&type=signup`, `${REDIRECT}?code=a`]) {
       expect(await connector.consumeAuthUrl(url)).toEqual({ type: 'linkFailed', failure: 'unknown' });
     }
+  });
+
+  it('announces the session identity when a recovery link opens', async () => {
+    const heard: unknown[] = [];
+    const connector = openConnector({ client: client({ exchangeCodeForSession: exchangeOk }), onIdentity: (next) => heard.push(next) });
+    expect(await connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`)).toEqual({ type: 'recoveryLinkOpened' });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(heard).toEqual([{ id: 'learner-1', email: 'ada@example.com', username: null, provider: 'email' }]);
+  });
+
+  it('opens a recovery link without waiting for a stalled profile read', async () => {
+    const heard: unknown[] = [];
+    const connector = openConnector({
+      client: profileClient(() => new Promise(() => {}), { exchangeCodeForSession: exchangeOk }),
+      onIdentity: (next) => heard.push(next)
+    });
+    const opened = connector.consumeAuthUrl(`${REDIRECT}?code=abc&type=recovery`);
+    const first = await Promise.race([opened, new Promise((resolve) => setTimeout(() => resolve('stalled'), 50))]);
+    expect(first).toEqual({ type: 'recoveryLinkOpened' });
+    expect(heard).toEqual([]);
+  });
+
+  describe('email link late success', () => {
+    function lateLink() {
+      const signOuts: unknown[] = [];
+      const heard: unknown[] = [];
+      let releaseFirst: (value: unknown) => void = () => {};
+      let calls = 0;
+      const connector = openConnector({
+        timeoutMs: 20,
+        onIdentity: (next) => heard.push(next),
+        client: client({
+          exchangeCodeForSession: () => {
+            calls += 1;
+            if (calls === 1) return new Promise((resolve) => { releaseFirst = resolve; });
+            return exchangeOk();
+          },
+          signOut: async (input: unknown) => {
+            signOuts.push(input);
+            return { error: null };
+          }
+        })
+      });
+      return { connector, signOuts, heard, release: () => releaseFirst({ data: { session: { user: SESSION_USER } }, error: null }) };
+    }
+    const URL = `${REDIRECT}?code=abc&type=signup`;
+
+    it('signs out locally and announces a guest when the exchange succeeds late', async () => {
+      const { connector, signOuts, heard, release } = lateLink();
+      expect(await connector.consumeAuthUrl(URL)).toEqual({ type: 'linkFailed', failure: 'network' });
+      release();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(signOuts).toEqual([{ scope: 'local' }]);
+      expect(heard).toEqual([null]);
+    });
+
+    it('keeps the session when a newer link succeeded first', async () => {
+      const { connector, signOuts, release } = lateLink();
+      expect(await connector.consumeAuthUrl(URL)).toEqual({ type: 'linkFailed', failure: 'network' });
+      expect(await connector.consumeAuthUrl(URL)).toMatchObject({ type: 'opened' });
+      release();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(signOuts).toEqual([]);
+    });
+  });
+
+  it('signOut announces a guest even when the local sign-out rejects', async () => {
+    const heard: unknown[] = [];
+    const connector = openConnector({
+      client: client({ signOut: async () => { throw new Error('offline'); } }),
+      onIdentity: (next) => heard.push(next)
+    });
+    await expect(connector.signOut()).resolves.toBeUndefined();
+    expect(heard).toEqual([null]);
   });
 
   describe('updatePassword settling', () => {
@@ -520,6 +600,63 @@ describe('account connector', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(signOuts).toEqual([]);
     });
+  });
+
+  it('leaves set-new-password when a late recovery save signs the session out', async () => {
+    const signOuts: unknown[] = [];
+    let releaseFirst: (value: unknown) => void = () => {};
+    let calls = 0;
+    const connector = openConnector({
+      timeoutMs: 20,
+      client: client({
+        updateUser: () => {
+          calls += 1;
+          if (calls === 1) return new Promise((resolve) => { releaseFirst = resolve; });
+          return Promise.resolve({ data: { user: null }, error: { message: 'Auth session missing!' } });
+        },
+        signOut: async (input: unknown) => {
+          signOuts.push(input);
+          return { error: null };
+        }
+      })
+    });
+    const slot: {
+      view?: ReturnType<typeof useAccountMachine>['view'];
+      dispatch?: ReturnType<typeof useAccountMachine>['dispatch'];
+    } = {};
+    function Screen() {
+      const machine = useAccountMachine(connector, null);
+      slot.view = machine.view;
+      slot.dispatch = machine.dispatch;
+      return null;
+    }
+    render(createElement(Screen));
+    const dispatch = slot.dispatch;
+    if (!dispatch) throw new Error('the screen did not render');
+    await act(async () => {
+      dispatch({ type: 'recoveryLinkOpened' });
+      dispatch({ type: 'edited', field: 'password', value: 'new-password' });
+      dispatch({ type: 'submitted' });
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    });
+    const timedOut = slot.view;
+    if (!timedOut || timedOut.kind !== 'setNewPassword') throw new Error('recovery did not reach set-new-password');
+    expect(timedOut.submit).toEqual({ status: 'failed', failure: 'network' });
+    expect(canDismiss(timedOut)).toBe(false);
+
+    await act(async () => {
+      releaseFirst({ data: { user: SESSION_USER }, error: null });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const retry = await connector.updatePassword('new-password');
+    const settled = slot.view;
+    if (!settled) throw new Error('the screen disappeared');
+    expect(signOuts).toEqual([{ scope: 'local' }]);
+    expect({
+      kind: settled.kind,
+      dismiss: canDismiss(settled),
+      retryOk: retry.ok
+    }).toEqual({ kind: 'signIn', dismiss: true, retryOk: false });
   });
 
   it('does not read a bare code as email confirmation while Google is open', async () => {

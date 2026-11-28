@@ -1,6 +1,6 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
-import { checkUsername, loadProfileUsername, mapCheckUsername, mapSetUsername, setUsername } from '../username';
+import { checkUsername, loadProfileRead, loadProfileUsername, mapCheckUsername, mapSetUsername, setUsername } from '../username';
 
 describe('username RPC mapping', () => {
   it('maps a saved username, a refusal, and a too_soon retry', () => {
@@ -83,5 +83,54 @@ describe('username RPC mapping', () => {
     };
     await expect(setUsername(rpc, 'Céline')).resolves.toEqual({ ok: false, reason: 'network' });
     await expect(checkUsername(rpc, 'Céline')).resolves.toEqual({ status: 'error' });
+  });
+
+  it('reads the username with from still attached to the client', async () => {
+    class ProfileReader {
+      tables: Record<string, unknown> = { profiles: { username: 'Céline' } };
+
+      from(table: string) {
+        const row = this.tables[table];
+        return {
+          select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: row, error: null }) }) })
+        };
+      }
+    }
+    await expect(loadProfileRead(new ProfileReader(), 'learner-1')).resolves.toEqual({ ok: true, username: 'Céline' });
+  });
+
+  it('does not wait forever when the profile read never settles', async () => {
+    const client = {
+      from: () => ({ select: () => ({ eq: () => ({ maybeSingle: () => new Promise<never>(() => {}) }) }) })
+    };
+    jest.useFakeTimers();
+    try {
+      let settled = false;
+      const pending = loadProfileRead(client, 'learner-1').then((read) => {
+        settled = true;
+        return read;
+      });
+      await jest.advanceTimersByTimeAsync(5000);
+      expect(settled).toBe(true);
+      await expect(pending).resolves.toEqual({ ok: false, username: null });
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('clears the profile timer when the read settles', async () => {
+    const client = {
+      from: () => ({
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { username: 'Céline' }, error: null }) }) })
+      })
+    };
+    jest.useFakeTimers();
+    try {
+      await expect(loadProfileUsername(client, 'learner-1')).resolves.toBe('Céline');
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

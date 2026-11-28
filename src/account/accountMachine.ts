@@ -42,7 +42,7 @@ export type AuthResult =
   | { ok: false; failure: AuthFailure };
 export type DeleteResult = { ok: true } | { ok: false; failure: 'network' | 'notSignedIn' | 'unknown' };
 export type AccountEvent =
-  | { type: 'opened'; identity: Identity | null }
+  | { type: 'opened'; identity: Identity | null; profileRead?: boolean }
   | { type: 'recoveryLinkOpened' }
   | { type: 'linkFailed'; failure: SubmitFailure }
   | { type: 'navigated'; to: 'signIn' | 'create' | 'forgot' }
@@ -110,6 +110,7 @@ export function reduce(view: AccountView, event: AccountEvent): AccountView {
   if (event.type === 'opened') {
     if (formStatus(view) === 'submitting' || formStatus(view) === 'oauth') return view;
     if (view.kind === 'username' && view.submit.status === 'submitting') return view;
+    if (event.identity?.username === null && event.profileRead === true) return openUsername(event.identity);
     return initialView(event.identity);
   }
   if (event.type === 'recoveryLinkOpened') return { kind: 'setNewPassword', password: '', submit: EDITING };
